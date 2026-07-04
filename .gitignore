@@ -1,0 +1,52 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# --- окружения (uv) ---
+.venv/
+venv/
+env/
+# uv.lock — коммитим
+
+# --- кэши инструментов ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# --- секреты / env ---
+.env
+.env.*
+!.env.example
+
+# --- данные и артефакты (крупные, вне git) ---
+data/
+datasets/
+raw/
+outputs/
+results/
+runs/
+logs/
+*.log
+wandb/
+mlruns/
+lightning_logs/
+checkpoints/
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.safetensors
+*.parquet
+*.csv
+*.xlsx
+
+# --- OS / IDE ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
