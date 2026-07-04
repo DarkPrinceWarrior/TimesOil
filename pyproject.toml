@@ -1,0 +1,34 @@
+[project]
+name = "timesoil"
+version = "0.1.0"
+description = "Прогноз дебита нефти/жидкости на 6 месяцев: TiRex-2 и SPDM на данных месторождения с разломами"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "numpy>=2.1",
+    "pandas>=2.2",
+    "scipy>=1.14",
+    "matplotlib>=3.9",
+    "openpyxl>=3.1",
+    "pyarrow>=17",
+]
+
+[project.optional-dependencies]
+tirex = [
+    "tirex-2>=0.1.1",
+    "torch>=2.8,<2.10",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/timesoil"]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }

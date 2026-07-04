@@ -24,6 +24,7 @@ env/
 !.env.example
 
 # --- данные и артефакты (крупные, вне git) ---
+raw_data/
 data/
 datasets/
 raw/
