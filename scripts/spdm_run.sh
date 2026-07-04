@@ -24,7 +24,7 @@ run_one() {
     --seq_len 24 --label_len 12 --pred_len 6 \
     --e_layers 2 --enc_in 49 --dec_in 49 --c_out 49 \
     --d_model 128 --d_ff 256 --cov_window 8 --cov_stride 4 \
-    --batch_size 8 --dropout 0.2 --learning_rate 3e-4 \
+    --batch_size 2 --dropout 0.2 --learning_rate 3e-4 \
     --optim AdamW --weight_decay 1e-6 \
     --train_epochs 20 --patience 5 --itr 1 --num_workers 2
   local rp
