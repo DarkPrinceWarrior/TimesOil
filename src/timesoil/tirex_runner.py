@@ -36,7 +36,7 @@ def _tt(target: np.ndarray, past: np.ndarray | None, future: np.ndarray | None):
 def _groups(variant: str) -> list[list[int]]:
     if variant == "u":
         return [[w] for w in PRODUCERS]
-    if variant == "m":
+    if variant in ("m", "m_cov"):
         return [list(PRODUCERS)]
     if variant in ("blocks", "blocks_cov"):
         return [block_wells(b, injectors=False) for b in ("A", "B", "B2", "C", "D", "E")]
@@ -66,8 +66,13 @@ def forecast_tirex(
     for wells in _groups(variant):
         tgt = ctx[wells].to_numpy().T  # [n, T]
         past = future = None
-        if variant == "blocks_cov":
-            blk_inj = [w for w in block_wells(_block_of(wells[0]), injectors=True)]
+        if variant in ("blocks_cov", "m_cov"):
+            if variant == "m_cov":
+                from .wells import INJECTORS
+
+                blk_inj = sorted(INJECTORS)
+            else:
+                blk_inj = block_wells(_block_of(wells[0]), injectors=True)
             if blk_inj and inj_mat is not None and inj_future is not None:
                 hist = inj_mat.loc[:cutoff, blk_inj].to_numpy().T
                 fut = inj_future.loc[dates_future, blk_inj].to_numpy().T
