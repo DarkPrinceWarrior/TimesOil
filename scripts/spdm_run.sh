@@ -15,7 +15,7 @@ run_one() {
   local csv="${target}_${tag}.csv"
   echo "=== SPDM: $csv (GPU $CUDA_VISIBLE_DEVICES) ==="
   cd "$SPDM"
-  find . -name real_prediction.npy -delete 2>/dev/null || true
+  find . -name "*real_prediction*.npy" -delete 2>/dev/null || true
   .venv/bin/python -u scripts/run.py \
     --is_training 1 --do_predict --inverse \
     --model ManiMamba --data custom --features M --target inj42 --freq ME \
@@ -28,7 +28,7 @@ run_one() {
     --optim AdamW --weight_decay 1e-6 \
     --train_epochs 20 --patience 5 --itr 1 --num_workers 2
   local rp
-  rp=$(find . -name real_prediction.npy | head -1)
+  rp=$(find . -name "*real_prediction*.npy" | head -1)
   if [[ -z "$rp" ]]; then echo "ОШИБКА: real_prediction.npy не найден для $csv" >&2; exit 1; fi
   mkdir -p "$RES/${target}_${tag}"
   cp "$rp" "$RES/${target}_${tag}/real_prediction.npy"
