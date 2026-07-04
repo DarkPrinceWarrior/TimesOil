@@ -18,7 +18,7 @@ run_one() {
   find . -name real_prediction.npy -delete 2>/dev/null || true
   .venv/bin/python -u scripts/run.py \
     --is_training 1 --do_predict --inverse \
-    --model ManiMamba --data custom --features M --target inj42 --freq m \
+    --model ManiMamba --data custom --features M --target inj42 --freq ME \
     --root_path "$DATA/" --data_path "$csv" \
     --model_id "${target}_${tag}" --des TIMESOIL \
     --seq_len 24 --label_len 12 --pred_len 6 \
