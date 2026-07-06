@@ -26,8 +26,14 @@ def fig_summary() -> None:
     names = {"oil_tpd": "Нефть", "liq_tpd": "Жидкость"}
     for ax, target in zip(axes, ("oil_tpd", "liq_tpd")):
         g = s[s.target == target].sort_values("wape")
-        colors = ["tab:green" if "tirex" in m else ("tab:red" if m == "spdm" else "tab:gray")
-                  for m in g.model]
+        def color(m: str) -> str:
+            if m.startswith(("crm", "frac")):
+                return "tab:blue"      # физические модели (CRM, Джентил)
+            if "tirex" in m:
+                return "tab:green"
+            return "tab:red" if m == "spdm" else "tab:gray"
+
+        colors = [color(m) for m in g.model]
         ax.barh(g.model, g.wape * 100, color=colors)
         ax.set_title(f"{names[target]}: WAPE за 3 среза x 6 мес, %")
         ax.invert_yaxis()
@@ -41,10 +47,12 @@ def fig_summary() -> None:
 def fig_examples() -> None:
     df = load_monthly()
     mat = producer_matrices(df)["oil_tpd"]
-    tirex = pd.read_csv(RES / "tirex_blocks_cov_oil_tpd.csv", parse_dates=["date", "cutoff"])
+    tirex = pd.read_csv(RES / "tirex_blocks_cov_crm_oil_tpd.csv", parse_dates=["date", "cutoff"])
     arps = pd.read_csv(RES / "baseline_arps36_oil_tpd.csv", parse_dates=["date", "cutoff"])
+    frac = pd.read_csv(RES / "frac_crm_oil_tpd.csv", parse_dates=["date", "cutoff"])
     tirex = tirex[tirex.cutoff == MAIN_CUTOFF]
     arps = arps[arps.cutoff == MAIN_CUTOFF]
+    frac = frac[frac.cutoff == MAIN_CUTOFF]
     fig, axes = plt.subplots(2, 2, figsize=(13, 8))
     for ax, w in zip(axes.flat, EXAMPLE_WELLS):
         hist = mat[w].dropna().loc["2012-01-01":]
@@ -55,6 +63,8 @@ def fig_examples() -> None:
                         label="TiRex-2: 10–90 проц.")
         ax.plot(t.date, t.y_pred, "-o", ms=3, color="tab:green", label="TiRex-2 (медиана)")
         ax.plot(a.date, a.y_pred, "--s", ms=3, color="tab:orange", label="Арпс")
+        f = frac[frac.well == w].sort_values("date")
+        ax.plot(f.date, f.y_pred, "-^", ms=3, color="tab:blue", label="CRM × Джентил")
         ax.axvline(pd.Timestamp(MAIN_CUTOFF), color="gray", ls=":", lw=1)
         ax.set_title(f"скв. {w}: нефть, т/сут")
         ax.grid(alpha=0.3)
