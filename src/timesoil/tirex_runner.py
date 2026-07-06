@@ -38,7 +38,7 @@ def _groups(variant: str) -> list[list[int]]:
         return [[w] for w in PRODUCERS]
     if variant in ("m", "m_cov"):
         return [list(PRODUCERS)]
-    if variant in ("blocks", "blocks_cov", "blocks_cov_crm"):
+    if variant in ("blocks", "blocks_cov", "blocks_cov_crm", "blocks_wcov", "blocks_fcov"):
         return [block_wells(b, injectors=False) for b in ("A", "B", "B2", "C", "D", "E")]
     raise ValueError(variant)
 
@@ -53,6 +53,7 @@ def forecast_tirex(
     pres_mat: pd.DataFrame | None = None,
     inj_future: pd.DataFrame | None = None,
     crm_mat: pd.DataFrame | None = None,
+    alloc_mat: pd.DataFrame | None = None,
     **forecast_kwargs,
 ) -> pd.DataFrame:
     """Прогноз всех добывающих на horizon месяцев после cutoff.
@@ -86,6 +87,13 @@ def forecast_tirex(
                 idx_full = ctx.index.append(dates_future)
                 crm_block = crm_mat.reindex(idx_full)[wells].to_numpy().T  # [n, T+h]
                 future = crm_block if future is None else np.concatenate([future, crm_block])
+        elif variant in ("blocks_wcov", "blocks_fcov"):
+            # адресная закачка: на каждую добывающую — её взвешенная закачка
+            if alloc_mat is not None:
+                idx_full = ctx.index.append(dates_future)
+                future = alloc_mat.reindex(idx_full)[wells].to_numpy().T  # [n, T+h]
+            if pres_mat is not None:
+                past = pres_mat.loc[:cutoff, wells].to_numpy().T
         ts_list.append(_tt(tgt, past, future))
         well_groups.append(wells)
 

@@ -80,6 +80,17 @@ def injection_matrix(df: pd.DataFrame) -> pd.DataFrame:
     return m.fillna(0.0)
 
 
+def well_coords(raw_dir: Path | str = RAW_DIR) -> pd.DataFrame:
+    """Координаты всех 49 скважин (лист coords)."""
+    c = pd.read_excel(Path(raw_dir) / DATASET_XLSX, sheet_name="coords")
+    c["well"] = c["Well"].str.strip("'").astype(int)
+    return (
+        c.set_index("well")[["X", "Y"]]
+        .rename(columns={"X": "x", "Y": "y"})
+        .sort_index()
+    )
+
+
 def static_features(raw_dir: Path | str = RAW_DIR) -> pd.DataFrame:
     """Статика добывающих из DobXY: проницаемость, пористость, насыщенность, толщина."""
     d = pd.read_excel(Path(raw_dir) / WIDE_XLSX, sheet_name="DobXY")
