@@ -61,17 +61,22 @@ assess risk (`codegraph_impact`) → read & edit (serena) → verify.
 разломами на 6 блоков (оцифровано в `src/timesoil/wells.py`).
 
 **Стек**: Python 3.13 + uv; `pandas/numpy/scipy/matplotlib`; модели —
-TiRex-2 (NX-AI, zero-shot, extra `tirex`) и SPDM/ManiMamba (обучение на a100,
-отдельное окружение `external/spdm/.venv`, python 3.12 + mamba-ssm cu12).
+TiRex-2 (NX-AI, zero-shot, extra `tirex`), SPDM/ManiMamba (обучение на a100,
+отдельное окружение `external/spdm/.venv`, python 3.12 + mamba-ssm cu12),
+физика — CRM (`pywaterflood`) и фракционная модель Джентила.
 
 **Структура и точки входа**:
 - `src/timesoil/` — данные (`data.py` — все причуды исходников задокументированы
   в докстринге), фонд/блоки (`wells.py`), метрики, бейслайны, бэктест,
-  раннер TiRex-2;
-- `scripts/run_baselines.py`, `run_tirex.py` — бэктест (3 среза x 6 мес);
+  раннер TiRex-2; этап 2: `crm.py` (ёмкостно-резистивная модель),
+  `allocation.py` (адресная закачка), `fractional.py` (обводнённость);
+- `scripts/run_baselines.py`, `run_tirex.py`, `run_crm.py`,
+  `run_fractional.py` — бэктест (3 среза x 6 мес);
+- `scripts/calibrate_intervals.py` — конформная калибровка квантилей;
 - `scripts/prepare_spdm_data.py` -> `spdm_run.sh` (на a100, tmux) ->
   `eval_spdm.py` — контур SPDM;
-- `scripts/forecast_forward.py` — итоговый прогноз 2015-12..2016-05;
+- `scripts/forecast_forward.py` — итоговый прогноз 2015-12..2016-05
+  (стек: CRM-жидкость, Джентил-нефть, интервалы TiRex-2 с множителями);
 - `scripts/collect_results.py`, `make_figs.py` — сводка и графики;
 - `results/` (вне git), отчёт — `docs/`.
 
