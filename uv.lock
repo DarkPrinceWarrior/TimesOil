@@ -405,6 +405,15 @@ wheels = [
 ]
 
 [[package]]
+name = "joblib"
+version = "1.5.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/f2/d34e8b3a08a9cc79a50b2208a93dce981fe615b64d5a4d4abee421d898df/joblib-1.5.3.tar.gz", hash = "sha256:8561a3269e6801106863fd0d6d84bb737be9e7631e33aaed3fb9ce5953688da3", size = 331603, upload-time = "2025-12-15T08:41:46.427Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7b/91/984aca2ec129e2757d1e4e3c81c3fcda9d0f85b74670a094cc443d9ee949/joblib-1.5.3-py3-none-any.whl", hash = "sha256:5fc3c5039fc5ca8c0276333a188bbd59d6b7ab37fe6632daa76bc7f9ec18e713", size = 309071, upload-time = "2025-12-15T08:41:44.973Z" },
+]
+
+[[package]]
 name = "joypy"
 version = "0.2.6"
 source = { registry = "https://pypi.org/simple" }
@@ -919,6 +928,28 @@ wheels = [
 ]
 
 [[package]]
+name = "pywaterflood"
+version = "0.3.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "joblib" },
+    { name = "numpy" },
+    { name = "openpyxl" },
+    { name = "pandas" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d2/1b/2125b1bf126f6f71e78fd1d543c5780b104321cf44365522c6c14768b43a/pywaterflood-0.3.4.tar.gz", hash = "sha256:e8a86bc32ec58b4ae162627c781a83a3ed5088d688fbb540b74702eae9ce46d6", size = 1061856, upload-time = "2024-11-27T17:51:42.685Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b5/9d/50a7d0eedabf0a7fcfc255c86b13ca54c0f48ffd65505b825b8ec6ec4154/pywaterflood-0.3.4-cp37-abi3-macosx_10_9_x86_64.whl", hash = "sha256:eb43235bdb897dec78ebf9a22f8bb08ca7d3aecc1bf442eeda0c771977295132", size = 283339, upload-time = "2024-11-27T17:51:13.262Z" },
+    { url = "https://files.pythonhosted.org/packages/3b/16/10a647fb3be5f766714595514a5a0df7d1482b6c8715675cc4edd0c25892/pywaterflood-0.3.4-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:ede2ce91c2ef13a4af5a46fe2c5c422e74dfba5779479dd69bc63d57eb13c0a1", size = 274191, upload-time = "2024-11-27T17:51:15.311Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/b2/f4b10fdf5eb95d15d5f2e95ab2a26bcd75cbbbc68114d91c851618dc8059/pywaterflood-0.3.4-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:43df6e3a8f7b6f4fc7eb88915523425f50d9092dcf37e5372977ea0e525c51c7", size = 314632, upload-time = "2024-11-27T17:51:17.218Z" },
+    { url = "https://files.pythonhosted.org/packages/84/a2/8a8c761b48b22d508986988e53c05dc0b81a727b0309283b2959195b0da9/pywaterflood-0.3.4-cp37-abi3-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:15d405fa827444d4d2dcfbe925264f8d9047507d92108d664a79aaf1cb90e260", size = 329202, upload-time = "2024-11-27T17:51:19.164Z" },
+    { url = "https://files.pythonhosted.org/packages/79/96/7da8dcd825b1faee9a3cb5d79e4d9b0bc0ce10209b2a5c107515e68eb522/pywaterflood-0.3.4-cp37-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:e017f73c137b24269892ae1f882dec171adb6098ca5a10415971994e353e248a", size = 375668, upload-time = "2024-11-27T17:51:21.577Z" },
+    { url = "https://files.pythonhosted.org/packages/37/b3/0cdd9cd4f70e431c8fe1264e85aaf703c748641980f4d445ed173d43c3c6/pywaterflood-0.3.4-cp37-abi3-win32.whl", hash = "sha256:3f4edf06c6eb6dbbc0cdf5f5def0279aea4c19c80fee8e9c7bb2e53173612e85", size = 168589, upload-time = "2024-11-27T17:51:23.157Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/c0/73de03dfcb55d532f570dd937b62df11467f48109cd3104555a7bc5309c9/pywaterflood-0.3.4-cp37-abi3-win_amd64.whl", hash = "sha256:58a1ebc6e25b78bbb0ed0b04c3414a7f4020ecd2d4bc8c8f467df8bb35dfa846", size = 180152, upload-time = "2024-11-27T17:51:25.193Z" },
+]
+
+[[package]]
 name = "pyyaml"
 version = "6.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1163,6 +1194,7 @@ dependencies = [
     { name = "openpyxl" },
     { name = "pandas" },
     { name = "pyarrow" },
+    { name = "pywaterflood" },
     { name = "scipy" },
 ]
 
@@ -1180,6 +1212,7 @@ requires-dist = [
     { name = "openpyxl", specifier = ">=3.1" },
     { name = "pandas", specifier = ">=2.2" },
     { name = "pyarrow", specifier = ">=17" },
+    { name = "pywaterflood", specifier = ">=0.3.4" },
     { name = "scipy", specifier = ">=1.14" },
     { name = "tirex-2", marker = "extra == 'tirex'", specifier = ">=0.1.1" },
     { name = "torch", marker = "extra == 'tirex'", specifier = ">=2.8,<2.10", index = "https://download.pytorch.org/whl/cpu" },
