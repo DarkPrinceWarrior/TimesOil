@@ -40,6 +40,24 @@ def main() -> None:
         if p.exists():
             crm_covs[cutoff] = pd.read_csv(p, index_col=0, parse_dates=True).rename(columns=int)
 
+    # адресная закачка: веса гидропроводности (статика) и связности CRM (по срезам)
+    alloc_maps: dict[str, dict] = {"blocks_wcov": {}, "blocks_fcov": {}}
+    if "blocks_wcov" in args.variants:
+        from timesoil.allocation import allocate, hydro_weights
+        from timesoil.data import static_features, well_coords
+
+        w_h = hydro_weights(static_features(), well_coords())
+        alloc_h = allocate(inj, w_h)
+        alloc_maps["blocks_wcov"] = {c: alloc_h for c in CUTOFFS}
+    if "blocks_fcov" in args.variants:
+        from timesoil.allocation import allocate
+
+        for cutoff in CUTOFFS:
+            p = OUT / f"crm_gains_{cutoff:%Y%m}.csv"
+            if p.exists():
+                g = pd.read_csv(p, index_col=0).rename(columns=int)
+                alloc_maps["blocks_fcov"][cutoff] = allocate(inj, g)
+
     for target in ("oil_tpd", "liq_tpd"):
         mat = mats[target]
         for variant in args.variants:
@@ -48,7 +66,8 @@ def main() -> None:
                 fc = forecast_tirex(
                     model, mat, cutoff, HORIZON, variant,
                     inj_mat=inj, pres_mat=mats["p_res"], inj_future=inj,
-                    crm_mat=crm_covs.get(cutoff), **kw,
+                    crm_mat=crm_covs.get(cutoff),
+                    alloc_mat=alloc_maps.get(variant, {}).get(cutoff), **kw,
                 )
                 fc["cutoff"] = cutoff
                 truth = mat.loc[fc.date.unique()]
