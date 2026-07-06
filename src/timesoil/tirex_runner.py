@@ -38,7 +38,10 @@ def _groups(variant: str) -> list[list[int]]:
         return [[w] for w in PRODUCERS]
     if variant in ("m", "m_cov"):
         return [list(PRODUCERS)]
-    if variant in ("blocks", "blocks_cov", "blocks_cov_crm", "blocks_wcov", "blocks_fcov"):
+    if variant in (
+        "blocks", "blocks_cov", "blocks_cov_crm",
+        "blocks_wcov", "blocks_fcov", "blocks_wcov_crm",
+    ):
         return [block_wells(b, injectors=False) for b in ("A", "B", "B2", "C", "D", "E")]
     raise ValueError(variant)
 
@@ -87,11 +90,15 @@ def forecast_tirex(
                 idx_full = ctx.index.append(dates_future)
                 crm_block = crm_mat.reindex(idx_full)[wells].to_numpy().T  # [n, T+h]
                 future = crm_block if future is None else np.concatenate([future, crm_block])
-        elif variant in ("blocks_wcov", "blocks_fcov"):
+        elif variant in ("blocks_wcov", "blocks_fcov", "blocks_wcov_crm"):
             # адресная закачка: на каждую добывающую — её взвешенная закачка
             if alloc_mat is not None:
                 idx_full = ctx.index.append(dates_future)
                 future = alloc_mat.reindex(idx_full)[wells].to_numpy().T  # [n, T+h]
+            if variant == "blocks_wcov_crm" and crm_mat is not None:
+                idx_full = ctx.index.append(dates_future)
+                crm_block = crm_mat.reindex(idx_full)[wells].to_numpy().T
+                future = crm_block if future is None else np.concatenate([future, crm_block])
             if pres_mat is not None:
                 past = pres_mat.loc[:cutoff, wells].to_numpy().T
         ts_list.append(_tt(tgt, past, future))

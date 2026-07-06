@@ -41,14 +41,15 @@ def main() -> None:
             crm_covs[cutoff] = pd.read_csv(p, index_col=0, parse_dates=True).rename(columns=int)
 
     # адресная закачка: веса гидропроводности (статика) и связности CRM (по срезам)
-    alloc_maps: dict[str, dict] = {"blocks_wcov": {}, "blocks_fcov": {}}
-    if "blocks_wcov" in args.variants:
+    alloc_maps: dict[str, dict] = {"blocks_wcov": {}, "blocks_fcov": {}, "blocks_wcov_crm": {}}
+    if "blocks_wcov" in args.variants or "blocks_wcov_crm" in args.variants:
         from timesoil.allocation import allocate, hydro_weights
         from timesoil.data import static_features, well_coords
 
         w_h = hydro_weights(static_features(), well_coords())
         alloc_h = allocate(inj, w_h)
         alloc_maps["blocks_wcov"] = {c: alloc_h for c in CUTOFFS}
+        alloc_maps["blocks_wcov_crm"] = {c: alloc_h for c in CUTOFFS}
     if "blocks_fcov" in args.variants:
         from timesoil.allocation import allocate
 
