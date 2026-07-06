@@ -38,7 +38,7 @@ def _groups(variant: str) -> list[list[int]]:
         return [[w] for w in PRODUCERS]
     if variant in ("m", "m_cov"):
         return [list(PRODUCERS)]
-    if variant in ("blocks", "blocks_cov"):
+    if variant in ("blocks", "blocks_cov", "blocks_cov_crm"):
         return [block_wells(b, injectors=False) for b in ("A", "B", "B2", "C", "D", "E")]
     raise ValueError(variant)
 
@@ -52,6 +52,7 @@ def forecast_tirex(
     inj_mat: pd.DataFrame | None = None,
     pres_mat: pd.DataFrame | None = None,
     inj_future: pd.DataFrame | None = None,
+    crm_mat: pd.DataFrame | None = None,
     **forecast_kwargs,
 ) -> pd.DataFrame:
     """Прогноз всех добывающих на horizon месяцев после cutoff.
@@ -66,7 +67,7 @@ def forecast_tirex(
     for wells in _groups(variant):
         tgt = ctx[wells].to_numpy().T  # [n, T]
         past = future = None
-        if variant in ("blocks_cov", "m_cov"):
+        if variant in ("blocks_cov", "m_cov", "blocks_cov_crm"):
             if variant == "m_cov":
                 from .wells import INJECTORS
 
@@ -79,6 +80,12 @@ def forecast_tirex(
                 future = np.concatenate([hist, fut], axis=1)  # [k, T+h]
             if pres_mat is not None:
                 past = pres_mat.loc[:cutoff, wells].to_numpy().T
+            if variant == "blocks_cov_crm" and crm_mat is not None:
+                # ряд CRM «история+горизонт» на каждую добывающую блока;
+                # до 2008-07 (общий старт фонда) — NaN, модель их маскирует
+                idx_full = ctx.index.append(dates_future)
+                crm_block = crm_mat.reindex(idx_full)[wells].to_numpy().T  # [n, T+h]
+                future = crm_block if future is None else np.concatenate([future, crm_block])
         ts_list.append(_tt(tgt, past, future))
         well_groups.append(wells)
 

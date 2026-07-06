@@ -34,6 +34,12 @@ def main() -> None:
     mats = producer_matrices(df)
     inj = injection_matrix(df)
 
+    crm_covs = {}
+    for cutoff in CUTOFFS:
+        p = OUT / f"crm_cov_{cutoff:%Y%m}.csv"
+        if p.exists():
+            crm_covs[cutoff] = pd.read_csv(p, index_col=0, parse_dates=True).rename(columns=int)
+
     for target in ("oil_tpd", "liq_tpd"):
         mat = mats[target]
         for variant in args.variants:
@@ -41,7 +47,8 @@ def main() -> None:
             for cutoff in CUTOFFS:
                 fc = forecast_tirex(
                     model, mat, cutoff, HORIZON, variant,
-                    inj_mat=inj, pres_mat=mats["p_res"], inj_future=inj, **kw,
+                    inj_mat=inj, pres_mat=mats["p_res"], inj_future=inj,
+                    crm_mat=crm_covs.get(cutoff), **kw,
                 )
                 fc["cutoff"] = cutoff
                 truth = mat.loc[fc.date.unique()]
