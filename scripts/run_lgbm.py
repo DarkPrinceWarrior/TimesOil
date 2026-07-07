@@ -34,7 +34,8 @@ LGB_PARAMS = dict(
 
 
 def run_polygon(name: str, prefix: str, targets: dict, alloc, blk_inj_sum,
-                crm_covs: dict, pres, static_df: pd.DataFrame | None, cutoffs) -> None:
+                crm_covs: dict, pres, static_df: pd.DataFrame | None, cutoffs,
+                n_windows: int = 3, step_size: int = HORIZON) -> None:
     crm_mat = combined_crm(crm_covs, cutoffs)
     frames = long_frame(targets, alloc, blk_inj_sum, crm_mat, pres)
     for tname, df_long in frames.items():
@@ -49,7 +50,7 @@ def run_polygon(name: str, prefix: str, targets: dict, alloc, blk_inj_sum,
         )
         static_cols = list(static_df.columns.drop("unique_id")) if static_df is not None else []
         cv = mlf.cross_validation(
-            df_long, n_windows=3, h=HORIZON, step_size=HORIZON, refit=True,
+            df_long, n_windows=n_windows, h=HORIZON, step_size=step_size, refit=True,
             static_features=static_cols,
         )
         cv = cv.dropna(subset=["y"]).reset_index(drop=True)
@@ -67,12 +68,13 @@ def run_polygon(name: str, prefix: str, targets: dict, alloc, blk_inj_sum,
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--polygons", nargs="*", default=["field", "unisim", "volve"])
+    ap.add_argument("--ext", action="store_true", help="расширенная проверка (14 срезов, только поле)")
     args = ap.parse_args()
     OUT.mkdir(exist_ok=True)
 
     if "field" in args.polygons:
         from timesoil.allocation import allocate, hydro_weights
-        from timesoil.backtest import CUTOFFS
+        from timesoil.backtest import CUTOFFS, EXT_CUTOFFS
         from timesoil.data import (
             injection_matrix, load_monthly, producer_matrices,
             static_features, well_coords,
@@ -87,8 +89,9 @@ def main() -> None:
             w: inj[block_wells(WELL_BLOCK[w], injectors=True)].sum(axis=1)
             for w in PRODUCERS
         })
+        field_cutoffs = EXT_CUTOFFS if args.ext else CUTOFFS
         crm_covs = {}
-        for cutoff in CUTOFFS:
+        for cutoff in field_cutoffs:
             p = OUT / f"crm_cov_{cutoff:%Y%m}.csv"
             if p.exists():
                 crm_covs[cutoff] = pd.read_csv(p, index_col=0, parse_dates=True).rename(columns=int)
@@ -98,8 +101,10 @@ def main() -> None:
             unique_id=st.well.astype(str), perm=st.perm_md, poro=st.poro,
             h_eff=st.h_eff, block=st.block.astype("category").cat.codes,
         ))
-        run_polygon("field", "", {"oil_tpd": mats["oil_tpd"], "liq_tpd": mats["liq_tpd"]},
-                    alloc, blk_sum, crm_covs, mats["p_res"], static_df, CUTOFFS)
+        run_polygon("field", "ext_" if args.ext else "",
+                    {"oil_tpd": mats["oil_tpd"], "liq_tpd": mats["liq_tpd"]},
+                    alloc, blk_sum, crm_covs, mats["p_res"], static_df, field_cutoffs,
+                    n_windows=len(field_cutoffs), step_size=2 if args.ext else HORIZON)
 
     if "unisim" in args.polygons:
         from timesoil.allocation import allocate
