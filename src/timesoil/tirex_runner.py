@@ -57,22 +57,32 @@ def forecast_tirex(
     inj_future: pd.DataFrame | None = None,
     crm_mat: pd.DataFrame | None = None,
     alloc_mat: pd.DataFrame | None = None,
+    groups: list[list] | None = None,
+    group_inj: list[list] | None = None,
     **forecast_kwargs,
 ) -> pd.DataFrame:
     """Прогноз всех добывающих на horizon месяцев после cutoff.
 
     inj_future: закачка на горизонте (для бэктеста — факт, для прогноза
-    вперёд — продление последнего режима). Возвращает длинную таблицу
+    вперёд — продление последнего режима). groups/group_inj — явные группы
+    скважин (для другого месторождения); по умолчанию — фонд и блоки
+    нашего поля из wells.py. Возвращает длинную таблицу
     [well, step, date, q10..q90, y_pred(медиана)].
     """
     ctx = target_mat.loc[:cutoff]
-    dates_future = pd.date_range(cutoff, periods=horizon + 1, freq="MS")[1:]
+    after = target_mat.index[target_mat.index > cutoff]
+    if len(after) >= horizon:
+        dates_future = after[:horizon]
+    else:
+        dates_future = pd.date_range(cutoff, periods=horizon + 1, freq="MS")[1:]
     ts_list, well_groups = [], []
-    for wells in _groups(variant):
+    for gi, wells in enumerate(groups if groups is not None else _groups(variant)):
         tgt = ctx[wells].to_numpy().T  # [n, T]
         past = future = None
         if variant in ("blocks_cov", "m_cov", "blocks_cov_crm"):
-            if variant == "m_cov":
+            if group_inj is not None:
+                blk_inj = group_inj[gi]
+            elif variant == "m_cov":
                 from .wells import INJECTORS
 
                 blk_inj = sorted(INJECTORS)
