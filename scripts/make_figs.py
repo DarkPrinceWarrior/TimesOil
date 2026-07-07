@@ -27,10 +27,12 @@ def fig_summary() -> None:
     for ax, target in zip(axes, ("oil_tpd", "liq_tpd")):
         g = s[s.target == target].sort_values("wape")
         def color(m: str) -> str:
+            if m.startswith(("ens", "stack")):
+                return "tab:purple"    # ансамбль/стек
             if m.startswith(("crm", "frac")):
-                return "tab:blue"      # физические модели (CRM, Джентил)
-            if "tirex" in m:
-                return "tab:green"
+                return "tab:blue"      # физические модели
+            if "tirex" in m or m.startswith(("chronos", "nf_", "tabpfn")):
+                return "tab:green"     # предобученные и сети
             return "tab:red" if m == "spdm" else "tab:gray"
 
         colors = [color(m) for m in g.model]
