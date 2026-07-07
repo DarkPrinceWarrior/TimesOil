@@ -15,6 +15,7 @@ dependencies = [
 
 [project.optional-dependencies]
 tirex = [
+    "chronos-forecasting>=2.0",
     "tirex-2>=0.1.1",
     "torch>=2.8,<2.10",
 ]

@@ -16,10 +16,9 @@ import pandas as pd
 from timesoil import baselines as B
 from timesoil.allocation import allocate
 from timesoil.backtest import HORIZON, run_pointwise, summarize
-from timesoil.crm import fit_block, predict_block
 from timesoil.fractional import fit_gentil, predict_fo
 from timesoil.tirex_runner import forecast_tirex
-from timesoil.volve import INJECTORS_V, PRODUCERS_V, load_volve, uniform_weights
+from timesoil.volve import INJECTORS_V, PRODUCERS_V, crm_stack, load_volve, uniform_weights
 
 OUT = Path(__file__).resolve().parents[1] / "results"
 CUTOFFS_V = (
@@ -27,26 +26,10 @@ CUTOFFS_V = (
     pd.Timestamp("2015-09-01"),
     pd.Timestamp("2016-03-01"),
 )
-MIN_FIT = 10  # минимум месяцев истории для CRM по скважине
 
 
 def drop_missing(res: pd.DataFrame) -> pd.DataFrame:
     return res.dropna(subset=["y_true"]).reset_index(drop=True)
-
-
-def crm_stack(liq: pd.DataFrame, winj: pd.DataFrame, cutoff: pd.Timestamp) -> pd.DataFrame:
-    """CRM по каждой добывающей от её собственного старта."""
-    parts = []
-    end_pos = liq.index.get_loc(cutoff) + HORIZON
-    for w in PRODUCERS_V:
-        start = liq[w].first_valid_index()
-        n_hist = liq.loc[start:cutoff, w].shape[0]
-        if start is None or n_hist < MIN_FIT:
-            continue
-        model = fit_block(liq, winj, [w], list(INJECTORS_V), cutoff, start=start)
-        inj_full = winj.loc[start: liq.index[end_pos], list(INJECTORS_V)]
-        parts.append(predict_block(model, inj_full, [w]))
-    return pd.concat(parts, axis=1)
 
 
 def main() -> None:
@@ -66,7 +49,7 @@ def main() -> None:
     # --- CRM ---
     crm_covs, rows = {}, []
     for cutoff in CUTOFFS_V:
-        pred = crm_stack(liq, winj, cutoff)
+        pred = crm_stack(liq, winj, cutoff, HORIZON)
         crm_covs[cutoff] = pred
         test = pred.index[pred.index > cutoff][:HORIZON]
         for step, dt in enumerate(test, 1):
