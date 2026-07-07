@@ -108,14 +108,16 @@ def main() -> None:
 
     rows_sum, rows_det = [], []
     for bound in (0.2, 0.3):
+        # нормировка: ограничение в долях суммарной закачки, цель в тыс. т
         cons = {"type": "eq",
-                "fun": lambda lam: float(np.dot(lam, base_future) - base_future.sum())}
+                "fun": lambda lam: float(np.dot(lam, base_future) / base_future.sum() - 1.0)}
         res = minimize(
-            lambda lam: -stack_oil(lam), lam0, method="SLSQP",
+            lambda lam: -stack_oil(lam) / 1e3, lam0, method="SLSQP",
             bounds=[(1 - bound, 1 + bound)] * len(inj_cols), constraints=[cons],
-            options={"maxiter": 200, "ftol": 1e-8},
+            options={"maxiter": 300, "ftol": 1e-7},
         )
         lam = res.x
+        print(f"  SLSQP: {res.message} (итераций {res.nit})", flush=True)
         opt_oil, opt_liq, _ = stack_oil(lam, detail=True)
         gain_t = opt_oil - base_oil
         rows_sum.append(dict(
