@@ -62,3 +62,23 @@ def uniform_weights() -> pd.DataFrame:
     """Равномерное распределение закачки по добывающим (координат нет)."""
     W = pd.DataFrame(1.0, index=list(PRODUCERS_V), columns=list(INJECTORS_V))
     return W / len(PRODUCERS_V)
+
+
+MIN_FIT = 10  # минимум месяцев истории для CRM по скважине
+
+
+def crm_stack(liq: pd.DataFrame, winj: pd.DataFrame, cutoff: pd.Timestamp,
+              horizon: int) -> pd.DataFrame:
+    """CRM по каждой добывающей от её собственного старта («история+горизонт»)."""
+    from .crm import fit_block, predict_block
+
+    parts = []
+    end_pos = liq.index.get_loc(cutoff) + horizon
+    for w in PRODUCERS_V:
+        start = liq[w].first_valid_index()
+        if start is None or liq.loc[start:cutoff, w].shape[0] < MIN_FIT:
+            continue
+        model = fit_block(liq, winj, [w], list(INJECTORS_V), cutoff, start=start)
+        inj_full = winj.loc[start: liq.index[end_pos], list(INJECTORS_V)]
+        parts.append(predict_block(model, inj_full, [w]))
+    return pd.concat(parts, axis=1)

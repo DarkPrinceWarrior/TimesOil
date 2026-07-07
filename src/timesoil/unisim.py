@@ -62,6 +62,43 @@ def load_unisim(data_dir: Path | str = DATA_DIR) -> dict[str, pd.DataFrame]:
     return {"oil": oil, "liq": liq, "bhp": bhp, "winj": winj}
 
 
+def block_start(liq: pd.DataFrame, producers: list[str]) -> pd.Timestamp:
+    """Первый месяц, с которого работают все добывающие блока."""
+    return max(liq[w].first_valid_index() for w in producers)
+
+
+def crm_stack(
+    liq: pd.DataFrame,
+    winj: pd.DataFrame,
+    cutoff: pd.Timestamp,
+    horizon: int,
+    bhp: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    """CRM по двум блокам (при bhp — с компенсацией забойного давления):
+    ряд «история+горизонт» по всем добывающим."""
+    from .crm import (
+        fit_block,
+        fit_block_compensated,
+        predict_block,
+        predict_block_compensated,
+    )
+
+    parts = []
+    for b in BLOCKS_U.values():
+        prods, injs = b["producers"], b["injectors"]
+        start = block_start(liq, prods)
+        end_pos = liq.index.get_loc(cutoff) + horizon
+        inj_full = winj.loc[start: liq.index[end_pos], injs]
+        if bhp is None:
+            model = fit_block(liq, winj, prods, injs, cutoff, start=start)
+            parts.append(predict_block(model, inj_full, prods))
+        else:
+            model = fit_block_compensated(liq, winj, bhp, prods, injs, cutoff, start=start)
+            bhp_full = bhp.loc[start: liq.index[end_pos], prods]
+            parts.append(predict_block_compensated(model, inj_full, bhp_full, prods))
+    return pd.concat(parts, axis=1, sort=False)[list(PRODUCERS_U)]
+
+
 def coords_unisim(data_dir: Path | str = DATA_DIR) -> pd.DataFrame:
     w = pd.read_csv(Path(data_dir) / "unisim_ih_wells.csv")
     return w.set_index("well")[["x_utm_m", "y_utm_m"]].rename(

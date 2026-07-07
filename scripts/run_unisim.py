@@ -28,6 +28,7 @@ from timesoil.unisim import (
     INJECTORS_U,
     PRODUCERS_U,
     coords_unisim,
+    crm_stack,
     distance_weights,
     load_unisim,
 )
@@ -38,31 +39,6 @@ CUTOFFS_U = (
     pd.Timestamp("2023-05-31"),
     pd.Timestamp("2023-11-30"),
 )
-
-
-def block_start(liq: pd.DataFrame, producers: list[str]) -> pd.Timestamp:
-    """Первый месяц, с которого работают все добывающие блока."""
-    return max(liq[w].first_valid_index() for w in producers)
-
-
-def crm_stack(liq: pd.DataFrame, winj: pd.DataFrame, cutoff: pd.Timestamp,
-              bhp: pd.DataFrame | None = None):
-    """CRM по двум блокам (с компенсацией забойного давления, если дано bhp):
-    ряд «история+горизонт»."""
-    parts = []
-    for b in BLOCKS_U.values():
-        prods, injs = b["producers"], b["injectors"]
-        start = block_start(liq, prods)
-        end_pos = liq.index.get_loc(cutoff) + HORIZON
-        inj_full = winj.loc[start: liq.index[end_pos], injs]
-        if bhp is None:
-            model = fit_block(liq, winj, prods, injs, cutoff, start=start)
-            parts.append(predict_block(model, inj_full, prods))
-        else:
-            model = fit_block_compensated(liq, winj, bhp, prods, injs, cutoff, start=start)
-            bhp_full = bhp.loc[start: liq.index[end_pos], prods]
-            parts.append(predict_block_compensated(model, inj_full, bhp_full, prods))
-    return pd.concat(parts, axis=1, sort=False)[list(PRODUCERS_U)]
 
 
 def main() -> None:
@@ -84,7 +60,7 @@ def main() -> None:
     # --- CRM по блокам (жидкость) + ковариата для TiRex-2 ---
     crm_covs, rows = {}, []
     for cutoff in CUTOFFS_U:
-        pred = crm_stack(liq, winj, cutoff)
+        pred = crm_stack(liq, winj, cutoff, HORIZON)
         crm_covs[cutoff] = pred
         test = pred.index[pred.index > cutoff][:HORIZON]
         for step, dt in enumerate(test, 1):
@@ -100,7 +76,7 @@ def main() -> None:
     # фактическое: допущение известного режима) ---
     rows = []
     for cutoff in CUTOFFS_U:
-        pred = crm_stack(liq, winj, cutoff, bhp=bhp)
+        pred = crm_stack(liq, winj, cutoff, HORIZON, bhp=bhp)
         test = pred.index[pred.index > cutoff][:HORIZON]
         for step, dt in enumerate(test, 1):
             for w in PRODUCERS_U:
