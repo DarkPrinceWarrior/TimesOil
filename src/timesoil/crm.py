@@ -27,6 +27,39 @@ def _time_axis(index: pd.DatetimeIndex) -> np.ndarray:
     return (index - index[0]).days.to_numpy(float) + index[0].days_in_month
 
 
+def fit_block(
+    liq: pd.DataFrame,
+    inj: pd.DataFrame,
+    producers: list[int],
+    injectors: list[int],
+    cutoff: pd.Timestamp,
+) -> CRM:
+    """Подгонка CRM одного блока на истории до cutoff."""
+    hist = liq.loc[FULL_START:cutoff, producers]
+    inj_hist = inj.loc[FULL_START:cutoff, injectors]
+    model = CRM(primary=True, tau_selection="per-pair", constraints="up-to one")
+    model.fit(
+        hist.to_numpy(),
+        inj_hist.to_numpy(),
+        _time_axis(hist.index),
+        num_cores=4,
+    )
+    return model
+
+
+def predict_block(
+    model: CRM,
+    inj_full: pd.DataFrame,
+    producers: list[int],
+) -> pd.DataFrame:
+    """Прогноз подогнанного CRM на произвольном графике закачки (быстро)."""
+    pred = model.predict(
+        injection=inj_full.to_numpy(),
+        time=_time_axis(inj_full.index),
+    )
+    return pd.DataFrame(np.maximum(pred, 0.0), index=inj_full.index, columns=producers)
+
+
 def fit_predict_block(
     liq: pd.DataFrame,
     inj: pd.DataFrame,
@@ -41,26 +74,10 @@ def fit_predict_block(
     [добывающие x нагнетательные]). Закачка на горизонте — фактическая
     (план ППД считается известным).
     """
-    hist = liq.loc[FULL_START:cutoff, producers]
-    inj_hist = inj.loc[FULL_START:cutoff, injectors]
     full_idx = liq.loc[FULL_START:].index
     end = full_idx[full_idx.get_loc(cutoff) + horizon]
-    inj_full = inj.loc[FULL_START:end, injectors]
-
-    model = CRM(primary=True, tau_selection="per-pair", constraints="up-to one")
-    model.fit(
-        hist.to_numpy(),
-        inj_hist.to_numpy(),
-        _time_axis(hist.index),
-        num_cores=4,
-    )
-    pred = model.predict(
-        injection=inj_full.to_numpy(),
-        time=_time_axis(inj_full.index),
-    )
-    pred_df = pd.DataFrame(
-        np.maximum(pred, 0.0), index=inj_full.index, columns=producers
-    )
+    model = fit_block(liq, inj, producers, injectors, cutoff)
+    pred_df = predict_block(model, inj.loc[FULL_START:end, injectors], producers)
     gains = pd.DataFrame(model.gains, index=producers, columns=injectors)
     return pred_df, gains
 
