@@ -1,6 +1,6 @@
 """Лёгкие сети neuralforecast на нашем поле: 3 среза x 6 мес.
 
-Модели: BiTCN, NHITS, TSMixerx (компактные конфигурации под 33 ряда x
+Модели: BiTCN, NHITS, TiDE (компактные конфигурации под 33 ряда x
 ~100 точек). Признаки: futr = адресная/блочная закачка + ряд CRM,
 hist = давление лагом 6, static = проницаемость/пористость/толщина/блок.
 Квантильный лосс (уровень 80 %) — интервалы из коробки.
@@ -27,7 +27,7 @@ STAT = ["perm", "poro", "h_eff", "block"]
 
 def build_models():
     from neuralforecast.losses.pytorch import MQLoss
-    from neuralforecast.models import NHITS, BiTCN, TSMixerx
+    from neuralforecast.models import NHITS, BiTCN, TiDE
 
     common = dict(
         h=HORIZON, input_size=24, loss=MQLoss(level=[80]),
@@ -38,7 +38,7 @@ def build_models():
     return [
         BiTCN(hidden_size=16, dropout=0.3, **common),
         NHITS(mlp_units=[[128, 128]] * 3, dropout_prob_theta=0.3, **common),
-        TSMixerx(n_block=2, ff_dim=32, dropout=0.3, **common),
+        TiDE(hidden_size=64, decoder_output_dim=8, dropout=0.3, **common),
     ]
 
 
@@ -55,7 +55,7 @@ def main() -> None:
             n_windows=3, step_size=HORIZON, val_size=12, refit=True,
         )
         cv = cv.reset_index() if "unique_id" not in cv.columns else cv
-        for model in ("BiTCN", "NHITS", "TSMixerx"):
+        for model in ("BiTCN", "NHITS", "TiDE"):
             med = f"{model}-median"
             if med not in cv.columns:
                 med = model
