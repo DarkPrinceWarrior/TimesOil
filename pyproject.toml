@@ -11,6 +11,8 @@ dependencies = [
     "openpyxl>=3.1",
     "pyarrow>=17",
     "pywaterflood>=0.3.4",
+    "mlforecast>=1.0.31",
+    "lightgbm>=4.6.0",
 ]
 
 [project.optional-dependencies]
