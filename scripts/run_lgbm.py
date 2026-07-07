@@ -54,9 +54,12 @@ def long_frame(targets: dict[str, pd.DataFrame], alloc: pd.DataFrame,
     out = {}
     for tname, mat in targets.items():
         rows = []
+        end = mat.dropna(how="all").index.max()
         for w in mat.columns:
             s = mat[w].dropna()
-            if len(s) < 24:
+            # скважины, остановленные раньше общего конца, исключаются:
+            # mlforecast строит окна от конца каждого ряда, срезы съедут
+            if len(s) < 24 or s.index.max() != end:
                 continue
             df = pd.DataFrame({"unique_id": str(w), "ds": s.index, "y": s.values})
             df["inj_alloc"] = alloc.reindex(s.index)[w].to_numpy(float)
