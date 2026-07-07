@@ -36,6 +36,12 @@ from timesoil.wells import WELL_BLOCK
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "results"
+# финальный стек этапа 7 (если файлы есть — калибруемся на нём)
+STACK_FILES = {
+    "oil_tpd": "ext_stack_lgbm_meta_oil_tpd.csv",
+    "liq_tpd": "ext_stack_greedy_well_liq_tpd.csv",
+}
+STACK_FILES = {k: v for k, v in STACK_FILES.items() if (OUT / v).exists()}
 
 TARGETS = ("oil_tpd", "liq_tpd")
 CONFIDENCE = 0.80
@@ -55,7 +61,8 @@ def months_apart(a: pd.Timestamp, b: pd.Timestamp) -> int:
 
 def load(target: str) -> pd.DataFrame:
     df = pd.read_csv(
-        OUT / f"ext_ens_nnls_{target}.csv", parse_dates=["cutoff", "date"]
+        OUT / (STACK_FILES.get(target) or f"ext_ens_nnls_{target}.csv"),
+        parse_dates=["cutoff", "date"]
     )
     df["well"] = df["well"].astype(int)
     df["block"] = df["well"].map(WELL_BLOCK)
