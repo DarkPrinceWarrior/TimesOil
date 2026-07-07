@@ -21,6 +21,8 @@ CUTOFFS = (
     pd.Timestamp("2014-11-01"),
     pd.Timestamp("2015-05-01"),
 )
+# расширенный набор для весов ансамбля и калибровки (14 срезов, шаг 2 мес)
+EXT_CUTOFFS = tuple(pd.date_range("2013-03-01", "2015-05-01", freq="2MS"))
 
 # сигнатура: (история одной скважины без NaN, горизонт) -> прогноз [h]
 PointForecaster = Callable[[np.ndarray, int], np.ndarray]

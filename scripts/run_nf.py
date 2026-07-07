@@ -16,7 +16,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from timesoil.backtest import CUTOFFS, HORIZON, summarize
+import argparse
+
+from timesoil.backtest import CUTOFFS, EXT_CUTOFFS, HORIZON, summarize
 from timesoil.mlprep import field_dataset
 
 OUT = Path(__file__).resolve().parents[1] / "results"
@@ -43,8 +45,14 @@ def build_models():
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--ext", action="store_true")
+    args = ap.parse_args()
+    cutoffs = EXT_CUTOFFS if args.ext else CUTOFFS
+    n_windows, step = (len(cutoffs), 2) if args.ext else (3, HORIZON)
+    prefix = "ext_" if args.ext else ""
     OUT.mkdir(exist_ok=True)
-    frames, static_df, mats = field_dataset(OUT, CUTOFFS, fill_na=True)
+    frames, static_df, mats = field_dataset(OUT, cutoffs, fill_na=True)
 
     from neuralforecast import NeuralForecast
 
@@ -52,7 +60,7 @@ def main() -> None:
         nf = NeuralForecast(models=build_models(), freq="MS")
         cv = nf.cross_validation(
             df=df_long, static_df=static_df,
-            n_windows=3, step_size=HORIZON, val_size=12, refit=True,
+            n_windows=n_windows, step_size=step, val_size=12, refit=True,
         )
         cv = cv.reset_index() if "unique_id" not in cv.columns else cv
         for model in ("BiTCN", "NHITS", "TiDE"):
@@ -67,7 +75,7 @@ def main() -> None:
                 q90=np.maximum(cv.get(f"{model}-hi-80", np.nan), 0.0),
             )).dropna(subset=["y_true"])
             res["step"] = res.groupby(["cutoff", "well"]).cumcount() + 1
-            res.to_csv(OUT / f"nf_{model.lower()}_{tname}.csv", index=False)
+            res.to_csv(OUT / f"{prefix}nf_{model.lower()}_{tname}.csv", index=False)
             print(f"=== field {tname} | nf-{model} ===")
             print(summarize(res).round(4).to_string(index=False), flush=True)
 
