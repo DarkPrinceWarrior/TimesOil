@@ -51,3 +51,6 @@ checkpoints/
 Thumbs.db
 .idea/
 .vscode/
+
+# --- внешние репозитории (SPDM на a100) ---
+external/
