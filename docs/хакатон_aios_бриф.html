@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Хакатон AIOS — заявочный бриф команды DS Mind Lab</title>
+<style>
+/* ============================= ПАЛИТРА ============================= */
+:root {
+  --navy: #0E2A47;        /* тёмно-синий */
+  --navy-2: #16395E;
+  --ink: #131A22;         /* нефтяной чёрный */
+  --accent: #E8722A;      /* оранжевый акцент (графика) */
+  --accent-ink: #B04E10;  /* оранжевый для мелкого текста */
+  --muted: #55677A;
+  --line: #D7DFE7;
+  --panel: #F3F6F9;
+  --paper: #FFFFFF;
+}
+
+/* ============================= СТРАНИЦЫ ============================ */
+@page {
+  size: A4;
+  margin: 19mm 17mm 20mm 17mm;
+  @top-right {
+    content: "Хакатон AIOS · заявочный бриф";
+    font-family: "DejaVu Sans";
+    font-size: 7.2pt;
+    letter-spacing: 0.09em;
+    color: #7A8A9A;
+    margin-bottom: 6mm;
+  }
+  @bottom-left {
+    content: "Команда DS Mind Lab · проект TimesOil";
+    font-family: "DejaVu Sans";
+    font-size: 7.2pt;
+    color: #7A8A9A;
+  }
+  @bottom-right {
+    content: "стр. " counter(page) " из " counter(pages);
+    font-family: "DejaVu Sans";
+    font-size: 7.2pt;
+    color: #7A8A9A;
+  }
+}
+@page cover {
+  margin: 0;
+  @top-right { content: none; }
+  @bottom-left { content: none; }
+  @bottom-right { content: none; }
+}
+
+/* ============================= БАЗА ================================ */
+html, body {
+  margin: 0; padding: 0;
+  font-family: "DejaVu Serif", serif;
+  font-size: 9.6pt;
+  line-height: 1.5;
+  color: var(--ink);
+}
+p { margin: 0 0 2.4mm 0; text-align: justify; hyphens: auto; }
+strong { font-weight: bold; }
+.sans { font-family: "DejaVu Sans", sans-serif; }
+code, .mono {
+  font-family: "DejaVu Sans Mono", monospace;
+  font-size: 8.6pt;
+  background: var(--panel);
+  padding: 0 1.2mm;
+  border-radius: 1mm;
+}
+
+.page-break { break-before: page; }
+.avoid-break { break-inside: avoid; }
+
+/* ============================= ТИТУЛ =============================== */
+.cover {
+  page: cover;
+  width: 210mm; height: 297mm;
+  background: linear-gradient(160deg, #0B2038 0%, var(--navy) 55%, #0A1B2E 100%);
+  color: #EAF1F8;
+  position: relative;
+}
+.cover .inner { position: absolute; left: 20mm; right: 20mm; top: 0; bottom: 0; }
+.cover .brand {
+  position: absolute; top: 18mm; left: 0; right: 0;
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 8.5pt; letter-spacing: 0.28em;
+  color: #9FB4C8;
+}
+.cover .brand .dot { color: var(--accent); }
+.cover .brand-rule {
+  position: absolute; top: 25mm; left: 0; width: 170mm;
+  border-top: 0.35mm solid rgba(234, 241, 248, 0.25);
+}
+.cover .kicker {
+  position: absolute; top: 57mm; left: 0;
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 9.5pt; letter-spacing: 0.22em;
+  color: var(--accent);
+}
+.cover h1 {
+  position: absolute; top: 65mm; left: 0; width: 170mm;
+  margin: 0;
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 34pt; line-height: 1.05; font-weight: bold;
+  color: #FFFFFF;
+}
+.cover .h1sub {
+  position: absolute; top: 82mm; left: 0; width: 170mm;
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 13.5pt; font-weight: bold; letter-spacing: 0.045em;
+  color: #F0A16B;
+}
+.cover .subtitle {
+  position: absolute; top: 93mm; left: 0; width: 158mm;
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 11.5pt; line-height: 1.45; color: #C9D8E6;
+}
+.cover .org {
+  position: absolute; top: 119mm; left: 0; width: 160mm;
+  font-size: 9.6pt; color: #9FB4C8;
+}
+.cover .facts {
+  position: absolute; top: 140mm; left: 0; right: 0;
+  display: flex; gap: 4mm;
+}
+.cover .fact {
+  flex: 1;
+  border: 0.3mm solid rgba(234, 241, 248, 0.22);
+  border-top: 0.7mm solid var(--accent);
+  padding: 3.2mm 3.6mm 3.4mm 3.6mm;
+}
+.cover .fact .v {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 12pt; font-weight: bold; color: #FFFFFF;
+  white-space: nowrap;
+}
+.cover .fact .l {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 7.5pt; color: #9FB4C8; margin-top: 1.2mm; line-height: 1.35;
+}
+.cover .map { position: absolute; left: 0; bottom: 34mm; width: 170mm; }
+.cover .foot {
+  position: absolute; bottom: 16mm; left: 0; right: 0;
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 9pt; color: #C9D8E6;
+  border-top: 0.35mm solid rgba(234, 241, 248, 0.25);
+  padding-top: 4mm;
+  display: flex; justify-content: space-between;
+}
+.cover .foot .team b { color: #FFFFFF; }
+
+/* ============================= РАЗДЕЛЫ ============================= */
+.kick {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 8pt; letter-spacing: 0.2em;
+  color: var(--accent-ink);
+  margin: 0 0 1.6mm 0;
+}
+h2 {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 15.5pt; line-height: 1.2;
+  color: var(--navy);
+  margin: 0 0 1.6mm 0;
+  padding-bottom: 2mm;
+  border-bottom: 0.55mm solid var(--navy);
+}
+h3 {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 10.6pt; color: var(--navy);
+  margin: 4.4mm 0 1.8mm 0;
+}
+h2 + p, .lead { margin-top: 2.6mm; }
+
+/* ============================= ТАБЛИЦЫ ============================= */
+table { width: 100%; border-collapse: collapse; margin: 2.2mm 0 3.2mm 0; }
+table.fixed { table-layout: fixed; }
+th {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 8.2pt; text-align: left;
+  color: var(--navy);
+  border-bottom: 0.5mm solid var(--navy);
+  padding: 1.5mm 2.5mm 1.5mm 0;
+  vertical-align: bottom;
+}
+td {
+  font-size: 9.2pt;
+  border-bottom: 0.2mm solid var(--line);
+  padding: 1.7mm 2.5mm 1.7mm 0;
+  vertical-align: top;
+  text-align: left;
+}
+tr { break-inside: avoid; }
+td.num, th.num { text-align: right; padding-right: 0; font-variant-numeric: tabular-nums; }
+table.compact td { font-size: 9pt; padding: 1.4mm 2.2mm 1.4mm 0; }
+.tbl-note { font-size: 8.2pt; color: var(--muted); margin-top: -1mm; }
+
+/* ============================= СПИСКИ ============================== */
+ul { margin: 1.4mm 0 2.6mm 0; padding-left: 5mm; }
+li { margin-bottom: 1mm; text-align: justify; hyphens: auto; }
+li::marker { color: var(--accent); }
+
+/* ============================= ПАНЕЛИ ============================== */
+.panel {
+  background: var(--panel);
+  border-left: 0.9mm solid var(--navy);
+  padding: 2.8mm 4mm;
+  margin: 2.8mm 0;
+  break-inside: avoid;
+}
+.panel.accent { border-left-color: var(--accent); }
+.panel .ttl {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 9pt; font-weight: bold; color: var(--navy);
+  margin-bottom: 1.4mm;
+}
+
+.track {
+  border: 0.25mm solid var(--line);
+  border-top: 0.8mm solid var(--navy);
+  padding: 2.6mm 3.6mm 2mm 3.6mm;
+  margin: 2.6mm 0;
+  break-inside: avoid;
+}
+.track.t2 { border-top-color: var(--accent); }
+.track .tno {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 7.8pt; letter-spacing: 0.18em; color: var(--muted);
+}
+.track .tname {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 10.4pt; font-weight: bold; color: var(--navy);
+  margin: 0.8mm 0 1.6mm 0;
+}
+.track ul { margin-bottom: 0.6mm; }
+
+/* ============================= ФОРМУЛЫ ============================= */
+.formula {
+  text-align: center;
+  margin: 2.2mm 0;
+  font-size: 10.5pt;
+  font-family: "DejaVu Serif", serif;
+  break-inside: avoid;
+}
+.formula i { font-style: italic; }
+.formula .sum { font-size: 14pt; vertical-align: -0.12em; }
+.frac { display: inline-block; vertical-align: middle; text-align: center; font-size: 9.4pt; line-height: 1.25; }
+.frac .num { display: block; border-bottom: 0.25mm solid var(--ink); padding: 0 1.5mm 0.4mm 1.5mm; }
+.frac .den { display: block; padding-top: 0.4mm; }
+.fnote { font-size: 8.4pt; color: var(--muted); text-align: justify; }
+
+/* ============================= ПЛИТКИ ============================== */
+.tiles { display: flex; flex-wrap: wrap; gap: 3mm; margin: 2.8mm 0; }
+.tile {
+  box-sizing: border-box;
+  width: 55.3mm;
+  border: 0.25mm solid var(--line);
+  border-top: 0.8mm solid var(--accent);
+  padding: 2.6mm 3mm 2.4mm 3mm;
+  break-inside: avoid;
+}
+.tile .v {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 15pt; font-weight: bold; color: var(--navy);
+  line-height: 1.1;
+}
+.tile .l {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 7.5pt; color: var(--muted); margin-top: 1.3mm; line-height: 1.38;
+}
+
+/* ============================= ПРОЧЕЕ ============================== */
+.sig {
+  margin-top: 3mm;
+  padding-top: 2.4mm;
+  border-top: 0.25mm solid var(--line);
+  font-size: 8.2pt; color: var(--muted);
+}
+.chip {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 7.6pt; font-weight: bold;
+  color: var(--navy);
+  background: #E4EBF2;
+  border-radius: 1.2mm;
+  padding: 0.4mm 1.8mm;
+  white-space: nowrap;
+}
+.chip.c2 { background: #FBE4D2; color: var(--accent-ink); }
+.svgwrap { margin: 2.8mm 0 1.6mm 0; }
+.caption { font-size: 8.2pt; color: var(--muted); text-align: center; margin-top: 0.8mm; }
+</style>
+</head>
+<body>
+
+<!-- ==================== ТИТУЛЬНЫЙ ЛИСТ ==================== -->
+<div class="cover">
+  <div class="inner">
+    <div class="brand">DS&nbsp;MIND&nbsp;LAB <span class="dot">·</span> ПРОЕКТ&nbsp;TIMESOIL</div>
+    <div class="brand-rule"></div>
+
+    <div class="kicker">ЗАЯВОЧНЫЙ БРИФ КОМАНДЫ</div>
+    <h1>Хакатон AIOS</h1>
+    <div class="h1sub">МУЛЬТИАГЕНТНЫЕ СИСТЕМЫ В НЕФТЕГАЗЕ</div>
+    <div class="subtitle">Иерархическая мультиагентная система управления разработкой
+      нефтяного месторождения: суррогатные модели, оптимизация чистого
+      дисконтированного дохода, проверка на&nbsp;гидродинамической модели</div>
+    <div class="org">Организатор — Blue Sky Research · индустриальный партнёр — ПАО «Татнефть»<br>
+      Университеты-партнёры: ИТМО, СПбПУ, ТГУ</div>
+
+    <div class="facts">
+      <div class="fact"><div class="v">01.07–31.08</div><div class="l">сроки хакатона, 2026&nbsp;год; регистрация — до&nbsp;12&nbsp;июля</div></div>
+      <div class="fact"><div class="v">2 трека</div><div class="l">управление на&nbsp;гидродинамической модели · нейросетевые суррогаты</div></div>
+      <div class="fact"><div class="v">3 недели</div><div class="l">разработка 13.07&nbsp;—&nbsp;30.07, команды из&nbsp;3–5&nbsp;человек</div></div>
+      <div class="fact"><div class="v">1 млн ₽</div><div class="l">общий призовой фонд двух треков — 1&nbsp;000&nbsp;000&nbsp;₽</div></div>
+    </div>
+
+    <svg class="map" viewBox="0 0 860 300" xmlns="http://www.w3.org/2000/svg">
+      <!-- абстрактный мотив: разломы и фонд скважин -->
+      <g stroke="#EAF1F8" stroke-opacity="0.16" stroke-width="2.4" fill="none">
+        <path d="M 40 250 C 140 190, 200 200, 300 120 S 470 40, 560 55"/>
+        <path d="M 240 290 C 330 240, 420 230, 500 160 S 640 80, 730 90"/>
+        <path d="M 520 290 C 590 250, 660 220, 740 190 S 830 150, 850 140"/>
+      </g>
+      <g stroke="#EAF1F8" stroke-opacity="0.10" stroke-width="1.2" stroke-dasharray="7 6" fill="none">
+        <path d="M 20 170 C 150 150, 300 175, 430 130 S 700 60, 845 75"/>
+      </g>
+      <g fill="#EAF1F8" fill-opacity="0.38">
+        <circle cx="95" cy="205" r="4"/><circle cx="170" cy="235" r="4"/>
+        <circle cx="235" cy="170" r="4"/><circle cx="330" cy="200" r="4"/>
+        <circle cx="380" cy="120" r="4"/><circle cx="470" cy="150" r="4"/>
+        <circle cx="540" cy="200" r="4"/><circle cx="600" cy="120" r="4"/>
+        <circle cx="680" cy="160" r="4"/><circle cx="760" cy="120" r="4"/>
+        <circle cx="440" cy="240" r="4"/><circle cx="650" cy="235" r="4"/>
+      </g>
+      <g fill="#E8722A" fill-opacity="0.9">
+        <circle cx="140" cy="150" r="5"/><circle cx="300" cy="250" r="5"/>
+        <circle cx="415" cy="180" r="5"/><circle cx="575" cy="165" r="5"/>
+        <circle cx="720" cy="215" r="5"/><circle cx="795" cy="165" r="5"/>
+      </g>
+    </svg>
+
+    <div class="foot">
+      <div class="team">Команда <b>DS Mind Lab</b> · задел — проект TimesOil</div>
+      <div>7 июля 2026 г.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 1. СУТЬ ХАКАТОНА ==================== -->
+<div class="page-break">
+  <div class="kick">РАЗДЕЛ 01</div>
+  <h2>Суть хакатона</h2>
+
+  <p class="lead">Хакатон AIOS «Иерархическая мультиагентная система в нефтегазовом
+  комплексе» проводится Blue Sky Research совместно с ПАО «Татнефть» с 1 июля по
+  31 августа 2026 года. Задача участников — за три недели разработки создать
+  прототип системы, в которой <strong>иерархия программных агентов управляет
+  разработкой нефтяного месторождения</strong>: оценивает состояние объекта, вырабатывает
+  управляющие решения по скважинам и максимизирует чистый дисконтированный доход
+  (NPV). Кейс построен на индустриальных данных нефтяных скважин — на задаче,
+  которую инженеры «Татнефти» решают в текущей работе.</p>
+
+  <p>Хакатон включает два параллельных инженерных трека с общим призовым фондом
+  1 000 000 ₽. Основная часть проходит дистанционно; финал — очный,
+  в Санкт-Петербурге. Ожидаемая нагрузка — 15–25 часов в неделю; на каждом этапе
+  команды сопровождают эксперты «Татнефти» и университетов-партнёров.</p>
+
+  <h3>Календарь</h3>
+  <table>
+    <tr><th style="width:30mm">Сроки</th><th>Этап</th></tr>
+    <tr><td class="sans">15.06 — 12.07</td><td>Открытый набор: регистрация участников и команд (до 12 июля 2026 г.)</td></tr>
+    <tr><td class="sans">13.07 — 30.07</td><td>Разработка — три недели с менторами; контрольные точки 20.07, 27.07 и 31.07</td></tr>
+    <tr><td class="sans">03.08 — 07.08</td><td>Автоматизированная валидация решений, отбор 20 % лучших в финал</td></tr>
+    <tr><td class="sans">10.08 — 14.08</td><td>Подготовка защиты: обоснование архитектуры решения и презентация</td></tr>
+    <tr><td class="sans">17.08 — 18.08</td><td>Онлайн-защиты перед экспертами (7 минут доклад + 5 минут вопросы)</td></tr>
+    <tr><td class="sans">24.08</td><td>Очная церемония закрытия и награждения</td></tr>
+  </table>
+
+  <h3>Призовой фонд</h3>
+  <table>
+    <tr><th>Трек</th><th class="num">1 место</th><th class="num">2 место</th><th class="num">3 место</th><th class="num">Итого</th></tr>
+    <tr><td>Трек 1 · управление на гидродинамической модели</td>
+        <td class="num">200 000 ₽</td><td class="num">150 000 ₽</td><td class="num">50 000 ₽</td><td class="num"><strong>400 000 ₽</strong></td></tr>
+    <tr><td>Трек 2 · нейросетевые суррогатные модели</td>
+        <td class="num">300 000 ₽</td><td class="num">200 000 ₽</td><td class="num">100 000 ₽</td><td class="num"><strong>600 000 ₽</strong></td></tr>
+  </table>
+
+  <div class="panel">
+    <div class="ttl">Критерии оценки решений</div>
+    <p style="margin-bottom:0">Основной критерий — <strong>NPV по результатам расчёта на полной
+    геолого-гидродинамической модели (ГГДМ)</strong>; дополнительно оцениваются: сравнение
+    с базовым и референсным сценариями, соблюдение ограничений, устойчивость
+    к возмущениям, адаптивность, согласованность решений между скважинами,
+    а для трека 2 — скорость расчёта и качество суррогатной модели.</p>
+  </div>
+
+  <p class="tbl-note">Сведения — по официальной странице хакатона
+  (blueskyresearch.ru/hackathon_aios) по состоянию на 7 июля 2026 г.</p>
+</div>
+
+<!-- ==================== 2. ТРЕКИ ==================== -->
+<div class="page-break">
+  <div class="kick">РАЗДЕЛ 02</div>
+  <h2>Два трека — одна задача оптимального управления</h2>
+
+  <p class="lead">Треки различаются способом расчёта отклика месторождения:
+  в первом решения проверяются непосредственно на гидродинамической модели,
+  во втором перебор вариантов выполняют быстрые суррогатные модели, а полная
+  модель служит арбитром. Постановка едина — максимизация NPV управляющими
+  последовательностями по скважинам.</p>
+
+  <div class="track">
+    <div class="tno">ТРЕК · 01</div>
+    <div class="tname">Мультиагентная система оптимального управления на основе гидродинамической модели</div>
+    <p>Требуется минимальный работоспособный прототип, который в итеративном цикле
+    «оценка состояния → выработка решения → управляющее воздействие → повторная
+    оценка» максимизирует NPV объекта разработки. Система должна уметь:</p>
+    <ul>
+      <li>принимать на вход описание месторождения и исходные данные модели;</li>
+      <li>анализировать состояние объекта разработки на каждом расчётном шаге;</li>
+      <li>формировать рекомендации по управлению скважинами — открытие и закрытие,
+          изменение режимов работы, иные допустимые воздействия;</li>
+      <li>учитывать технологические и физические ограничения модели и регламента;</li>
+      <li>формировать управляющие последовательности — расписание воздействий,
+          максимизирующее NPV.</li>
+    </ul>
+  </div>
+
+  <div class="track t2">
+    <div class="tno">ТРЕК · 02</div>
+    <div class="tname">Масштабируемая мультиагентная система с нейросетевыми суррогатными моделями</div>
+    <p>Прототип, в котором суррогатные нейросетевые модели ускоряют расчёт отклика
+    системы, а агенты принимают решения по их предсказаниям — без постоянного
+    запуска полной гидродинамической модели. Система должна уметь:</p>
+    <ul>
+      <li>прогнозировать динамику параметров разработки суррогатными моделями,
+          не запуская полную гидродинамическую модель;</li>
+      <li>вырабатывать управляющие воздействия на основе предсказаний суррогата;</li>
+      <li>генерировать корректный файл управляющих последовательностей
+          <code>wells_schedule.inc</code>;</li>
+      <li>максимизировать NPV в расширенной постановке (больше скважин, более
+          сложная конфигурация месторождения), сохраняя воспроизводимость
+          результатов и пригодность к проверке на полной модели.</li>
+    </ul>
+  </div>
+
+  <div class="panel accent">
+    <div class="ttl">Наша позиция</div>
+    <p style="margin-bottom:0">Команда планирует выступление с <strong>единым ядром для обоих
+    треков</strong>: линейка откалиброванных суррогатов заменяет полную модель в переборе
+    сценариев (трек 2), а тот же контур «оценка — решение — воздействие — проверка»
+    с верификацией кандидатов на ГГДМ закрывает постановку трека 1. Приоритет —
+    трек 2: там задел команды по суррогатным моделям даёт наибольшее преимущество,
+    а скорость и качество суррогата оцениваются напрямую (критерий H).</p>
+  </div>
+</div>
+
+<!-- ==================== 3. СООТВЕТСТВИЕ ЗАДЕЛА ==================== -->
+<div class="page-break">
+  <div class="kick">РАЗДЕЛ 03</div>
+  <h2>Соответствие нашего задела требованиям треков</h2>
+
+  <p class="lead">Задел команды — завершённый проект TimesOil: прогноз дебита нефти
+  и жидкости 33 добывающих скважин реального месторождения на 6 месяцев вперёд
+  (история 2007–2015, шесть блоков разломов), с оптимизацией закачки и честной
+  скользящей проверкой. Все элементы, требуемые треками, уже реализованы и измерены.</p>
+
+  <table class="fixed">
+    <tr>
+      <th style="width:50mm">Требование трека</th>
+      <th style="width:15mm">Трек</th>
+      <th>Готовый актив проекта TimesOil</th>
+    </tr>
+    <tr>
+      <td>Итеративный цикл «оценка → решение → воздействие → повторная оценка»</td>
+      <td><span class="chip">1</span> <span class="chip c2">2</span></td>
+      <td>Отлаженный контур «данные → модель → решение → проверка»: 14 исторических
+          срезов, пересчёт всей цепочки одним запуском.</td>
+    </tr>
+    <tr>
+      <td>Быстрый расчёт отклика без полной гидродинамической модели</td>
+      <td><span class="chip c2">2</span></td>
+      <td>Линейка физических суррогатов: двухфазная ёмкостно-резистивная модель —
+          нефть 5,25 % WAPE на 6 месяцев; модель с пластовым давлением — давление
+          с точностью около 2 атм; фракционная модель обводнённости.
+          Скорость — миллисекунды на сценарий.</td>
+    </tr>
+    <tr>
+      <td>Нейросетевой прогноз динамики с учётом управляющих воздействий</td>
+      <td><span class="chip c2">2</span></td>
+      <td>Chronos-2 с низкоранговым дообучением (LoRA), TiRex-2, градиентный
+          бустинг; обученное объединение второго уровня — <strong>нефть 3,74 %,
+          жидкость 3,21 % WAPE</strong> на 6 месяцев при скользящей проверке.</td>
+    </tr>
+    <tr>
+      <td>Выработка воздействий, максимизирующих экономический критерий</td>
+      <td><span class="chip">1</span> <span class="chip c2">2</span></td>
+      <td>Оптимизация перераспределения закачки последовательным квадратичным
+          программированием: <strong>+2,75…+4,09 % добычи нефти</strong> за полугодие;
+          решение физически интерпретируемо.</td>
+    </tr>
+    <tr>
+      <td>Технологические и физические ограничения</td>
+      <td><span class="chip">1</span></td>
+      <td>Границы режимов ±20–30 % и балансовые условия по сумме закачки в явном
+          виде; согласованность «нефть не выше жидкости» гарантирована
+          конструкцией моделей.</td>
+    </tr>
+    <tr>
+      <td>Управляющие последовательности, файл <code>wells_schedule.inc</code></td>
+      <td><span class="chip">1</span> <span class="chip c2">2</span></td>
+      <td>Помесячные планы режимов уже формируются оптимизатором; генератор файла
+          заданного формата — тонкая надстройка с проверкой синтаксиса.</td>
+    </tr>
+    <tr>
+      <td>Устойчивость к возмущениям, оценка риска (критерий E)</td>
+      <td><span class="chip">1</span> <span class="chip c2">2</span></td>
+      <td>Конформные интервалы неопределённости с фактическим накрытием 0,79–0,82;
+          копула остатков для согласованных сценариев «нефть + жидкость».</td>
+    </tr>
+    <tr>
+      <td>Согласованность решений между скважинами (критерий G)</td>
+      <td><span class="chip">1</span> <span class="chip c2">2</span></td>
+      <td>Матрица межскважинной связности и шесть блоков разломов, оцифрованных
+          с карты; связность подтверждена тремя независимыми методами.</td>
+    </tr>
+    <tr>
+      <td>Воспроизводимость и проверяемость на полной модели</td>
+      <td><span class="chip c2">2</span></td>
+      <td>Проверка без утечки данных на 14 срезах; перенос контура подтверждён
+          на открытых полигонах UNISIM-I-H и Volve; воспроизведение — фиксированной
+          последовательностью запусков.</td>
+    </tr>
+    <tr>
+      <td>Мультиагентная организация решения</td>
+      <td><span class="chip">1</span> <span class="chip c2">2</span></td>
+      <td>Проект TimesOil выполнен иерархической системой агентов — координатор
+          и до 8 параллельных исполнителей; рабочая практика команды.</td>
+    </tr>
+  </table>
+
+</div>
+
+<!-- ==================== 4. АРХИТЕКТУРА ==================== -->
+<div class="page-break">
+  <div class="kick">РАЗДЕЛ 04</div>
+  <h2>Архитектура мультиагентной системы</h2>
+
+  <p class="lead">Предлагается единое ядро для обоих треков: иерархия из шести
+  агентов, замкнутая в итеративный цикл управления. Для трека 1 роль расчётного
+  звена выполняет полная гидродинамическая модель, для трека 2 перебор сценариев
+  ведут суррогаты, а полная модель подключается только для проверки кандидатов.</p>
+
+  <div class="svgwrap">
+  <svg viewBox="0 0 900 620" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="DejaVu Sans">
+    <!-- ======== координатор ======== -->
+    <rect x="170" y="14" width="560" height="66" rx="6" fill="#0E2A47"/>
+    <text x="450" y="41" text-anchor="middle" fill="#FFFFFF" font-size="19" font-weight="bold">АГЕНТ-КООРДИНАТОР</text>
+    <text x="450" y="64" text-anchor="middle" fill="#C9D8E6" font-size="14">цикл: оценка состояния → решение → воздействие → повторная оценка</text>
+
+    <!-- ======== управляющие связи (пунктир) ======== -->
+    <g stroke="#8296A9" stroke-width="1.6" stroke-dasharray="6 5" fill="none">
+      <line x1="156" y1="80" x2="156" y2="148"/>
+      <line x1="450" y1="80" x2="450" y2="148"/>
+      <line x1="744" y1="80" x2="744" y2="148"/>
+      <path d="M 730 47 H 890 V 452 H 891"/>
+    </g>
+    <polygon points="891,446.5 880,452 891,457.5" fill="#8296A9"/>
+
+    <!-- ======== ряд A ======== -->
+    <!-- 1. оценка состояния -->
+    <g>
+      <rect x="20" y="150" width="272" height="150" rx="6" fill="#FFFFFF" stroke="#0E2A47" stroke-width="1.8"/>
+      <rect x="20" y="150" width="272" height="38" rx="6" fill="#16395E"/>
+      <rect x="20" y="176" width="272" height="12" fill="#16395E"/>
+      <text x="156" y="175" text-anchor="middle" fill="#FFFFFF" font-size="14.5" font-weight="bold">АГЕНТ ОЦЕНКИ СОСТОЯНИЯ</text>
+      <text x="34" y="213" fill="#131A22" font-size="12.3">ассимиляция данных модели:</text>
+      <text x="34" y="234" fill="#131A22" font-size="12.3">пластовое давление, обводнённость,</text>
+      <text x="34" y="255" fill="#131A22" font-size="12.3">связность скважин, блоки разломов</text>
+      <text x="34" y="276" fill="#55677A" font-size="12">→ состояние объекта на шаге t</text>
+    </g>
+    <!-- 2. суррогат -->
+    <g>
+      <rect x="314" y="150" width="272" height="150" rx="6" fill="#FFFFFF" stroke="#0E2A47" stroke-width="1.8"/>
+      <rect x="314" y="150" width="272" height="38" rx="6" fill="#16395E"/>
+      <rect x="314" y="176" width="272" height="12" fill="#16395E"/>
+      <text x="450" y="175" text-anchor="middle" fill="#FFFFFF" font-size="14.5" font-weight="bold">АГЕНТ-СУРРОГАТ</text>
+      <text x="328" y="213" fill="#131A22" font-size="12.3">двухфазная CRM · CRM с давлением</text>
+      <text x="328" y="234" fill="#131A22" font-size="12.3">фракционная модель обводнённости</text>
+      <text x="328" y="255" fill="#131A22" font-size="12.3">Chronos-2 (LoRA), TiRex-2, бустинг</text>
+      <text x="328" y="276" fill="#55677A" font-size="12">→ отклик за миллисекунды</text>
+    </g>
+    <!-- 3. оптимизатор -->
+    <g>
+      <rect x="608" y="150" width="272" height="150" rx="6" fill="#FFFFFF" stroke="#0E2A47" stroke-width="1.8"/>
+      <rect x="608" y="150" width="272" height="38" rx="6" fill="#16395E"/>
+      <rect x="608" y="176" width="272" height="12" fill="#16395E"/>
+      <text x="744" y="175" text-anchor="middle" fill="#FFFFFF" font-size="14.5" font-weight="bold">АГЕНТ-ОПТИМИЗАТОР</text>
+      <text x="622" y="213" fill="#131A22" font-size="12.3">целевая функция — NPV</text>
+      <text x="622" y="234" fill="#131A22" font-size="12.3">квадратичное программирование,</text>
+      <text x="622" y="255" fill="#131A22" font-size="12.3">эволюционный поиск (дискретные)</text>
+      <text x="622" y="276" fill="#55677A" font-size="12">→ кандидаты в рамках ограничений</text>
+    </g>
+
+    <!-- ======== стрелки ряда A ======== -->
+    <g stroke="#0E2A47" stroke-width="2.6" fill="#0E2A47">
+      <line x1="292" y1="225" x2="303" y2="225"/><polygon points="303,219.5 314,225 303,230.5"/>
+      <line x1="586" y1="225" x2="597" y2="225"/><polygon points="597,219.5 608,225 597,230.5"/>
+      <line x1="744" y1="300" x2="744" y2="369"/><polygon points="738.5,369 744,380 749.5,369"/>
+    </g>
+
+    <!-- ======== ряд B ======== -->
+    <!-- 4. генератор -->
+    <g>
+      <rect x="608" y="380" width="272" height="145" rx="6" fill="#FFFFFF" stroke="#0E2A47" stroke-width="1.8"/>
+      <rect x="608" y="380" width="272" height="38" rx="6" fill="#16395E"/>
+      <rect x="608" y="406" width="272" height="12" fill="#16395E"/>
+      <text x="744" y="405" text-anchor="middle" fill="#FFFFFF" font-size="14.5" font-weight="bold">АГЕНТ-ГЕНЕРАТОР</text>
+      <text x="622" y="443" fill="#131A22" font-size="12.3">расписание воздействий по шагам:</text>
+      <text x="622" y="464" fill="#131A22" font-size="12.3">открытие/закрытие, режимы работы</text>
+      <text x="622" y="485" fill="#131A22" font-size="12.3">синтаксический контроль формата</text>
+      <text x="622" y="506" fill="#55677A" font-size="12">→ файл wells_schedule.inc</text>
+    </g>
+    <!-- 5. верификатор -->
+    <g>
+      <rect x="314" y="380" width="272" height="145" rx="6" fill="#FFFFFF" stroke="#B04E10" stroke-width="1.8"/>
+      <rect x="314" y="380" width="272" height="38" rx="6" fill="#E8722A"/>
+      <rect x="314" y="406" width="272" height="12" fill="#E8722A"/>
+      <text x="450" y="405" text-anchor="middle" fill="#FFFFFF" font-size="14.5" font-weight="bold">АГЕНТ-ВЕРИФИКАТОР</text>
+      <text x="328" y="443" fill="#131A22" font-size="12.3">прогон кандидата на полной ГГДМ</text>
+      <text x="328" y="464" fill="#131A22" font-size="12.3">конформные интервалы риска</text>
+      <text x="328" y="485" fill="#131A22" font-size="12.3">контроль ограничений и NPV</text>
+      <text x="328" y="506" fill="#55677A" font-size="12">→ допуск или возврат на доработку</text>
+    </g>
+    <!-- ГГДМ -->
+    <g>
+      <rect x="20" y="392" width="272" height="120" rx="6" fill="#F3F6F9" stroke="#55677A" stroke-width="1.6" stroke-dasharray="7 5"/>
+      <text x="156" y="428" text-anchor="middle" fill="#0E2A47" font-size="14.5" font-weight="bold">ПОЛНАЯ ГГДМ</text>
+      <text x="156" y="452" text-anchor="middle" fill="#131A22" font-size="12.3">гидродинамическая модель</text>
+      <text x="156" y="473" text-anchor="middle" fill="#131A22" font-size="12.3">организаторов — внешний расчёт</text>
+      <text x="156" y="494" text-anchor="middle" fill="#55677A" font-size="12">арбитр итогового NPV</text>
+    </g>
+
+    <!-- ======== стрелки ряда B ======== -->
+    <g stroke="#0E2A47" stroke-width="2.6" fill="#0E2A47">
+      <line x1="608" y1="452" x2="597" y2="452"/><polygon points="597,446.5 586,452 597,457.5"/>
+      <line x1="314" y1="437" x2="303" y2="437"/><polygon points="303,431.5 292,437 303,442.5"/>
+      <line x1="292" y1="472" x2="303" y2="472"/><polygon points="303,466.5 314,472 303,477.5"/>
+    </g>
+
+    <!-- ======== возврат цикла ======== -->
+    <g stroke="#E8722A" stroke-width="2.6" fill="none">
+      <path d="M 450 380 V 342 H 156 V 313"/>
+    </g>
+    <polygon points="150.5,313 156,302 161.5,313" fill="#E8722A"/>
+    <text x="300" y="334" text-anchor="middle" fill="#B04E10" font-size="13" font-weight="bold">повторная оценка · новые данные · докалибровка суррогатов</text>
+
+    <!-- ======== легенда ======== -->
+    <g transform="translate(20,556)">
+      <line x1="0" y1="8" x2="34" y2="8" stroke="#0E2A47" stroke-width="2.6"/>
+      <polygon points="34,3.5 44,8 34,12.5" fill="#0E2A47"/>
+      <text x="52" y="12" fill="#131A22" font-size="13">поток данных и решений</text>
+      <line x1="250" y1="8" x2="294" y2="8" stroke="#E8722A" stroke-width="2.6"/>
+      <text x="302" y="12" fill="#131A22" font-size="13">итерационный возврат цикла</text>
+      <line x1="530" y1="8" x2="574" y2="8" stroke="#8296A9" stroke-width="1.8" stroke-dasharray="6 5"/>
+      <text x="582" y="12" fill="#131A22" font-size="13">управление координатора</text>
+    </g>
+    <g transform="translate(20,588)">
+      <text x="0" y="12" fill="#55677A" font-size="12.5">Трек 1: расчётное звено — полная ГГДМ. Трек 2: перебор — на суррогатах, полная ГГДМ проверяет только кандидатов.</text>
+    </g>
+  </svg>
+  </div>
+  <div class="caption">Рис. 1. Иерархия агентов и итеративный цикл управления (единое ядро обоих треков)</div>
+</div>
+
+<!-- ==================== 4a. АГЕНТЫ ПОДРОБНО ==================== -->
+<div class="page-break">
+  <div class="kick">РАЗДЕЛ 04 · ПРОДОЛЖЕНИЕ</div>
+  <h2>Назначение агентов и целевая функция</h2>
+
+  <table class="compact">
+    <tr><th style="width:34mm">Агент</th><th>Назначение и готовая основа</th></tr>
+    <tr>
+      <td><strong>Координатор</strong></td>
+      <td>Ведёт итеративный цикл, распределяет задачи, сводит результаты, принимает
+          решение о следующем шаге. Основа — отработанная в проекте TimesOil схема
+          «координатор + параллельные исполнители».</td>
+    </tr>
+    <tr>
+      <td><strong>Оценка состояния</strong></td>
+      <td>Ассимилирует выданные данные: восстанавливает пластовое давление,
+          обводнённость, межскважинную связность и блоковую структуру; формирует
+          вектор состояния для суррогатов. Основа — модули загрузки и физической
+          диагностики TimesOil (давление с точностью около 2 атм).</td>
+    </tr>
+    <tr>
+      <td><strong>Суррогат</strong></td>
+      <td>Быстрый расчёт отклика месторождения на воздействия: физические модели
+          (двухфазная ёмкостно-резистивная, с пластовым давлением, фракционная)
+          и нейросетевые (Chronos-2 с дообучением, TiRex-2, градиентный бустинг),
+          объединённые обученной моделью второго уровня; докалибровка по прогонам
+          полной модели.</td>
+    </tr>
+    <tr>
+      <td><strong>Оптимизатор</strong></td>
+      <td>Максимизирует NPV на суррогате: непрерывные режимы — последовательным
+          квадратичным программированием, дискретные решения (открытие/закрытие) —
+          направленным и эволюционным поиском; ограничения — в явном виде.
+          Основа — оптимизация закачки TimesOil (+2,75…+4,09 % нефти).</td>
+    </tr>
+    <tr>
+      <td><strong>Генератор последовательностей</strong></td>
+      <td>Переводит найденный план в расписание воздействий и файл
+          <code>wells_schedule.inc</code>; проверяет синтаксис и полноту
+          на эталонных примерах организаторов.</td>
+    </tr>
+    <tr>
+      <td><strong>Верификатор</strong></td>
+      <td>Прогоняет кандидатов на полной гидродинамической модели, сверяет прогноз
+          суррогата с расчётом, оценивает риск конформными интервалами
+          (накрытие 0,79–0,82), возвращает расхождения суррогату для докалибровки.</td>
+    </tr>
+  </table>
+
+  <h3>Целевая функция</h3>
+  <p>Оптимизатор максимизирует чистый дисконтированный доход за горизонт планирования:</p>
+
+  <div class="formula">
+    <i>NPV</i> = <span class="sum">&Sigma;</span><sub><i>t</i>=1…<i>T</i></sub>&nbsp;
+    (1 + <i>r</i>)<sup>−<i>t</i></sup>
+    [ <i>Ц</i><sub>н</sub>·<i>Q</i><sub>н</sub>(<i>t</i>) −
+      <i>С</i><sub>ж</sub>·<i>Q</i><sub>ж</sub>(<i>t</i>) −
+      <i>С</i><sub>з</sub>·<i>I</i>(<i>t</i>) ] → max,
+  </div>
+
+  <p class="fnote">где <i>Q</i><sub>н</sub>, <i>Q</i><sub>ж</sub> — добыча нефти и попутной
+  воды за шаг <i>t</i>; <i>I</i> — объём закачки; <i>Ц</i><sub>н</sub> — цена нефти;
+  <i>С</i><sub>ж</sub>, <i>С</i><sub>з</sub> — удельные затраты на подъём и утилизацию
+  жидкости и на поддержание пластового давления; <i>r</i> — ставка дисконтирования
+  на шаг. Управляемые переменные — режимы и состояния скважин по шагам; ограничения —
+  технологические пределы, балансы закачки, регламент модели; точный вид издержек
+  уточняется по техническому заданию.</p>
+
+  <p>Качество суррогатов контролируется взвешенной абсолютной процентной ошибкой</p>
+
+  <div class="formula">
+    <i>WAPE</i> =
+    <span class="frac">
+      <span class="num">&Sigma;<sub><i>w</i>,<i>t</i></sub> | <i>q</i><sub><i>w</i>,<i>t</i></sub> − <i>q&#770;</i><sub><i>w</i>,<i>t</i></sub> |</span>
+      <span class="den">&Sigma;<sub><i>w</i>,<i>t</i></sub> <i>q</i><sub><i>w</i>,<i>t</i></sub></span>
+    </span>,
+  </div>
+
+  <p class="fnote">где <i>q</i><sub><i>w</i>,<i>t</i></sub> и <i>q&#770;</i><sub><i>w</i>,<i>t</i></sub> —
+  фактический и прогнозный дебиты скважины <i>w</i> на шаге <i>t</i>. Метрика
+  устойчива к скважинам с нулевой добычей и одинаково применима к суррогату
+  и полной модели.</p>
+</div>
+
+<!-- ==================== 5. ПЛАН MVP ==================== -->
+<div class="page-break">
+  <div class="kick">РАЗДЕЛ 05</div>
+  <h2>План создания прототипа на хакатоне</h2>
+
+  <p class="lead">План привязан к контрольным точкам хакатона (20.07, 27.07, 31.07)
+  и построен по принципу «сквозной контур раньше точности»: уже к первой
+  контрольной точке система проходит полный цикл на базовом сценарии, дальше
+  наращиваются качество суррогатов и глубина оптимизации.</p>
+
+  <h3>Этапы</h3>
+  <table>
+    <tr><th style="width:30mm">Период</th><th>Содержание работ</th></tr>
+    <tr>
+      <td class="sans">13 — 15 июля<br><span style="color:var(--muted)">вход в задачу</span></td>
+      <td>Разбор технического задания и формата выданной модели; загрузчики данных;
+          парсер и генератор <code>wells_schedule.inc</code> на эталонных примерах;
+          расчёт NPV базового сценария.</td>
+    </tr>
+    <tr>
+      <td class="sans">до 20 июля<br><span style="color:var(--muted)">КТ&nbsp;1</span></td>
+      <td>Калибровка линейки суррогатов на выданном месторождении (физические —
+          за часы, нейросетевые — за сутки); каркас агентов и протокол обмена;
+          первый сквозной цикл «оценка → решение → файл → проверка на ГГДМ».</td>
+    </tr>
+    <tr>
+      <td class="sans">до 27 июля<br><span style="color:var(--muted)">КТ&nbsp;2</span></td>
+      <td>Полный оптимизатор: непрерывные режимы — квадратичное программирование,
+          дискретные воздействия — направленный и эволюционный поиск; верификация
+          кандидатов на полной модели и докалибровка суррогатов по расхождениям;
+          замер прироста NPV против базового и референсного сценариев.</td>
+    </tr>
+    <tr>
+      <td class="sans">до 31 июля<br><span style="color:var(--muted)">КТ&nbsp;3</span></td>
+      <td>Расширенная постановка трека 2 (масштабирование по числу скважин);
+          проверка устойчивости к возмущениям на пучке сценариев; отбор итогового
+          решения по нижней границе NPV; воспроизводимость, документация,
+          материалы защиты.</td>
+    </tr>
+  </table>
+
+  <h3>Роли в команде (3–5 человек)</h3>
+  <ul>
+    <li><strong>Координатор-архитектор</strong> — протокол агентов, итеративный цикл, интеграция, защита решения;</li>
+    <li><strong>Инженер физических суррогатов</strong> — ёмкостно-резистивная линейка, ассимиляция давления и обводнённости;</li>
+    <li><strong>Инженер нейросетевых моделей</strong> — предобученные модели с дообучением, объединение второго уровня;</li>
+    <li><strong>Инженер оптимизации</strong> — NPV, ограничения, дискретно-непрерывный поиск;</li>
+    <li><strong>Инженер верификации</strong> — прогоны полной модели, интервалы риска, воспроизводимость.</li>
+  </ul>
+  <p class="tbl-note">При составе меньше пяти роли совмещаются: каждый контур уже
+  пройден командой в проекте TimesOil. Вычислительная база — собственный сервер
+  с шестью ускорителями A100.</p>
+
+  <div style="break-before: page">
+  <h3 style="margin-top:0">Риски и меры</h3>
+  <table class="fixed">
+    <tr><th style="width:56mm">Риск</th><th>Мера</th></tr>
+    <tr>
+      <td>Незнакомый формат модели и файла последовательностей</td>
+      <td>Первые два дня — только интерфейсы: парсеры, эталонные файлы,
+          автоматическая проверка синтаксиса на примерах организаторов.</td>
+    </tr>
+    <tr>
+      <td>Расхождение суррогата с полной моделью</td>
+      <td>Докалибровка суррогата по каждому прогону ГГДМ; итоговые кандидаты
+          всегда подтверждаются полной моделью — критерий A считается на ней.</td>
+    </tr>
+    <tr>
+      <td>Дороговизна прогонов полной модели</td>
+      <td>Перебор — на суррогате (миллисекунды на сценарий), полная модель —
+          только для лучших кандидатов и контрольных замеров.</td>
+    </tr>
+    <tr>
+      <td>Комбинаторный взрыв дискретных решений</td>
+      <td>Декомпозиция: дискретные воздействия — жадный и эволюционный поиск
+          на суррогате, непрерывные режимы — квадратичное программирование
+          в окрестности найденной конфигурации.</td>
+    </tr>
+    <tr>
+      <td>Нарушение ограничений в найденном решении</td>
+      <td>Ограничения в явном виде в оптимизаторе и дублирующий контроль
+          агента-верификатора перед выпуском файла.</td>
+    </tr>
+    <tr>
+      <td>Переобучение на единственный сценарий (критерии E, F)</td>
+      <td>Оценка кандидатов на пучке возмущённых сценариев (конформные интервалы,
+          копула остатков); выбор по нижней границе NPV, а не по точечному значению.</td>
+    </tr>
+  </table>
+  </div>
+</div>
+
+<!-- ==================== 6. ПОЧЕМУ МЫ ==================== -->
+<div class="page-break">
+  <div class="kick">РАЗДЕЛ 06</div>
+  <h2>Почему мы: измеренные результаты проекта TimesOil</h2>
+
+  <p class="lead">Все цифры получены на реальном промысловом наборе данных
+  (33 добывающие скважины, история 2007–2015) при честной скользящей проверке:
+  обучение строго до даты среза, сравнение с фактом на 6 месяцев вперёд,
+  без утечки данных.</p>
+
+  <div class="tiles">
+    <div class="tile"><div class="v">3,74 %</div><div class="l">ошибка прогноза добычи нефти на 6 месяцев (WAPE); жидкость — 3,21 %</div></div>
+    <div class="tile"><div class="v">+4,09 %</div><div class="l">прирост добычи нефти оптимизацией распределения закачки (при границах ±30 %)</div></div>
+    <div class="tile"><div class="v">≈ 2 атм</div><div class="l">точность прогноза пластового давления ёмкостно-резистивной моделью</div></div>
+    <div class="tile"><div class="v">мс / сценарий</div><div class="l">скорость расчёта отклика физическим суррогатом — миллисекунды</div></div>
+    <div class="tile"><div class="v">0,79–0,82</div><div class="l">фактическое накрытие 80-процентных конформных интервалов</div></div>
+    <div class="tile"><div class="v">16+ / 14</div><div class="l">проверенных семейств моделей / исторических срезов контроля</div></div>
+  </div>
+
+  <h3>Путь точности прогноза нефти</h3>
+  <div class="svgwrap avoid-break">
+  <svg viewBox="0 0 760 142" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="DejaVu Sans">
+    <!-- одна метрика по стадиям проекта; финальная стадия — акцент -->
+    <g>
+      <text x="10" y="50" fill="#131A22" font-size="14" font-weight="bold">8,3 %</text>
+      <rect x="10" y="56" width="160" height="42" rx="3" fill="#0E2A47" fill-opacity="0.45"/>
+      <text x="10" y="116" fill="#55677A" font-size="11.5">заданные модели</text>
+      <text x="10" y="131" fill="#55677A" font-size="11.5">(TiRex-2 с закачкой)</text>
+
+      <text x="200" y="58" fill="#131A22" font-size="14" font-weight="bold">6,4 %</text>
+      <rect x="200" y="64" width="160" height="34" rx="3" fill="#0E2A47" fill-opacity="0.65"/>
+      <text x="200" y="116" fill="#55677A" font-size="11.5">физическая обвязка</text>
+      <text x="200" y="131" fill="#55677A" font-size="11.5">(CRM × Джентил)</text>
+
+      <text x="390" y="65" fill="#131A22" font-size="14" font-weight="bold">5,1 %</text>
+      <rect x="390" y="71" width="160" height="27" rx="3" fill="#0E2A47" fill-opacity="0.85"/>
+      <text x="390" y="116" fill="#55677A" font-size="11.5">расширение набора,</text>
+      <text x="390" y="131" fill="#55677A" font-size="11.5">ансамбль</text>
+
+      <text x="580" y="72" fill="#B04E10" font-size="14" font-weight="bold">3,7 %</text>
+      <rect x="580" y="78" width="160" height="20" rx="3" fill="#E8722A"/>
+      <text x="580" y="116" fill="#55677A" font-size="11.5">двухфазная физика +</text>
+      <text x="580" y="131" fill="#55677A" font-size="11.5">обученное объединение</text>
+    </g>
+    <line x1="10" y1="98" x2="740" y2="98" stroke="#D7DFE7" stroke-width="1"/>
+  </svg>
+  </div>
+  <div class="caption">Рис. 2. Снижение ошибки прогноза нефти (WAPE, 6 месяцев) по этапам проекта</div>
+
+  <h3>Что ещё отличает команду</h3>
+  <ul>
+    <li><strong>Физика и данные вместе.</strong> Блоковая структура месторождения оцифрована
+        с карты разломов и подтверждена тремя независимыми методами — связностью
+        ёмкостно-резистивной модели, адаптацией по пластовому давлению и
+        вейвлет-когерентностью «закачка — добыча».</li>
+    <li><strong>Переносимость проверена.</strong> Контур без изменений отработал на открытых
+        полигонах UNISIM-I-H и Volve — прототип не привязан к одному набору данных.</li>
+    <li><strong>Мультиагентность как практика.</strong> Проект TimesOil выполнен иерархией
+        агентов — координатор и до восьми параллельных исполнителей; предлагаемая
+        архитектура повторяет отработанную организацию работы.</li>
+    <li><strong>Честная методика.</strong> Результаты — при проверке без утечки данных;
+        отрицательные исходы фиксировались наравне с положительными.</li>
+  </ul>
+
+  <div class="panel accent avoid-break">
+    <div class="ttl">Готовность</div>
+    <p style="margin-bottom:0">Команда DS Mind Lab готова выйти на оба трека с единым ядром:
+    суррогаты и оптимизатор уже работают на реальных промысловых данных, цикл
+    «оценка → решение → воздействие → проверка» отлажен, вычислительная
+    инфраструктура развёрнута. На хакатоне остаётся адаптировать контур
+    к формату организаторов и целевой функции NPV.</p>
+  </div>
+
+  <div class="sig">
+    Заявочный бриф команды DS Mind Lab (проект TimesOil) · 7 июля 2026 г. ·
+    Сведения о хакатоне — по странице blueskyresearch.ru/hackathon_aios;
+    результаты — по итоговым отчётам проекта TimesOil.
+  </div>
+</div>
+
+</body>
+</html>
