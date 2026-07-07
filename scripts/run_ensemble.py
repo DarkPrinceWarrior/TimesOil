@@ -98,6 +98,10 @@ def main() -> None:
             ).to_csv(OUT / f"ext_ens_{scheme}_{target}.csv", index=False)
             wape_all = M.wape(ens.y_true, ens.y_pred)
             canon = ens[ens.cutoff.isin(CUTOFFS)]
+            if scheme == "nnls":  # канонические 3 среза — для общей сводки
+                canon[["cutoff", "well", "date", "y_true", "y_pred"]].assign(
+                    step=canon.groupby(["cutoff", "well"]).cumcount() + 1
+                ).to_csv(OUT / f"ens_nnls_{target}.csv", index=False)
             wape_canon = M.wape(canon.y_true, canon.y_pred)
             bias = M.cum_error_pct(ens.y_true.to_numpy(), ens.y_pred.to_numpy())
             print(f"  ансамбль {scheme:10s}: WAPE(14)={wape_all:.4f}  "
