@@ -77,6 +77,8 @@ TiRex-2 (NX-AI, zero-shot, extra `tirex`), SPDM/ManiMamba (обучение на
   `eval_spdm.py` — контур SPDM;
 - `scripts/forecast_forward.py` — итоговый прогноз 2015-12..2016-05
   (стек: CRM-жидкость, Джентил-нефть, интервалы TiRex-2 с множителями);
+- `scripts/optimize_injection.py` — перераспределение закачки (SLSQP
+  поверх стека CRM x Джентил, сумма закачки фиксирована);
 - `scripts/collect_results.py`, `make_figs.py` — сводка и графики;
 - `results/` (вне git), отчёт — `docs/`.
 

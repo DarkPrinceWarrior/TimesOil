@@ -35,6 +35,6 @@
 - **Структура и точки входа:** `src/timesoil/` (data/wells/metrics/baselines/
   backtest/tirex_runner + этап 2: crm/allocation/fractional) + `scripts/`
   (`run_baselines.py`, `run_tirex.py`, `run_crm.py`, `run_fractional.py`,
-  `calibrate_intervals.py`, `prepare_spdm_data.py` → `spdm_run.sh` →
+  `calibrate_intervals.py`, `optimize_injection.py`, `prepare_spdm_data.py` → `spdm_run.sh` →
   `eval_spdm.py`, `forecast_forward.py`, `collect_results.py`, `make_figs.py`).
   Данные `raw_data/` вне git (передавать `scp`), результаты `results/` вне git.
