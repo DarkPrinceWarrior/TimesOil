@@ -16,7 +16,10 @@ def main() -> None:
     rows = []
     for path in sorted(RES.glob("*.csv")):
         name = path.stem
-        if name.startswith(("forward_", "spdm_run")):
+        if name.startswith(("forward_", "spdm_run", "ext_", "nf_bitcn",
+                            "unisim_", "volve_", "crm_cov", "crm_gains",
+                            "injection_opt", "calibrat", "interval_scale",
+                            "ensemble_weights", "summary")):
             continue
         try:
             model, target = name.rsplit("_", 2)[0], "_".join(name.rsplit("_", 2)[1:])
