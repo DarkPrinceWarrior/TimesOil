@@ -19,7 +19,7 @@ def main() -> None:
         if name.startswith(("forward_", "spdm_run", "ext_", "nf_bitcn",
                             "unisim_", "volve_", "crm_cov", "crm_gains",
                             "injection_opt", "calibrat", "interval_scale",
-                            "ensemble_weights", "summary")):
+                            "ensemble_weights", "summary", "chronos_lora", "w3_")):
             continue
         try:
             model, target = name.rsplit("_", 2)[0], "_".join(name.rsplit("_", 2)[1:])

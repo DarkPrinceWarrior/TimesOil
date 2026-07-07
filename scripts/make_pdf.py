@@ -39,14 +39,16 @@ def page_title(pdf: PdfPages) -> None:
     txt = (
         "ПРОГНОЗ ДЕБИТА НЕФТИ И ЖИДКОСТИ НА 6 МЕСЯЦЕВ\n"
         "Приложение: поскважинные графики\n\n"
-        "Итоговая модель — ансамбль (неотрицательная регрессия, веса по 14 срезам):\n"
-        "нефть:  CRM×Джентил + Chronos-2 + TiRex-2 + LightGBM + TiDE\n"
-        "жидкость:  CRM + TiRex-2 + Chronos-2 + LightGBM\n\n"
+        "Итоговая модель — обученный стекинг (этап 7) над 7 компонентами:\n"
+        "двухфазная CRM, CRM×Джентил, Chronos-2, Chronos-2-дообученный,\n"
+        "TiRex-2, LightGBM, TiDE (веса подбираются без утечки по 14 срезам)\n\n"
         "Качество на трёх канонических срезах (2014-05, 2014-11, 2015-05; WAPE):\n"
-        "нефть 5.10 %   |   жидкость 3.87 %\n"
-        "(лучшие одиночные модели: 6.40 % и 4.38 %)\n\n"
-        "Интервалы 80 % — эмпирические, по остаткам ансамбля на 14 срезах.\n"
-        "Прогноз вперёд: 2015-12 … 2016-05 при продлении последнего режима закачки."
+        "нефть 3.74 %   |   жидкость 3.21 %\n"
+        "(лучшая одиночная модель — двухфазная CRM: нефть 5.25 %)\n\n"
+        "Интервалы 80 % — конформные (crepes): накрытие 0.815 / 0.790\n"
+        "при ширине 11 % / 9 % от уровня добычи.\n"
+        "Прогноз вперёд: 2015-12 … 2016-05 — ансамбль этапа 5\n"
+        "(пересчёт финальным стеком — следующий шаг)."
     )
     ax.text(0.5, 0.6, txt, ha="center", va="center", fontsize=13, family="DejaVu Sans")
     fig.suptitle("TimesOil — 2026-07-07", y=0.95, fontsize=10, color="gray")
@@ -60,11 +62,11 @@ def page_summary(pdf: PdfPages) -> None:
         g = s[s.target == target].sort_values("wape")
 
         def color(m: str) -> str:
-            if m.startswith("ens"):
+            if m.startswith(("ens", "stack")):
                 return "tab:purple"
             if m.startswith(("crm", "frac")):
                 return "tab:blue"
-            if "tirex" in m or m.startswith(("chronos", "nf_")):
+            if "tirex" in m or m.startswith(("chronos", "nf_", "tabpfn")):
                 return "tab:green"
             return "tab:red" if m == "spdm" else "tab:gray"
 
@@ -85,13 +87,30 @@ def page_map(pdf: PdfPages) -> None:
     pdf.savefig(fig); plt.close(fig)
 
 
+COMPONENT_FILES = {
+    "oil_tpd": {"CRM2Ф": "ext_crm2p_oil_tpd.csv", "CRM×Джентил": "ext_frac_crm_oil_tpd.csv",
+                "Chronos-2": "ext_chronos_oil_tpd.csv", "Chronos-2 LoRA": "chronos_lora_oil_tpd.csv",
+                "TiRex-2": "ext_tirex_oil_tpd.csv", "LightGBM": "ext_lgbm_oil_tpd.csv",
+                "TiDE": "ext_nf_tide_oil_tpd.csv"},
+    "liq_tpd": {"CRM": "ext_crm_liq_tpd.csv", "CRM2Ф": "ext_crm2p_liq_tpd.csv",
+                "Chronos-2": "ext_chronos_liq_tpd.csv", "Chronos-2 LoRA": "chronos_lora_liq_tpd.csv",
+                "TiRex-2": "ext_tirex_liq_tpd.csv", "LightGBM": "ext_lgbm_liq_tpd.csv"},
+}
+
+
 def page_weights_importance(pdf: PdfPages) -> None:
-    weights = pd.read_csv(RES / "ensemble_weights.csv")
+    from timesoil import metrics as MM
     fig, axes = plt.subplots(2, 2, figsize=(11.7, 8.3))
     for ax, target in zip(axes[0], ("oil_tpd", "liq_tpd")):
-        g = weights[weights.target == target]
-        ax.bar(g.model, g.weight, color="tab:purple")
-        ax.set_title(f"Веса ансамбля — {NAMES[target]}")
+        names, wapes = [], []
+        for nm, fn in COMPONENT_FILES[target].items():
+            fp = RES / fn
+            if fp.exists():
+                d = pd.read_csv(fp)
+                names.append(nm); wapes.append(MM.wape(d.y_true, d.y_pred) * 100)
+        ax.bar(names, wapes, color="tab:blue")
+        ax.set_title(f"Компоненты стека: WAPE по 14 срезам, % — {NAMES[target]}")
+        ax.tick_params(axis="x", rotation=25)
         ax.grid(axis="y", alpha=0.3)
 
     # важности признаков LightGBM (обучение на всей истории)
@@ -122,8 +141,12 @@ def well_pages(pdf: PdfPages) -> None:
     df = load_monthly()
     mats = producer_matrices(df)
     wct = 1.0 - (mats["oil_tpd"] / mats["liq_tpd"].replace(0, np.nan))
-    bt = {t: pd.read_csv(RES / f"ens_nnls_{t}.csv", parse_dates=["date", "cutoff"])
-          for t in ("oil_tpd", "liq_tpd")}
+    stack_files = {"oil_tpd": "ext_stack_lgbm_meta_oil_tpd.csv",
+                   "liq_tpd": "ext_stack_greedy_well_liq_tpd.csv"}
+    bt = {}
+    for t, fn in stack_files.items():
+        d = pd.read_csv(RES / fn, parse_dates=["date", "cutoff"])
+        bt[t] = d[d.cutoff.isin(CUTOFFS)].reset_index(drop=True)
     fwd = {t: pd.read_csv(RES / f"forward_{t}.csv", parse_dates=["date"])
            for t in ("oil_tpd", "liq_tpd")}
     comp = {t: pd.read_csv(RES / f"forward_components_{t}.csv", parse_dates=["date"])
@@ -139,7 +162,7 @@ def well_pages(pdf: PdfPages) -> None:
             for i, c in enumerate(CUTOFFS):
                 g = b[(b.well.astype(str) == str(w)) & (b.cutoff == c)].sort_values("date")
                 ax.plot(g.date, g.y_pred, "-o", ms=3, lw=1.2, color="tab:purple",
-                        alpha=0.85, label="ансамбль (срезы)" if i == 0 else None)
+                        alpha=0.85, label="стек (срезы)" if i == 0 else None)
             # вперёд
             f = fwd[target][fwd[target].well.astype(str) == str(w)].sort_values("date")
             ax.fill_between(f.date, f.q10, f.q90, color="tab:purple", alpha=0.18,
