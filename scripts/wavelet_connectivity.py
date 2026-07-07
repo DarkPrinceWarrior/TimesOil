@@ -197,6 +197,43 @@ def analyze(res: pd.DataFrame, alpha: float) -> pd.DataFrame:
     return ok
 
 
+def common_signal_diagnostics() -> None:
+    """Когерентность нагн-нагн и доб-доб: оценка общего полевого сигнала.
+
+    Высокая когерентность закачки между блоками означает, что бивариантная
+    (не частная) когерентность закачка-добыча завышает связность через
+    разломы: добывающая, реагирующая на «свою» нагнетательную, когерентна
+    и с чужими, у которых похож спектр графика закачки.
+    """
+    import itertools
+
+    df = load_monthly()
+    inj = injection_matrix(df).loc["2008-07":CUTOFF]
+    liq = producer_matrices(df)["liq_tpd"].loc[:CUTOFF]
+
+    def cross(cols: list[int], mat: pd.DataFrame) -> tuple[float, float]:
+        within, across = [], []
+        for a, b in itertools.combinations(cols, 2):
+            idx = mat[a].dropna().index.intersection(mat[b].dropna().index)
+            if len(idx) < MIN_RELIABLE:
+                continue
+            x = detrend(mat.loc[idx, a].to_numpy(float))
+            y = detrend(mat.loc[idx, b].to_numpy(float))
+            if x.std() < 1e-9 or y.std() < 1e-9:
+                continue
+            (within if WELL_BLOCK[a] == WELL_BLOCK[b] else across).append(
+                band_coherence(x, y)
+            )
+        return float(np.mean(within)), float(np.mean(across))
+
+    print("\n=== Диагностика общего сигнала (та же полоса 3-12 мес) ===")
+    w, a = cross(sorted(INJECTORS), inj)
+    print(f"нагн-нагн: внутри блока {w:.3f}, поперёк {a:.3f} "
+          "(поперёк ~ внутри -> общий спектр графиков закачки завышает c_ij через разломы)")
+    w, a = cross(list(PRODUCERS), liq)
+    print(f"доб-доб:   внутри блока {w:.3f}, поперёк {a:.3f}")
+
+
 def crm_mask_test(res: pd.DataFrame, alpha: float) -> None:
     """Блочный CRM без нагнетательных, незначимых для всех добывающих блока.
 
@@ -322,6 +359,7 @@ def main() -> None:
     print(f"сохранено: {OUT / 'wavelet_coherence.csv'}, {OUT / 'wavelet_mask.csv'}")
 
     analyze(res, args.alpha)
+    common_signal_diagnostics()
     heatmap(res, args.alpha)
     if args.crm_test:
         crm_mask_test(res, args.alpha)

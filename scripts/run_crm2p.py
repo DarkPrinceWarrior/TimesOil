@@ -58,11 +58,15 @@ def main() -> None:
         res.to_csv(OUT / f"{prefix}crm2p_{name}.csv", index=False)
         print(f"\n=== {name} | CRM2P (двухфазная, по блокам) ===")
         print(summarize(res).round(4).to_string(index=False))
-        base_path = OUT / BASELINES[name]
-        if not args.ext and base_path.exists():
-            base = pd.read_csv(base_path, parse_dates=["date", "cutoff"])
-            print(f"--- база: {BASELINES[name]} ---")
-            print(summarize(base).round(4).to_string(index=False))
+        for cand in (f"ext_{BASELINES[name]}", BASELINES[name]):
+            if not (OUT / cand).exists():
+                continue
+            base = pd.read_csv(OUT / cand, parse_dates=["date", "cutoff"])
+            base = base[base.cutoff.isin(cutoffs)]
+            if len(base):
+                print(f"--- база: {cand} (те же срезы) ---")
+                print(summarize(base).round(4).to_string(index=False))
+            break
 
 
 if __name__ == "__main__":
