@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from pywaterflood.crm import CRM
+from pywaterflood.crm import CRM, CrmCompensated
 
 from .wells import INJECTORS, PRODUCERS, WELL_BLOCK, block_wells
 
@@ -58,6 +58,44 @@ def predict_block(
     pred = model.predict(
         injection=inj_full.to_numpy(),
         time=_time_axis(inj_full.index),
+    )
+    return pd.DataFrame(np.maximum(pred, 0.0), index=inj_full.index, columns=producers)
+
+
+def fit_block_compensated(
+    liq: pd.DataFrame,
+    inj: pd.DataFrame,
+    bhp: pd.DataFrame,
+    producers: list,
+    injectors: list,
+    cutoff: pd.Timestamp,
+    start: pd.Timestamp = FULL_START,
+) -> CrmCompensated:
+    """CRM с компенсацией забойного давления добывающих (член -J tau dPзаб/dt);
+    нужен, когда добывающие работают при переменном забойном давлении."""
+    hist = liq.loc[start:cutoff, producers]
+    pres = bhp.loc[start:cutoff, producers]
+    inj_hist = inj.loc[start:cutoff, injectors]
+    model = CrmCompensated(primary=True, tau_selection="per-pair", constraints="up-to one")
+    model.fit(
+        hist.to_numpy(), pres.to_numpy(), inj_hist.to_numpy(),
+        _time_axis(hist.index), num_cores=4,
+    )
+    return model
+
+
+def predict_block_compensated(
+    model: CrmCompensated,
+    inj_full: pd.DataFrame,
+    bhp_full: pd.DataFrame,
+    producers: list,
+) -> pd.DataFrame:
+    """Прогноз CRM-P; забойное давление контрольного окна — фактическое
+    (допущение известного режима, аналогично плану закачки)."""
+    pred = model.predict(
+        injection=inj_full.to_numpy(),
+        time=_time_axis(inj_full.index),
+        pressure=bhp_full.to_numpy(),
     )
     return pd.DataFrame(np.maximum(pred, 0.0), index=inj_full.index, columns=producers)
 

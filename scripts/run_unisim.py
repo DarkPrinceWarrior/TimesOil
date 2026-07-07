@@ -15,7 +15,12 @@ import pandas as pd
 
 from timesoil import baselines as B
 from timesoil.backtest import HORIZON, run_pointwise, summarize
-from timesoil.crm import fit_block, predict_block
+from timesoil.crm import (
+    fit_block,
+    fit_block_compensated,
+    predict_block,
+    predict_block_compensated,
+)
 from timesoil.fractional import fit_gentil, predict_fo
 from timesoil.tirex_runner import forecast_tirex
 from timesoil.unisim import (
@@ -40,17 +45,24 @@ def block_start(liq: pd.DataFrame, producers: list[str]) -> pd.Timestamp:
     return max(liq[w].first_valid_index() for w in producers)
 
 
-def crm_stack(liq: pd.DataFrame, winj: pd.DataFrame, cutoff: pd.Timestamp):
-    """CRM по двум блокам: ряд «история+горизонт» и прогноз на 6 мес."""
+def crm_stack(liq: pd.DataFrame, winj: pd.DataFrame, cutoff: pd.Timestamp,
+              bhp: pd.DataFrame | None = None):
+    """CRM по двум блокам (с компенсацией забойного давления, если дано bhp):
+    ряд «история+горизонт»."""
     parts = []
     for b in BLOCKS_U.values():
         prods, injs = b["producers"], b["injectors"]
         start = block_start(liq, prods)
-        model = fit_block(liq, winj, prods, injs, cutoff, start=start)
         end_pos = liq.index.get_loc(cutoff) + HORIZON
         inj_full = winj.loc[start: liq.index[end_pos], injs]
-        parts.append(predict_block(model, inj_full, prods))
-    return pd.concat(parts, axis=1)[list(PRODUCERS_U)]
+        if bhp is None:
+            model = fit_block(liq, winj, prods, injs, cutoff, start=start)
+            parts.append(predict_block(model, inj_full, prods))
+        else:
+            model = fit_block_compensated(liq, winj, bhp, prods, injs, cutoff, start=start)
+            bhp_full = bhp.loc[start: liq.index[end_pos], prods]
+            parts.append(predict_block_compensated(model, inj_full, bhp_full, prods))
+    return pd.concat(parts, axis=1, sort=False)[list(PRODUCERS_U)]
 
 
 def main() -> None:
@@ -83,6 +95,21 @@ def main() -> None:
     crm_res.to_csv(OUT / "unisim_crm_liq.csv", index=False)
     print("=== unisim liq | CRM (по блокам) ===")
     print(summarize(crm_res).round(4).to_string(index=False), flush=True)
+
+    # --- CRM-P: с компенсацией забойного давления (Pзаб контрольного окна —
+    # фактическое: допущение известного режима) ---
+    rows = []
+    for cutoff in CUTOFFS_U:
+        pred = crm_stack(liq, winj, cutoff, bhp=bhp)
+        test = pred.index[pred.index > cutoff][:HORIZON]
+        for step, dt in enumerate(test, 1):
+            for w in PRODUCERS_U:
+                rows.append(dict(cutoff=cutoff, well=w, step=step, date=dt,
+                                 y_true=float(liq.at[dt, w]), y_pred=float(pred.at[dt, w])))
+    crmp_res = pd.DataFrame(rows)
+    crmp_res.to_csv(OUT / "unisim_crmp_liq.csv", index=False)
+    print("=== unisim liq | CRM-P (компенсация Pзаб) ===")
+    print(summarize(crmp_res).round(4).to_string(index=False), flush=True)
 
     # --- TiRex-2 ---
     from tirex2 import load_model
@@ -122,7 +149,8 @@ def main() -> None:
     alloc = allocate(winj, distance_weights(coords_unisim()))
     days = pd.Series(alloc.index.days_in_month, index=alloc.index)
     w_cum = alloc.mul(days, axis=0).cumsum()
-    for src_name, src in (("crm", crm_res), ("tirex", tirex_results[("blocks_cov_crm", "liq")])):
+    for src_name, src in (("crm", crm_res), ("crmp", crmp_res),
+                          ("tirex", tirex_results[("blocks_cov_crm", "liq")])):
         rows = []
         for cutoff in CUTOFFS_U:
             part = src[src.cutoff == cutoff]
