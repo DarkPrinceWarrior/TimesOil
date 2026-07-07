@@ -30,13 +30,15 @@ def _time_axis(index: pd.DatetimeIndex) -> np.ndarray:
 def fit_block(
     liq: pd.DataFrame,
     inj: pd.DataFrame,
-    producers: list[int],
-    injectors: list[int],
+    producers: list,
+    injectors: list,
     cutoff: pd.Timestamp,
+    start: pd.Timestamp = FULL_START,
 ) -> CRM:
-    """Подгонка CRM одного блока на истории до cutoff."""
-    hist = liq.loc[FULL_START:cutoff, producers]
-    inj_hist = inj.loc[FULL_START:cutoff, injectors]
+    """Подгонка CRM одного блока на истории [start, cutoff]
+    (start — месяц, с которого работают все добывающие блока)."""
+    hist = liq.loc[start:cutoff, producers]
+    inj_hist = inj.loc[start:cutoff, injectors]
     model = CRM(primary=True, tau_selection="per-pair", constraints="up-to one")
     model.fit(
         hist.to_numpy(),
@@ -50,7 +52,7 @@ def fit_block(
 def predict_block(
     model: CRM,
     inj_full: pd.DataFrame,
-    producers: list[int],
+    producers: list,
 ) -> pd.DataFrame:
     """Прогноз подогнанного CRM на произвольном графике закачки (быстро)."""
     pred = model.predict(
