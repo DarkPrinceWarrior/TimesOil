@@ -41,15 +41,19 @@ OUT = Path(__file__).resolve().parents[1] / "results"
 COMPONENTS = {
     "oil_tpd": {
         "frac_crm": "ext_frac_crm_oil_tpd.csv",
+        "crm2p": "ext_crm2p_oil_tpd.csv",              # двухфазная CRM (этап 7)
         "chronos": "ext_chronos_oil_tpd.csv",
+        "chronos_lora": "chronos_lora_oil_tpd.csv",    # дообученный (этап 7)
         "tirex": "ext_tirex_oil_tpd.csv",
         "lgbm": "ext_lgbm_oil_tpd.csv",
         "tide": "ext_nf_tide_oil_tpd.csv",
     },
     "liq_tpd": {
         "crm": "ext_crm_liq_tpd.csv",
+        "crm2p": "ext_crm2p_liq_tpd.csv",
         "tirex": "ext_tirex_liq_tpd.csv",
         "chronos": "ext_chronos_liq_tpd.csv",
+        "chronos_lora": "chronos_lora_liq_tpd.csv",
         "lgbm": "ext_lgbm_liq_tpd.csv",
     },
 }
