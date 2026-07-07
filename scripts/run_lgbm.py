@@ -22,6 +22,7 @@ from mlforecast import MLForecast
 from mlforecast.lag_transforms import RollingMean
 
 from timesoil.backtest import HORIZON, summarize
+from timesoil.mlprep import combined_crm, long_frame
 
 OUT = Path(__file__).resolve().parents[1] / "results"
 
@@ -30,47 +31,6 @@ LGB_PARAMS = dict(
     min_child_samples=20, subsample=0.9, colsample_bytree=0.8,
     random_state=0, verbosity=-1,
 )
-
-
-def combined_crm(crm_covs: dict, cutoffs) -> pd.DataFrame | None:
-    """Склейка рядов CRM разных срезов в одну матрицу дата x скважина без
-    утечки: значение на дату d берётся из CRM, подогнанного на самом раннем
-    срезе, чей ряд «история+горизонт» покрывает d."""
-    parts, prev_end = [], None
-    for c in cutoffs:
-        crm = crm_covs.get(c)
-        if crm is None:
-            return None
-        seg = crm if prev_end is None else crm.loc[crm.index > prev_end]
-        parts.append(seg)
-        prev_end = crm.index.max()
-    return pd.concat(parts).sort_index()
-
-
-def long_frame(targets: dict[str, pd.DataFrame], alloc: pd.DataFrame,
-               blk_inj_sum: pd.DataFrame, crm_mat: pd.DataFrame | None,
-               pres: pd.DataFrame | None) -> dict[str, pd.DataFrame]:
-    """Длинные таблицы по целям: unique_id, ds, y + признаки."""
-    out = {}
-    for tname, mat in targets.items():
-        rows = []
-        end = mat.dropna(how="all").index.max()
-        for w in mat.columns:
-            s = mat[w].dropna()
-            # скважины, остановленные раньше общего конца, исключаются:
-            # mlforecast строит окна от конца каждого ряда, срезы съедут
-            if len(s) < 24 or s.index.max() != end:
-                continue
-            df = pd.DataFrame({"unique_id": str(w), "ds": s.index, "y": s.values})
-            df["inj_alloc"] = alloc.reindex(s.index)[w].to_numpy(float)
-            df["inj_block"] = blk_inj_sum.reindex(s.index)[w].to_numpy(float)
-            if crm_mat is not None and w in crm_mat.columns:
-                df["crm"] = crm_mat.reindex(s.index)[w].to_numpy(float)
-            if pres is not None and w in pres.columns:
-                df["pres_lag6"] = pres[w].shift(6).reindex(s.index).to_numpy(float)
-            rows.append(df)
-        out[tname] = pd.concat(rows, ignore_index=True)
-    return out
 
 
 def run_polygon(name: str, prefix: str, targets: dict, alloc, blk_inj_sum,
