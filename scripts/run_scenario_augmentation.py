@@ -244,9 +244,10 @@ def nearest_scenario(
         if scenario == REFERENCE:
             continue
         candidate = data.targets[target].loc[:through].to_numpy()
+        valid = np.isfinite(reference) & np.isfinite(candidate)
         distances[scenario] = float(
-            np.abs(reference - candidate).sum()
-            / max(np.abs(reference).sum(), 1e-12)
+            np.abs(reference[valid] - candidate[valid]).sum()
+            / max(np.abs(reference[valid]).sum(), 1e-12)
         )
     return min(distances, key=lambda scenario: distances[scenario]), distances
 
