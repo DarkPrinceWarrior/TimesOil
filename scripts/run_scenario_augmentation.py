@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 from mlforecast import MLForecast
 from mlforecast.lag_transforms import RollingMean
+from mlforecast.target_transforms import LocalStandardScaler
 
 from timesoil import metrics as M
 from timesoil.allocation import allocate, hydro_weights
@@ -175,6 +176,8 @@ def run_variant(
     variant: str,
     selected: tuple[str, ...],
     with_scenario_feature: bool,
+    reference_weight: float,
+    scale_target: bool,
     cutoffs: tuple[pd.Timestamp, ...],
     step_size: int,
 ) -> tuple[pd.DataFrame, int]:
@@ -186,7 +189,16 @@ def run_variant(
         freq="MS",
         lags=[1, 2, 3, 4, 5, 6, 12],
         lag_transforms={1: [RollingMean(3), RollingMean(6)]},
+        target_transforms=[LocalStandardScaler()] if scale_target else None,
     )
+    weight_col = None
+    if reference_weight != 1.0:
+        frame["sample_weight"] = np.where(
+            frame["unique_id"].str.startswith(f"{REFERENCE}|"),
+            reference_weight,
+            1.0,
+        )
+        weight_col = "sample_weight"
     cv = model.cross_validation(
         frame,
         n_windows=len(cutoffs),
@@ -194,6 +206,7 @@ def run_variant(
         step_size=step_size,
         refit=True,
         static_features=static_cols,
+        weight_col=weight_col,
     ).dropna(subset=["y"])
     actual_cutoffs = tuple(pd.Timestamp(c) for c in sorted(cv["cutoff"].unique()))
     if actual_cutoffs != cutoffs:
@@ -217,6 +230,25 @@ def run_variant(
         result.groupby(["scenario", "cutoff", "well"]).cumcount() + 1
     )
     return result, len(frame)
+
+
+def nearest_scenario(
+    scenarios: dict[str, ScenarioData],
+    target: str,
+    through: pd.Timestamp,
+) -> tuple[str, dict[str, float]]:
+    """Ближайший режим по WAPE-расстоянию только на доступной ранней истории."""
+    reference = scenarios[REFERENCE].targets[target].loc[:through].to_numpy()
+    distances = {}
+    for scenario, data in scenarios.items():
+        if scenario == REFERENCE:
+            continue
+        candidate = data.targets[target].loc[:through].to_numpy()
+        distances[scenario] = float(
+            np.abs(reference - candidate).sum()
+            / max(np.abs(reference).sum(), 1e-12)
+        )
+    return min(distances, key=lambda scenario: distances[scenario]), distances
 
 
 def metrics_rows(
@@ -298,20 +330,44 @@ def main() -> None:
     print("=== Профиль сценариев ===")
     print(profile.round(2).to_string(index=False), flush=True)
 
-    variants = (
-        ("reference_only", (REFERENCE,), False),
-        ("pooled", names, False),
-        ("pooled_with_id", names, True),
-    )
     summaries: list[dict[str, object]] = []
     for target in args.targets:
-        for variant, selected, with_scenario_feature in variants:
+        nearest, distances = nearest_scenario(
+            scenarios, target, through=cutoffs[0]
+        )
+        print(
+            f"\n{target}: расстояния до reference на истории <= "
+            f"{cutoffs[0].date()}: "
+            + ", ".join(f"{k}={v:.3f}" for k, v in distances.items())
+            + f"; ближайший={nearest}",
+            flush=True,
+        )
+        variants = (
+            ("reference_only", (REFERENCE,), False, 1.0, False),
+            ("reference_scaled", (REFERENCE,), False, 1.0, True),
+            ("nearest", (REFERENCE, nearest), False, 1.0, False),
+            ("nearest_scaled", (REFERENCE, nearest), False, 1.0, True),
+            ("pooled", names, False, 1.0, False),
+            ("pooled_weighted", names, False, 3.0, False),
+            ("pooled_scaled", names, False, 1.0, True),
+            ("pooled_weighted_scaled", names, False, 3.0, True),
+            ("pooled_with_id", names, True, 1.0, False),
+        )
+        for (
+            variant,
+            selected,
+            with_scenario_feature,
+            reference_weight,
+            scale_target,
+        ) in variants:
             result, training_rows = run_variant(
                 scenarios,
                 target,
                 variant,
                 selected,
                 with_scenario_feature,
+                reference_weight,
+                scale_target,
                 cutoffs,
                 step_size,
             )
