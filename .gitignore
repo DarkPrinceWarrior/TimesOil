@@ -13,6 +13,7 @@ env/
 # uv.lock — коммитим
 
 # --- кэши инструментов ---
+.codegraph/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/

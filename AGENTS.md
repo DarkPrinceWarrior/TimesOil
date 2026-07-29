@@ -1,3 +1,81 @@
+# Global instructions
+
+## Host and permissions
+
+This Codex installation runs natively in WSL. Use Linux tools and paths for WSL
+repositories. Windows repositories mounted under `/mnt/c` may be inspected and
+edited from WSL, but platform SDK commands must use the repository's documented
+native host toolchain.
+
+The user explicitly selected full access for this WSL Codex installation:
+`sandbox_mode = "danger-full-access"` and `approval_policy = "never"`. Do not
+weaken or override those defaults, and do not add MCP approval prompts, unless
+the user explicitly requests a safer profile. Platform-enforced approval gates
+may still apply outside Codex configuration.
+
+## File search and grep
+
+For any file lookup or literal search in the current git repository, use fff
+first. Do not use shell `find`, `grep`, or `rg` when fff can express the query.
+Use short bare identifiers and `multi_grep` for OR queries. After two searches,
+inspect the selected code instead of repeating variants.
+
+## Structural navigation
+
+Use CodeGraph for structural questions over symbols, calls, dependencies, and
+impact. Prefer `codegraph_explore` as the primary entry point for unfamiliar
+features and bugs. Run `codegraph status` at the start of a work session and
+`codegraph sync` after bulk external changes or reported staleness. If a
+repository is not initialized, state that and continue with fff and Serena; do
+not initialize it without the user's request.
+
+Do not run Windows and WSL CodeGraph processes concurrently against one
+`.codegraph` SQLite index on `/mnt/c`. For slow mounted filesystems,
+`codegraph serve --mcp --no-watch` is available; when using it, sync explicitly
+after meaningful external edits.
+
+## Symbolic navigation and editing
+
+Use Serena after fff or CodeGraph identifies the relevant area. Call
+`initial_instructions` before coding tasks. Prefer `get_symbols_overview`,
+`find_symbol`, `find_referencing_symbols`, `replace_symbol_body`, `insert_*`,
+`rename_symbol`, and `safe_delete_symbol` when symbolic operations are
+sufficient. Serena runs with `--project-from-cwd`.
+
+## Skills, docs, and web research
+
+Use a skill when the task matches its description. Use Context7 before relying
+on memory for version-sensitive library or framework behavior. Use Tavily for
+fresh general web research. For OpenAI and Codex behavior, use the current
+official OpenAI documentation workflow.
+
+## Memory
+
+Use Honcho through the installed `codex-honcho` host plugin. The plugin owns
+hooks, its skill, and MCP registration; do not hand-maintain a separate Honcho
+MCP block. Consult Honcho before answering about remembered preferences,
+project rules, or prior decisions. Save only durable preferences, decisions,
+patterns, and gotchas. Treat memory as inference until verified in files or
+command output.
+
+## Verified local tools
+
+Verified on 2026-07-29: Codex CLI `0.146.0`, Claude Code `2.1.212`,
+uv `0.11.25`, Node `22.20.0`, npm `11.17.0`, fff-mcp `0.10.0`,
+CodeGraph `1.5.0`, Serena `1.6.1.dev0`, zoxide `0.10.0`, fzf `0.74.1`, and
+Starship `1.26.0`. Global Codex MCP includes fff, CodeGraph, Serena, Context7,
+Tavily, Playwright, Figma, Honcho, and DBHub.
+
+## Working style
+
+Before changing code, briefly state what was found, what will change, and why.
+Prefer minimal, localized edits. Preserve unrelated work in dirty trees. Do not
+rename or move files, change public interfaces, install project dependencies,
+or edit secrets unless the task requires it. Separate confirmed facts from
+inference and verify completion against the actual current state.
+
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) and Codex when working
@@ -11,44 +89,36 @@ with code in this repository.
 Code navigation uses three MCP servers, each with one job — do not duplicate them:
 
 - **fff** — locate files and literal text (strings, comments, log messages).
-  Use fff instead of shell `find`/`grep`/`rg` — быстрее и точнее на больших репо.
-  One bare identifier per query; after two greps, read the code.
-  Tools: `find_files` (какие файлы/модули существуют), `grep` (содержимое по
-  идентификатору), `multi_grep` (OR по нескольким паттернам / вариантам регистра).
+  Use fff instead of shell `find`/`grep`/`rg`. One bare identifier per query;
+  after two greps, read the code.
 - **codegraph** — structural questions over a tree-sitter symbol graph.
-  `codegraph_explore "<task>"` — **основной** инструмент (точки входа + связанные
-  символы + исходники в одном вызове). Также `codegraph_search` (символ по имени —
-  предпочесть вместо `fff grep`), `codegraph_callers`/`codegraph_callees`,
-  `codegraph_impact` (радиус изменений перед рефактором), `codegraph_node`,
-  `codegraph_files`, `codegraph_status`. Доверять результатам — полный AST-парс,
-  не перепроверять grep'ом. `codegraph status` в начале сессии, `codegraph sync`
-  после bulk-изменений.
-- **serena** — LSP-точная навигация по символам и **единственный** инструмент,
-  который *редактирует* на уровне символов (`find_symbol`, `get_symbols_overview`,
-  `find_referencing_symbols`, `replace_symbol_body`, `insert_before_symbol`,
-  `insert_after_symbol`, `rename_symbol`, `safe_delete_symbol`). Предпочесть чтению
-  целых файлов. Язык проекта: **python** (см. `.serena/project.yml`). Serena
-  активирует проект автоматически (ищет `.serena/project.yml` или `.git` вверх от
-  cwd); в начале задачи полезно вызвать `initial_instructions`.
+  `codegraph_explore "<task>"` is the primary tool (entry points + related
+  symbols + source in one call); use `codegraph_context` only where exposed.
+  Trust the AST result and do not re-check it with grep. Run `codegraph status`
+  at session start and `codegraph sync` after bulk external edits.
+- **serena** — LSP-precise symbol navigation and symbol-level editing
+  (`find_symbol`, `get_symbols_overview`, `find_referencing_symbols`,
+  `replace_symbol_body`, `insert_*`, `rename_symbol`, `safe_delete_symbol`).
+  Prefer it over reading whole code files. Project language: **python**
+  (`.serena/project.yml`); call `initial_instructions` before coding.
 
 Цикл: locate (fff / `codegraph_search`) → understand (`codegraph_explore`) →
 assess risk (`codegraph_impact`) → read & edit (serena) → verify.
 
-Прочие MCP / плагины: **context7** — версионно-зависимые доки библиотек
-(предпочесть веб-поиску); **tavily** — общий веб-поиск (`tavily_search`,
-`tavily_extract`); **playwright** — браузерные smoke-проверки любого веб-UI.
+The global MCP configuration is inherited from the WSL user account. Do not
+create a project `.mcp.json` or copy credentials into this repository.
+Context7 handles version-sensitive library docs; Tavily handles fresh general
+research. TimesOil currently has no web UI, so Playwright is relevant only if a
+web surface is added.
 
 ## Memory (Honcho)
 
-Память — через установленный host-плагин: `honcho@honcho` из
-`plastic-labs/claude-honcho` в Claude Code и `codex-honcho` в Codex. Контекст о
-пользователе, предпочтениях и прошлой работе загружается хуками плагина в начале
-сессии; доверять ему, но перед ответами о предпочтениях проекта, рабочих правилах,
-прошлых решениях и запомненном контексте — свериться с Honcho ещё раз. Для активной
-работы: `search`/`chat` (recall), `get_context`/`get_representation` (текущая модель
-пользователя/проекта), `create_conclusions`/`create_conclusion` (сохранить
-устойчивые предпочтения, решения, паттерны, грабли). Разделять подтверждённое
-(файлы, вывод команд) и предположения (память, архитектурные догадки) до проверки.
+Use the installed host plugin: `codex-honcho` in Codex and `honcho@honcho` from
+`plastic-labs/claude-honcho` in Claude Code. The plugin owns hooks, its skill,
+and MCP registration; do not add a second hand-maintained Honcho block. Use
+`search`/`chat` for recall and `create_conclusions` for durable decisions and
+gotchas. Treat memory as inference until files or command output confirm it.
+Serena project memories complement Honcho: start with `mem:core`.
 
 ## Project Purpose
 
@@ -60,10 +130,12 @@ assess risk (`codegraph_impact`) → read & edit (serena) → verify.
 история 2007-05..2015-11 из гидродинамического симулятора; поле разбито
 разломами на 6 блоков (оцифровано в `src/timesoil/wells.py`).
 
-**Стек**: Python 3.13 + uv; `pandas/numpy/scipy/matplotlib`; модели —
-TiRex-2 (NX-AI, zero-shot, extra `tirex`), SPDM/ManiMamba (обучение на a100,
-отдельное окружение `external/spdm/.venv`, python 3.12 + mamba-ssm cu12),
-физика — CRM (`pywaterflood`) и фракционная модель Джентила.
+**Стек**: Python 3.13 + uv; `pandas/numpy/scipy/matplotlib`, LightGBM и
+MLForecast. Модельный контур включает Chronos-2, TiRex-2, TiDE, LightGBM и
+физические CRM/двухфазную CRM/CRMP с давлением и модель Джентила; SPDM/ManiMamba
+остаётся исследовательской линией на a100 в отдельном Python 3.12-окружении.
+Последний зафиксированный ансамбль: WAPE **3,74 % по нефти** и **3,21 % по
+жидкости** на трёх канонических срезах.
 
 **Структура и точки входа**:
 - `src/timesoil/` — данные (`data.py` — все причуды исходников задокументированы
@@ -71,7 +143,8 @@ TiRex-2 (NX-AI, zero-shot, extra `tirex`), SPDM/ManiMamba (обучение на
   раннер TiRex-2; этап 2: `crm.py` (ёмкостно-резистивная модель),
   `allocation.py` (адресная закачка), `fractional.py` (обводнённость);
 - `scripts/run_baselines.py`, `run_tirex.py`, `run_crm.py`,
-  `run_fractional.py` — бэктест (3 среза x 6 мес);
+  `run_fractional.py`, `run_chronos.py`, `run_lgbm.py`, `run_ensemble.py`,
+  `run_stacking.py` — бэктест и ансамбли;
 - `scripts/calibrate_intervals.py` — конформная калибровка квантилей;
 - `scripts/prepare_spdm_data.py` -> `spdm_run.sh` (на a100, tmux) ->
   `eval_spdm.py` — контур SPDM;
@@ -95,6 +168,7 @@ TiRex-2 (NX-AI, zero-shot, extra `tirex`), SPDM/ManiMamba (обучение на
 uv venv --python 3.13 .venv        # создать окружение
 uv add <package>                   # добавить зависимость (пишет в pyproject + uv.lock)
 uv sync                            # установить из uv.lock
+uv sync --extra tirex              # TiRex/Chronos; обычный sync может снять extra
 uv run python <script>.py          # запуск в окружении проекта
 ```
 
@@ -113,26 +187,56 @@ uv run python <script>.py          # запуск в окружении прое
   `/root/.local/bin/uv`; окружение `uv venv --python 3.13 .venv`.
 - **Синхронизация:** правка в WSL → `git commit && git push` → на a100 `git pull`.
   `rsync` на сервере нет — для файлов вне git используйте `scp -p`.
-- **GPU:** 6× A100-SXM4-40GB. **NVLink физически отсутствует** → межкарточно только
-  PCIe, P2P выключен (`NCCL_P2P_DISABLE=1` — норма для этого бокса). GPU0 занят
-  сервисом `whisperx` → использовать `CUDA_VISIBLE_DEVICES=1..5`. Для нескольких
-  карт: предпочтительно независимые задачи 1-на-GPU, либо DDP **внутри одного
-  NUMA-острова** (`{1,2}` ↔ node0 / `{3,4,5}` ↔ node1).
+- **GPU:** 6× A100-SXM4-40GB. **NVLink физически отсутствует** → межкарточно
+  только PCIe, P2P выключен (`NCCL_P2P_DISABLE=1` — норма для этого бокса).
+  Сервер разделяется с production-сервисами других проектов: ни одна карта не
+  считается свободной по умолчанию. Перед каждым запуском проверить
+  `nvidia-smi`; не останавливать и не вытеснять чужие сервисы. Использовать
+  только явно свободную или выделенную карту. Для нескольких карт
+  предпочтительны независимые задачи 1-на-GPU либо DDP внутри одного
+  NUMA-острова (`{1,2}` ↔ node0 / `{3,4,5}` ↔ node1).
 - **Long-running** запускать в `tmux new -d -s <name>`.
 
 ## Conventions
 
+- Владелец разрешил автономно менять код, запускать проверки, скачивать открытые
+  модели, выполнять согласованные A100-прогоны и синхронизацию. Спрашивать
+  только при платформенном подтверждении либо необратимом и неоднозначном
+  действии. Это не разрешает останавливать сервисы других проектов.
 - `from __future__ import annotations` в начале модулей; type hints; `X | Y` (3.10+).
 - Зависимости — только через `uv` (не `pip install` напрямую).
+- `raw_data/`, `data/`, `results/`, модельные веса и крупные артефакты не
+  коммитить; передавать через `scp -p`.
 - Экспертные отчёты/документы — на русском, без англоязычного жаргона;
   формулы — в LaTeX.
 - Рабочий журнал проекта — `docs/roadmap.md` (схема Plan → Act → Verify → Report).
 
-## Local tool versions
+## Task completion
 
-Verified **2026-07-04**: `fff-mcp 0.9.6`, `Serena 1.5.4.dev0` (git-main
-`oraios/serena`, новее релиза v1.5.3), `codegraph 1.2.0`, `codex-cli 0.142.5`,
-`node 22.20.0`, `npm 11.17.0`. MCP-серверы настроены **глобально**
-(`~/.claude.json`): `serena`, `tavily`, `fff`, `codegraph`; плагины Claude Code:
-`context7`, `playwright`, `honcho`. Новый проект наследует их автоматически —
-отдельная установка не нужна (нужен лишь `.serena/project.yml`, он уже создан).
+Минимальный локальный шлюз для изменений Python:
+
+```bash
+uv sync --locked
+uv run python -m compileall -q src scripts
+uv run python -c "import timesoil"
+git diff --check
+```
+
+После изменения модели или расчёта дополнительно выполнить релевантный
+воспроизводимый скрипт на a100, сохранить метрики в `docs/roadmap.md`, затем
+commit/push → `git pull --ff-only` на сервере. Не считать локальный smoke
+заменой серверного численного прогона.
+
+## Agent bootstrap
+
+Запускать Codex из корня проекта, иначе fff/Serena/CodeGraph получат другой cwd:
+
+```bash
+cd /home/ruslan_safaev/TimesOil
+codex
+```
+
+В начале сессии: `codegraph status`, Serena `initial_instructions`, затем
+`mem:core`. CodeGraph уже инициализирован локально; его SQLite-индекс
+не коммитится. MCP-серверы и Honcho подключаются глобально, дополнительных
+project-level credential/config файлов не требуется.
