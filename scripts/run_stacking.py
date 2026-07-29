@@ -46,6 +46,7 @@ COMPONENTS = {
         "chronos_lora": "chronos_lora_oil_tpd.csv",    # дообученный (этап 7)
         "tirex": "ext_tirex_oil_tpd.csv",
         "lgbm": "ext_lgbm_oil_tpd.csv",
+        "scenario_lgbm": "ext_scenario_lgbm_pooled_bhp_reference_oil_tpd.csv",
         "tide": "ext_nf_tide_oil_tpd.csv",
     },
     "liq_tpd": {
@@ -55,6 +56,7 @@ COMPONENTS = {
         "chronos": "ext_chronos_liq_tpd.csv",
         "chronos_lora": "chronos_lora_liq_tpd.csv",
         "lgbm": "ext_lgbm_liq_tpd.csv",
+        "scenario_lgbm": "ext_scenario_lgbm_pooled_bhp_reference_liq_tpd.csv",
     },
 }
 

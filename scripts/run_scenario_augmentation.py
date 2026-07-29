@@ -462,10 +462,15 @@ def main() -> None:
                 OUT / f"{prefix}scenario_lgbm_{variant}_{target}.csv",
                 index=False,
             )
+            reference = result[result["scenario"] == REFERENCE].copy()
+            reference.to_csv(
+                OUT
+                / f"{prefix}scenario_lgbm_{variant}_reference_{target}.csv",
+                index=False,
+            )
             summaries.extend(
                 metrics_rows(result, target, variant, training_rows)
             )
-            reference = result[result["scenario"] == REFERENCE]
             print(
                 f"{target:8s} {variant:14s} "
                 f"rows={training_rows:5d} "
