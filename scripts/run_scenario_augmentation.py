@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 from mlforecast import MLForecast
 from mlforecast.lag_transforms import RollingMean
-from mlforecast.target_transforms import LocalStandardScaler
+from mlforecast.target_transforms import Differences, LocalStandardScaler
 
 from timesoil import metrics as M
 from timesoil.allocation import allocate, hydro_weights
@@ -177,19 +177,24 @@ def run_variant(
     selected: tuple[str, ...],
     with_scenario_feature: bool,
     reference_weight: float,
-    scale_target: bool,
+    target_transform: str,
     cutoffs: tuple[pd.Timestamp, ...],
     step_size: int,
 ) -> tuple[pd.DataFrame, int]:
     frame, static_cols = pooled_frame(
         scenarios, target, selected, with_scenario_feature
     )
+    transforms = {
+        "raw": None,
+        "scaled": [LocalStandardScaler()],
+        "difference": [Differences([1])],
+    }
     model = MLForecast(
         models={"lgbm": lgb.LGBMRegressor(**LGB_PARAMS)},
         freq="MS",
         lags=[1, 2, 3, 4, 5, 6, 12],
         lag_transforms={1: [RollingMean(3), RollingMean(6)]},
-        target_transforms=[LocalStandardScaler()] if scale_target else None,
+        target_transforms=transforms[target_transform],
     )
     weight_col = None
     if reference_weight != 1.0:
@@ -315,6 +320,12 @@ def main() -> None:
         default=["oil_tpd", "liq_tpd"],
         choices=["oil_tpd", "liq_tpd"],
     )
+    parser.add_argument(
+        "--variants",
+        nargs="*",
+        default=None,
+        help="ограничить список вариантов (по умолчанию — все)",
+    )
     args = parser.parse_args()
 
     OUT.mkdir(exist_ok=True)
@@ -344,22 +355,50 @@ def main() -> None:
             flush=True,
         )
         variants = (
-            ("reference_only", (REFERENCE,), False, 1.0, False),
-            ("reference_scaled", (REFERENCE,), False, 1.0, True),
-            ("nearest", (REFERENCE, nearest), False, 1.0, False),
-            ("nearest_scaled", (REFERENCE, nearest), False, 1.0, True),
-            ("pooled", names, False, 1.0, False),
-            ("pooled_weighted", names, False, 3.0, False),
-            ("pooled_scaled", names, False, 1.0, True),
-            ("pooled_weighted_scaled", names, False, 3.0, True),
-            ("pooled_with_id", names, True, 1.0, False),
+            ("reference_only", (REFERENCE,), False, 1.0, "raw"),
+            ("reference_scaled", (REFERENCE,), False, 1.0, "scaled"),
+            ("reference_difference", (REFERENCE,), False, 1.0, "difference"),
+            ("nearest", (REFERENCE, nearest), False, 1.0, "raw"),
+            ("nearest_scaled", (REFERENCE, nearest), False, 1.0, "scaled"),
+            (
+                "nearest_difference",
+                (REFERENCE, nearest),
+                False,
+                1.0,
+                "difference",
+            ),
+            ("pooled", names, False, 1.0, "raw"),
+            ("pooled_weighted", names, False, 3.0, "raw"),
+            ("pooled_scaled", names, False, 1.0, "scaled"),
+            (
+                "pooled_weighted_scaled",
+                names,
+                False,
+                3.0,
+                "scaled",
+            ),
+            ("pooled_difference", names, False, 1.0, "difference"),
+            (
+                "pooled_weighted_difference",
+                names,
+                False,
+                3.0,
+                "difference",
+            ),
+            ("pooled_with_id", names, True, 1.0, "raw"),
         )
+        if args.variants is not None:
+            known = {variant[0] for variant in variants}
+            unknown = set(args.variants).difference(known)
+            if unknown:
+                raise SystemExit(f"неизвестные варианты: {sorted(unknown)}")
+            variants = tuple(v for v in variants if v[0] in args.variants)
         for (
             variant,
             selected,
             with_scenario_feature,
             reference_weight,
-            scale_target,
+            target_transform,
         ) in variants:
             result, training_rows = run_variant(
                 scenarios,
@@ -368,7 +407,7 @@ def main() -> None:
                 selected,
                 with_scenario_feature,
                 reference_weight,
-                scale_target,
+                target_transform,
                 cutoffs,
                 step_size,
             )
