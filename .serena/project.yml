@@ -1,6 +1,10 @@
 # the name by which the project can be referenced within Serena/when chatting with the LLM.
 project_name: "TimesOil"
 
+# language servers started for this project
+languages:
+- python
+
 # the encoding used by text files in the project
 # For a list of possible encodings, see https://docs.python.org/3.11/library/codecs.html#standard-encodings
 encoding: "utf-8"
