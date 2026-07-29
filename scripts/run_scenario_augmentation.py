@@ -26,6 +26,7 @@ from timesoil.crm import crm_forecast
 from timesoil.data import (
     injection_matrix,
     load_scenarios,
+    pivot,
     producer_matrices,
     static_features,
     well_coords,
@@ -55,6 +56,7 @@ class ScenarioData:
     allocated_injection: pd.DataFrame
     block_injection: pd.DataFrame
     pressure: pd.DataFrame
+    bottomhole_pressure: pd.DataFrame
     crm: pd.DataFrame
 
 
@@ -117,6 +119,7 @@ def prepare_scenarios(
             allocated_injection=allocated,
             block_injection=block_sum,
             pressure=mats["p_res"],
+            bottomhole_pressure=pivot(monthly, "p_bhp", PRODUCERS),
             crm=crm,
         )
     return prepared
@@ -141,6 +144,7 @@ def pooled_frame(
     target: str,
     selected: tuple[str, ...],
     with_scenario_feature: bool,
+    with_bhp_history: bool,
 ) -> tuple[pd.DataFrame, list[str]]:
     static = static_table()
     scenario_codes = {scenario: code for code, scenario in enumerate(scenarios)}
@@ -155,6 +159,20 @@ def pooled_frame(
             data.pressure,
         )[target]
         frame["well_id"] = frame["unique_id"].astype(int)
+        if with_bhp_history:
+            bhp = (
+                data.bottomhole_pressure.shift(HORIZON)
+                .rename_axis(index="ds", columns="well_id")
+                .stack(future_stack=True)
+                .rename("bhp_lag6")
+                .reset_index()
+            )
+            frame = frame.merge(
+                bhp,
+                on=["ds", "well_id"],
+                how="left",
+                validate="one_to_one",
+            )
         frame["unique_id"] = scenario + "|" + frame["unique_id"].astype(str)
         frame = frame.merge(static, on="well_id", how="left", validate="many_to_one")
         if with_scenario_feature:
@@ -176,13 +194,18 @@ def run_variant(
     variant: str,
     selected: tuple[str, ...],
     with_scenario_feature: bool,
+    with_bhp_history: bool,
     reference_weight: float,
     target_transform: str,
     cutoffs: tuple[pd.Timestamp, ...],
     step_size: int,
 ) -> tuple[pd.DataFrame, int]:
     frame, static_cols = pooled_frame(
-        scenarios, target, selected, with_scenario_feature
+        scenarios,
+        target,
+        selected,
+        with_scenario_feature,
+        with_bhp_history,
     )
     transforms = {
         "raw": None,
@@ -355,37 +378,59 @@ def main() -> None:
             flush=True,
         )
         variants = (
-            ("reference_only", (REFERENCE,), False, 1.0, "raw"),
-            ("reference_scaled", (REFERENCE,), False, 1.0, "scaled"),
-            ("reference_difference", (REFERENCE,), False, 1.0, "difference"),
-            ("nearest", (REFERENCE, nearest), False, 1.0, "raw"),
-            ("nearest_scaled", (REFERENCE, nearest), False, 1.0, "scaled"),
+            ("reference_only", (REFERENCE,), False, False, 1.0, "raw"),
+            ("reference_bhp", (REFERENCE,), False, True, 1.0, "raw"),
+            ("reference_scaled", (REFERENCE,), False, False, 1.0, "scaled"),
             (
-                "nearest_difference",
-                (REFERENCE, nearest),
+                "reference_difference",
+                (REFERENCE,),
+                False,
                 False,
                 1.0,
                 "difference",
             ),
-            ("pooled", names, False, 1.0, "raw"),
-            ("pooled_weighted", names, False, 3.0, "raw"),
-            ("pooled_scaled", names, False, 1.0, "scaled"),
+            ("nearest", (REFERENCE, nearest), False, False, 1.0, "raw"),
+            ("nearest_bhp", (REFERENCE, nearest), False, True, 1.0, "raw"),
+            (
+                "nearest_scaled",
+                (REFERENCE, nearest),
+                False,
+                False,
+                1.0,
+                "scaled",
+            ),
+            (
+                "nearest_difference",
+                (REFERENCE, nearest),
+                False,
+                False,
+                1.0,
+                "difference",
+            ),
+            ("pooled", names, False, False, 1.0, "raw"),
+            ("pooled_bhp", names, False, True, 1.0, "raw"),
+            ("pooled_weighted", names, False, False, 3.0, "raw"),
+            ("pooled_weighted_bhp", names, False, True, 3.0, "raw"),
+            ("pooled_scaled", names, False, False, 1.0, "scaled"),
             (
                 "pooled_weighted_scaled",
                 names,
                 False,
+                False,
                 3.0,
                 "scaled",
             ),
-            ("pooled_difference", names, False, 1.0, "difference"),
+            ("pooled_difference", names, False, False, 1.0, "difference"),
             (
                 "pooled_weighted_difference",
                 names,
                 False,
+                False,
                 3.0,
                 "difference",
             ),
-            ("pooled_with_id", names, True, 1.0, "raw"),
+            ("pooled_with_id", names, True, False, 1.0, "raw"),
+            ("pooled_bhp_with_id", names, True, True, 1.0, "raw"),
         )
         if args.variants is not None:
             known = {variant[0] for variant in variants}
@@ -397,6 +442,7 @@ def main() -> None:
             variant,
             selected,
             with_scenario_feature,
+            with_bhp_history,
             reference_weight,
             target_transform,
         ) in variants:
@@ -406,6 +452,7 @@ def main() -> None:
                 variant,
                 selected,
                 with_scenario_feature,
+                with_bhp_history,
                 reference_weight,
                 target_transform,
                 cutoffs,
