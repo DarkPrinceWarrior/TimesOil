@@ -9,8 +9,6 @@
 | **Трек 1** | **Model Y** | `Model_Y (3).zip` | `docs/hackathon/models/model_y/` |
 | **Трек 2** | **Model Z** | **`Model_Z_final_OPM.zip`** | `docs/hackathon/models/model_z_final_opm/` |
 
-**Model_Z_final_OPM заменяет старый Model_Z.zip.** Старый архив (`models/model_z_old/Model_Z.zip`, дата 2026-08-07) сохранён только для сравнения; для прогонов и сдачи используйте **final OPM**.
-
 Сводка по трекам и ЧДД — [tracks.md](tracks.md). Симуляторы и открытые полигоны — [simulators.md](simulators.md).
 
 ---
@@ -53,24 +51,28 @@
 
 ## Model Z (трек 2)
 
-**Актуальный архив:** `Model_Z_final_OPM.zip` (~18,4 МБ сжатый, ~80 МБ распакованный, 14 файлов, дата 2026-08-14).
+**Архив:** `Model_Z_final_OPM.zip` (~18,4 МБ сжатый, ~80 МБ распакованный, 14 файлов, дата 2026-08-14).
 
-**Устаревший:** `Model_Z.zip` (~17,7 МБ, 8 файлов, 2026-08-07) — без папки USER и без правок под OPM Flow.
+**Путь в репозитории:** `docs/hackathon/models/model_z_final_opm/`.
 
-| Параметр | Model Z (old) | Model Z final OPM |
-|----------|---------------|-------------------|
-| **START** | 01 JUN 1991 | 01 JUN 1991 |
-| **DIMENS** | 91 × 102 × 59 | 91 × 102 × 59 |
-| **WELLDIMS** | 137 109 2 137 | 137 109 2 137 |
-| **Шагов DATES** | 371 | 371 |
-| **Диапазон DATES** | 01 NOV 1994 … 01 SEP 2025 | то же |
-| **WCONINJE** | 339 | 338 |
-| **WCONPROD** | 371 | 370 |
-| **Уник. нагнетатели (WCONINJE)** | 41 | 41 |
-| **Уник. добывающие (WCONPROD)** | 92 | 92 |
-| **WELSPECS (добывающие)** | 103 | 103 |
+**Ключевые параметры DATA:**
 
-Подробное побайтовое сравнение — [model_z_opm_diff.md](model_z_opm_diff.md).
+- **START:** 01 JUN 1991
+- **DIMENS:** 91 × 102 × 59
+- **WELLDIMS:** 137 109 2 137
+- **371 шаг DATES:** 01 NOV 1994 … 01 SEP 2025
+- DATA совместим с OPM Flow; ключи tNavigator в сетке не используются
+
+**Скважины и расписание:**
+
+- **WELSPECS (добывающие):** 103
+- **WCONPROD:** 370 блоков, 92 уникальные скважины
+- **WCONINJE:** 338 блоков, 41 уникальная нагнетательная
+- Расписание: блоки **WELSPECS** + **COMPDAT** по IJK (~60 блоков COMPDAT, ~31 800 строк перфораций)
+
+**Вспомогательные файлы:**
+
+- `USER/script_1.py` — выгрузка отчёта tNavigator → CSV (префикс `МодельZ_`)
 
 **Старт учёта ЧДД:** 01.01.2007.
 
@@ -82,14 +84,14 @@
 
 | Инструмент | Когда использовать |
 |------------|-------------------|
-| **tNavigator** | Если есть лицензия — нативный формат исходников (Model Y; старый Model Z с WELLTRACK) |
-| **[OPM Flow](https://opm-project.org/?page_id=19)** | **Рекомендуется для Model Z final OPM** — открытый симулятор, Eclipse/INCLUDE |
+| **tNavigator** | Model Y — нативный формат исходников; при наличии лицензии также можно считать Model Z |
+| **[OPM Flow](https://opm-project.org/?page_id=19)** | **Рекомендуется для Model Z** — открытый симулятор, Eclipse/INCLUDE |
 | **[MRST](https://www.sintef.no/projectweb/mrst/)** | Прототипы, исследования, постобработка полей |
 
 Типовой цикл для трека 2:
 
 1. МАС генерирует `wells_schedule.inc` (или эквивалент).
-2. Подставить в SCHEDULE / прогнать **OPM Flow** (или tNavigator для сверки).
+2. Подставить в SCHEDULE / прогнать **OPM Flow** (или tNavigator при лицензии).
 3. Считать SUMMARY / RFT / restart → признаки для суррогата и финальная верификация кандидата.
 
 `script_1.py` в USER — вспомогательный экспорт tNavigator в CSV (`E:\reports\…`); для OPM Flow используйте стандартный post-processing (Python + `.SMSPEC`/`.UNSMRY` или конвертеры).
@@ -112,7 +114,6 @@
 Без полных `*grid.inc` (>40–70 МБ) маленькие файлы лежат в:
 
 - `models/model_y/unpacked_small/` — DATA, SUMMARY, `script_1.py`, HEAD/TAIL `*_sch.inc`
-- `models/model_z_old/unpacked_small/` — DATA, summary, init, props, HEAD/TAIL sch
-- `models/model_z_final_opm/unpacked_small/` — то же + `script_1.py`
+- `models/model_z_final_opm/unpacked_small/` — DATA, summary, init, props, HEAD/TAIL sch, `script_1.py`
 
 Полные сетки остаются только внутри zip; для прогона копируйте архив целиком на машину с симулятором.
