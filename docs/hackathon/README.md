@@ -35,12 +35,12 @@
 
 ## Модели и ЧДД
 
-| Трек | Актуальный архив | Не использовать | Старт расчёта ЧДД |
-|------|------------------|-----------------|-------------------|
-| 1 | `models/model_y/Model_Y (3).zip` | — | 01.01.2014 |
-| 2 | `models/model_z_final_opm/Model_Z_final_OPM.zip` | `models/model_z_old/Model_Z.zip` | 01.01.2007 |
+| Трек | Архив | Старт расчёта ЧДД |
+|------|-------|-------------------|
+| 1 | `models/model_y/Model_Y (3).zip` | 01.01.2014 |
+| 2 | `models/model_z_final_opm/Model_Z_final_OPM.zip` | 01.01.2007 |
 
-Актуальный Model Z подогнан под внешний симулятор: из сетки убраны ключи tNavigator, в расписании `COMPDAT` вместо `WELLTRACK`. Горизонт Z: 01 NOV 1994 … 01 SEP 2025, 103 добывающие, 41 нагнетательная. Подробности: [notes/model_z_opm_diff.md](notes/model_z_opm_diff.md).
+Model Z в архиве `Model_Z_final_OPM.zip` подготовлен для OPM Flow: сетка без ключей tNavigator, расписание на `COMPDAT`. Горизонт Z: 01 NOV 1994 … 01 SEP 2025, 103 добывающие, 41 нагнетательная. Подробности: [notes/models.md](notes/models.md).
 
 Картины гидродинамики и данные для суррогата организаторы не выкладывают — их нужно снять самим прогоном симулятора: tNavigator (если есть лицензия), [OPM Flow](https://opm-project.org/?page_id=19), [MRST](https://www.sintef.no/projectweb/mrst/). Открытые датасеты (OPM, Volve, ORSD, модели ТПУ) — только для учёбы, не объект конкурса.
 
@@ -59,7 +59,7 @@
 7. [notes/chdd_usage.md](notes/chdd_usage.md) и [notes/npv.md](notes/npv.md) — расчёт ЧДД.
 8. [notes/timesoil_map.md](notes/timesoil_map.md) — что уже есть в репозитории TimesOil.
 9. [notes/track1_channel.md](notes/track1_channel.md) — ответы организаторов из канала трека 1 (ресурсы, LLM, вода, компенсация).
-10. [notes/faq.md](notes/faq.md) — суррогат, симуляторы, обновление Model Z.
+10. [notes/faq.md](notes/faq.md) — суррогат, симуляторы, архив Model Z.
 11. [notes/lectures.md](notes/lectures.md) — кратко по лекциям; полные тексты в `extracted/`.
 
 ## Карта каталога
@@ -71,7 +71,7 @@
 | `extracted/` | полный текст лекций, ТЗ и методик |
 | `sources/` | исходные pptx / pdf / docx / zip |
 | `chdd/` | эталонный расчётчик ЧДД |
-| `models/` | архивы Model Y, старый Model Z, актуальный Model Z для OPM |
+| `models/` | архивы Model Y и Model Z (OPM) |
 | `canvas/` | копия панели разбора из чата |
 | `sync_desktop.sh` | копия справочника на рабочий стол |
 
