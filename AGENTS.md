@@ -60,11 +60,13 @@ command output.
 
 ## Verified local tools
 
-Verified on 2026-07-29: Codex CLI `0.146.0`, Claude Code `2.1.212`,
-uv `0.11.25`, Node `22.20.0`, npm `11.17.0`, fff-mcp `0.10.0`,
-CodeGraph `1.5.0`, Serena `1.6.1.dev0`, zoxide `0.10.0`, fzf `0.74.1`, and
-Starship `1.26.0`. Global Codex MCP includes fff, CodeGraph, Serena, Context7,
-Tavily, Playwright, Figma, Honcho, and DBHub.
+Verified on 2026-08-17: Codex CLI `0.147.0`, Claude Code `2.1.231`,
+uv `0.11.25`, Node `22.20.0`, npm `11.17.0`, fff-mcp `0.10.5`,
+CodeGraph `1.5.0`, Serena `1.7.0`, Context7 `4.0.2`, Playwright MCP `0.0.79`,
+Tavily MCP `0.2.22`, DBHub `1.2.0`, Ponytail `4.9.0`, Caveman MCP
+(`@caveman-ai/cli` `1.2.0`), zoxide `0.10.0`, fzf `0.74.1`, and
+Starship `1.26.0`. Global MCP includes fff, CodeGraph, Serena, Context7,
+Tavily, Playwright, Figma, Honcho, DBHub, Ponytail, and Caveman.
 
 ## Working style
 
@@ -88,28 +90,51 @@ with code in this repository.
 
 Code navigation uses three MCP servers, each with one job — do not duplicate them:
 
-- **fff** — locate files and literal text (strings, comments, log messages).
-  Use fff instead of shell `find`/`grep`/`rg`. One bare identifier per query;
-  after two greps, read the code.
-- **codegraph** — structural questions over a tree-sitter symbol graph.
-  `codegraph_explore "<task>"` is the primary tool (entry points + related
-  symbols + source in one call); use `codegraph_context` only where exposed.
-  Trust the AST result and do not re-check it with grep. Run `codegraph status`
-  at session start and `codegraph sync` after bulk external edits.
-- **serena** — LSP-precise symbol navigation and symbol-level editing
+- **fff 0.10.5** — locate files and literal text (strings, comments, log
+  messages). Tools: `find_files`, `grep`, `multi_grep`. Use fff instead of
+  shell `find`/`grep`/`rg`. One bare identifier per query; after two greps,
+  read the code. Grep keeps FilePath scope in regex/literal fallback;
+  `multi_grep` accepts standalone constraints. Do not index `$HOME` or `/`
+  (`--enable-home-scan` / `--enable-root-scan` stay off).
+- **codegraph 1.5.0** — structural questions over a tree-sitter symbol graph.
+  Native Rust parse engine; a save reaches the graph in well under a second
+  (watcher quiet window 300ms). MCP tool is only `codegraph_explore` (entry
+  points + related symbols + source). Callers/impact/status/sync are CLI —
+  there is no `codegraph_context` / `codegraph_search` / `codegraph_impact`
+  MCP tool. Trust the AST result and do not re-check it with grep. Run
+  `codegraph status` at session start and `codegraph sync` after bulk
+  external edits.
+- **serena 1.7.0** — LSP-precise symbol navigation and symbol-level editing
   (`find_symbol`, `get_symbols_overview`, `find_referencing_symbols`,
-  `replace_symbol_body`, `insert_*`, `rename_symbol`, `safe_delete_symbol`).
-  Prefer it over reading whole code files. Project language: **python**
-  (`.serena/project.yml`); call `initial_instructions` before coding.
+  `find_declaration`, `find_implementations`, `replace_symbol_body`,
+  `insert_*`, `rename_symbol`, `safe_delete_symbol`, `replace_content`,
+  `replace_in_files`). Prefer it over reading whole code files. Project
+  language: **python** (`.serena/project.yml`); call `initial_instructions`
+  before coding. Project key `languages` → `language_servers` (auto-migrated).
+  Explicit file tools (`read_file`, `replace_content`, `create_text_file`)
+  are no longer blocked by ignore lists; subtree tools take
+  `skip_ignored_files`. `get_current_config` includes language-server status.
+  Activation errors appear in the system prompt, not only logs. Dashboard is
+  disabled globally — do not re-enable it.
 
-Цикл: locate (fff / `codegraph_search`) → understand (`codegraph_explore`) →
-assess risk (`codegraph_impact`) → read & edit (serena) → verify.
+Цикл: locate (fff) → understand (`codegraph_explore`) → assess risk
+(`codegraph impact` CLI) → read & edit (serena) → verify.
 
 The global MCP configuration is inherited from the WSL user account. Do not
 create a project `.mcp.json` or copy credentials into this repository.
-Context7 handles version-sensitive library docs; Tavily handles fresh general
-research. TimesOil currently has no web UI, so Playwright is relevant only if a
-web surface is added.
+Context7 `4.0.2` (`resolve-library-id`, `query-docs`; one concept per query;
+HTTP stateless after MCP SDK v2) handles version-sensitive library docs;
+Tavily `0.2.22` handles fresh general research. Playwright `0.0.79`:
+`browser_take_screenshot` accepts `type` png/jpeg/webp; `--output-mode` is
+gone. TimesOil currently has no web UI, so Playwright is relevant only if a
+web surface is added. DBHub `1.2.0` returns one result set per SQL statement.
+
+**Ponytail 4.9.0** shrinks *code*: always-on 7-rung ladder (YAGNI → reuse →
+stdlib → native → installed dep → one line → minimum). MCP:
+`ponytail_instructions`. Skills: `/ponytail`, `/ponytail-review`,
+`/ponytail-audit`. **Caveman** shrinks *prose*: terse talk, code stays exact.
+MCP: `caveman_compress` / `caveman_retrieve` / `caveman_stats` /
+`caveman_toon_encode` / `caveman_toon_decode`. Use both together.
 
 ## Memory (Honcho)
 
