@@ -55,3 +55,9 @@ Thumbs.db
 
 # --- внешние репозитории (SPDM на a100) ---
 external/
+
+# --- хакатон AIOS: исходники и сетки моделей (справочник в docs/hackathon/) ---
+docs/hackathon/sources/
+docs/hackathon/models/
+docs/hackathon/**/*.zip
+!docs/hackathon/chdd/**/*.xlsx
