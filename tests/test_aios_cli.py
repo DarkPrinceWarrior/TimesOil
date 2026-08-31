@@ -34,7 +34,11 @@ class CLITest(unittest.TestCase):
     def test_doctor_is_json_and_never_prints_secrets(self) -> None:
         secret = "api-key-must-not-leak"
         output = io.StringIO()
-        with patch.dict("os.environ", {"LLM_API_KEY": secret}, clear=False), patch(
+        with patch.dict(
+            "os.environ",
+            {"LLM_API_KEY": secret, "LLM_BASE_URL": "https://qwen.example/v1"},
+            clear=True,
+        ), patch(
             "timesoil.aios.cli.shutil.which", return_value=None
         ), patch("sys.stdout", output):
             self.assertEqual(cli.main(["doctor"]), 0)
@@ -49,23 +53,22 @@ class CLITest(unittest.TestCase):
                 "connectivity_verified": False,
             },
         )
-        self.assertIn("component_available", report["track1"])
-        self.assertIn("certified", report["track1"])
+        self.assertEqual(set(report), {"qwen", "track2", "chdd"})
         self.assertIn("model_z_trained", report["track2"])
-        self.assertFalse(report["track1"]["runtime_ready"])
+        self.assertFalse(report["track2"]["runtime_ready"])
 
     def test_doctor_inspects_exact_pinned_image_without_shell(self) -> None:
         output = io.StringIO()
         completed = subprocess.CompletedProcess([], 0, "[]", "")
-        with patch("timesoil.aios.cli.shutil.which", return_value="/usr/bin/docker"), patch(
+        with patch("timesoil.aios.cli.shutil.which", return_value="docker-bin"), patch(
             "timesoil.aios.cli.subprocess.run", return_value=completed
         ) as run, patch("sys.stdout", output):
             self.assertEqual(cli.main(["doctor"]), 0)
 
-        self.assertTrue(json.loads(output.getvalue())["track1"]["runtime_ready"])
+        self.assertTrue(json.loads(output.getvalue())["track2"]["runtime_ready"])
         self.assertEqual(
             run.call_args.args[0],
-            ["/usr/bin/docker", "image", "inspect", OPM_IMAGE],
+            ["docker-bin", "image", "inspect", OPM_IMAGE],
         )
         self.assertFalse(run.call_args.kwargs["shell"])
         self.assertEqual(run.call_args.kwargs["timeout"], 5.0)
@@ -78,7 +81,7 @@ class CLITest(unittest.TestCase):
         ), patch("sys.stdout", output):
             self.assertEqual(cli.main(["doctor"]), 0)
 
-        self.assertFalse(json.loads(output.getvalue())["track1"]["runtime_ready"])
+        self.assertFalse(json.loads(output.getvalue())["track2"]["runtime_ready"])
 
     def test_agent_experiment_reads_stdin_and_outputs_no_reasoning(self) -> None:
         result = {
@@ -108,7 +111,7 @@ class CLITest(unittest.TestCase):
         workflow = Mock()
 
         with patch("timesoil.aios.cli.LLMConfig.from_env", return_value=Mock()), patch(
-            "timesoil.aios.cli.TatneftLLMClient", return_value=client
+            "timesoil.aios.cli.ExternalQwenClient", return_value=client
         ), patch("timesoil.aios.cli.AgentWorkflow", return_value=workflow) as factory, patch(
             "timesoil.aios.cli.run_agent_experiment",
             AsyncMock(return_value=response),
@@ -119,6 +122,36 @@ class CLITest(unittest.TestCase):
         self.assertEqual(registry.names, frozenset(sum(GROUNDED_ROLE_TOOLS.values(), ())))
         self.assertEqual(factory.call_args.kwargs["role_tools"], GROUNDED_ROLE_TOOLS)
         self.assertEqual(result, {"complete": True})
+
+    def test_full_cycle_uses_internal_production_factory(self) -> None:
+        client = Mock()
+        client.__aenter__ = AsyncMock(return_value=client)
+        client.__aexit__ = AsyncMock(return_value=None)
+        request = Mock()
+        destination = Path("full-cycle-test")
+        expected = Mock()
+        workflow = Mock()
+        workflow.run = AsyncMock(return_value=expected)
+
+        with patch("timesoil.aios.cli.LLMConfig.from_env", return_value=Mock()), patch(
+            "timesoil.aios.cli.ExternalQwenClient", return_value=client
+        ), patch.object(
+            cli.FullCycleWorkflow, "_from_cli", return_value=workflow
+        ) as factory:
+            result = asyncio.run(
+                cli._run_full_cycle(
+                    request,
+                    destination,
+                    run_id="production-cycle",
+                    timeout_seconds=321.0,
+                )
+            )
+
+        factory.assert_called_once_with(client, timeout_seconds=321.0)
+        workflow.run.assert_awaited_once_with(
+            request, destination, run_id="production-cycle"
+        )
+        self.assertIs(result, expected)
 
     def test_chdd_requires_canonical_csv_and_writes_below_runs_root(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -200,7 +233,6 @@ class CLITest(unittest.TestCase):
                         "--run-id",
                         "baseline",
                         "--low",
-                        "--normalize-model-y",
                     ]
                 )
 
@@ -208,22 +240,16 @@ class CLITest(unittest.TestCase):
             self.assertEqual(
                 runner.run.call_args.kwargs["parsing_strictness"], "low"
             )
-            self.assertTrue(runner.run.call_args.kwargs["normalize_model_y"])
             runner.extract_summary_report.assert_called_once()
             self.assertEqual(json.loads(output.getvalue())["warnings"], ["PINCHREG"])
 
-    def test_model_y_normalization_requires_explicit_low(self) -> None:
-        error = io.StringIO()
-        with patch("sys.stderr", error):
-            code = cli.main(["opm-baseline", "case.zip", "--normalize-model-y"])
-        self.assertEqual(code, 1)
-        self.assertIn("requires explicit --low", error.getvalue())
-
     def test_serve_invokes_fixed_app_without_subprocess(self) -> None:
         with patch("uvicorn.run") as run:
-            self.assertEqual(cli.main(["serve", "--port", "9000"]), 0)
+            self.assertEqual(
+                cli.main(["serve", "--host", "api.example", "--port", "9000"]), 0
+            )
         self.assertEqual(run.call_args.kwargs["port"], 9000)
-        self.assertEqual(run.call_args.kwargs["host"], "127.0.0.1")
+        self.assertEqual(run.call_args.kwargs["host"], "api.example")
 
 
 if __name__ == "__main__":

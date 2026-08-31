@@ -11,11 +11,18 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt
 
-from .agents import AgentState, AgentWorkflow
+from .agents import AgentState, AgentWorkflow, WorkflowError
 from .economics import CHDDEconomicsAdapter, EconomicResult
-from .llm import APPROVED_MODEL, LLMConfig, TatneftLLMClient
+from .llm import APPROVED_MODEL, ExternalQwenClient, LLMConfig
+from .surrogate import Track2Surrogate
 from .tools import GROUNDED_ROLE_TOOLS, build_grounded_tool_registry
 from .ui import OPERATOR_PAGE, UI_HEADERS
+
+
+MODEL_Z_SURROGATE_MANIFEST_SHA256 = (
+    "de825094812f4f3faf83b8c5e2e3338a519bc866a2ac728322080bbd0a17ec8a"
+)
+_MODEL_Z_SURROGATE_DIR = "/app/model-z-surrogate-v4"
 
 
 class APIModel(BaseModel):
@@ -48,7 +55,6 @@ class CHDDCapability(APIModel):
 
 class CapabilitiesResponse(APIModel):
     qwen: QwenCapability
-    track1: TrackCapability
     track2: Track2Capability
     chdd: CHDDCapability
 
@@ -121,7 +127,7 @@ async def get_agent_workflow() -> AsyncIterator[AgentWorkflow]:
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Qwen3.6 is not configured",
         ) from None
-    async with TatneftLLMClient(config) as client:
+    async with ExternalQwenClient(config) as client:
         yield AgentWorkflow(
             client,
             build_grounded_tool_registry(),
@@ -165,7 +171,30 @@ def _chdd_ready() -> bool:
     return True
 
 
-app = FastAPI(title="TimesOil AIOS", version="1")
+def _model_z_trained() -> bool:
+    if len(MODEL_Z_SURROGATE_MANIFEST_SHA256) != 64:
+        return False
+    directory = Path(
+        os.environ.get("MODEL_Z_SURROGATE_DIR", _MODEL_Z_SURROGATE_DIR)
+    )
+    try:
+        model = Track2Surrogate.load(
+            directory,
+            expected_manifest_sha256=MODEL_Z_SURROGATE_MANIFEST_SHA256,
+        )
+    except Exception:
+        # Readiness must fail closed for every corrupt or incompatible artifact.
+        return False
+    metadata = model.training_metadata
+    return (
+        isinstance(metadata, dict)
+        and metadata.get("model_z_ready") is True
+        and metadata.get("pipeline_proof_only") is False
+        and metadata.get("source_models") == ["model_z_opm"]
+    )
+
+
+app = FastAPI(title="Track 2 AIOS", version="1")
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -186,11 +215,10 @@ def capabilities() -> CapabilitiesResponse:
             configured=_qwen_configured(),
             connectivity_verified=False,
         ),
-        track1=TrackCapability(component_available=True, certified=False),
         track2=Track2Capability(
             component_available=True,
             certified=False,
-            model_z_trained=False,
+            model_z_trained=_model_z_trained(),
         ),
         chdd=CHDDCapability(component_available=True, ready=_chdd_ready()),
     )
@@ -201,7 +229,18 @@ async def run_agent_experiment(
     request: AgentExperimentRequest,
     workflow: AgentWorkflowDep,
 ) -> AgentExperimentResponse:
-    state: AgentState = await workflow.run(request.context)
+    try:
+        state: AgentState = await workflow.run(request.context)
+    except WorkflowError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="agent context or response violated the bounded contract",
+        ) from None
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="external Qwen workflow failed",
+        ) from None
     return AgentExperimentResponse(
         run_id=state.run_id,
         complete=state.complete,

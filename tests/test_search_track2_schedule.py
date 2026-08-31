@@ -41,6 +41,45 @@ sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
 
 
+_EXPECTED_SCENARIO_IDS = (
+    "baseline",
+    *(f"perturbation-{index:03d}" for index in range(1, 10)),
+)
+
+
+def _scenario_batch(
+    *,
+    baseline_dataset_sha256: str = "d" * 64,
+    baseline_manifest_sha256: str = "e" * 64,
+) -> dict[str, object]:
+    records = [
+        {
+            "scenario_id": scenario_id,
+            "actions_sha256": MODULE._EXPECTED_SCENARIO_ACTIONS_SHA256[scenario_id],
+            "dataset_sha256": (
+                baseline_dataset_sha256
+                if scenario_id == "baseline"
+                else sha256(f"dataset:{scenario_id}".encode()).hexdigest()
+            ),
+            "export_manifest_sha256": (
+                baseline_manifest_sha256
+                if scenario_id == "baseline"
+                else sha256(f"manifest:{scenario_id}".encode()).hexdigest()
+            ),
+        }
+        for scenario_id in _EXPECTED_SCENARIO_IDS
+    ]
+    return {
+        "schema": MODULE._TRAINING_LINEAGE_SCHEMA,
+        "scenario_run_schema": MODULE._SCENARIO_RUN_SCHEMA,
+        "batch_manifest_sha256": "b" * 64,
+        "official_source_sha256": MODEL_Z_SOURCE_SHA256,
+        "scenario_index_sha256": MODULE._MODEL_Z_SCENARIO_INDEX_SHA256,
+        "scenario_ids": list(_EXPECTED_SCENARIO_IDS),
+        "scenarios": records,
+    }
+
+
 class _FakeSurrogate:
     def __init__(self, *, baseline_ood: bool = False) -> None:
         self.calls: list[np.ndarray] = []
@@ -51,7 +90,7 @@ class _FakeSurrogate:
             "method": "scenario_loso_max_normalized_residual",
             "nominal_coverage": 0.9,
             "scenario_count": 10,
-            "scenario_ids": [f"scenario-{index}" for index in range(10)],
+            "scenario_ids": list(_EXPECTED_SCENARIO_IDS),
             "quantile_rank": 10,
             "independent_validation": False,
         }
@@ -61,6 +100,7 @@ class _FakeSurrogate:
             "dataset_hash": "verified-dataset",
             "scenario_ids": calibration["scenario_ids"],
             "conformal_calibration": calibration,
+            "scenario_batch": _scenario_batch(),
         }
 
     def rollout(self, initial_state: np.ndarray, actions: np.ndarray) -> SimpleNamespace:
@@ -100,7 +140,7 @@ def _trajectory() -> ScenarioTrajectory:
     )
     actions = np.repeat(monthly[None, ...], 6, axis=0)
     return ScenarioTrajectory(
-        "model-z-baseline",
+        "baseline",
         "model_z_opm",
         dates,
         wells,
@@ -408,9 +448,17 @@ def test_search_consumes_rollout_and_preserves_bounds_and_injection() -> None:
     assert len({item.wells_schedule_sha256 for item in result.accepted}) == 8
     assert result.certified is False
     assert result.horizon_months == 6
-    baseline_injection = _monthly_injection(result.accepted[0].actions)
+    baseline_injection = {
+        (action.month, action.well): action
+        for action in result.accepted[0].actions
+        if action.target is ControlTarget.WATER_INJECTION_RATE
+    }
     for candidate in result.accepted:
-        assert _monthly_injection(candidate.actions) == pytest.approx(baseline_injection)
+        assert {
+            (action.month, action.well): action
+            for action in candidate.actions
+            if action.target is ControlTarget.WATER_INJECTION_RATE
+        } == baseline_injection
         assert max(
             action.value for action in candidate.actions if action.target.value == "LRAT"
         ) <= 500.0
@@ -467,7 +515,7 @@ def test_search_cli_writes_uncertified_lineage_and_replay_command(
         "method": "scenario_loso_max_normalized_residual",
         "nominal_coverage": 0.9,
         "scenario_count": 10,
-        "scenario_ids": [f"scenario-{index}" for index in range(10)],
+        "scenario_ids": list(_EXPECTED_SCENARIO_IDS),
         "quantile_rank": 10,
         "independent_validation": False,
     }
@@ -481,6 +529,10 @@ def test_search_cli_writes_uncertified_lineage_and_replay_command(
             model_manifest_path.read_bytes()
         ).hexdigest(),
         "conformal_calibration": calibration,
+        "scenario_batch": _scenario_batch(
+            baseline_dataset_sha256=sha256(dataset.read_bytes()).hexdigest(),
+            baseline_manifest_sha256=sha256(export_manifest.read_bytes()).hexdigest(),
+        ),
     }
     metrics.write_text(json.dumps(metrics_payload), encoding="utf-8")
     source = tmp_path / "Model_Z_final_OPM.zip"
@@ -493,11 +545,17 @@ def test_search_cli_writes_uncertified_lineage_and_replay_command(
         model_z_identity = True
 
     fake = _FakeSurrogate()
+    fake.training_metadata["scenario_batch"] = metrics_payload["scenario_batch"]
     monkeypatch.setattr(MODULE.Track2Surrogate, "load", lambda _: fake)
     monkeypatch.setattr(
         MODULE, "load_trajectory_dataset", lambda *_args, **_kwargs: _Verified([_trajectory()])
     )
     monkeypatch.setattr(MODULE, "_source_digest", lambda _: MODEL_Z_SOURCE_SHA256)
+    monkeypatch.setattr(
+        MODULE,
+        "_actions_sha256",
+        lambda _: MODULE._EXPECTED_SCENARIO_ACTIONS_SHA256["baseline"],
+    )
     args = argparse.Namespace(
         model=model_dir,
         dataset=dataset,
@@ -506,7 +564,7 @@ def test_search_cli_writes_uncertified_lineage_and_replay_command(
         source=source,
         schedule=schedule,
         output=output,
-        scenario_id="model-z-baseline",
+        scenario_id="baseline",
         start_date="2020-01-01",
         candidate_count=4,
         seed=11,
@@ -547,11 +605,11 @@ def test_search_cli_writes_uncertified_lineage_and_replay_command(
     fake.training_metadata["scenario_hashes"] = {}
     with pytest.raises(ValueError, match="absent from surrogate training metadata"):
         MODULE._search(args)
-    fake.training_metadata["scenario_hashes"] = {"model-z-baseline": "0" * 64}
+    fake.training_metadata["scenario_hashes"] = {"baseline": "0" * 64}
     with pytest.raises(ValueError, match="hash disagrees"):
         MODULE._search(args)
     fake.training_metadata["scenario_hashes"] = {
-        "model-z-baseline": _trajectory().content_hash
+        "baseline": _trajectory().content_hash
     }
     manifest_bytes_before_swap = model_manifest_path.read_bytes()
 
@@ -597,6 +655,31 @@ def test_search_cli_writes_uncertified_lineage_and_replay_command(
         lambda *_args, **_kwargs: _Verified([_trajectory()]),
     )
 
+    scenario_batch = metrics_payload["scenario_batch"]
+    assert isinstance(scenario_batch, dict)
+    metrics_payload["scenario_batch"] = {
+        **scenario_batch,
+        "scenario_index_sha256": "0" * 64,
+    }
+    metrics.write_text(json.dumps(metrics_payload), encoding="utf-8")
+    with pytest.raises(ValueError, match="scenario lineage disagree"):
+        MODULE._search(args)
+    assert not output.exists()
+    metrics_payload["scenario_batch"] = scenario_batch
+
+    mismatched_batch = _scenario_batch(
+        baseline_dataset_sha256="0" * 64,
+        baseline_manifest_sha256=sha256(export_manifest.read_bytes()).hexdigest(),
+    )
+    metrics_payload["scenario_batch"] = mismatched_batch
+    fake.training_metadata["scenario_batch"] = mismatched_batch
+    metrics.write_text(json.dumps(metrics_payload), encoding="utf-8")
+    with pytest.raises(ValueError, match="trajectory hash disagrees with scenario batch"):
+        MODULE._search(args)
+    assert not output.exists()
+    metrics_payload["scenario_batch"] = scenario_batch
+    fake.training_metadata["scenario_batch"] = scenario_batch
+
     metrics_payload["surrogate_artifact_hash"] = "b" * 64
     metrics.write_text(json.dumps(metrics_payload), encoding="utf-8")
     with pytest.raises(ValueError, match="artifact hashes disagree"):
@@ -612,6 +695,17 @@ def test_search_cli_writes_uncertified_lineage_and_replay_command(
     assert manifest["certified"] is False
     assert manifest["selection_only"] is True
     assert lineage["certified"] is False
+    assert manifest["score"]["control_scope"] == "producer_controls_only"
+    assert manifest["search"]["gates"][0] == (
+        "baseline_per_well_injection_controls_frozen"
+    )
+    assert manifest["inputs"]["scenario_batch_manifest_sha256"] == "b" * 64
+    assert manifest["inputs"]["scenario_index_sha256"] == (
+        MODULE._MODEL_Z_SCENARIO_INDEX_SHA256
+    )
+    assert manifest["inputs"]["scenario_actions_sha256"] == (
+        MODULE._EXPECTED_SCENARIO_ACTIONS_SHA256["baseline"]
+    )
     assert manifest["inputs"]["deck_relative_path"] == "Model_Z/Model_Z.data"
     assert lineage["deck_relative_path"] == "Model_Z/Model_Z.data"
     assert manifest["artifacts"]["wells_schedule_sha256"] == sha256(

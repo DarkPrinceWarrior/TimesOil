@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import csv
+import errno
 import json
 import os
 import re
+import shutil
+import stat
 import subprocess
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -30,10 +33,18 @@ from .economics import (
     EconomicResult,
     normalize_chdd_rows,
 )
-from .llm import APPROVED_BASE_URL, APPROVED_MODEL, TatneftLLMClient
+from .llm import APPROVED_MODEL, ExternalQwenClient
 from .opm import OPM_IMAGE, OpmFlowRunner
 from .opm_chdd import export_opm_chdd
-from .schedule_overlay import _canonical_schedule, apply_schedule_overlay
+from .schedule_overlay import (
+    ScheduleOverlayError,
+    _ControlTemplate,
+    _canonical_schedule,
+    _control_templates,
+    _date_blocks,
+    _terminal_line,
+    apply_schedule_overlay,
+)
 from .tools import GROUNDED_ROLE_TOOLS, build_grounded_tool_registry
 
 
@@ -91,9 +102,11 @@ class CycleRequest:
     source_model: str
     start_year: int
     parsing_strictness: str = "strict"
-    normalize_model_y: bool = False
     density_map: Path | None = None
     charge_initial_pump: bool | None = None
+
+    def __post_init__(self) -> None:
+        _validate_cycle_request(self)
 
     @classmethod
     def from_mapping(
@@ -111,7 +124,6 @@ class CycleRequest:
         }
         allowed = required | {
             "parsing_strictness",
-            "normalize_model_y",
             "density_map",
             "charge_initial_pump",
         }
@@ -138,18 +150,17 @@ class CycleRequest:
         )
         scenario_id = _identifier(value["scenario_id"], "scenario_id")
         source_model = _text(value["source_model"], "source_model", 128)
+        if source_model != "model_z_opm":
+            raise CycleError("source_model must identify the authenticated Model Z export")
         start_year = value["start_year"]
         if isinstance(start_year, bool) or not isinstance(start_year, int) or not 1900 <= start_year <= 9999:
             raise CycleError("start_year must be a four-digit integer")
         parsing = value.get("parsing_strictness", "strict")
         if parsing not in {"strict", "low"}:
             raise CycleError("parsing_strictness must be strict or low")
-        normalize = value.get("normalize_model_y", False)
         charge = value.get("charge_initial_pump")
-        if not isinstance(normalize, bool) or charge is not None and not isinstance(charge, bool):
+        if charge is not None and not isinstance(charge, bool):
             raise CycleError("cycle boolean options are invalid")
-        if normalize and parsing != "low":
-            raise CycleError("normalize_model_y requires explicit low parsing")
         return cls(
             context=normalized_context,
             controls=controls,
@@ -160,7 +171,6 @@ class CycleRequest:
             source_model=source_model,
             start_year=start_year,
             parsing_strictness=parsing,
-            normalize_model_y=normalize,
             density_map=density_map,
             charge_initial_pump=charge,
         )
@@ -188,7 +198,6 @@ class CycleRequest:
                     "source_model": self.source_model,
                     "start_year": self.start_year,
                     "parsing_strictness": self.parsing_strictness,
-                    "normalize_model_y": self.normalize_model_y,
                     "density_map": str(self.density_map) if self.density_map else None,
                     "charge_initial_pump": self.charge_initial_pump,
                 }
@@ -205,6 +214,116 @@ class CycleResult:
     critic_approved: bool
 
 
+@dataclass(frozen=True, slots=True)
+class _SourceControl:
+    role: WellRole
+    pre_control: bool
+    first_control_month: date | None
+
+
+def _validate_cycle_request(request: CycleRequest) -> None:
+    normalized_context = _json_object(request.context, "context")
+    _reject_sensitive_keys(normalized_context)
+    if not isinstance(request.controls, tuple) or any(
+        not isinstance(item, ControlAction) for item in request.controls
+    ):
+        raise CycleError("controls must be a tuple")
+    controls = _controls([_action(item) for item in request.controls])
+    _validate_full_horizon(controls)
+    if not isinstance(request.source, Path) or (
+        request.density_map is not None and not isinstance(request.density_map, Path)
+    ):
+        raise CycleError("cycle paths are invalid")
+    try:
+        source = Path(request.source).expanduser().resolve()
+        density_map = (
+            None
+            if request.density_map is None
+            else Path(request.density_map).expanduser().resolve()
+        )
+    except (TypeError, ValueError) as exc:
+        raise CycleError("cycle paths are invalid") from exc
+    deck = _text(request.deck, "deck", 512)
+    if not isinstance(request.schedule_relative_path, PurePosixPath):
+        raise CycleError("schedule_relative_path must be a safe relative POSIX path")
+    schedule_relative_path = _relative(
+        request.schedule_relative_path.as_posix(), "schedule_relative_path"
+    )
+    scenario_id = _identifier(request.scenario_id, "scenario_id")
+    source_model = _text(request.source_model, "source_model", 128)
+    if source_model != "model_z_opm":
+        raise CycleError("source_model must identify the authenticated Model Z export")
+    if (
+        isinstance(request.start_year, bool)
+        or not isinstance(request.start_year, int)
+        or not 1900 <= request.start_year <= 9999
+    ):
+        raise CycleError("start_year must be a four-digit integer")
+    if request.parsing_strictness not in {"strict", "low"}:
+        raise CycleError("parsing_strictness must be strict or low")
+    if request.charge_initial_pump is not None and not isinstance(
+        request.charge_initial_pump, bool
+    ):
+        raise CycleError("cycle boolean options are invalid")
+    object.__setattr__(request, "context", normalized_context)
+    object.__setattr__(request, "controls", controls)
+    object.__setattr__(request, "source", source)
+    object.__setattr__(request, "deck", deck)
+    object.__setattr__(request, "schedule_relative_path", schedule_relative_path)
+    object.__setattr__(request, "scenario_id", scenario_id)
+    object.__setattr__(request, "source_model", source_model)
+    object.__setattr__(request, "density_map", density_map)
+
+
+def _verify_prepared_destination(
+    prepared: Any, destination: Path
+) -> tuple[int, int]:
+    run_dir = getattr(prepared, "run_dir", None)
+    if not isinstance(run_dir, Path) or run_dir != destination:
+        raise CycleError("prepared run directory disagrees with requested destination")
+    try:
+        status = os.lstat(destination)
+    except OSError as exc:
+        raise CycleError("prepared run directory is unavailable") from exc
+    if stat.S_ISLNK(status.st_mode) or not stat.S_ISDIR(status.st_mode):
+        raise CycleError("prepared run directory must be a real directory")
+    return status.st_dev, status.st_ino
+
+
+def _cleanup_prepared_destination(
+    prepared: Any, destination: Path, expected_identity: tuple[int, int]
+) -> None:
+    if not shutil.rmtree.avoids_symlink_attacks:
+        raise CycleError("safe prepared run directory cleanup is unavailable")
+    if _verify_prepared_destination(prepared, destination) != expected_identity:
+        raise CycleError("prepared run directory identity changed before cleanup")
+    try:
+        descriptor = os.open(
+            destination, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+        )
+    except OSError as exc:
+        raise CycleError("prepared run directory is unavailable for cleanup") from exc
+    try:
+        status = os.fstat(descriptor)
+        if (
+            (status.st_dev, status.st_ino) != expected_identity
+            or not stat.S_ISDIR(status.st_mode)
+        ):
+            raise CycleError("prepared run directory identity changed before cleanup")
+        try:
+            shutil.rmtree(".", dir_fd=descriptor)
+        except OSError as exc:
+            if exc.errno != errno.EINVAL or os.listdir(descriptor):
+                raise
+        if os.listdir(descriptor):
+            raise CycleError("prepared run directory cleanup is incomplete")
+    finally:
+        os.close(descriptor)
+    if _verify_prepared_destination(prepared, destination) != expected_identity:
+        raise CycleError("prepared run directory identity changed during cleanup")
+    os.rmdir(destination)
+
+
 class FullCycleWorkflow:
     """Run supplied controls only after Qwen planning, then ask Qwen to review evidence."""
 
@@ -218,88 +337,128 @@ class FullCycleWorkflow:
         exporter: Callable[..., dict[str, Any]] = export_opm_chdd,
     ) -> None:
         if (
-            not isinstance(llm, TatneftLLMClient)
-            or llm.config.base_url.rstrip("/") != APPROVED_BASE_URL
+            not isinstance(llm, ExternalQwenClient)
             or llm.config.model != APPROVED_MODEL
         ):
-            raise CycleError("full cycle requires the approved external Tatneft Qwen client")
+            raise CycleError("full cycle requires the configured external Qwen client")
         self._llm = llm
         self._runner = runner
         self._economics = economics
         self._registry = registry or build_grounded_tool_registry()
         self._exporter = exporter
+        self._dependency_mode = "injected_test"
+
+    @classmethod
+    def _from_cli(
+        cls, llm: ExternalQwenClient, *, timeout_seconds: float
+    ) -> FullCycleWorkflow:
+        if (
+            cls is not FullCycleWorkflow
+            or type(llm) is not ExternalQwenClient
+            or llm._owns_client is not True
+        ):
+            raise CycleError("production CLI requires its exact owned Qwen client")
+        workflow = cls(
+            llm,
+            runner=OpmFlowRunner(timeout_seconds=timeout_seconds),
+            economics=CHDDEconomicsAdapter.from_env(),
+        )
+        workflow._dependency_mode = "production_cli"
+        return workflow
 
     async def run(
         self, request: CycleRequest, run_dir: str | Path, *, run_id: str
     ) -> CycleResult:
+        _validate_cycle_request(request)
         if not _ID.fullmatch(run_id) or run_id in {".", ".."}:
             raise CycleError("run_id violates the bounded contract")
-        destination = Path(run_dir).resolve()
+        requested_destination = Path(run_dir)
+        if requested_destination.is_symlink():
+            raise FileExistsError(
+                f"run directory already exists: {requested_destination}"
+            )
+        destination = requested_destination.resolve()
         if destination.exists():
             raise FileExistsError(f"run directory already exists: {destination}")
         execution_binding = _capture_execution_source_binding()
-        controls_evidence = _controls_evidence(request)
-        terminal_evidence: dict[str, Any] = {"available": False}
-        registry = self._registry.extended(
-            (
-                ToolDefinition(
-                    VERIFY_FULL_CONTROLS,
-                    "Return a hash-backed digest of every validated monthly control.",
-                    _EMPTY_SCHEMA,
-                    lambda _arguments, _context: controls_evidence,
-                ),
-                ToolDefinition(
-                    VERIFY_TERMINAL_EVIDENCE,
-                    "Return authenticated terminal OPM, SUMMARY, export and CHDD evidence.",
-                    _EMPTY_SCHEMA,
-                    lambda _arguments, _context: terminal_evidence,
-                ),
-            )
-        )
-        role_tools = {role: tuple(names) for role, names in GROUNDED_ROLE_TOOLS.items()}
-        role_tools[AgentRole.PLANNER] += (VERIFY_FULL_CONTROLS,)
-        role_tools[AgentRole.CRITIC] += (VERIFY_TERMINAL_EVIDENCE,)
-        agents = AgentWorkflow(
-            self._llm,
-            registry,
-            role_tools=role_tools,
-            required_tools={
-                AgentRole.PLANNER: (VERIFY_FULL_CONTROLS,),
-                AgentRole.CRITIC: (VERIFY_TERMINAL_EVIDENCE,),
-            },
-        )
-        planning_context = _agent_context(request, controls_evidence)
-        planning = await agents.run_plan(planning_context, run_id=run_id)
-        if not all(decision.approved for decision in planning.decisions):
-            raise CycleRejected("Qwen planning rejected controls before OPM execution")
-
         prepared = self._runner.prepare(
             request.source,
             destination,
             deck=request.deck,
-            normalize_model_y=request.normalize_model_y,
         )
-        schedule_path = _inside(
-            prepared.input_dir,
-            request.schedule_relative_path,
-            "prepared schedule",
-        )
-        source_schedule = _regular_bytes(schedule_path, "prepared schedule")
+        prepared_identity: tuple[int, int] | None = None
         try:
-            source_text = source_schedule.decode("utf-8")
-        except UnicodeError as exc:
-            raise CycleError("prepared schedule must be UTF-8") from exc
-        overlay = apply_schedule_overlay(
-            source_text,
-            request.controls,
-            known_wells={action.well for action in request.controls},
-        )
-        if (
-            overlay.action_count != len(request.controls)
-            or overlay.controls_sha256 != request.controls_sha256
-        ):
-            raise CycleError("schedule overlay disagrees with full controls digest")
-        schedule_path.write_text(overlay.text, encoding="utf-8")
+            prepared_identity = _verify_prepared_destination(prepared, destination)
+            schedule_path = _inside(
+                prepared.input_dir,
+                request.schedule_relative_path,
+                "prepared schedule",
+            )
+            source_schedule = _regular_bytes(schedule_path, "prepared schedule")
+            try:
+                source_text = source_schedule.decode("utf-8")
+            except UnicodeError as exc:
+                raise CycleError("prepared schedule must be UTF-8") from exc
+            control_months = sorted({action.month for action in request.controls})
+            source_inventory = _source_control_inventory(source_text, control_months)
+            _validate_source_well_scope(request.controls, source_inventory)
+            controls_evidence = _controls_evidence(request, source_inventory)
+            source_wells = next(iter(source_inventory.values())).keys()
+            terminal_evidence: dict[str, Any] = {"available": False}
+            registry = self._registry.extended(
+                (
+                    ToolDefinition(
+                        VERIFY_FULL_CONTROLS,
+                        "Return a hash-backed digest of every validated monthly control.",
+                        _EMPTY_SCHEMA,
+                        lambda _arguments, _context: controls_evidence,
+                    ),
+                    ToolDefinition(
+                        VERIFY_TERMINAL_EVIDENCE,
+                        "Return authenticated terminal OPM, SUMMARY, export and CHDD evidence.",
+                        _EMPTY_SCHEMA,
+                        lambda _arguments, _context: terminal_evidence,
+                    ),
+                )
+            )
+            role_tools = {
+                role: tuple(names) for role, names in GROUNDED_ROLE_TOOLS.items()
+            }
+            role_tools[AgentRole.PLANNER] += (VERIFY_FULL_CONTROLS,)
+            role_tools[AgentRole.CRITIC] += (VERIFY_TERMINAL_EVIDENCE,)
+            agents = AgentWorkflow(
+                self._llm,
+                registry,
+                role_tools=role_tools,
+                required_tools={
+                    AgentRole.PLANNER: (VERIFY_FULL_CONTROLS,),
+                    AgentRole.CRITIC: (VERIFY_TERMINAL_EVIDENCE,),
+                },
+            )
+            planning_context = _agent_context(request, controls_evidence)
+            planning = await agents.run_plan(planning_context, run_id=run_id)
+            if not all(decision.approved for decision in planning.decisions):
+                raise CycleRejected(
+                    "Qwen planning rejected controls before OPM execution"
+                )
+
+            overlay = apply_schedule_overlay(
+                source_text,
+                request.controls,
+                known_wells=source_wells,
+            )
+            if (
+                overlay.action_count != len(request.controls)
+                or overlay.controls_sha256 != request.controls_sha256
+            ):
+                raise CycleError("schedule overlay disagrees with full controls digest")
+            schedule_path.write_text(overlay.text, encoding="utf-8")
+        except BaseException:
+            if prepared_identity is not None:
+                _cleanup_prepared_destination(
+                    prepared, destination, prepared_identity
+                )
+            raise
         result = self._runner._run_prepared(
             prepared, parsing_strictness=request.parsing_strictness
         )
@@ -354,7 +513,7 @@ class FullCycleWorkflow:
                 },
                 "opm": {
                     "complete": True,
-                    "gdm_executed": True,
+                    "simulator_executed": True,
                     "image": OPM_IMAGE,
                     "pinned_image_verified": True,
                     "manifest_sha256": result.manifest_sha256,
@@ -391,8 +550,10 @@ class FullCycleWorkflow:
             trajectory_csv,
             economics,
             terminal_evidence,
+            controls_evidence,
             prepared.source_sha256,
             execution_binding,
+            self._dependency_mode,
         )
         receipt_path = result.run_dir / "full-cycle-receipt.json"
         receipt_bytes = _json_bytes(receipt, indent=2)
@@ -458,13 +619,144 @@ def _validate_full_horizon(actions: Sequence[ControlAction]) -> None:
         raise CycleError("producer liquid control exceeds 500 m3/day")
 
 
-def _controls_evidence(request: CycleRequest) -> dict[str, Any]:
+def _source_control_inventory(
+    source: str, months: Sequence[date]
+) -> dict[date, dict[str, _SourceControl]]:
+    try:
+        templates = _control_templates(source)
+        blocks = _date_blocks(source)
+        lines = source.splitlines(keepends=True)
+        terminal = _terminal_line(lines, blocks[-1])
+    except ScheduleOverlayError as exc:
+        raise CycleError("prepared source schedule control inventory is invalid") from exc
+    by_month = {block.month: index for index, block in enumerate(blocks)}
+    templates_by_well: dict[str, list[_ControlTemplate]] = {}
+    for template in templates:
+        templates_by_well.setdefault(template.well, []).append(template)
+    first_control_month = {
+        well: next(
+            (
+                block.month
+                for block in reversed(blocks)
+                if block.keyword_line < well_templates[0].line
+            ),
+            None,
+        )
+        for well, well_templates in templates_by_well.items()
+    }
+    inventory: dict[date, dict[str, _SourceControl]] = {}
+    for month in months:
+        if month not in by_month:
+            raise CycleError("control month is absent from prepared source schedule")
+        index = by_month[month]
+        boundary = (
+            blocks[index + 1].keyword_line
+            if index + 1 < len(blocks)
+            else terminal
+        )
+        effective_templates = {}
+        pre_control_wells: set[str] = set()
+        for well, well_templates in templates_by_well.items():
+            prior = [template for template in well_templates if template.line < boundary]
+            if prior:
+                effective_templates[well] = prior[-1]
+            else:
+                effective_templates[well] = well_templates[0]
+                pre_control_wells.add(well)
+        if not effective_templates:
+            raise CycleError("prepared source schedule has no controlled wells")
+        if any(
+            template.role is WellRole.INJECTOR and template.fluid != "WATER"
+            for template in effective_templates.values()
+        ):
+            raise CycleError("prepared source schedule contains a non-WATER injector")
+        inventory[month] = {
+            well: _SourceControl(
+                role=template.role,
+                pre_control=well in pre_control_wells,
+                first_control_month=first_control_month[well],
+            )
+            for well, template in effective_templates.items()
+        }
+    return inventory
+
+
+def _validate_source_well_scope(
+    actions: Sequence[ControlAction],
+    source_inventory: Mapping[date, Mapping[str, _SourceControl]],
+) -> None:
+    months = {action.month for action in actions}
+    inventories = list(source_inventory.values())
+    source_wells = set(inventories[0]) if inventories else set()
+    if (
+        set(source_inventory) != months
+        or not source_wells
+        or any(set(inventory) != source_wells for inventory in inventories)
+        or len(actions) != len(months) * len(source_wells)
+        or any(
+            {
+                (action.well, action.role)
+                for action in actions
+                if action.month == month
+            }
+            != {
+                (well, control.role)
+                for well, control in source_inventory[month].items()
+            }
+            for month in months
+        )
+    ):
+        raise CycleError(
+            "controls must cover every prepared source schedule well and role in every month"
+        )
+    if any(
+        control.pre_control
+        and (action.status is not WellStatus.SHUT or action.value != 0.0)
+        for action in actions
+        for control in (source_inventory[action.month][action.well],)
+    ):
+        raise CycleError("controls before a well's first source WCON must be SHUT at zero")
+
+
+def _controls_evidence(
+    request: CycleRequest,
+    source_inventory: Mapping[date, Mapping[str, _SourceControl]],
+) -> dict[str, Any]:
     months = sorted({action.month for action in request.controls})
+    canonical_inventory = [
+        {
+            "month": month.isoformat(),
+            "wells": [
+                {
+                    "well": well,
+                    "role": source_inventory[month][well].role.value,
+                    "pre_control": source_inventory[month][well].pre_control,
+                    "first_control_month": (
+                        source_inventory[month][well].first_control_month.isoformat()
+                        if source_inventory[month][well].first_control_month
+                        else None
+                    ),
+                }
+                for well in sorted(source_inventory[month])
+            ],
+        }
+        for month in sorted(source_inventory)
+    ]
+    source_well_count = len(next(iter(source_inventory.values())))
     return {
         "verified": True,
         "complete_six_month_horizon": True,
         "action_count": len(request.controls),
         "well_count": len({action.well for action in request.controls}),
+        "source_well_count": source_well_count,
+        "source_pre_control_action_count": sum(
+            control.pre_control
+            for inventory in source_inventory.values()
+            for control in inventory.values()
+        ),
+        "source_control_inventory_sha256": sha256(
+            _json_bytes(canonical_inventory)
+        ).hexdigest(),
         "months": [month.isoformat() for month in months],
         "canonical_schedule_sha256": request.controls_sha256,
         "canonical_actions_sha256": request.actions_sha256,
@@ -506,7 +798,7 @@ def _terminal_context(
     value["readiness"] = {
         "full_controls_verified": True,
         "opm_complete": True,
-        "gdm_executed": True,
+        "simulator_executed": True,
         "summary_authenticated": True,
         "export_authenticated": True,
         "official_chdd_complete": True,
@@ -595,8 +887,10 @@ def _receipt(
     trajectory_csv: Path,
     economics: EconomicResult,
     terminal_evidence: Mapping[str, Any],
+    controls_evidence: Mapping[str, Any],
     source_sha256: str,
     execution_binding: Mapping[str, Any],
+    dependency_mode: str,
 ) -> dict[str, Any]:
     artifacts = {
         "exact_opm_input_schedule": _artifact(schedule, run_dir),
@@ -611,12 +905,33 @@ def _receipt(
     economics_manifest, _ = _json_file(economics.manifest_path, "economics manifest")
     for name, relative in economics_manifest["artifacts"].items():
         artifacts[f"economics_{name}"] = _artifact(economics.output_dir / relative, run_dir)
-    return {
-        "schema": "timesoil.aios.full-cycle/v1",
-        "complete": True,
+    production = dependency_mode == "production_cli"
+    if not production and dependency_mode != "injected_test":
+        raise CycleError("full-cycle dependency mode is invalid")
+    public_terminal_evidence = (
+        dict(terminal_evidence)
+        if production
+        else {
+            "available": False,
+            "opm": {
+                "complete": False,
+                "simulator_executed": False,
+                "pinned_image_verified": False,
+            },
+            "summary": {"authenticated": False},
+            "export": {"authenticated": False},
+            "economics": {"official_chdd_complete": False},
+        }
+    )
+    receipt = {
+        "schema": "timesoil.aios.track2-full-cycle/v1",
+        "experimental": True,
+        "complete": production,
+        "organizer_certified": False,
         "critic_approved": state.critic_approved,
         "approval_is_recommendation_only": True,
-        "local_model_used": False,
+        "external_qwen_used": production,
+        "dependency_mode": dependency_mode,
         "run_id": state.run_id,
         "request_sha256": request.request_sha256,
         "source_sha256": source_sha256,
@@ -624,21 +939,37 @@ def _receipt(
             **dict(execution_binding),
             "unchanged_after_execution": True,
         },
-        "controls": _controls_evidence(request),
+        "controls": dict(controls_evidence),
         "agent": {
-            "provider": "Tatneft LiteLLM",
-            "endpoint": APPROVED_BASE_URL,
-            "model": APPROVED_MODEL,
+            "transport": (
+                "external_openai_compatible_api" if production else "injected_test"
+            ),
+            "model": APPROVED_MODEL if production else None,
             "decisions": [_decision(decision) for decision in state.decisions],
         },
-        "terminal_evidence": dict(terminal_evidence),
-        "economics": {
-            "start_year": request.start_year,
-            "total_chdd_m": economics.total_chdd_m,
-            "profitability_index": economics.profitability_index,
-        },
+        "terminal_evidence": public_terminal_evidence,
+        "economics": (
+            {
+                "start_year": request.start_year,
+                "total_chdd_m": economics.total_chdd_m,
+                "profitability_index": economics.profitability_index,
+            }
+            if production
+            else {"official_chdd_complete": False}
+        ),
         "artifacts": artifacts,
     }
+    if not production:
+        receipt["claim_limits"] = {
+            "production_dependencies": False,
+            "external_qwen": False,
+            "opm_simulation": False,
+            "pinned_opm_image": False,
+            "authenticated_summary_export": False,
+            "official_chdd": False,
+            "numeric_economics": False,
+        }
+    return receipt
 
 
 def _decision(value: Any) -> dict[str, Any]:

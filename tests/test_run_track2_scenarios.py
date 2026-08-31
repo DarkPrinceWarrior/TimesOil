@@ -13,7 +13,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from timesoil.aios.track2 import CANONICAL_COLUMNS, load_trajectory_dataset
+from timesoil.aios.track2 import CANONICAL_COLUMNS
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -270,8 +270,16 @@ class Track2ScenarioRunnerTest(unittest.TestCase):
             receipt = json.loads(batch_manifest.read_text(encoding="utf-8"))
             self.assertEqual(receipt["schema"], "timesoil.aios.track2-scenario-run/v2")
             self.assertEqual(receipt["scenario_count"], 10)
+            argv = receipt["training"]["argv"]
             self.assertEqual(
-                receipt["training"]["argv"][-2:], ["--conformal-level", "0.9"]
+                argv[argv.index("--batch-manifest") + 1], str(batch_manifest)
+            )
+            self.assertEqual(
+                argv[argv.index("--scenario-index-sha256") + 1],
+                receipt["scenario_index_sha256"],
+            )
+            self.assertEqual(
+                argv[-2:], ["--conformal-level", "0.9"]
             )
 
     def test_read_regular_rejects_component_swap_to_symlink(self) -> None:
@@ -417,11 +425,6 @@ class Track2ScenarioRunnerTest(unittest.TestCase):
                     ],
                     f"{scenario_id}.csv",
                 )
-            trajectories = load_trajectory_dataset(output / "dataset")
-            self.assertEqual(
-                [trajectory.scenario_id for trajectory in trajectories],
-                list(scenario_ids),
-            )
             self.assertEqual(receipt["training"]["dataset"], "dataset")
             self.assertEqual(receipt["training"]["manifests"], "manifests")
             self.assertEqual(

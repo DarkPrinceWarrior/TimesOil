@@ -1,4 +1,4 @@
-"""Deterministic compiler for the supported Model Y schedule subset."""
+"""Deterministic compiler for the supported simulator schedule subset."""
 
 from __future__ import annotations
 

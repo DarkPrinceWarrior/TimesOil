@@ -1,0 +1,89 @@
+{
+  "schema": "scorp.track2.model-z-v4-summary/v1",
+  "terminal": true,
+  "complete": true,
+  "organizer_certified": false,
+  "model_z_trained": true,
+  "lineage": {
+    "official_model_z_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+    "scenario_index_sha256": "69697fede3bafe9fd50f7ba568a7aaec3d2f98a9726fde94595feea82f10e317",
+    "scenario_batch_manifest_sha256": "3282072c910ba75d3023c2780e3d2ee36219a1b984cc00d6be8cd36a12b27157"
+  },
+  "surrogate": {
+    "architecture": "CRM/material-balance baseline + LightGBM residual ensemble",
+    "objective": "per-output L1 residual with train-only OOB shrinkage",
+    "horizon_months": 6,
+    "train_scenario_count": 8,
+    "test_scenario_count": 2,
+    "dataset_sha256": "d4cb67af5920b45f6a60f694b72d87eca37c8174ebb433c309437d58c2db5d32",
+    "metrics_sha256": "d0e2a42468b10d0d0ec48442f1b8a7bc4450857537087d3b517abdbc36530de4",
+    "model_manifest_sha256": "de825094812f4f3faf83b8c5e2e3338a519bc866a2ac728322080bbd0a17ec8a",
+    "model_artifact_hash": "ec64f681a3fd7c155cf91c2be35532d32dc41f6971913e0610d838c07ba157b4",
+    "train_metrics": {
+      "oil_wape": 0.07489988115442116,
+      "liquid_wape": 0.0488429221277408,
+      "pressure_rmse_bar": 8.335837302331504
+    },
+    "test_metrics": {
+      "oil_wape": 0.07710031489897712,
+      "liquid_wape": 0.05113553427981644,
+      "pressure_rmse_bar": 8.45069214754346
+    },
+    "conformal_calibration": {
+      "method": "scenario_loso_max_normalized_residual",
+      "nominal_coverage": 0.9,
+      "scenario_count": 10,
+      "finite_sample_denominator": 11,
+      "quantile_rank": 10,
+      "independent_validation": false,
+      "calibration_group_coverage": {
+        "oil_tpd": 1.0,
+        "liquid_tpd": 1.0,
+        "pressure_bar": 1.0
+      },
+      "loso_metrics": {
+        "oil_wape": 0.07546405209572488,
+        "liquid_wape": 0.0490850782183436,
+        "pressure_rmse_bar": 8.5020440947777
+      }
+    }
+  },
+  "search": {
+    "manifest_sha256": "c6eeb3e2aafde08271ece5a57adbd6ebc846737c9e52c5196e220dacd03179d8",
+    "lineage_sha256": "92ebacf6b5e02e451421c6a4306ec4e2c46465434d70ee30572c21ac8a39c488",
+    "seed": 20260831,
+    "requested_candidates": 500,
+    "accepted_candidates": 500,
+    "selected_for_final_replay_candidate_id": "perturbation-249",
+    "operational_decision": "retain_authenticated_baseline",
+    "operationally_accepted_candidate_id": null,
+    "control_scope": "producer_controls_only",
+    "per_well_injection_controls_frozen": true,
+    "selection_only": true,
+    "certified": false
+  },
+  "final_replay": {
+    "complete": true,
+    "horizon_months": 6,
+    "receipt_sha256": "abc4f915d0932d8e1da3950d06d82f9ff08756447669196a0e588562caf1d2e7",
+    "opm_manifest_sha256": "4a71c5dadd1afba5d0ca03de98e8dc52cf38badf119d72b680fb4744099773b2",
+    "canonical_export_manifest_sha256": "5748fc93b711399962bac4aa2a2a09d6981702d8fa203084c17a43d8be660e79",
+    "canonical_chdd_csv_sha256": "840c949ffcaae6680bf9957d04de39946abd7266c144d5b7309b63c3d175b6b5",
+    "economics_manifest_sha256": "85fde23104ce5bd25ba17d828e65e97da5a609ffad2841df9e539eb49e146f3d",
+    "economics_result_sha256": "b9b639c5757bf84f43dabaf3eb6874a9ad2121a260d9df2334deed02bebada01",
+    "opm_image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+    "operational_baseline_chdd_m": 11918.789227262983,
+    "selected_candidate_chdd_m": 11914.37327100996,
+    "delta_chdd_m": -4.415956253023,
+    "improvement_over_operational_baseline": false,
+    "candidate_accepted": false
+  },
+  "claim_limits": {
+    "producer_controls_only": true,
+    "per_well_injection_frozen": true,
+    "search_score_is_official_chdd": false,
+    "conformal_coverage_is_independently_validated": false,
+    "organizer_certified": false,
+    "optimization_improvement_claimed": false
+  }
+}

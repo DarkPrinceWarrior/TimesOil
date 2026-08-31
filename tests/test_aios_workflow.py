@@ -16,11 +16,10 @@ import pytest
 
 from timesoil.aios.economics import CHDD_FIELDS, EconomicResult
 from timesoil.aios.llm import (
-    APPROVED_BASE_URL,
     APPROVED_MODEL,
     ChatMessage,
+    ExternalQwenClient,
     LLMResponse,
-    TatneftLLMClient,
     ToolCall,
 )
 from timesoil.aios.workflow import CycleError, CycleRequest, FullCycleWorkflow
@@ -89,9 +88,9 @@ def _request(root: Path) -> dict[str, Any]:
     }
 
 
-class _LLM(TatneftLLMClient):
+class _LLM(ExternalQwenClient):
     def __init__(self) -> None:
-        self.config = SimpleNamespace(base_url=APPROVED_BASE_URL, model=APPROVED_MODEL)
+        self.config = SimpleNamespace(model=APPROVED_MODEL)
         self.forced_tools: list[str] = []
         self.states: list[str] = []
 
@@ -138,19 +137,29 @@ class _LLM(TatneftLLMClient):
 
 
 class _Runner:
+    def __init__(self) -> None:
+        self.executions = 0
+
     def prepare(
         self,
         source: Path,
         run_dir: Path,
         *,
         deck: str,
-        normalize_model_y: bool,
     ) -> Any:
-        del source, deck, normalize_model_y
+        del source, deck
         input_dir = run_dir / "input"
         input_dir.mkdir(parents=True)
+        producers = "".join(
+            f" 'P{well}' 'OPEN' 'LRAT' /\n" for well in range(1, 72)
+        )
+        injectors = "".join(
+            f" 'I{well}' 'WATER' 'OPEN' 'RATE' /\n" for well in range(1, 33)
+        )
         (input_dir / "schedule.inc").write_text(
             "DATES\n  1 JAN 2007 /\n/\n"
+            f"WCONPROD\n{producers}/\n"
+            f"WCONINJE\n{injectors}/\n"
             "DATES\n  1 FEB 2007 /\n/\n"
             "DATES\n  1 MAR 2007 /\n/\n"
             "DATES\n  1 APR 2007 /\n/\n"
@@ -169,6 +178,7 @@ class _Runner:
         )
 
     def _run_prepared(self, prepared: Any, *, parsing_strictness: str) -> Any:
+        self.executions += 1
         assert parsing_strictness == "strict"
         manifest = prepared.run_dir / "manifest.json"
         manifest.write_text('{"image":"pinned"}\n', encoding="utf-8")
@@ -184,6 +194,21 @@ class _Runner:
         extraction = result.run_dir / "summary-extraction.json"
         extraction.write_text('{"verified":true}\n', encoding="utf-8")
         return report, extraction
+
+
+class _FailingRunner(_Runner):
+    def _run_prepared(self, prepared: Any, *, parsing_strictness: str) -> Any:
+        self.executions += 1
+        assert parsing_strictness == "strict"
+        (prepared.run_dir / "execution-started").write_text("yes\n", encoding="utf-8")
+        raise RuntimeError("simulated OPM failure")
+
+
+class _PlannerRejectingLLM(_LLM):
+    async def structured(self, *args: Any, **kwargs: Any) -> tuple[dict[str, Any], LLMResponse]:
+        decision, response = await super().structured(*args, **kwargs)
+        decision["approved"] = False
+        return decision, response
 
 
 def _exporter(
@@ -291,9 +316,32 @@ def test_full_cycle_keeps_full_digest_and_real_critic_decision(tmp_path: Path) -
     assert all("agent_tool_action_cap" not in state for state in llm.states)
     assert receipt["controls"]["action_count"] == 618
     assert receipt["controls"]["complete_six_month_horizon"] is True
-    assert receipt["terminal_evidence"]["opm"]["gdm_executed"] is True
-    assert receipt["terminal_evidence"]["summary"]["authenticated"] is True
-    assert receipt["economics"]["total_chdd_m"] == 12.5
+    assert receipt["controls"]["source_well_count"] == 103
+    assert receipt["controls"]["source_pre_control_action_count"] == 0
+    assert len(receipt["controls"]["source_control_inventory_sha256"]) == 64
+    assert receipt["schema"] == "timesoil.aios.track2-full-cycle/v1"
+    assert receipt["experimental"] is True
+    assert receipt["complete"] is False
+    assert receipt["organizer_certified"] is False
+    assert receipt["dependency_mode"] == "injected_test"
+    assert receipt["external_qwen_used"] is False
+    assert receipt["agent"]["transport"] == "injected_test"
+    assert receipt["agent"]["model"] is None
+    assert "endpoint" not in receipt["agent"]
+    assert receipt["terminal_evidence"]["available"] is False
+    assert receipt["terminal_evidence"]["opm"] == {
+        "complete": False,
+        "simulator_executed": False,
+        "pinned_image_verified": False,
+    }
+    assert receipt["terminal_evidence"]["summary"]["authenticated"] is False
+    assert receipt["terminal_evidence"]["export"]["authenticated"] is False
+    assert (
+        receipt["terminal_evidence"]["economics"]["official_chdd_complete"]
+        is False
+    )
+    assert receipt["economics"] == {"official_chdd_complete": False}
+    assert receipt["claim_limits"] and not any(receipt["claim_limits"].values())
     assert receipt["execution_source_binding"] == {
         **binding,
         "unchanged_after_execution": True,
@@ -303,6 +351,42 @@ def test_full_cycle_keeps_full_digest_and_real_critic_decision(tmp_path: Path) -
     assert receipt["agent"]["decisions"][-1]["approved"] is False
     assert result.receipt_path.stat().st_mode & 0o777 == 0o444
     assert _sha(result.receipt_path) == result.receipt_sha256
+
+
+def test_only_internal_cli_factory_with_owned_client_enables_production_claims() -> None:
+    class _QwenSubclass(ExternalQwenClient):
+        pass
+
+    def qwen(kind: type[ExternalQwenClient], *, owns: bool = True) -> ExternalQwenClient:
+        client = object.__new__(kind)
+        client.config = SimpleNamespace(model=APPROVED_MODEL)
+        client._owns_client = owns
+        return client
+
+    runner = object.__new__(workflow.OpmFlowRunner)
+    economics = object.__new__(workflow.CHDDEconomicsAdapter)
+    client = qwen(ExternalQwenClient)
+    direct = FullCycleWorkflow(client, runner=runner, economics=economics)
+    assert direct._dependency_mode == "injected_test"
+
+    with patch.object(
+        workflow.CHDDEconomicsAdapter, "from_env", return_value=economics
+    ) as from_env:
+        production = FullCycleWorkflow._from_cli(client, timeout_seconds=123.0)
+    assert production._dependency_mode == "production_cli"
+    assert type(production._runner) is workflow.OpmFlowRunner
+    assert production._runner.timeout_seconds == 123.0
+    assert production._runner.docker_executable == "docker"
+    assert production._economics is economics
+    assert production._exporter is workflow.export_opm_chdd
+    from_env.assert_called_once_with()
+
+    with pytest.raises(CycleError, match="exact owned Qwen"):
+        FullCycleWorkflow._from_cli(qwen(_QwenSubclass), timeout_seconds=1.0)
+    with pytest.raises(CycleError, match="exact owned Qwen"):
+        FullCycleWorkflow._from_cli(
+            qwen(ExternalQwenClient, owns=False), timeout_seconds=1.0
+        )
 
 
 @pytest.mark.parametrize(
@@ -345,9 +429,9 @@ def test_execution_binding_requires_clean_tracked_sources(tmp_path: Path) -> Non
             "-C",
             str(tmp_path),
             "-c",
-            "user.name=TimesOil test",
+            "user.name=Scorp test",
             "-c",
-            "user.email=timesoil@example.invalid",
+            "user.email=scorp@example.invalid",
             "commit",
             "-qm",
             "fixture",
@@ -394,8 +478,270 @@ def test_cycle_request_rejects_partial_scope_and_sensitive_context(tmp_path: Pat
     with pytest.raises(CycleError, match="sensitive"):
         CycleRequest.from_mapping(sensitive)
 
-    with pytest.raises(CycleError, match="external Tatneft Qwen"):
+    with pytest.raises(CycleError, match="external Qwen"):
         FullCycleWorkflow(Mock(), runner=_Runner(), economics=_Economics())
+
+    wrong_source = _request(tmp_path)
+    wrong_source["source_model"] = "unverified_source"
+    with pytest.raises(CycleError, match="Model Z"):
+        CycleRequest.from_mapping(wrong_source)
+
+
+def test_direct_cycle_request_rejects_one_month_before_prepare_or_qwen(
+    tmp_path: Path,
+) -> None:
+    valid = CycleRequest.from_mapping(_request(tmp_path))
+    with pytest.raises(CycleError, match="six months"):
+        CycleRequest(
+            context=valid.context,
+            controls=valid.controls[:103],
+            source=valid.source,
+            deck=valid.deck,
+            schedule_relative_path=valid.schedule_relative_path,
+            scenario_id=valid.scenario_id,
+            source_model=valid.source_model,
+            start_year=valid.start_year,
+        )
+
+
+@pytest.mark.parametrize("scope", ("missing", "unknown"))
+def test_full_cycle_rejects_controls_outside_source_well_scope_before_execution(
+    tmp_path: Path, scope: str
+) -> None:
+    raw = _request(tmp_path)
+    if scope == "missing":
+        raw["controls"] = [
+            control for control in raw["controls"] if control["well"] != "P71"
+        ]
+    else:
+        raw["controls"].extend(
+            {
+                "month": f"2007-{month:02d}-01",
+                "well": "UNKNOWN",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 1.0,
+            }
+            for month in range(1, 7)
+        )
+    request = CycleRequest.from_mapping(raw)
+    llm = _LLM()
+    runner = _Runner()
+    run_dir = tmp_path / "run"
+
+    with patch(
+        "timesoil.aios.workflow._capture_execution_source_binding",
+        return_value=_execution_binding(),
+    ), pytest.raises(CycleError, match="every prepared source schedule well"):
+        asyncio.run(
+            FullCycleWorkflow(
+                llm,
+                runner=runner,
+                economics=_Economics(),
+                exporter=_exporter,
+            ).run(request, run_dir, run_id=f"scope-{scope}")
+        )
+
+    assert llm.states == []
+    assert runner.executions == 0
+    assert not run_dir.exists()
+
+
+def test_full_cycle_rejects_source_role_swap_before_execution(tmp_path: Path) -> None:
+    raw = _request(tmp_path)
+    for control in raw["controls"]:
+        if control["well"] == "P71":
+            control.update(role="injector", target="WRAT")
+        elif control["well"] == "I32":
+            control.update(role="producer", target="LRAT")
+    request = CycleRequest.from_mapping(raw)
+    llm = _LLM()
+    runner = _Runner()
+    run_dir = tmp_path / "run"
+
+    with patch(
+        "timesoil.aios.workflow._capture_execution_source_binding",
+        return_value=_execution_binding(),
+    ), pytest.raises(CycleError, match="source schedule well and role"):
+        asyncio.run(
+            FullCycleWorkflow(
+                llm,
+                runner=runner,
+                economics=_Economics(),
+                exporter=_exporter,
+            ).run(request, run_dir, run_id="scope-role-swap")
+        )
+
+    assert llm.states == []
+    assert runner.executions == 0
+    assert not run_dir.exists()
+
+
+def test_full_cycle_cleans_prepared_tree_after_qwen_rejection(tmp_path: Path) -> None:
+    request = CycleRequest.from_mapping(_request(tmp_path))
+    runner = _Runner()
+    run_dir = tmp_path / "run"
+
+    with patch(
+        "timesoil.aios.workflow._capture_execution_source_binding",
+        return_value=_execution_binding(),
+    ), pytest.raises(CycleError, match="planning rejected"):
+        asyncio.run(
+            FullCycleWorkflow(
+                _PlannerRejectingLLM(),
+                runner=runner,
+                economics=_Economics(),
+                exporter=_exporter,
+            ).run(request, run_dir, run_id="planning-rejected")
+        )
+
+    assert runner.executions == 0
+    assert not run_dir.exists()
+
+
+def test_pre_execution_cleanup_refuses_replaced_directory(tmp_path: Path) -> None:
+    destination = tmp_path / "run"
+    owned = destination / "owned"
+    owned.mkdir(parents=True)
+    (owned / "artifact").write_text("owned\n", encoding="utf-8")
+    prepared = SimpleNamespace(run_dir=destination)
+    identity = workflow._verify_prepared_destination(prepared, destination)
+    original = tmp_path / "original-run"
+    marker = destination / "replacement"
+    real_rmtree = workflow.shutil.rmtree
+
+    def swap_after_fd_binding(path: str, *, dir_fd: int) -> None:
+        assert path == "."
+        destination.rename(original)
+        destination.mkdir()
+        marker.write_text("preserve\n", encoding="utf-8")
+        real_rmtree(path, dir_fd=dir_fd)
+
+    with patch.object(
+        workflow.shutil, "rmtree", side_effect=swap_after_fd_binding
+    ), pytest.raises(CycleError, match="identity changed during cleanup"):
+        workflow._cleanup_prepared_destination(prepared, destination, identity)
+
+    assert marker.read_text(encoding="utf-8") == "preserve\n"
+    assert list(original.iterdir()) == []
+
+
+def test_pre_execution_cleanup_requires_symlink_safe_rmtree(tmp_path: Path) -> None:
+    destination = tmp_path / "run"
+    destination.mkdir()
+    marker = destination / "preserved"
+    marker.write_text("yes\n", encoding="utf-8")
+    prepared = SimpleNamespace(run_dir=destination)
+    identity = workflow._verify_prepared_destination(prepared, destination)
+
+    with patch.object(
+        workflow.shutil.rmtree, "avoids_symlink_attacks", False
+    ), pytest.raises(CycleError, match="safe prepared run directory cleanup"):
+        workflow._cleanup_prepared_destination(prepared, destination, identity)
+
+    assert marker.read_text(encoding="utf-8") == "yes\n"
+
+
+def test_full_cycle_preserves_tree_after_opm_execution_starts(tmp_path: Path) -> None:
+    request = CycleRequest.from_mapping(_request(tmp_path))
+    runner = _FailingRunner()
+    run_dir = tmp_path / "run"
+
+    with patch(
+        "timesoil.aios.workflow._capture_execution_source_binding",
+        return_value=_execution_binding(),
+    ), pytest.raises(RuntimeError, match="simulated OPM failure"):
+        asyncio.run(
+            FullCycleWorkflow(
+                _LLM(),
+                runner=runner,
+                economics=_Economics(),
+                exporter=_exporter,
+            ).run(request, run_dir, run_id="opm-failure")
+        )
+
+    assert runner.executions == 1
+    assert (run_dir / "execution-started").read_text(encoding="utf-8") == "yes\n"
+    assert not (run_dir / "full-cycle-receipt.json").exists()
+
+
+def test_source_control_inventory_uses_latest_role_for_each_month() -> None:
+    source = (
+        "DATES\n 1 JAN 2007 /\n/\n"
+        "WCONPROD\n 'P1' 'OPEN' 'LRAT' /\n/\n"
+        "DATES\n 1 FEB 2007 /\n/\n"
+        "WCONINJE\n 'P1' 'WATER' 'OPEN' 'RATE' /\n/\n"
+        "DATES\n 1 MAR 2007 /\n/\n"
+    )
+
+    inventory = workflow._source_control_inventory(
+        source, (workflow.date(2007, 1, 1), workflow.date(2007, 2, 1))
+    )
+
+    january = inventory[workflow.date(2007, 1, 1)]["P1"]
+    february = inventory[workflow.date(2007, 2, 1)]["P1"]
+    assert (january.role, january.pre_control, january.first_control_month) == (
+        workflow.WellRole.PRODUCER,
+        False,
+        workflow.date(2007, 1, 1),
+    )
+    assert (february.role, february.pre_control, february.first_control_month) == (
+        workflow.WellRole.INJECTOR,
+        False,
+        workflow.date(2007, 1, 1),
+    )
+
+
+def test_source_control_inventory_allows_only_shut_zero_before_first_wcon() -> None:
+    source = (
+        "DATES\n 1 JAN 2007 /\n/\n"
+        "DATES\n 1 FEB 2007 /\n/\n"
+        "WCONINJE\n 'I1' 'WATER' 'OPEN' 'RATE' /\n/\n"
+        "DATES\n 1 MAR 2007 /\n/\n"
+    )
+    january = workflow.date(2007, 1, 1)
+    february = workflow.date(2007, 2, 1)
+    inventory = workflow._source_control_inventory(source, (january, february))
+
+    assert (
+        inventory[january]["I1"].role,
+        inventory[january]["I1"].pre_control,
+        inventory[january]["I1"].first_control_month,
+    ) == (workflow.WellRole.INJECTOR, True, february)
+    assert not inventory[february]["I1"].pre_control
+
+    shut = workflow.ControlAction(
+        january,
+        "I1",
+        workflow.WellRole.INJECTOR,
+        workflow.WellStatus.SHUT,
+        workflow.ControlTarget.WATER_INJECTION_RATE,
+        0.0,
+    )
+    open_early = workflow.ControlAction(
+        january,
+        "I1",
+        workflow.WellRole.INJECTOR,
+        workflow.WellStatus.OPEN,
+        workflow.ControlTarget.WATER_INJECTION_RATE,
+        0.0,
+    )
+    workflow._validate_source_well_scope((shut,), {january: inventory[january]})
+    with pytest.raises(CycleError, match="first source WCON"):
+        workflow._validate_source_well_scope(
+            (open_early,), {january: inventory[january]}
+        )
+
+
+def test_source_control_inventory_rejects_non_water_injector() -> None:
+    source = (
+        "DATES\n 1 JAN 2007 /\n/\n"
+        "WCONINJE\n 'I1' 'GAS' 'OPEN' 'RATE' /\n/\n"
+        "DATES\n 1 FEB 2007 /\n/\n"
+    )
+    with pytest.raises(CycleError, match="non-WATER"):
+        workflow._source_control_inventory(source, (workflow.date(2007, 1, 1),))
 
 
 def test_single_cli_command_emits_receipt_and_preserves_critic_rejection(

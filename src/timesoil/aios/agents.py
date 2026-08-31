@@ -20,6 +20,10 @@ _MAX_TOOL_RESULT_CHARS = 32_768
 _MAX_TOOL_CALLS_PER_ROLE = 8
 _TOOL_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]{0,63}$")
 _TOOL_CALL_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,128}$")
+_SENSITIVE_KEY = re.compile(
+    r"(?:^|_)(?:api[_-]?key|authorization|cookie|credential|password|secret|token)(?:$|_)",
+    re.IGNORECASE,
+)
 
 
 class WorkflowError(RuntimeError):
@@ -55,10 +59,10 @@ _ROLE_PROMPTS = {
     ),
     AgentRole.PLANNER: (
         "Ты планировщик. Предлагай только типизированное намерение; режимы обязаны пройти проектор "
-        "ограничений, полную ГДМ и официальный ЧДД. Не пиши wells_schedule.inc."
+        "ограничений, полный симулятор и официальный ЧДД. Не пиши wells_schedule.inc."
     ),
     AgentRole.CRITIC: (
-        "Ты критик. Отклони план без подтверждения ограничений, ГДМ, ЧДД, UQ/OOD или происхождения. "
+        "Ты критик. Отклони план без подтверждения ограничений, симулятора, ЧДД, UQ/OOD или происхождения. "
         "Одобрение является рекомендацией графу, не заменой защитного контура."
     ),
 }
@@ -408,7 +412,21 @@ def _normalized_json_object(value: Mapping[str, Any], *, label: str) -> dict[str
         raise WorkflowError(f"{label} must be finite JSON data") from exc
     if not isinstance(normalized, dict):
         raise WorkflowError(f"{label} must be a JSON object")
+    _reject_sensitive_keys(normalized)
+    if normalized.get("track") not in (None, 2, "2"):
+        raise WorkflowError(f"{label} must describe Track 2")
     return normalized
+
+
+def _reject_sensitive_keys(value: Any) -> None:
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            if not isinstance(key, str) or _SENSITIVE_KEY.search(key):
+                raise WorkflowError("workflow context contains a sensitive key")
+            _reject_sensitive_keys(nested)
+    elif isinstance(value, list):
+        for nested in value:
+            _reject_sensitive_keys(nested)
 
 
 def _validate_tool_arguments(

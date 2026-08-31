@@ -96,7 +96,7 @@ def build_grounded_tool_registry() -> ToolRegistry:
             ),
             ToolDefinition(
                 VALIDATE_CANDIDATE_CONTROLS,
-                "Validate request candidate controls with typed contracts and ScheduleCompiler; does not run GDM or CHDD.",
+                "Validate request candidate controls with typed contracts and ScheduleCompiler; does not run a simulator or CHDD.",
                 _EMPTY_INPUT_SCHEMA,
                 _validate_candidate_controls,
             ),
@@ -137,7 +137,6 @@ def _read_evidence_readiness(
         "reported": reported,
         "evidence": context.get("evidence", []),
         "verified": {
-            "track1_certified": False,
             "model_z_trained": False,
         },
     }
@@ -149,7 +148,6 @@ def _read_evidence_readiness(
             "reported": {},
             "evidence": [],
             "verified": {
-                "track1_certified": False,
                 "model_z_trained": False,
             },
             "error": "evidence_section_rejected",
@@ -163,7 +161,7 @@ def _validate_candidate_controls(
         "source": "current_request",
         "valid": False,
         "certified": False,
-        "gdm_executed": False,
+        "simulator_executed": False,
         "chdd_complete": False,
     }
     try:

@@ -13,17 +13,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from ..allocation import allocate, hydro_weights
-from ..data import (
-    injection_matrix,
-    load_scenarios,
-    pivot,
-    producer_matrices,
-    static_features,
-    well_coords,
-)
 from ..metrics import rmse, wape
-from ..wells import PRODUCERS
 from .contracts import ControlAction, ControlTarget, WellRole, WellStatus
 from .opm import OPM_IMAGE_DIGEST, OpmSummaryError, verify_summary_extraction
 from .scenario_generation import ScenarioGeneratorConfig, generate_control_scenarios
@@ -49,6 +39,33 @@ CANONICAL_COLUMNS = (
 )
 CONTROL_TARGET_CODES = {"ORAT": 0.0, "LRAT": 1.0, "WRAT": 2.0}
 MODEL_Z_SOURCE_SHA256 = "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa"
+MODEL_Z_SCENARIO_INDEX_SHA256 = (
+    "69697fede3bafe9fd50f7ba568a7aaec3d2f98a9726fde94595feea82f10e317"
+)
+MODEL_Z_SCENARIO_ACTIONS_SHA256 = (
+    ("baseline", "826a77efad0c8dc848b3e26f1da70ea00ce34b19e30cf69df574348899ef4c85"),
+    ("perturbation-001", "4b5a1cdef9c00eb633b91d1acf0750f11afc0a5b56a0359d6bcd1cde952c3cb4"),
+    ("perturbation-002", "951a90621ab3705fcd0cbe97ae5ddfe4866cb570a31589f014fe68038ebd1b53"),
+    ("perturbation-003", "8f298be7162158bc785933be1b922e7358e4ebdae251311c7a2af381ab1031dd"),
+    ("perturbation-004", "876c355b40ad8222a96bbb1c2104b538e3808795970ad41dd6247f9ecd603c43"),
+    ("perturbation-005", "1fa828a1b4a646eb609ca9d29dd34f7b75142ee3c22d0fca71773c508ebf8de6"),
+    ("perturbation-006", "562659552e8609871de4b973e68e889ce670ed793d927200b8f909453f8c42a4"),
+    ("perturbation-007", "a5b9aead89a8f35a38b88734b23bb89a4277c2577062fb8d3c002c53ebd210ff"),
+    ("perturbation-008", "b2a4ab007987076a41d7873af7b5d0d9ccc77f7fb73767812a333780a83edbe5"),
+    ("perturbation-009", "ff914a5c5cf47b3568e4f01c345ce65c9d8ce1e3053159cd033ec42337d761c8"),
+)
+MODEL_Z_SCENARIO_EXPORTED_ACTIONS_SHA256 = (
+    ("baseline", "826a77efad0c8dc848b3e26f1da70ea00ce34b19e30cf69df574348899ef4c85"),
+    ("perturbation-001", "b560f191784d7f56c207e0c80a2a98aa57ac1d5c7244bd73c48e888bd15597e5"),
+    ("perturbation-002", "ff81b7fc4644926be9f0b0865be4b4def30b0b58c3938e2048eb8098c7667c5f"),
+    ("perturbation-003", "e9a28dc2b2f9835aa5d363f42c842575d3c9bbe1b549e5941ae56de677cb441c"),
+    ("perturbation-004", "3a32f181e8ed550a60bdc8f03cdf75184048ee8ef2400d3d07e908a50441c369"),
+    ("perturbation-005", "ab9d1b23a3f3ae9fb467cac0b111e089d6d84df7d6df3da2a1d4e4962e463bad"),
+    ("perturbation-006", "cdddb50851ccbc0762833aebd8da7fd846aa21a3261ab81d8c3fe68288425b47"),
+    ("perturbation-007", "f07434f25a44537166113d3424082da1c1b69e78febea0e5d81ba25d99674566"),
+    ("perturbation-008", "553467f9590a7f48537a96d14b749a406ad9e365755c85594d8932ca6f30aadf"),
+    ("perturbation-009", "d059a5832beee263957566ce06f7c79de2e64862a6358a1c39a6ad21884a1ee9"),
+)
 _MODEL_Z_SOURCE_SHA256 = MODEL_Z_SOURCE_SHA256
 MAX_TRACK2_SEARCH_CANDIDATES = 500
 
@@ -315,10 +332,10 @@ def trajectory_from_frame(frame: pd.DataFrame) -> ScenarioTrajectory:
 def load_trajectory_dataset(
     path: Path | str,
     *,
-    manifest: Path | str | None = None,
+    manifest: Path | str,
     _summary_run: Any = None,
 ) -> list[ScenarioTrajectory]:
-    """Load canonical trajectories; provenance is verified only when supplied."""
+    """Load canonical trajectories with mandatory export provenance."""
     path = Path(path)
     files = sorted(path.glob("*.csv")) + sorted(path.glob("*.parquet")) if path.is_dir() else [path]
     if not files:
@@ -326,89 +343,39 @@ def load_trajectory_dataset(
     frames: list[pd.DataFrame] = []
     for file in files:
         frames.append(pd.read_parquet(file) if file.suffix.lower() == ".parquet" else pd.read_csv(file))
-    verified = manifest is not None
     model_z_identities: list[bool] = []
-    if verified:
-        manifest_path = Path(manifest)
-        manifest_files = sorted(manifest_path.glob("*.json")) if manifest_path.is_dir() else [manifest_path]
-        manifests: dict[str, tuple[Path, dict[str, Any]]] = {}
-        for candidate in manifest_files:
-            value = _json_object(candidate, "Track 2 export manifest")
-            if value.get("generator") != "timesoil.aios.opm_chdd":
-                continue
-            try:
-                name = value["outputs"]["track2_csv"]["name"]
-            except (KeyError, TypeError) as exc:
-                raise ValueError("incomplete Track 2 export manifest") from exc
-            if not isinstance(name, str) or name in manifests:
-                raise ValueError("duplicate or invalid Track 2 dataset manifest")
-            manifests[name] = (candidate, value)
-        for file, frame in zip(files, frames, strict=True):
-            if file.name not in manifests:
-                raise ValueError(f"no provenance manifest for Track 2 dataset: {file.name}")
-            candidate, value = manifests[file.name]
-            model_z_identities.append(
-                _verify_export_manifest(
-                    file,
-                    frame,
-                    candidate,
-                    value,
-                    summary_run=_summary_run,
-                )
+    manifest_path = Path(manifest)
+    manifest_files = sorted(manifest_path.glob("*.json")) if manifest_path.is_dir() else [manifest_path]
+    manifests: dict[str, tuple[Path, dict[str, Any]]] = {}
+    for candidate in manifest_files:
+        value = _json_object(candidate, "Track 2 export manifest")
+        if value.get("generator") != "timesoil.aios.opm_chdd":
+            continue
+        try:
+            name = value["outputs"]["track2_csv"]["name"]
+        except (KeyError, TypeError) as exc:
+            raise ValueError("incomplete Track 2 export manifest") from exc
+        if not isinstance(name, str) or name in manifests:
+            raise ValueError("duplicate or invalid Track 2 dataset manifest")
+        manifests[name] = (candidate, value)
+    for file, frame in zip(files, frames, strict=True):
+        if file.name not in manifests:
+            raise ValueError(f"no provenance manifest for Track 2 dataset: {file.name}")
+        candidate, value = manifests[file.name]
+        model_z_identities.append(
+            _verify_export_manifest(
+                file,
+                frame,
+                candidate,
+                value,
+                summary_run=_summary_run,
             )
+        )
     data = pd.concat(frames, ignore_index=True)
     trajectories = [trajectory_from_frame(group) for _, group in data.groupby("scenario_id", sort=True)]
-    return (
-        _VerifiedTrajectoryDataset(
-            trajectories, model_z_identity=all(model_z_identities)
-        )
-        if verified
-        else trajectories
+    return _VerifiedTrajectoryDataset(
+        trajectories, model_z_identity=all(model_z_identities)
     )
-
-
-def load_model_y_pipeline_proof(raw_dir: Path | str) -> list[ScenarioTrajectory]:
-    """Adapt available Model Y scenarios only to prove the Track 2 pipeline.
-
-    These are not Model Z training data.  Allocated injection is a
-    hydro-connectivity proxy for producer control, not an OPM well schedule.
-    """
-    weights = hydro_weights(static_features(raw_dir), well_coords(raw_dir))
-    trajectories = []
-    for scenario_id, monthly in load_scenarios(raw_dir, include_reference=True).items():
-        matrices = producer_matrices(monthly)
-        allocated = allocate(injection_matrix(monthly), weights)
-        status = pivot(monthly, "weff", PRODUCERS).fillna(0.0).gt(0).astype(float)
-        valid = (
-            matrices["oil_tpd"].notna().all(axis=1)
-            & matrices["liq_tpd"].notna().all(axis=1)
-            & matrices["p_res"].notna().all(axis=1)
-        )
-        dates = matrices["oil_tpd"].index[valid]
-        states = np.stack([
-            matrices["oil_tpd"].loc[dates].to_numpy(float),
-            matrices["liq_tpd"].loc[dates].to_numpy(float),
-            matrices["p_res"].loc[dates].to_numpy(float) * 1.01325,
-        ], axis=-1)
-        actions = np.stack([
-            allocated.loc[dates].to_numpy(float),
-            np.full((len(dates), len(PRODUCERS)), CONTROL_TARGET_CODES["WRAT"]),
-            status.loc[dates].to_numpy(float),
-        ], axis=-1)
-        trajectories.append(ScenarioTrajectory(
-            scenario_id=scenario_id,
-            source_model="model_y_pipeline_proof",
-            dates=dates,
-            well_ids=tuple(str(well) for well in PRODUCERS),
-            states=states,
-            actions=actions,
-            metadata={
-                "not_model_z_training": True,
-                "pressure_conversion": "atm_to_bar_x1.01325",
-                "action_semantics": "allocated_injection_proxy_not_direct_control",
-            },
-        ))
-    return trajectories
 
 
 def split_scenarios(
@@ -736,8 +703,10 @@ class Track2ScheduleSearch:
     certified: bool = False
 
 
-def _window_controls(
-    trajectory: ScenarioTrajectory, start_index: int
+def _trajectory_controls(
+    trajectory: ScenarioTrajectory,
+    start_index: int = 0,
+    horizon: int | None = None,
 ) -> tuple[ControlAction, ...]:
     target_codes = {
         0.0: ControlTarget.OIL_RATE,
@@ -745,7 +714,8 @@ def _window_controls(
         2.0: ControlTarget.WATER_INJECTION_RATE,
     }
     actions: list[ControlAction] = []
-    for offset, timestamp in enumerate(trajectory.dates[start_index : start_index + 6]):
+    stop = None if horizon is None else start_index + horizon
+    for offset, timestamp in enumerate(trajectory.dates[start_index:stop]):
         month = timestamp.date()
         for well_index, well in enumerate(trajectory.well_ids):
             value, code, status_code = trajectory.actions[start_index + offset, well_index]
@@ -760,6 +730,12 @@ def _window_controls(
                 ControlAction(month, well, role, status, target, float(value))
             )
     return tuple(actions)
+
+
+def _window_controls(
+    trajectory: ScenarioTrajectory, start_index: int
+) -> tuple[ControlAction, ...]:
+    return _trajectory_controls(trajectory, start_index, 6)
 
 
 def _action_cube(
@@ -868,6 +844,7 @@ def search_track2_schedule(
             seed=seed,
             perturbation_fraction=perturbation_fraction,
             liquid_rate_scale=liquid_rate_scale,
+            perturb_injection=False,
         ),
     )
     months = tuple(
@@ -876,16 +853,19 @@ def search_track2_schedule(
     )
     days = np.asarray([pd.Timestamp(month).days_in_month for month in months], float)
     baseline_cube = _action_cube(generated[0].actions, months, trajectory.well_ids)
-    baseline_injection = _injection_totals(baseline_cube)
+    baseline_injectors = baseline_cube[..., 1] == 2.0
     accepted: list[Track2SearchCandidate] = []
     rejected_ood: list[str] = []
 
     for scenario in generated:
         cube = _action_cube(scenario.actions, months, trajectory.well_ids)
-        if not np.allclose(
-            _injection_totals(cube), baseline_injection, rtol=0.0, atol=1e-8
-        ):
-            raise ValueError("candidate changed the monthly total-injection policy")
+        candidate_injectors = cube[..., 1] == 2.0
+        same_injectors = np.array_equal(candidate_injectors, baseline_injectors)
+        same_injection_controls = np.array_equal(
+            cube[baseline_injectors], baseline_cube[baseline_injectors]
+        )
+        if not same_injectors or not same_injection_controls:
+            raise ValueError("candidate changed the baseline injection controls")
         rollout = model.rollout(trajectory.states[start_index], cube)
         _validated_rollout(rollout, horizon=6, wells=len(trajectory.well_ids))
         if np.asarray(rollout.ood, dtype=bool).any():
