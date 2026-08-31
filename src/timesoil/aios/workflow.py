@@ -6,6 +6,7 @@ import csv
 import json
 import os
 import re
+import subprocess
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
@@ -50,6 +51,25 @@ _SENSITIVE_KEY = re.compile(
     re.IGNORECASE,
 )
 _MAX_ACTIONS = 10_000
+_PROJECT_ROOT = Path(__file__).resolve().parents[3]
+_EXECUTION_SOURCE_PATHS = (
+    "pyproject.toml",
+    "uv.lock",
+    "src/timesoil/aios/agents.py",
+    "src/timesoil/aios/cli.py",
+    "src/timesoil/aios/contracts.py",
+    "src/timesoil/aios/economics.py",
+    "src/timesoil/aios/llm.py",
+    "src/timesoil/aios/opm.py",
+    "src/timesoil/aios/opm_chdd.py",
+    "src/timesoil/aios/schedule_overlay.py",
+    "src/timesoil/aios/tools.py",
+    "src/timesoil/aios/workflow.py",
+    "docs/hackathon/chdd/CHDD_PYTHON/chdd_model.py",
+    "docs/hackathon/chdd/CHDD_PYTHON/excel_io.py",
+    "docs/hackathon/chdd/CHDD_PYTHON/input/Нормативы_ЧДД.xlsx",
+    "docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py",
+)
 
 
 class CycleError(RuntimeError):
@@ -217,6 +237,7 @@ class FullCycleWorkflow:
         destination = Path(run_dir).resolve()
         if destination.exists():
             raise FileExistsError(f"run directory already exists: {destination}")
+        execution_binding = _capture_execution_source_binding()
         controls_evidence = _controls_evidence(request)
         terminal_evidence: dict[str, Any] = {"available": False}
         registry = self._registry.extended(
@@ -355,6 +376,8 @@ class FullCycleWorkflow:
         final_state = await agents.run_critic(
             planning, _terminal_context(planning_context, terminal_evidence)
         )
+        if _capture_execution_source_binding() != execution_binding:
+            raise CycleError("git commit or execution sources changed during full cycle")
         receipt = _receipt(
             request,
             final_state,
@@ -369,6 +392,7 @@ class FullCycleWorkflow:
             economics,
             terminal_evidence,
             prepared.source_sha256,
+            execution_binding,
         )
         receipt_path = result.run_dir / "full-cycle-receipt.json"
         receipt_bytes = _json_bytes(receipt, indent=2)
@@ -572,6 +596,7 @@ def _receipt(
     economics: EconomicResult,
     terminal_evidence: Mapping[str, Any],
     source_sha256: str,
+    execution_binding: Mapping[str, Any],
 ) -> dict[str, Any]:
     artifacts = {
         "exact_opm_input_schedule": _artifact(schedule, run_dir),
@@ -595,6 +620,10 @@ def _receipt(
         "run_id": state.run_id,
         "request_sha256": request.request_sha256,
         "source_sha256": source_sha256,
+        "execution_source_binding": {
+            **dict(execution_binding),
+            "unchanged_after_execution": True,
+        },
         "controls": _controls_evidence(request),
         "agent": {
             "provider": "Tatneft LiteLLM",
@@ -704,6 +733,66 @@ def _regular_bytes(path: Path, label: str) -> bytes:
 
 def _sha256_file(path: Path) -> str:
     return sha256(_regular_bytes(path, "hashed artifact")).hexdigest()
+
+
+def _capture_execution_source_binding() -> dict[str, Any]:
+    sources: dict[str, dict[str, Any]] = {}
+    for relative in _EXECUTION_SOURCE_PATHS:
+        data = _regular_bytes(_PROJECT_ROOT / relative, "execution source")
+        sources[relative] = {"bytes": len(data), "sha256": sha256(data).hexdigest()}
+
+    commit = _git_output("rev-parse", "--verify", "HEAD")
+    if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit):
+        raise CycleError("git HEAD is unavailable or invalid")
+    tracked = set(
+        _git_output(
+            "-c", "core.quotePath=false", "ls-files", "--", *_EXECUTION_SOURCE_PATHS
+        ).splitlines()
+    )
+    if tracked != set(_EXECUTION_SOURCE_PATHS):
+        raise CycleError("execution source is not tracked by git")
+    if _git_returncode("diff", "--quiet", "HEAD", "--", *_EXECUTION_SOURCE_PATHS):
+        raise CycleError("execution sources are not clean at git HEAD")
+    return {
+        "verified": True,
+        "git_commit": commit,
+        "git_scoped_sources_clean": True,
+        "source_count": len(sources),
+        "source_map_sha256": sha256(_json_bytes(sources)).hexdigest(),
+        "sources": sources,
+    }
+
+
+def _git_output(*arguments: str) -> str:
+    completed = _git(*arguments)
+    if completed.returncode != 0:
+        raise CycleError("git provenance check failed")
+    try:
+        return completed.stdout.decode("utf-8").strip()
+    except UnicodeError as exc:
+        raise CycleError("git provenance output is invalid") from exc
+
+
+def _git_returncode(*arguments: str) -> int:
+    completed = _git(*arguments)
+    if completed.returncode not in {0, 1}:
+        raise CycleError("git provenance check failed")
+    return completed.returncode
+
+
+def _git(*arguments: str) -> subprocess.CompletedProcess[bytes]:
+    try:
+        return subprocess.run(
+            ("git", "-C", str(_PROJECT_ROOT), *arguments),
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=10.0,
+            check=False,
+            shell=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise CycleError("git provenance check failed") from exc
 
 
 def _manifest_link(manifest: Path, value: Any) -> Path:

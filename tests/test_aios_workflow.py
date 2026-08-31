@@ -7,6 +7,7 @@ import io
 import json
 import os
 from pathlib import Path
+import subprocess
 from types import SimpleNamespace
 from typing import Any, Mapping, Sequence
 from unittest.mock import AsyncMock, Mock, patch
@@ -23,11 +24,24 @@ from timesoil.aios.llm import (
     ToolCall,
 )
 from timesoil.aios.workflow import CycleError, CycleRequest, FullCycleWorkflow
-from timesoil.aios import cli
+from timesoil.aios import cli, workflow
 
 
 def _sha(path: Path) -> str:
     return sha256(path.read_bytes()).hexdigest()
+
+
+def _execution_binding(*, commit: str = "f" * 40, marker: str = "1" * 64) -> dict[str, Any]:
+    return {
+        "verified": True,
+        "git_commit": commit,
+        "git_scoped_sources_clean": True,
+        "source_count": 1,
+        "source_map_sha256": marker,
+        "sources": {
+            "src/timesoil/aios/workflow.py": {"bytes": 1, "sha256": marker}
+        },
+    }
 
 
 def _request(root: Path) -> dict[str, Any]:
@@ -257,14 +271,19 @@ class _Economics:
 def test_full_cycle_keeps_full_digest_and_real_critic_decision(tmp_path: Path) -> None:
     llm = _LLM()
     request = CycleRequest.from_mapping(_request(tmp_path))
-    result = asyncio.run(
-        FullCycleWorkflow(
-            llm,
-            runner=_Runner(),
-            economics=_Economics(),
-            exporter=_exporter,
-        ).run(request, tmp_path / "run", run_id="cycle-test")
-    )
+    binding = _execution_binding()
+    with patch(
+        "timesoil.aios.workflow._capture_execution_source_binding",
+        return_value=binding,
+    ) as capture:
+        result = asyncio.run(
+            FullCycleWorkflow(
+                llm,
+                runner=_Runner(),
+                economics=_Economics(),
+                exporter=_exporter,
+            ).run(request, tmp_path / "run", run_id="cycle-test")
+        )
 
     receipt = json.loads(result.receipt_path.read_text(encoding="utf-8"))
     assert llm.forced_tools == ["verify_full_controls", "verify_terminal_evidence"]
@@ -275,10 +294,93 @@ def test_full_cycle_keeps_full_digest_and_real_critic_decision(tmp_path: Path) -
     assert receipt["terminal_evidence"]["opm"]["gdm_executed"] is True
     assert receipt["terminal_evidence"]["summary"]["authenticated"] is True
     assert receipt["economics"]["total_chdd_m"] == 12.5
+    assert receipt["execution_source_binding"] == {
+        **binding,
+        "unchanged_after_execution": True,
+    }
+    assert capture.call_count == 2
     assert receipt["critic_approved"] is False
     assert receipt["agent"]["decisions"][-1]["approved"] is False
     assert result.receipt_path.stat().st_mode & 0o777 == 0o444
     assert _sha(result.receipt_path) == result.receipt_sha256
+
+
+@pytest.mark.parametrize(
+    "after",
+    (
+        _execution_binding(marker="2" * 64),
+        _execution_binding(commit="e" * 40),
+    ),
+    ids=("source-drift", "commit-drift"),
+)
+def test_full_cycle_rejects_execution_binding_drift(
+    tmp_path: Path, after: dict[str, Any]
+) -> None:
+    request = CycleRequest.from_mapping(_request(tmp_path))
+    with patch(
+        "timesoil.aios.workflow._capture_execution_source_binding",
+        side_effect=(_execution_binding(), after),
+    ), pytest.raises(CycleError, match="changed during full cycle"):
+        asyncio.run(
+            FullCycleWorkflow(
+                _LLM(),
+                runner=_Runner(),
+                economics=_Economics(),
+                exporter=_exporter,
+            ).run(request, tmp_path / "run", run_id="cycle-drift")
+        )
+
+    assert not (tmp_path / "run" / "full-cycle-receipt.json").exists()
+
+
+def test_execution_binding_requires_clean_tracked_sources(tmp_path: Path) -> None:
+    paths = ("source.py", "Нормативы.xlsx")
+    for name in paths:
+        (tmp_path / name).write_text(name, encoding="utf-8")
+    subprocess.run(("git", "init", "-q", str(tmp_path)), check=True)
+    subprocess.run(("git", "-C", str(tmp_path), "add", "--", *paths), check=True)
+    subprocess.run(
+        (
+            "git",
+            "-C",
+            str(tmp_path),
+            "-c",
+            "user.name=TimesOil test",
+            "-c",
+            "user.email=timesoil@example.invalid",
+            "commit",
+            "-qm",
+            "fixture",
+        ),
+        check=True,
+    )
+    with patch.object(workflow, "_PROJECT_ROOT", tmp_path), patch.object(
+        workflow, "_EXECUTION_SOURCE_PATHS", paths
+    ):
+        binding = workflow._capture_execution_source_binding()
+        assert binding["git_scoped_sources_clean"] is True
+        assert binding["source_count"] == 2
+        assert set(binding["sources"]) == set(paths)
+
+        (tmp_path / "unrelated.md").write_text("dirty but out of scope", encoding="utf-8")
+        assert workflow._capture_execution_source_binding() == binding
+
+        (tmp_path / paths[0]).write_text("changed", encoding="utf-8")
+        with pytest.raises(CycleError, match="not clean"):
+            workflow._capture_execution_source_binding()
+
+
+def test_execution_binding_fails_closed_on_missing_source_or_git(tmp_path: Path) -> None:
+    with patch.object(workflow, "_PROJECT_ROOT", tmp_path), patch.object(
+        workflow, "_EXECUTION_SOURCE_PATHS", ("missing.py",)
+    ), pytest.raises(CycleError, match="regular non-symlink"):
+        workflow._capture_execution_source_binding()
+
+    (tmp_path / "source.py").write_text("pass\n", encoding="utf-8")
+    with patch.object(workflow, "_PROJECT_ROOT", tmp_path), patch.object(
+        workflow, "_EXECUTION_SOURCE_PATHS", ("source.py",)
+    ), pytest.raises(CycleError, match="git provenance"):
+        workflow._capture_execution_source_binding()
 
 
 def test_cycle_request_rejects_partial_scope_and_sensitive_context(tmp_path: Path) -> None:
