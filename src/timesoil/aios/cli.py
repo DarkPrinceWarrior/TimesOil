@@ -20,7 +20,7 @@ from uuid import uuid4
 from .agents import AgentWorkflow
 from .api import AgentExperimentRequest, capabilities, get_runs_dir, run_agent_experiment
 from .economics import CHDD_FIELDS, CHDDEconomicsAdapter
-from .llm import LLMConfig, TatneftLLMClient
+from .llm import ExternalQwenClient, LLMConfig
 from .opm import OPM_IMAGE, OpmFlowRunner
 from .tools import GROUNDED_ROLE_TOOLS, build_grounded_tool_registry
 from .workflow import CycleRequest, CycleResult, FullCycleWorkflow
@@ -122,7 +122,7 @@ def _read_chdd_csv(source: str) -> list[dict[str, str]]:
 
 async def _qwen_experiment(context: dict[str, Any]) -> dict[str, Any]:
     config = LLMConfig.from_env()
-    async with TatneftLLMClient(config) as client:
+    async with ExternalQwenClient(config) as client:
         workflow = AgentWorkflow(
             client,
             build_grounded_tool_registry(),
@@ -140,11 +140,9 @@ async def _run_full_cycle(
     timeout_seconds: float,
 ) -> CycleResult:
     config = LLMConfig.from_env()
-    async with TatneftLLMClient(config) as client:
-        workflow = FullCycleWorkflow(
-            client,
-            runner=OpmFlowRunner(timeout_seconds=timeout_seconds),
-            economics=CHDDEconomicsAdapter.from_env(),
+    async with ExternalQwenClient(config) as client:
+        workflow = FullCycleWorkflow._from_cli(
+            client, timeout_seconds=timeout_seconds
         )
         return await workflow.run(request, destination, run_id=run_id)
 
@@ -170,7 +168,7 @@ def _opm_runtime_ready() -> bool:
 
 def _doctor(_: argparse.Namespace) -> int:
     report = capabilities().model_dump(mode="json")
-    report["track1"]["runtime_ready"] = _opm_runtime_ready()
+    report["track2"]["runtime_ready"] = _opm_runtime_ready()
     _json(report)
     return 0
 
@@ -248,8 +246,6 @@ def _chdd(args: argparse.Namespace) -> int:
 
 
 def _opm_baseline(args: argparse.Namespace) -> int:
-    if args.normalize_model_y and not args.low:
-        raise CLIError("--normalize-model-y requires explicit --low")
     run_id = args.run_id or uuid4().hex
     destination = _destination(args.runs_dir, run_id)
     runner = OpmFlowRunner(timeout_seconds=args.timeout)
@@ -259,7 +255,6 @@ def _opm_baseline(args: argparse.Namespace) -> int:
             destination,
             deck=args.deck,
             parsing_strictness="low" if args.low else "strict",
-            normalize_model_y=args.normalize_model_y,
         )
         summary_report, summary_extraction = runner.extract_summary_report(
             result, result.run_dir / "summary-report.txt"
@@ -293,7 +288,7 @@ def build_parser() -> argparse.ArgumentParser:
     doctor.set_defaults(handler=_doctor)
 
     serve = commands.add_parser("serve", help="serve the fixed FastAPI application")
-    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--host", required=True)
     serve.add_argument("--port", type=_port, default=8000)
     serve.add_argument(
         "--log-level",
@@ -308,7 +303,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     cycle = commands.add_parser(
         "full-cycle",
-        help="run Qwen plan, pinned OPM, authenticated export, CHDD and immutable receipt",
+        help="experimental fail-closed Qwen, OPM, export and CHDD cycle",
     )
     cycle.add_argument("request", nargs="?", default="-", help="cycle request JSON or '-' for stdin")
     cycle.add_argument("--runs-dir", type=Path)
@@ -330,7 +325,6 @@ def build_parser() -> argparse.ArgumentParser:
     opm.add_argument("--run-id", type=_run_id)
     opm.add_argument("--timeout", type=_positive_timeout, default=3600.0)
     opm.add_argument("--low", "--allow-low-parsing", action="store_true")
-    opm.add_argument("--normalize-model-y", action="store_true")
     opm.set_defaults(handler=_opm_baseline)
     return parser
 

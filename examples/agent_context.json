@@ -1,0 +1,25 @@
+{
+  "case_id": "model-z-kt2-demo",
+  "track": 2,
+  "month": "2007-01-01",
+  "facts": {
+    "model_z_ready": false,
+    "scenario_batch_complete": false,
+    "final_opm_complete": false,
+    "official_chdd_complete": false
+  },
+  "field_state": {
+    "candidate_selected": false,
+    "uncertainty_calibrated": false
+  },
+  "constraints": {
+    "horizon_months": 6,
+    "candidate_requires_final_opm": true,
+    "surrogate_chdd_is_final": false
+  },
+  "readiness": {
+    "model_z_trained": false,
+    "final_replay_ready": false
+  },
+  "evidence": []
+}

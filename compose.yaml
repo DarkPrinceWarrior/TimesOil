@@ -1,15 +1,15 @@
-name: timesoil-kt2
+name: scorp-timesoil-track2
 
 services:
   api:
-    build:
-      context: .
-    image: timesoil-kt2-api:local
+    build: .
+    image: scorp-timesoil-track2:local
     init: true
+    user: "0:0"
     ports:
       - "127.0.0.1:${AIOS_PORT:-8000}:8000"
     env_file:
-      - ./config/aios.env
+      - "${AIOS_ENV_FILE:-./config/aios.example.env}"
     secrets:
       - qwen_api_key
     volumes:
@@ -19,6 +19,10 @@ services:
       - /tmp:size=64m,mode=1777
     cap_drop:
       - ALL
+    cap_add:
+      - DAC_READ_SEARCH
+      - SETGID
+      - SETUID
     security_opt:
       - no-new-privileges:true
     entrypoint:
@@ -27,17 +31,18 @@ services:
       - -c
       - |
         test -s /run/secrets/qwen_api_key
-        key="$$(cat /run/secrets/qwen_api_key)" || exit 1
+        key="$$(cat /run/secrets/qwen_api_key)"
         test -n "$$key"
         export LLM_API_KEY="$$key"
         unset key
-        exec "$$@"
+        exec setpriv --reuid=10001 --regid=10001 --init-groups \
+          --bounding-set=-all --inh-caps=-all --ambient-caps=-all "$$@"
       - --
     command: ["uvicorn", "timesoil.aios.api:app", "--host", "0.0.0.0", "--port", "8000"]
 
 secrets:
   qwen_api_key:
-    file: "${QWEN_API_KEY_FILE:?set QWEN_API_KEY_FILE to a UID 10001-readable secret file}"
+    file: "${QWEN_API_KEY_FILE:?set QWEN_API_KEY_FILE}"
 
 volumes:
   runs:

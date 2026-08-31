@@ -76,7 +76,7 @@ def load_source_records(path: str | Path) -> tuple[list[str], list[dict[str, Any
 
     if suffix == ".xlsx":
         workbook = load_workbook(source_path, read_only=True, data_only=True)
-        sheet = workbook["MODEL_Y"] if "MODEL_Y" in workbook.sheetnames else workbook.active
+        sheet = workbook["DATA"] if "DATA" in workbook.sheetnames else workbook.active
         values = sheet.iter_rows(values_only=True)
         try:
             raw_headers = list(next(values))
@@ -258,7 +258,7 @@ def create_input_template(path: str | Path, *, with_example: bool = True) -> Pat
     output_path.parent.mkdir(parents=True, exist_ok=True)
     workbook = Workbook()
     sheet = workbook.active
-    sheet.title = "MODEL_Y"
+    sheet.title = "DATA"
     sheet.sheet_view.showGridLines = False
     sheet.append(RUSSIAN_INPUT_HEADERS)
 

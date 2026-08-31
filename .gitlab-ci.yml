@@ -1,0 +1,33 @@
+stages:
+  - test
+
+variables:
+  UV_LINK_MODE: copy
+  UV_CACHE_DIR: .uv-cache
+
+cache:
+  paths:
+    - .uv-cache
+
+python-contracts:
+  stage: test
+  image: ghcr.io/astral-sh/uv:python3.13-bookworm-slim@sha256:531f855bda2c73cd6ef67d56b733b357cea384185b3022bd09f05e002cd144ca
+  before_script:
+    - apt-get update
+    - apt-get install --yes --no-install-recommends git libgomp1 libstdc++6
+    - rm -rf /var/lib/apt/lists/*
+  script:
+    - uv sync --locked
+    - uv run python -m compileall -q src scripts
+    - uv run python -c "import lightgbm; import timesoil; import timesoil.aios.api; import timesoil.aios.track2"
+    - uv run pytest -q
+    - git diff --check
+
+compose-contract:
+  stage: test
+  image: docker:28.5.1-cli@sha256:9190b0613792e658a7783cf14b2d5ace5941bb68ede7276922ea36ee457d76ad
+  variables:
+    AIOS_ENV_FILE: ./config/aios.example.env
+    QWEN_API_KEY_FILE: /run/secrets/qwen_api_key
+  script:
+    - docker compose config -q

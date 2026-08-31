@@ -44,7 +44,7 @@ def _validate_well_name(value: str) -> None:
 
 @dataclass(frozen=True, slots=True)
 class Case:
-    """Static Model Y case contract for an inclusive monthly horizon."""
+    """Static simulator case contract for an inclusive monthly horizon."""
 
     case_id: str
     start: date
@@ -200,7 +200,7 @@ class Evidence:
     trajectories: tuple[Trajectory, ...]
     step_economics: tuple[Economics, ...]
     schedule_sha256: str
-    backend_provenance: str
+    simulator_provenance: str
 
     def __post_init__(self) -> None:
         if len(self.trajectories) != len(self.step_economics):
@@ -216,8 +216,8 @@ class Evidence:
                 raise ContractError("evidence contains incomplete or unrelated economics")
         if not re.fullmatch(r"[0-9a-f]{64}", self.schedule_sha256):
             raise ContractError("schedule_sha256 must be a lowercase SHA-256")
-        if not self.backend_provenance.strip():
-            raise ContractError("backend provenance is required")
+        if not self.simulator_provenance.strip():
+            raise ContractError("simulator provenance is required")
 
     @property
     def final_economics(self) -> Economics:

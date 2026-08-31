@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import date
 import json
 from pathlib import Path
 import subprocess
@@ -9,15 +8,12 @@ import unittest
 from unittest.mock import patch
 from zipfile import ZipFile
 
-from timesoil.aios.contracts import Case, State
 from timesoil.aios.opm import (
     OPM_IMAGE,
     OPM_IMAGE_DIGEST,
     OPM_EXPORT_VECTORS,
-    OpmCertificationError,
     OpmError,
     OpmFlowRunner,
-    OpmGdmBackend,
     OpmSummaryError,
     OpmTimeoutError,
     build_summary_overlay,
@@ -118,62 +114,6 @@ class OpmFlowRunnerTest(unittest.TestCase):
 
             with self.assertRaisesRegex(OpmError, "at least one WELSPECS well"):
                 OpmFlowRunner().prepare(source, root / "run")
-            self.assertFalse((root / "run").exists())
-
-    @patch("timesoil.aios.opm.subprocess.run")
-    def test_model_y_normalization_is_opt_in_hashed_and_exact(self, mocked_run) -> None:
-        mocked_run.return_value = subprocess.CompletedProcess([], 0, "ok", "")
-        source_text = """RUNSPEC
-METRIC
-#if 1
-KEEP_THIS_DIRECTIVE
-#endif
-#if 0 // tNavigator keyword
-TNavigatorOnly
-TNavigatorOnly2
-#endif
-SUMMARY
-SCHEDULE
-WELSPECS
- 'P1' 'G' 1 1 /
-/
-"""
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            source = root / "MODEL_Y.DATA"
-            source.write_text(source_text)
-
-            result = OpmFlowRunner().run(
-                source, root / "run", normalize_model_y=True
-            )
-
-            self.assertEqual(source.read_text(), source_text)
-            snapshot = result.deck_path.read_text()
-            self.assertNotIn("tNavigator keyword", snapshot)
-            self.assertNotIn("TNavigatorOnly", snapshot)
-            self.assertIn("#if 1\nKEEP_THIS_DIRECTIVE\n#endif", snapshot)
-            manifest = json.loads(result.manifest_path.read_text())
-            transformations = manifest["deck_transformations"]
-            self.assertEqual(len(transformations), 1)
-            self.assertEqual(transformations[0]["start_line"], 6)
-            self.assertEqual(len(transformations[0]["removed_sha256"]), 64)
-            self.assertNotEqual(
-                transformations[0]["deck_sha256_before"],
-                transformations[0]["deck_sha256_after"],
-            )
-
-    def test_model_y_normalization_rejects_unbalanced_block(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            source = root / "MODEL_Y.DATA"
-            source.write_text(
-                "RUNSPEC\nMETRIC\n#if 0 // tNavigator keyword\nBROKEN\nSUMMARY\n"
-            )
-
-            with self.assertRaisesRegex(OpmError, "not correctly balanced"):
-                OpmFlowRunner().prepare(
-                    source, root / "run", normalize_model_y=True
-                )
             self.assertFalse((root / "run").exists())
 
     def test_prepare_rejects_zip_slip_without_partial_run(self) -> None:
@@ -413,27 +353,6 @@ WELSPECS
             self.assertFalse(mocked_run.call_args_list[2].kwargs["shell"])
             self.assertFalse(mocked_run.call_args_list[3].kwargs["shell"])
             self.assertEqual(mocked_run.call_args_list[3].kwargs["timeout"], 900.0)
-
-    def test_track1_boundary_requires_explicit_replay_configuration(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            source = Path(temporary) / "MODEL.DATA"
-            source.write_text("RUNSPEC\nMETRIC\nSUMMARY\nSCHEDULE\n")
-            case = Case(
-                "case",
-                date(2014, 1, 1),
-                date(2014, 1, 1),
-                date(2014, 1, 1),
-                ("P1",),
-                ("I1",),
-            )
-            state = State("case", date(2014, 1, 1), "restart", ())
-            backend = OpmGdmBackend(OpmFlowRunner(), source)
-
-            with self.assertRaisesRegex(
-                OpmCertificationError, "requires runs_dir and schedule_include"
-            ):
-                backend.validate_case(case)
-
 
 if __name__ == "__main__":
     unittest.main()

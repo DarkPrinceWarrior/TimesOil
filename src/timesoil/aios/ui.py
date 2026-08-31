@@ -63,10 +63,10 @@ OPERATOR_PAGE = """<!doctype html>
       <label for="context">Контекст запроса в JSON</label>
       <textarea id="context" name="context" spellcheck="false" required>{
   "request": "Проверить готовность предложенного плана",
+  "track": 2,
   "field_state": {},
   "constraints": {},
   "evidence": {
-    "track1_certified": false,
     "model_z_ready": false,
     "chdd_complete": false
   }
@@ -121,25 +121,16 @@ OPERATOR_PAGE = """<!doctype html>
     const list = element("capabilities");
     list.replaceChildren();
     const qwen = data.qwen || {};
-    const track1 = data.track1 || {};
     const track2 = data.track2 || {};
     const chdd = data.chdd || {};
 addCapability(
   list,
   "Qwen3.6",
   qwen.configured
-    ? (qwen.connectivity_verified ? "настроен, связь подтверждена" : "ключ настроен, связь не проверена")
+    ? (qwen.connectivity_verified ? "настроен, связь подтверждена" : "API настроен, связь не проверена")
     : "не настроен",
   Boolean(qwen.configured && qwen.connectivity_verified),
 );
-    addCapability(
-      list,
-      "Трек 1",
-      track1.certified
-        ? "сертифицирован"
-        : (track1.component_available ? "доступен, не сертифицирован" : "недоступен"),
-      Boolean(track1.certified)
-    );
     addCapability(
       list,
       "Трек 2",

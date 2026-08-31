@@ -479,7 +479,7 @@ class OpmChddTest(unittest.TestCase):
             self.assertAlmostEqual(float(chdd[0]["WLPT_Diff"]), expected_total_tonnes)
             self.assertAlmostEqual(float(track2[0]["liquid_tpd"]), expected_rate_tpd)
 
-    def test_model_y_2014_liquid_mass_regression(self) -> None:
+    def test_2014_liquid_mass_regression(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             liquid_m3 = 1080.64350568

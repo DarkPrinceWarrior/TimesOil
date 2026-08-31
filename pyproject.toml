@@ -1,49 +1,32 @@
 [project]
-name = "timesoil"
-version = "0.1.0"
-description = "Прогноз дебита нефти/жидкости на 6 месяцев: TiRex-2 и SPDM на данных месторождения с разломами"
+name = "scorp-timesoil-track2"
+version = "0.2.0"
+description = "TimesOil Track 2: Model Z surrogate, AIOS, OPM replay and CHDD"
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "numpy>=2.1",
-    "pandas>=2.2",
-    "scipy>=1.14",
-    "matplotlib>=3.9",
-    "openpyxl>=3.1",
-    "pyarrow>=17",
-    "pywaterflood>=0.3.4",
-    "mlforecast>=1.0.31",
-    "lightgbm>=4.6.0",
-    "httpx>=0.28",
     "fastapi>=0.116",
+    "httpx>=0.28",
+    "lightgbm>=4.6.0",
+    "numpy>=2.1",
+    "openpyxl>=3.1",
+    "pandas>=2.2",
+    "pyarrow>=17",
+    "pydantic>=2.11",
     "uvicorn>=0.35",
 ]
 
 [project.scripts]
 timesoil-aios = "timesoil.aios.cli:main"
 
-[project.optional-dependencies]
-tirex = [
-    "chronos-forecasting>=2.0",
-    "tirex-2>=0.1.1",
-    "torch>=2.8,<2.10",
-]
-
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling==1.32.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/timesoil"]
 
-[[tool.uv.index]]
-name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
-explicit = true
-
-[tool.uv.sources]
-torch = { index = "pytorch-cpu" }
-
 [dependency-groups]
 dev = [
+    "hatchling==1.32.0",
     "pytest>=8.4",
 ]
