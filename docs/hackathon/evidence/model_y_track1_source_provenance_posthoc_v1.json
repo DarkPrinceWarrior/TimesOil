@@ -1,0 +1,156 @@
+{
+  "argv": {
+    "embedded_nested_argv_source": [
+      "sys.executable",
+      "/tmp/timesoil-kt2/track1-v1/scripts/run_track1_mpc.py",
+      "/tmp/timesoil-kt2/track1-v1/config/model-y-track1-proof.json",
+      "--runs-dir",
+      "/tmp/timesoil-kt2/track1-v1/results/model-y-track1-mpc-20260831-a100-v3"
+    ],
+    "embedded_nested_execution_properties": {
+      "check": true,
+      "cwd": "/tmp/timesoil-kt2/track1-v1",
+      "shell": false,
+      "stdin": "DEVNULL"
+    },
+    "resolved_expected_is_inference": true,
+    "resolved_expected_sys_executable": "/tmp/timesoil-kt2/track1-v1/.venv/bin/python",
+    "top_level": null,
+    "top_level_inference": "The successful invocation required --resume-baseline because the authenticated baseline directory already existed and the non-resume branch invokes a fail-closed non-overwriting OPM run. This is an inference; no top-level Python argv was persisted."
+  },
+  "complete": true,
+  "created_at_utc": "2026-08-31T04:18:02.037447+00:00",
+  "cryptographic_execution_binding": false,
+  "evidence_artifacts": {
+    "baseline_proof": {
+      "mtime_utc": "2026-08-31T02:54:32.453487+00:00",
+      "path": "/tmp/timesoil-kt2/track1-v1/results/model-y-baseline-20260831-a100-v4/baseline-proof.json",
+      "sha256": "f7ded80cf8835bd357b2b42480ceee6ea6433e734509cf44defe9917ac3e21e3",
+      "size_bytes": 10343
+    },
+    "candidate_manifests": [
+      {
+        "finished_at": "2026-08-31T02:57:19.820898+00:00",
+        "mtime_utc": "2026-08-31T02:57:19.916264+00:00",
+        "path": "/tmp/timesoil-kt2/track1-v1/results/model-y-track1-candidates-20260831-a100-v3/opm-full-replay-2538e01468d2b09edc04357a/manifest.json",
+        "persisted_simulator_argv": [
+          "docker",
+          "run",
+          "--rm",
+          "--name",
+          "timesoil-aios-51660e103601c63affe7",
+          "--network=none",
+          "--user",
+          "0:0",
+          "--mount",
+          "type=bind,src=/tmp/timesoil-kt2/track1-v1/results/model-y-track1-candidates-20260831-a100-v3/opm-full-replay-2538e01468d2b09edc04357a/input,dst=/case,readonly",
+          "--mount",
+          "type=bind,src=/tmp/timesoil-kt2/track1-v1/results/model-y-track1-candidates-20260831-a100-v3/opm-full-replay-2538e01468d2b09edc04357a/output,dst=/output",
+          "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+          "flow",
+          "--output-dir=/output",
+          "--parsing-strictness=low",
+          "/case/MODEL_Y/MODEL_Y.DATA"
+        ],
+        "returncode": 0,
+        "run_id": "opm-full-replay-2538e01468d2b09edc04357a",
+        "sha256": "0cb42734c5ec2598034c27cc0f693193a4c076e412230daedfdd606cf37406a5",
+        "size_bytes": 12575,
+        "started_at": "2026-08-31T02:55:01.640930+00:00",
+        "status": "success"
+      },
+      {
+        "finished_at": "2026-08-31T03:00:34.289431+00:00",
+        "mtime_utc": "2026-08-31T03:00:34.379004+00:00",
+        "path": "/tmp/timesoil-kt2/track1-v1/results/model-y-track1-candidates-20260831-a100-v3/opm-full-replay-41bda657ce77290fbd1de404/manifest.json",
+        "persisted_simulator_argv": [
+          "docker",
+          "run",
+          "--rm",
+          "--name",
+          "timesoil-aios-209ce95c471eb2ba1d41",
+          "--network=none",
+          "--user",
+          "0:0",
+          "--mount",
+          "type=bind,src=/tmp/timesoil-kt2/track1-v1/results/model-y-track1-candidates-20260831-a100-v3/opm-full-replay-41bda657ce77290fbd1de404/input,dst=/case,readonly",
+          "--mount",
+          "type=bind,src=/tmp/timesoil-kt2/track1-v1/results/model-y-track1-candidates-20260831-a100-v3/opm-full-replay-41bda657ce77290fbd1de404/output,dst=/output",
+          "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+          "flow",
+          "--output-dir=/output",
+          "--parsing-strictness=low",
+          "/case/MODEL_Y/MODEL_Y.DATA"
+        ],
+        "returncode": 0,
+        "run_id": "opm-full-replay-41bda657ce77290fbd1de404",
+        "sha256": "ed73ab8db9be0bd4c82e811e7b49b331498d3d595f211f6657857eca0c6e0bfb",
+        "size_bytes": 12575,
+        "started_at": "2026-08-31T02:58:16.261876+00:00",
+        "status": "success"
+      }
+    ],
+    "final_manifest": {
+      "mtime_utc": "2026-08-31T03:01:11.394955+00:00",
+      "path": "/tmp/timesoil-kt2/track1-v1/results/model-y-track1-mpc-20260831-a100-v3/track1-155590eff7aa40c0c6923e2a/manifest.json",
+      "sha256": "34988de7432330470fba47dfd724046447f733baa1329f078cbe26bd47c15d08",
+      "size_bytes": 1075
+    },
+    "final_proof": {
+      "mtime_utc": "2026-08-31T03:01:11.572955+00:00",
+      "path": "/tmp/timesoil-kt2/track1-v1/results/model-y-track1-mpc-20260831-a100-v3/track1-155590eff7aa40c0c6923e2a/proof.json",
+      "sha256": "dc368c857947fdd554ddba231da332e8bc16b45353ead408883c4b8bb87ed972",
+      "size_bytes": 1256
+    },
+    "final_result": {
+      "mtime_utc": "2026-08-31T03:01:11.394955+00:00",
+      "path": "/tmp/timesoil-kt2/track1-v1/results/model-y-track1-mpc-20260831-a100-v3/track1-155590eff7aa40c0c6923e2a/result.json",
+      "sha256": "8f8ac34f9438988bb0f75897716f92fc724eba8c4a44b465e3ccb5eac27bc04d",
+      "size_bytes": 35108
+    }
+  },
+  "input_config": {
+    "mtime_utc": "2026-08-31T02:54:40.073477+00:00",
+    "path": "/tmp/timesoil-kt2/track1-v1/config/model-y-track1-proof.json",
+    "sha256": "f479536219efb5602bfff6cac65d67eea7b2f6d7cb539bbaab2ba78ad0a73c70",
+    "size_bytes": 26987
+  },
+  "limitations": [
+    "Neither existing baseline nor final proof records either Python source SHA-256.",
+    "No successful top-level Python process argv or terminal transcript was persisted.",
+    "The saved proof-v4.log belongs to an earlier failed attempt and is not used as success provenance.",
+    "Staged files may be byte-compared now, but this receipt does not claim their hashes were captured before execution."
+  ],
+  "posthoc_recovered_staged_source": true,
+  "proof_root": "/tmp/timesoil-kt2/track1-v1",
+  "schema": "timesoil.evidence.model-y-track1-source-provenance-posthoc/v1",
+  "scope": "Posthoc identity of staged Python sources still present on A100 and their byte identity with the reviewed local copies; not proof that these SHA-256 values were recorded before execution.",
+  "secrets_included": false,
+  "staged_sources": {
+    "controller": {
+      "mtime_utc": "2026-08-31T02:02:25.393684+00:00",
+      "path": "/tmp/timesoil-kt2/track1-v1/scripts/run_track1_mpc.py",
+      "sha256": "a986dfd89552f6e302a71bc956aef023cead2ae058093d2219c69880a2639b61",
+      "size_bytes": 18947
+    },
+    "orchestrator": {
+      "mtime_utc": "2026-08-31T02:51:22+00:00",
+      "path": "/tmp/timesoil-kt2/track1-v1/scripts/run_model_y_track1_proof.py",
+      "sha256": "220d4aefa1272c8e14378419507a84c1ddefd07ceb63def7388d3dec4eaca781",
+      "size_bytes": 21191
+    }
+  },
+  "timestamp_ordering": {
+    "baseline_proof_mtime": "2026-08-31T02:54:32.453487+00:00",
+    "candidate_001_finished_at": "2026-08-31T02:57:19.820898+00:00",
+    "candidate_001_started_at": "2026-08-31T02:55:01.640930+00:00",
+    "candidate_002_finished_at": "2026-08-31T03:00:34.289431+00:00",
+    "candidate_002_started_at": "2026-08-31T02:58:16.261876+00:00",
+    "config_mtime": "2026-08-31T02:54:40.073477+00:00",
+    "controller_staged_mtime": "2026-08-31T02:02:25.393684+00:00",
+    "final_proof_mtime": "2026-08-31T03:01:11.572955+00:00",
+    "observation": "Both staged source mtimes precede generated config, both candidate simulator runs, and final proof. Timestamp ordering supports posthoc attribution but is not cryptographic execution binding.",
+    "orchestrator_staged_mtime": "2026-08-31T02:51:22+00:00"
+  },
+  "top_level_argv_persisted": false
+}

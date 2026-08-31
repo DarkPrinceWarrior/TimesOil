@@ -1,0 +1,43 @@
+name: timesoil-kt2
+
+services:
+  api:
+    build:
+      context: .
+    image: timesoil-kt2-api:local
+    init: true
+    ports:
+      - "127.0.0.1:${AIOS_PORT:-8000}:8000"
+    env_file:
+      - ./config/aios.env
+    secrets:
+      - qwen_api_key
+    volumes:
+      - runs:/app/runs
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    entrypoint:
+      - /bin/sh
+      - -eu
+      - -c
+      - |
+        test -s /run/secrets/qwen_api_key
+        key="$$(cat /run/secrets/qwen_api_key)" || exit 1
+        test -n "$$key"
+        export LLM_API_KEY="$$key"
+        unset key
+        exec "$$@"
+      - --
+    command: ["uvicorn", "timesoil.aios.api:app", "--host", "0.0.0.0", "--port", "8000"]
+
+secrets:
+  qwen_api_key:
+    file: "${QWEN_API_KEY_FILE:?set QWEN_API_KEY_FILE to a UID 10001-readable secret file}"
+
+volumes:
+  runs:

@@ -1,0 +1,97 @@
+{
+  "active_bundle": {
+    "directory_sha256": "c56e1e5d59c110d1934277d393c548624054e19724c96d8c63266e87619ff8c1",
+    "file_count": 13,
+    "index_sha256": "71edcb70cf4e04871f81e6d6ed4842f8cc91d542731024269060a1c8f5cfaf54",
+    "path": "/tmp/timesoil-kt2/track2-v2/scenario-bundle"
+  },
+  "canonical_reproduction": {
+    "directory_sha256": "c56e1e5d59c110d1934277d393c548624054e19724c96d8c63266e87619ff8c1",
+    "file_count": 13,
+    "index_sha256": "71edcb70cf4e04871f81e6d6ed4842f8cc91d542731024269060a1c8f5cfaf54",
+    "path": "/tmp/timesoil-kt2/track2-v2/scenario-bundle-canonical-repro"
+  },
+  "comparison": "recursive regular-file byte identity",
+  "complete": true,
+  "created_at": "2026-08-31T04:08:01.676334+00:00",
+  "files": {
+    "baseline/Model_Z_sch.inc": {
+      "sha256": "ec5f51a61bced93be0fa83a621a814f5ccd612c25f770bd084d9f83626404d87",
+      "size_bytes": 1553298
+    },
+    "baseline/manifest.json": {
+      "sha256": "8f31fb5a3ec6fd2526993e5351c832a99c4ce67a935de271079fb15961da1f2f",
+      "size_bytes": 17687
+    },
+    "baseline/wells_schedule.inc": {
+      "sha256": "d9f8fbc78cb08560fab90e8909322fe5b9a60f5d193549241c9292e93916395e",
+      "size_bytes": 1444886
+    },
+    "index.json": {
+      "sha256": "71edcb70cf4e04871f81e6d6ed4842f8cc91d542731024269060a1c8f5cfaf54",
+      "size_bytes": 2791
+    },
+    "perturbation-001/Model_Z_sch.inc": {
+      "sha256": "fc52341b4856ed4ff32688b9ac623231405af3c90a9ab0665612c8f1626cf1b3",
+      "size_bytes": 3544823
+    },
+    "perturbation-001/manifest.json": {
+      "sha256": "9d3ab7287fafe7b6f01ff623897128e013c3df54c7f95b3f902a08cf3386ccb3",
+      "size_bytes": 17691
+    },
+    "perturbation-001/wells_schedule.inc": {
+      "sha256": "5a393e7d470b76c3d46b8e135df9b7da7d1d114b6b114b803f7162e30eb61512",
+      "size_bytes": 1444169
+    },
+    "perturbation-002/Model_Z_sch.inc": {
+      "sha256": "9045f363ade605c7ada668f94d564bc2db352bd8f2246e835c6d413e9ae59815",
+      "size_bytes": 3544811
+    },
+    "perturbation-002/manifest.json": {
+      "sha256": "96ca49d355ccee9d913e30a07322b2d47ae90e47a21c2841e3b9690ea8ffa2d4",
+      "size_bytes": 17691
+    },
+    "perturbation-002/wells_schedule.inc": {
+      "sha256": "992628779336c13e2220f775e0c0eebeee8bae0b6cd445f1f39627a4dd647aa6",
+      "size_bytes": 1444157
+    },
+    "perturbation-003/Model_Z_sch.inc": {
+      "sha256": "9e4e1bffa9d9a8bac13b28e433dde48f38f3efd107faf5b3a38e705f000ca8d5",
+      "size_bytes": 3544839
+    },
+    "perturbation-003/manifest.json": {
+      "sha256": "e2774a3212646226561322395539f51d91b59f4da240ae344b91c8adccfbdfd9",
+      "size_bytes": 17691
+    },
+    "perturbation-003/wells_schedule.inc": {
+      "sha256": "b39395d6a1f73b2f412d4f89e0269e0d71f11e9e2ead340831667e4f8ab63e60",
+      "size_bytes": 1444185
+    }
+  },
+  "inputs": {
+    "canonical_track2_csv": {
+      "path": "/tmp/timesoil-kt2/evidence/model-z-baseline-20260831-a100-v4-production-vectors/canonical-final/model-z-track2.csv",
+      "sha256": "b49d2ff4b5cd7b6ef08f30f2b2f79365209b40d77349986a584fba34b6f2190d"
+    },
+    "generator": {
+      "path": "/tmp/timesoil-kt2/track2-v2/code/scripts/generate_track2_scenarios.py",
+      "sha256": "35750b55b71a6d2d51f2778c0beb29495eb713f16e647f4b7c472d7c7d8f1f3a"
+    },
+    "parameters": {
+      "liquid_rate_scale": 1.0,
+      "monthly_liquid_rate_cap": null,
+      "perturbation_fraction": 0.15,
+      "scenario_count": 4,
+      "seed": 20260831
+    },
+    "projected_controls_csv": {
+      "path": "/tmp/timesoil-kt2/track2-v2/inputs/model-z-baseline-controls.csv",
+      "sha256": "1a92c1e031ab7dca843f3f8824070f7fe85a2955fa270d45eb66b0638e88752f"
+    },
+    "schedule_include": {
+      "path": "/tmp/timesoil-kt2/evidence/model-z-baseline-20260831-a100-v4-production-vectors/input/Model_Z/Model_Z_sch.inc",
+      "sha256": "ec5f51a61bced93be0fa83a621a814f5ccd612c25f770bd084d9f83626404d87"
+    }
+  },
+  "schema_version": 1
+}

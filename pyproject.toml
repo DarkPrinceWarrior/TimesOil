@@ -13,7 +13,13 @@ dependencies = [
     "pywaterflood>=0.3.4",
     "mlforecast>=1.0.31",
     "lightgbm>=4.6.0",
+    "httpx>=0.28",
+    "fastapi>=0.116",
+    "uvicorn>=0.35",
 ]
+
+[project.scripts]
+timesoil-aios = "timesoil.aios.cli:main"
 
 [project.optional-dependencies]
 tirex = [
@@ -36,3 +42,8 @@ explicit = true
 
 [tool.uv.sources]
 torch = { index = "pytorch-cpu" }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4",
+]
