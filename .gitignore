@@ -1,65 +1,22 @@
-# --- Python ---
+.venv/
+.uv-cache/
+.pytest_cache/
+.serena/
+dist/
+build/
 __pycache__/
 *.py[cod]
-*.egg-info/
-.eggs/
-build/
-dist/
-
-# --- окружения (uv) ---
-.venv/
-venv/
-env/
-# uv.lock — коммитим
-
-# --- кэши инструментов ---
-.codegraph/
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.ipynb_checkpoints/
-.serena/memories/
-
-# --- секреты / env ---
-.env
-.env.*
+.env*
 !.env.example
-
-# --- данные и артефакты (крупные, вне git) ---
-raw_data/
+config/*.env
+!config/*.example.env
+secrets/
+*.key
+*.pem
 data/
-datasets/
-raw/
-outputs/
+inputs/
 results/
-runs/
-logs/
+work/
+artifacts/
+*.zip
 *.log
-wandb/
-mlruns/
-lightning_logs/
-checkpoints/
-*.ckpt
-*.pt
-*.pth
-*.onnx
-*.safetensors
-*.parquet
-*.csv
-*.xlsx
-
-# --- OS / IDE ---
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-
-# --- внешние репозитории (SPDM на a100) ---
-external/
-
-# --- хакатон AIOS: исходники и сетки моделей (справочник в docs/hackathon/) ---
-docs/hackathon/sources/
-docs/hackathon/models/
-docs/hackathon/**/*.zip
-!docs/hackathon/chdd/**/*.xlsx
-!docs/hackathon/chdd/reference_baselines/*.csv

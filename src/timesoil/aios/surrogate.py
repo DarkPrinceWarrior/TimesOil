@@ -130,8 +130,7 @@ class ScenarioTrajectory:
     ``states`` has shape ``[month, well, 3]`` and ``actions`` has shape
     ``[month, well, 3]``. Target codes are ORAT=0, LRAT=1 and WRAT=2. The
     action at index ``t`` drives ``states[t + 1]``.
-    ``source_model`` must explicitly distinguish Model Z OPM data from the
-    Model Y pipeline proof.
+    ``source_model`` must explicitly identify simulator provenance.
     """
 
     scenario_id: str
@@ -752,11 +751,21 @@ class Track2Surrogate:
         return manifest
 
     @classmethod
-    def load(cls, directory: Path | str) -> Track2Surrogate:
+    def load(
+        cls,
+        directory: Path | str,
+        *,
+        expected_manifest_sha256: str | None = None,
+    ) -> Track2Surrogate:
         directory = Path(directory)
         manifest_bytes = _read_regular_bytes(
             directory / "manifest.json", "surrogate manifest"
         )
+        if (
+            expected_manifest_sha256 is not None
+            and sha256(manifest_bytes).hexdigest() != expected_manifest_sha256
+        ):
+            raise ValueError("surrogate manifest failed pinned hash check")
         try:
             manifest = json.loads(manifest_bytes.decode("utf-8"))
         except (UnicodeError, json.JSONDecodeError) as exc:

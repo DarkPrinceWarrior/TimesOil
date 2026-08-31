@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import date
 from hashlib import sha256
-from pathlib import Path
 
 import pytest
 
@@ -18,17 +17,6 @@ from timesoil.aios.schedule import ScheduleCompiler
 from timesoil.aios.schedule_overlay import (
     ScheduleOverlayError,
     apply_schedule_overlay,
-)
-
-
-ROOT = Path(__file__).parents[1]
-MODEL_Y_SCHEDULE = ROOT / (
-    "results/hackathon/certified_opm_runs/model-y-baseline-20260831-local/"
-    "input/MODEL_Y/INCLUDE/DemoSpe_002_2_sch.inc"
-)
-MODEL_Z_SCHEDULE = ROOT / (
-    "results/hackathon/certified_opm_runs/model-z-baseline-20260831-local/"
-    "input/Model_Z/Model_Z_sch.inc"
 )
 
 
@@ -49,7 +37,7 @@ def _action(
 def _source() -> str:
     return """-- real-style quoted/unquoted dates and include
 DATES -- January report date
- 01 'JAN' 2025 / -- accepted by Model Y
+ 01 'JAN' 2025 / -- accepted by the simulator
 /
 WCONPROD
  'P1' 'OPEN' 'LRAT' 3* 10 1* 50 1* 1* /
@@ -209,31 +197,3 @@ def test_tampered_schedule_artifact_fails_closed() -> None:
 
     with pytest.raises(ScheduleOverlayError, match="canonical hash"):
         apply_schedule_overlay(_source(), tampered, known_wells=("P1",))
-
-
-@pytest.mark.parametrize(
-    ("path", "month", "role", "next_date"),
-    [
-        (MODEL_Y_SCHEDULE, date(2015, 11, 1), WellRole.PRODUCER, "01 'DEC' 2015"),
-        (MODEL_Z_SCHEDULE, date(2025, 8, 1), WellRole.INJECTOR, "01 SEP 2025"),
-    ],
-)
-def test_real_prepared_model_schedules(
-    path: Path, month: date, role: WellRole, next_date: str
-) -> None:
-    if not path.is_file():
-        pytest.skip("prepared organizer schedule is an external test artifact")
-    source = path.read_text()
-    artifact = apply_schedule_overlay(
-        source,
-        (_action(month, "1", role),),
-        known_wells=("1",),
-        replay_month=month,
-    )
-
-    assert artifact.source_sha256 == sha256(source.encode()).hexdigest()
-    assert next_date in artifact.text
-    assert artifact.text.rstrip().endswith("/")
-    expected_keyword = "WCONPROD" if role is WellRole.PRODUCER else "WCONINJE"
-    marker = artifact.text.rfind("-- TIMESOIL AIOS OVERRIDE")
-    assert marker < artifact.text.rfind(expected_keyword) < artifact.text.rfind("DATES")

@@ -29,7 +29,7 @@ _CONNECTION_VECTORS = {
 
 
 _MODEL_Z_SOURCE_SHA256 = "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa"
-_MODEL_Y_SOURCE_SHA256 = "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e"
+_OTHER_SOURCE_SHA256 = "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e"
 
 
 def _scenarios(
@@ -336,13 +336,22 @@ class Track2Tests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             model_dir = Path(directory) / "model"
             manifest = run.model.save(model_dir)
-            loaded = Track2Surrogate.load(model_dir)
+            manifest_sha256 = _file_hash(model_dir / "manifest.json")
+            loaded = Track2Surrogate.load(
+                model_dir,
+                expected_manifest_sha256=manifest_sha256,
+            )
             item = _scenarios()[0]
             np.testing.assert_allclose(
                 loaded.rollout(item.states[0], item.actions[:3]).mean,
                 run.model.rollout(item.states[0], item.actions[:3]).mean,
             )
             self.assertEqual(len(manifest["artifact_hash"]), 64)
+            with self.assertRaisesRegex(ValueError, "pinned hash"):
+                Track2Surrogate.load(
+                    model_dir,
+                    expected_manifest_sha256="0" * 64,
+                )
 
             target = model_dir / "member_00_oil_tpd.txt"
             original_target_bytes = target.read_bytes()
@@ -490,9 +499,14 @@ class Track2Tests(unittest.TestCase):
                     [
                         sys.executable,
                         str(script),
-                        "--model-y-proof",
-                        "--raw-dir",
-                        str(root / "missing-raw"),
+                        "--dataset",
+                        str(root / "missing-data"),
+                        "--manifest",
+                        str(root / "missing-manifest"),
+                        "--batch-manifest",
+                        str(root / "missing-batch-manifest"),
+                        "--scenario-index-sha256",
+                        "69697fede3bafe9fd50f7ba568a7aaec3d2f98a9726fde94595feea82f10e317",
                         "--output",
                         str(output),
                     ],
@@ -549,13 +563,10 @@ class Track2Tests(unittest.TestCase):
         )
         self.assertEqual(restored.content_hash, expected.content_hash)
 
-    def test_model_z_csv_labels_without_provenance_are_not_ready(self) -> None:
+    def test_dataset_manifest_is_required(self) -> None:
         with TemporaryDirectory() as directory:
-            trajectories = load_trajectory_dataset(_write_csvs(Path(directory)))
-            run = fit_track2_surrogate(
-                trajectories, ensemble_size=2, n_estimators=8, horizon=3
-            )
-        self.assertFalse(run.model_z_ready)
+            with self.assertRaises(TypeError):
+                load_trajectory_dataset(_write_csvs(Path(directory)))
 
     def test_tampered_dataset_hash_is_rejected(self) -> None:
         with TemporaryDirectory() as directory:
@@ -641,8 +652,8 @@ class Track2Tests(unittest.TestCase):
 
     def test_model_z_identity_requires_archive_digest_and_canonical_label(self) -> None:
         cases = (
-            ("model_z_opm", _MODEL_Y_SOURCE_SHA256),
-            ("model_y_opm", _MODEL_Z_SOURCE_SHA256),
+            ("model_z_opm", _OTHER_SOURCE_SHA256),
+            ("other_opm", _MODEL_Z_SOURCE_SHA256),
         )
         for source_model, source_sha256 in cases:
             with self.subTest(source_model=source_model, source_sha256=source_sha256):

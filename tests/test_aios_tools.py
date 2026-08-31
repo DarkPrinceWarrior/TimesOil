@@ -25,21 +25,17 @@ from timesoil.aios.tools import (
 
 def _context() -> dict[str, Any]:
     return {
-        "case_id": "model-y",
-        "track": 1,
+        "case_id": "model-z",
+        "track": 2,
         "month": "2014-01-01",
-        "facts": {
-            "field_oil_rate": 100.0,
-            "api_key": "must-not-leak",
-        },
+        "facts": {"field_oil_rate": 100.0},
         "constraints": {"fixed_total_injection": True},
         "readiness": {
-            "track1_certified": True,
             "model_z_trained": True,
         },
         "evidence": ["request assertion only"],
         "case": {
-            "case_id": "model-y",
+            "case_id": "model-z",
             "start": "2014-01-01",
             "end": "2014-02-01",
             "economics_start": "2014-01-01",
@@ -71,6 +67,7 @@ def _context() -> dict[str, Any]:
 def test_grounded_tools_are_request_scoped_redacted_and_fail_closed() -> None:
     registry = build_grounded_tool_registry()
     context = _context()
+    context["facts"]["api_key"] = "must-not-leak"
     allowed = tuple(registry.names)
 
     state = asyncio.run(
@@ -96,14 +93,11 @@ def test_grounded_tools_are_request_scoped_redacted_and_fail_closed() -> None:
     ).output
 
     assert state["state"]["facts"] == {"field_oil_rate": 100.0}
-    assert readiness["reported"]["track1_certified"] is True
-    assert readiness["verified"] == {
-        "track1_certified": False,
-        "model_z_trained": False,
-    }
+    assert readiness["reported"]["model_z_trained"] is True
+    assert readiness["verified"] == {"model_z_trained": False}
     assert validation["valid"] is True
     assert validation["certified"] is False
-    assert validation["gdm_executed"] is False
+    assert validation["simulator_executed"] is False
     assert validation["chdd_complete"] is False
     assert len(validation["schedule_sha256"]) == 64
 
