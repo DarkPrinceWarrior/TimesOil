@@ -1,0 +1,38 @@
+{
+  "baseline_proof": "/tmp/timesoil-kt2/track1-v2.1/output/results/model-y-baseline-resume-20260831-a100-v4/baseline-proof.json",
+  "baseline_proof_sha256": "fb43651b6a06de21bb43d24da7feb38c79557044dc943c05432a162f50dd876c",
+  "binary_restart": false,
+  "candidate_run_ids": [
+    "opm-full-replay-2538e01468d2b09edc04357a",
+    "opm-full-replay-41bda657ce77290fbd1de404"
+  ],
+  "config": "/tmp/timesoil-kt2/track1-v2.1/output/config/model-y-track1-proof.json",
+  "config_sha256": "107e83b467a474991a5e8fc362b3b5ddc8333e4b85e0a53ff394cbe505e19295",
+  "replay_mode": "full-replay",
+  "result_manifest_sha256": "f5ed00bf7788b92ff83c75e9223f69db19589d218c5a51ec966e6c040f5d5bd1",
+  "schema": "timesoil.aios.model-y-track1-proof/v1",
+  "script_source_contract": {
+    "controller_execution_mode": "current-source-sibling",
+    "controller_source": {
+      "path": "/tmp/timesoil-kt2/track1-v2.1/code/scripts/run_track1_mpc.py",
+      "sha256": "e6ed84b44614ef184429e8716d58644091be0977d31ac03d846312622fd18a37"
+    },
+    "copied_controller_bytes_exact": false,
+    "execution": {
+      "run_model_y_track1_proof.py": {
+        "path": "/tmp/timesoil-kt2/track1-v2.1/code/scripts/run_model_y_track1_proof.py",
+        "sha256": "9b372eaa892b2c2f663937482407cd6b8998cf9a527a2a44edd3bec7ce2c9ecb"
+      },
+      "run_track1_mpc.py": {
+        "path": "/tmp/timesoil-kt2/track1-v2.1/code/scripts/run_track1_mpc.py",
+        "sha256": "e6ed84b44614ef184429e8716d58644091be0977d31ac03d846312622fd18a37"
+      }
+    }
+  },
+  "selected_chdd_m": 110.78238336080598,
+  "selected_chdd_sha256": "d7e2ab894a6b1d776b92841df90e6f715ec60bb42aa68219371018f69e14bdb4",
+  "selected_lineage": "/tmp/timesoil-kt2/track1-v2.1/output/results/model-y-track1-candidates-20260831-a100-v3/opm-full-replay-41bda657ce77290fbd1de404/lineage.json",
+  "selected_lineage_sha256": "35160edcad6ebca2179f628088d4f8bcc78597ab94f91a1589ea1738d6ba8a3d",
+  "selected_run_id": "opm-full-replay-41bda657ce77290fbd1de404",
+  "wells_schedule_sha256": "5a21c8a293e0b48502d67b7240125733fba9091cd2c4a82024975402f8881cb4"
+}

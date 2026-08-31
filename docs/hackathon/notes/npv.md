@@ -16,41 +16,32 @@
 
 ## Как запустить
 
-### Windows
+### Linux / WSL (через закреплённое окружение TimesOil)
 
-1. Положить `.xlsx` или `.csv` с исходными данными в `chdd/CHDD_PYTHON/input/`.
-2. В `ВХОДНОЙ_ФАЙЛ.txt` указать **одну строку** — только имя файла (без пути).
-3. Проверить `input/Нормативы_ЧДД.xlsx`.
-4. Запустить `ЗАПУСК_WINDOWS.bat` (ставит `openpyxl` через `pip`, если нужно).
-
-### Linux / WSL (через uv проекта TimesOil)
-
-Зависимость калькулятора — только `openpyxl`; в `pyproject.toml` TimesOil её нет, поэтому используется ephemeral-зависимость:
+`openpyxl>=3.1` закреплён в `pyproject.toml` и `uv.lock`. Поддерживаемый запуск
+из корня репозитория использует только это окружение:
 
 ```bash
-cd /home/ruslan_safaev/TimesOil/docs/hackathon/chdd/CHDD_PYTHON
-echo "Пример_исходных_данных.xlsx" > ВХОДНОЙ_ФАЙЛ.txt
 cd /home/ruslan_safaev/TimesOil
-uv run --with openpyxl python docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py
+uv sync --locked
+uv run python docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py
 ```
 
 Трек 1 (старт дисконтирования с 2014):
 
 ```bash
-uv run --with openpyxl python docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py --start-year 2014
+uv run python docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py --start-year 2014
 ```
 
 Трек 2 (старт с 2007):
 
 ```bash
-uv run --with openpyxl python docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py --start-year 2007
+uv run python docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py --start-year 2007
 ```
 
-Альтернатива с `.venv` TimesOil (если `openpyxl` уже установлен в окружение вручную):
-
-```bash
-/home/ruslan_safaev/TimesOil/.venv/bin/python docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py --start-year 2014
-```
+Входной файл выбирается через `ВХОДНОЙ_ФАЙЛ.txt` либо явным `--input`. Не
+устанавливать зависимости вручную через `pip` и не использовать `uv run --with`:
+это обходит воспроизводимость `uv.lock`.
 
 Результат: `output/Расчет_ЧДД_<имя_входного_файла>.xlsx`. Опционально `--json путь.json` для машиночитаемого дампа.
 
@@ -117,7 +108,17 @@ uv run --with openpyxl python docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧД�
 | **stop** | Был активен → стал неактивен | 1,0 млн руб. |
 | **start** | Был неактивен → стал активен | 1,0 млн руб. |
 
-Запуск **не** требует нового ЭЦН; CAPEX насоса — только при смене типоразмера по правилам. Первичное оснащение при старте сценария **бесплатно** (`chargeInitialPump = false` по умолчанию).
+Запуск **не** требует нового ЭЦН; CAPEX насоса — только при смене типоразмера
+по правилам. Начальный парк учитывается одним из двух явных экономических
+профилей:
+
+| Профиль | `chargeInitialPump` | Когда применять |
+|---|---:|---|
+| `organizer_reference` | `true` | Полная история от старта deck для сверки с базовым расчётом организаторов |
+| `operational_sunk_assets` | `false` | Оптимизационный горизонт: ЭЦН, установленные до его начала, уже оплачены |
+
+Профиль и эффективные нормативы записываются в provenance расчёта; не менять
+флаг неявно между baseline и кандидатом.
 
 ### Смена ЭЦН
 
@@ -170,7 +171,8 @@ uv run --with openpyxl python docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧД�
 - `WLPR` не более 500 м³/сут
 - остановка и запуск — два отдельных события по 1,0 млн руб.
 - перевод под закачку — 5,0 млн руб. (без стоимости ЭЦН)
-- первичный ЭЦН по умолчанию не начисляется (`chargeInitialPump`)
+- начальный ЭЦН учитывается только по явно выбранному профилю
+  `organizer_reference` / `operational_sunk_assets`
 - отрицательные `WLPT_Diff` / `WOMT_Diff` / `WWIT_Diff` выкидывают всю месячную строку
 
 ---
@@ -205,6 +207,10 @@ uv run --with openpyxl python docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧД�
 
 ---
 
-## Контрольный эталон
+## Опциональный контроль полного CSV
 
-На полном CSV `Модель2трек_Оптимальный_002_2_OPTIMIZED_AlenkinDA.csv` (если добавлен в `input/`): ЧДД **4418.1319744583** млн руб., исключено **102** строки с отрицательными diff (в т.ч. **90** с отрицательной нефтью). См. `README.md` калькулятора и `test_full_csv_parity.py`.
+Полный CSV `Модель2трек_Оптимальный_002_2_OPTIMIZED_AlenkinDA.csv` не входит
+в репозиторий. Только при его фактическом наличии в `input/` и подключённом
+веб-ядре можно запускать `tests/test_full_csv_parity.py`; ожидаемый исторический
+результат — ЧДД **4418.1319744583** млн руб. и 102 исключённые строки. Этот
+опциональный тест не является базовым сценарием Model Y или Model Z.

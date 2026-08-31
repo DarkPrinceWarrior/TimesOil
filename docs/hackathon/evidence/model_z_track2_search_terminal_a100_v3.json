@@ -1,0 +1,317 @@
+{
+  "argv": [
+    "/tmp/timesoil-kt2/track1-v1/.venv/bin/python",
+    "/tmp/timesoil-kt2/track2-terminal-v3/code/scripts/search_track2_schedule.py",
+    "search",
+    "/tmp/timesoil-kt2/track2-terminal-v3/training/model",
+    "/tmp/timesoil-kt2/track2-v2/scenario-runs/dataset/baseline.csv",
+    "/tmp/timesoil-kt2/track2-v2/scenario-runs/manifests/baseline.json",
+    "/tmp/timesoil-kt2/track2-terminal-v3/training/metrics.json",
+    "/tmp/timesoil-kt2/model_z/Model_Z_final_OPM.zip",
+    "/tmp/timesoil-kt2/evidence/model-z-baseline-20260831-a100-v4-production-vectors/input/Model_Z/Model_Z_sch.inc",
+    "/tmp/timesoil-kt2/track2-terminal-v3/search",
+    "--scenario-id",
+    "baseline",
+    "--start-date",
+    "2007-01-01",
+    "--candidate-count",
+    "32",
+    "--seed",
+    "20260831",
+    "--perturbation-fraction",
+    "0.05",
+    "--uncertainty-weight",
+    "1",
+    "--injection-cost-equivalent",
+    "0.01",
+    "--deck",
+    "Model_Z/Model_Z.data",
+    "--schedule-relative-path",
+    "Model_Z/Model_Z_sch.inc",
+    "--timeout-seconds",
+    "3600",
+    "--parsing-strictness",
+    "low"
+  ],
+  "command_receipt": {
+    "bytes": 8277,
+    "path": "/tmp/timesoil-kt2/track2-terminal-v3/search-evidence/search-command.json",
+    "sha256": "3c30f3fac975b94b665fd43842e3fd8ffce9663a0ada226485f644cacb14973e"
+  },
+  "complete": true,
+  "cwd": "/tmp/timesoil-kt2/track2-terminal-v3/code",
+  "deep_validation": {
+    "accepted_candidates_at_least_two": true,
+    "baseline_retained": true,
+    "canonical_actions_valid": true,
+    "execution_sources_bound": true,
+    "input_snapshots_unchanged": true,
+    "lineage_authenticated": true,
+    "manifest_sidecar_valid": true,
+    "output_file_set_exact": true,
+    "overlay_rebuilt_exactly": true,
+    "selected_is_proxy_optimum": true,
+    "wells_schedule_rebuilt_exactly": true
+  },
+  "effects": {
+    "official_chdd_invoked": false,
+    "opm_invoked": false,
+    "replay_invoked": false,
+    "replay_output_created": false,
+    "search_output_created": true,
+    "wells_schedule_created": true
+  },
+  "exact_argv_cryptographic_binding": false,
+  "execution_source_binding": true,
+  "exit_code": 0,
+  "exit_code_artifact": {
+    "bytes": 2,
+    "path": "/tmp/timesoil-kt2/track2-terminal-v3/search-evidence/search-exit-code",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "final_replay_argv": [
+    "uv",
+    "run",
+    "python",
+    "scripts/search_track2_schedule.py",
+    "replay",
+    "/tmp/timesoil-kt2/model_z/Model_Z_final_OPM.zip",
+    "/tmp/timesoil-kt2/track2-terminal-v3/search",
+    "/tmp/timesoil-kt2/track2-terminal-v3/search-final-opm",
+    "--deck",
+    "Model_Z/Model_Z.data",
+    "--schedule-relative-path",
+    "Model_Z/Model_Z_sch.inc",
+    "--timeout-seconds",
+    "3600.0",
+    "--parsing-strictness",
+    "low"
+  ],
+  "host": "a100",
+  "inputs": {
+    "dataset": {
+      "bytes": 3085566,
+      "path": "/tmp/timesoil-kt2/track2-v2/scenario-runs/dataset/baseline.csv",
+      "sha256": "cc7e768be45162d5883f20780177724e75e5a3096797541621b00147920797fe"
+    },
+    "export_manifest": {
+      "bytes": 31227,
+      "path": "/tmp/timesoil-kt2/track2-v2/scenario-runs/manifests/baseline.json",
+      "sha256": "efe5718d3906b86e904efb314619381f148f8551d57fa5c465b9f20a13dded03"
+    },
+    "metrics": {
+      "bytes": 3078,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/metrics.json",
+      "sha256": "95e3773ac6dc5036304c6f5fd697b9e603c9220ab7747d36469426a57ab8c4c4"
+    },
+    "model": {
+      "manifest.json": {
+        "bytes": 1643,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/manifest.json",
+        "sha256": "6f9532414dc8ea7291fca11159ab751c5370f9e59f234041ab017eda76698772"
+      },
+      "member_00_liquid_tpd.txt": {
+        "bytes": 241700,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_00_liquid_tpd.txt",
+        "sha256": "1ce7370f52e9cf1f4be33d34f8ef41fe0c992018c3fa4cb41c300f2a446cc7fc"
+      },
+      "member_00_oil_tpd.txt": {
+        "bytes": 242160,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_00_oil_tpd.txt",
+        "sha256": "7f4aacae783251bb58ec3b0679e19c5e2a57661ca4d07371b38aa7b80919335e"
+      },
+      "member_00_pressure_bar.txt": {
+        "bytes": 249223,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_00_pressure_bar.txt",
+        "sha256": "ab79481af18117d7cb1230d641752691472a8eada562588a4ad5a8924e5c956b"
+      },
+      "member_01_liquid_tpd.txt": {
+        "bytes": 241826,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_01_liquid_tpd.txt",
+        "sha256": "038ee56ae89e1ae9f3220a6229ffc6e44d8bc25f9d86b4639104a86dbc60f0c5"
+      },
+      "member_01_oil_tpd.txt": {
+        "bytes": 242787,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_01_oil_tpd.txt",
+        "sha256": "bbbcb3a1acf33fd11d3a4586306c94e6b8c542d789d8aef0a06bd764b073a911"
+      },
+      "member_01_pressure_bar.txt": {
+        "bytes": 249339,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_01_pressure_bar.txt",
+        "sha256": "4c9e5d7e4dd43e45a51c8c056e0933eb86f8cae355ff2e770f997ac66e6c502d"
+      },
+      "member_02_liquid_tpd.txt": {
+        "bytes": 241241,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_02_liquid_tpd.txt",
+        "sha256": "a2a2fcfd532c80ca875d8ec859ce74b997c825b002c73b3538e756e64b358b71"
+      },
+      "member_02_oil_tpd.txt": {
+        "bytes": 241156,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_02_oil_tpd.txt",
+        "sha256": "afb5193ac544d3e10a244dbe2e8921ad36b5d3ef1d2d6af1d5673c88c7a16c5c"
+      },
+      "member_02_pressure_bar.txt": {
+        "bytes": 248604,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_02_pressure_bar.txt",
+        "sha256": "8969f1dffe16b91e85e1c1cc7228fcc8b65e8105a95d8b79080a61f81535dd94"
+      },
+      "member_03_liquid_tpd.txt": {
+        "bytes": 241529,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_03_liquid_tpd.txt",
+        "sha256": "95eecf38c7eb999eff3cd74bef0b0102dc0e421118d6a2404d3cee1a2defee06"
+      },
+      "member_03_oil_tpd.txt": {
+        "bytes": 241623,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_03_oil_tpd.txt",
+        "sha256": "7c25127e63ab2e292e3d590469aa1fb9aa906f36ccdcc501a4f829727f113b9e"
+      },
+      "member_03_pressure_bar.txt": {
+        "bytes": 248483,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_03_pressure_bar.txt",
+        "sha256": "8d0655ed1282a722a885ebed495bad5f5ce11cd01db3727f4c42c7fad693a672"
+      },
+      "member_04_liquid_tpd.txt": {
+        "bytes": 241189,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_04_liquid_tpd.txt",
+        "sha256": "a0223919bbd8437452afb5a49f4c11547cbd790c289eba67c1aa2c7f90d41b10"
+      },
+      "member_04_oil_tpd.txt": {
+        "bytes": 242630,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_04_oil_tpd.txt",
+        "sha256": "8a4bd2b5833a8ed5fed91707e4c9fb449c57c5db5d407e233a01315098a70918"
+      },
+      "member_04_pressure_bar.txt": {
+        "bytes": 249113,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/member_04_pressure_bar.txt",
+        "sha256": "ead0974aaf88ad3e2b3133efcc563005d55285ec31af3f48d0f16d824a7b4fbc"
+      },
+      "model.json": {
+        "bytes": 3359,
+        "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/model.json",
+        "sha256": "d7c7df4587ac21981415054d7b4e98e506191635b4786254541e5a1b114763d1"
+      }
+    },
+    "model_z_source": {
+      "bytes": 18414034,
+      "path": "/tmp/timesoil-kt2/model_z/Model_Z_final_OPM.zip",
+      "sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa"
+    },
+    "source_schedule": {
+      "bytes": 1553298,
+      "path": "/tmp/timesoil-kt2/evidence/model-z-baseline-20260831-a100-v4-production-vectors/input/Model_Z/Model_Z_sch.inc",
+      "sha256": "ec5f51a61bced93be0fa83a621a814f5ccd612c25f770bd084d9f83626404d87"
+    },
+    "training_receipt": {
+      "bytes": 15538,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/evidence/training-terminal-receipt.json",
+      "sha256": "511e1950d43244ab9cd7ca034a26cd811e7532df155fe259555728a53c10036a"
+    }
+  },
+  "local_model_used": false,
+  "manifest": {
+    "path": "/tmp/timesoil-kt2/track2-terminal-v3/search/manifest.json",
+    "schema": "timesoil.aios.track2-surrogate-search/v1",
+    "sha256": "b4a6721adf38da833d41e21dd64a2496ee833e4b84e10dc2d583b5511052e5e8"
+  },
+  "missing_certification_evidence": [
+    "successful_opm_run_manifest",
+    "authenticated_summary_extraction",
+    "canonical_chdd_export_manifest",
+    "official_chdd_receipt"
+  ],
+  "observed_at": "2026-08-31T06:18:51.980241+00:00",
+  "organizer_certified": false,
+  "output_artifacts": {
+    "Model_Z_sch.inc": {
+      "bytes": 1585440,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/search/Model_Z_sch.inc",
+      "sha256": "4fa3d5efb189bb365b426c6c6acca98cd41894ad88a53749b4d7742a83d0af35"
+    },
+    "lineage.json": {
+      "bytes": 61588,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/search/lineage.json",
+      "sha256": "1cfddbd255d55a048ffe2da93af9b1db878111cd70a50b08efa0e959bc49de24"
+    },
+    "manifest.json": {
+      "bytes": 18460,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/search/manifest.json",
+      "sha256": "b4a6721adf38da833d41e21dd64a2496ee833e4b84e10dc2d583b5511052e5e8"
+    },
+    "manifest.sha256": {
+      "bytes": 65,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/search/manifest.sha256",
+      "sha256": "34f70288a63c643d2efbfb5f0024e44c87ca345d02f7024905d7e81e6e67bb91"
+    },
+    "wells_schedule.inc": {
+      "bytes": 23468,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/search/wells_schedule.inc",
+      "sha256": "2cf99d0e70901d3881c8ce14b9901b82fa21e0ee2945ff6f1ee82a35429af372"
+    }
+  },
+  "parameters": {
+    "candidate_count": 32,
+    "deck": "Model_Z/Model_Z.data",
+    "injection_cost_equivalent": 0.01,
+    "perturbation_fraction": 0.05,
+    "scenario_id": "baseline",
+    "schedule_relative_path": "Model_Z/Model_Z_sch.inc",
+    "seed": 20260831,
+    "start_date": "2007-01-01",
+    "uncertainty_weight": 1.0
+  },
+  "reasoning_or_secrets_persisted": false,
+  "runner": {
+    "bytes": 1222,
+    "path": "/tmp/timesoil-kt2/track2-terminal-v3/search-evidence/search-runner.sh",
+    "sha256": "e72ea137953498012b4a40fcd7ef876c5c18737517c825a19d7e8f982a09a05c"
+  },
+  "schema": "timesoil.aios.track2-search-terminal-success/v3",
+  "search": {
+    "accepted_candidates": 32,
+    "rejected_ood": [],
+    "requested_candidates": 32
+  },
+  "selected": {
+    "actions_sha256": "74580379bf3b1551eac0b85fd9684dd6873a69149924491871dad92b7b31e659",
+    "candidate_id": "baseline",
+    "certified": false,
+    "injected_water_m3": 277865.0,
+    "max_ood_score": 0.4330660353474191,
+    "oil_uncertainty_tonnes": 1135.8637866758434,
+    "predicted_oil_tonnes": 131408.64887994673,
+    "proxy_score": 127494.1350932709,
+    "selection_only": true,
+    "wells_schedule_sha256": "2cf99d0e70901d3881c8ce14b9901b82fa21e0ee2945ff6f1ee82a35429af372"
+  },
+  "selection_only": true,
+  "source_file_count": 25,
+  "source_map": {
+    "bytes": 2449,
+    "path": "/tmp/timesoil-kt2/track2-terminal-v3/evidence/source-map.sha256",
+    "sha256": "31e6358553634055f25d6049257d85451ea43943a5c6b6381b1f1559ef87f8ba"
+  },
+  "terminal": true,
+  "terminal_process_absent": true,
+  "train_log": {
+    "bytes": 58,
+    "path": "/tmp/timesoil-kt2/track2-terminal-v3/search-evidence/search.log",
+    "sha256": "3fcdce0af5fbb7e6e87aeb4d25e17693ce4c38f20a634f0df12e4a3415461459"
+  },
+  "training": {
+    "metrics": {
+      "bytes": 3078,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/metrics.json",
+      "sha256": "95e3773ac6dc5036304c6f5fd697b9e603c9220ab7747d36469426a57ab8c4c4"
+    },
+    "model_manifest": {
+      "bytes": 1643,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/training/model/manifest.json",
+      "sha256": "6f9532414dc8ea7291fca11159ab751c5370f9e59f234041ab017eda76698772"
+    },
+    "receipt": {
+      "bytes": 15538,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/evidence/training-terminal-receipt.json",
+      "sha256": "511e1950d43244ab9cd7ca034a26cd811e7532df155fe259555728a53c10036a"
+    }
+  }
+}

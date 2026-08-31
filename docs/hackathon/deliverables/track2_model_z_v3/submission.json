@@ -1,0 +1,214 @@
+{
+  "schema": "timesoil.hackathon.track2-deliverable/v3",
+  "competition_submission": true,
+  "track": 2,
+  "model": "Model Z",
+  "created_at": "2026-08-31T07:15:00Z",
+  "source": {
+    "archive_file": "Model_Z_final_OPM.zip",
+    "archive_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+    "deck": "Model_Z/Model_Z.data",
+    "deck_sha256": "29dec80ba1e3faf4915ab7444c6fea59d8875575224262acff7507cc0ab8e0dc",
+    "schedule_relative_path": "Model_Z/Model_Z_sch.inc"
+  },
+  "horizon": {
+    "start_inclusive": "2007-01-01",
+    "end_exclusive": "2007-07-01",
+    "months": 6
+  },
+  "simulator": {
+    "image": "openporousmedia/opmreleases:2026.04_amd64",
+    "digest": "sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+    "image_reference": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+  },
+  "run_ids": {
+    "flow": "opm-e4eba3f347d5e46d9319a8c5",
+    "economics": "economics-6c7ae0866582847a07cae104"
+  },
+  "artifacts": {
+    "controls_only_schedule": {
+      "file": "wells_schedule.inc",
+      "sha256": "2cf99d0e70901d3881c8ce14b9901b82fa21e0ee2945ff6f1ee82a35429af372"
+    },
+    "full_schedule_overlay": {
+      "file": "Model_Z_sch.inc",
+      "sha256": "4fa3d5efb189bb365b426c6c6acca98cd41894ad88a53749b4d7742a83d0af35"
+    },
+    "lineage": {
+      "file": "lineage.json",
+      "sha256": "1cfddbd255d55a048ffe2da93af9b1db878111cd70a50b08efa0e959bc49de24"
+    },
+    "search_manifest": {
+      "file": "manifest.json",
+      "sha256": "b4a6721adf38da833d41e21dd64a2496ee833e4b84e10dc2d583b5511052e5e8"
+    }
+  },
+  "receipts": {
+    "scenario_batch": {
+      "file": "../../evidence/track2_scenario_batch_completion_a100_v1.json",
+      "schema": "timesoil.evidence.track2-scenario-batch-completion/v1",
+      "sha256": "d50386ca122c5e3608b14157661ff0974c9329f89072e7b46cbfc3b3d0f797b6"
+    },
+    "baseline_economics": {
+      "file": "../../evidence/model_z_economics_terminal_a100_v2.json",
+      "schema": "timesoil.track2.terminal-economics/v2",
+      "sha256": "6a814805cce34aaf91f815b567248dde88966e522cd5a11526b4d77611858d8c"
+    },
+    "surrogate_training": {
+      "file": "../../evidence/model_z_track2_training_terminal_a100_v3.json",
+      "schema": "timesoil.aios.track2-training-terminal/v3",
+      "sha256": "511e1950d43244ab9cd7ca034a26cd811e7532df155fe259555728a53c10036a"
+    },
+    "surrogate_search": {
+      "file": "../../evidence/model_z_track2_search_terminal_a100_v3.json",
+      "schema": "timesoil.aios.track2-search-terminal-success/v3",
+      "sha256": "ccc9705475209baaa306a2e8a4bbff034cfa6996564f725fd4f58fcd9333c006"
+    },
+    "builtin_replay": {
+      "file": "../../evidence/model_z_track2_final_replay_a100_v3.json",
+      "schema": "timesoil.aios.track2-final-replay/v2",
+      "sha256": "359bd379d77adedb8d4bfb39f267335af40f64fcd67314e4cb8111d45fed483c"
+    },
+    "terminal_replay_audit": {
+      "file": "../../evidence/model_z_track2_final_replay_audit_a100_v3.json",
+      "schema": "timesoil.aios.track2-terminal-replay-audit/v3",
+      "sha256": "3c6d50e5cf355b08f0c67d5feaadee9e319050499d91162c6061e87a650dda32"
+    }
+  },
+  "scenario_pipeline": {
+    "scenario_index": {
+      "path": "/tmp/timesoil-kt2/track2-v2/scenario-bundle/index.json",
+      "sha256": "71edcb70cf4e04871f81e6d6ed4842f8cc91d542731024269060a1c8f5cfaf54"
+    },
+    "batch_manifest": {
+      "path": "/tmp/timesoil-kt2/track2-v2/scenario-runs/manifest.json",
+      "sha256": "fd4a8d11ca85886f56e143ef0a48686da2677b80d770f95b5fd7e938ac33e946"
+    },
+    "scenario_count": 4,
+    "sequential": true,
+    "identity_baseline": {
+      "canonical_chdd_sha256": "446c24eaa063710422835a745be157abdce66d602c75f33de50a8e75881d3884",
+      "final_replay_chdd_sha256": "446c24eaa063710422835a745be157abdce66d602c75f33de50a8e75881d3884",
+      "byte_identical_to_final_replay": true,
+      "row_count": 38213,
+      "organizer_1991_chdd_m": 5181.184136469775,
+      "organizer_reference_envelope_chdd_m": [
+        5157.016329811206,
+        5218.9449080841405
+      ],
+      "inside_reference_envelope": true
+    },
+    "preservation": {
+      "source_schedule_sha256": "ec5f51a61bced93be0fa83a621a814f5ccd612c25f770bd084d9f83626404d87",
+      "controls_sha256": "2cf99d0e70901d3881c8ce14b9901b82fa21e0ee2945ff6f1ee82a35429af372",
+      "full_overlay_sha256": "4fa3d5efb189bb365b426c6c6acca98cd41894ad88a53749b4d7742a83d0af35",
+      "source_schedule_retained_and_overrides_appended": true,
+      "secondary_wcon_fields_preserved": true,
+      "effective_bhp_constraints_preserved": true,
+      "regression_test": "tests/test_aios_schedule_overlay.py::test_overlay_preserves_effective_bhp_constraints"
+    },
+    "scenarios": [
+      {
+        "id": "baseline",
+        "opm_run_manifest_sha256": "efada179be86f90a39af3c51c25dc84e2b8fd5f174b79fb64e40d765a38864e0",
+        "dataset_sha256": "cc7e768be45162d5883f20780177724e75e5a3096797541621b00147920797fe",
+        "export_manifest_sha256": "efe5718d3906b86e904efb314619381f148f8551d57fa5c465b9f20a13dded03",
+        "row_count": 38213
+      },
+      {
+        "id": "perturbation-001",
+        "opm_run_manifest_sha256": "efe526caa2bea5eef0f314cc68bc63c09e959f356b34b032f9929b99edff125e",
+        "dataset_sha256": "c08ca1affc08fcdba192dec8306c0423fbf09724ac71460ab0d32e1dc3611641",
+        "export_manifest_sha256": "83b6ca03c03c196729b750416c247993c850f6c74b1a48ab6176769a8e5be4b6",
+        "row_count": 38213
+      },
+      {
+        "id": "perturbation-002",
+        "opm_run_manifest_sha256": "184100888aa8a3e32dd1ebd47979cd21f057979f14eb4b1f9b22479c2e02528f",
+        "dataset_sha256": "32e925dfd379f40b3eafaeac7569d0efb92c78afda229f12897eb1d715a44bb5",
+        "export_manifest_sha256": "dc5df1953919cdc1f3954108278a0b6689d57f0d604477d1ec09293377108a0e",
+        "row_count": 38213
+      },
+      {
+        "id": "perturbation-003",
+        "opm_run_manifest_sha256": "01a69f54e383df8d8de3e25f614e32ae596ecbb43ffdfaf8be96a44402b69948",
+        "dataset_sha256": "bd08edc7b3d2e186bfa33eeb740e30987cb7da90a909f0c145ddb90e5bbc0e83",
+        "export_manifest_sha256": "d7d2cce17e55b188740b70d9e616b9bcedd973f8487f78fe20822131c2f19171",
+        "row_count": 38213
+      }
+    ]
+  },
+  "surrogate": {
+    "architecture": "CRM/material-balance baseline + LightGBM residual ensemble",
+    "objective": "per-output L1 residual with train-only OOB shrinkage",
+    "seed": 20260831,
+    "horizon_months": 6,
+    "ensemble_size": 5,
+    "n_estimators": 160,
+    "model_artifact_sha256": "82dfc80d535345fddcf3ec3540c8ea66df89bce7ff50f1f262256fdf07cce4d3",
+    "model_manifest_sha256": "6f9532414dc8ea7291fca11159ab751c5370f9e59f234041ab017eda76698772",
+    "metrics_sha256": "95e3773ac6dc5036304c6f5fd697b9e603c9220ab7747d36469426a57ab8c4c4",
+    "train": {
+      "rollouts": 183,
+      "oil_wape": 0.07194876872241276,
+      "liquid_wape": 0.0450418237016783,
+      "pressure_rmse_bar": 8.728282555431857,
+      "ood_step_rate": 0.007285974499089253,
+      "ensemble_90_coverage": 0.4370553109212985
+    },
+    "test": {
+      "rollouts": 61,
+      "oil_wape": 0.07794010582163956,
+      "liquid_wape": 0.05194313143850126,
+      "pressure_rmse_bar": 8.808412498471592,
+      "ood_step_rate": 0.00546448087431694,
+      "ensemble_90_coverage": 0.40498169664173167
+    },
+    "uncertainty": "ensemble standard deviation; not conformally calibrated",
+    "model_z_ready": true
+  },
+  "search": {
+    "seed": 20260831,
+    "requested_candidates": 32,
+    "accepted_candidates": 32,
+    "rejected_ood": 0,
+    "selected_candidate_id": "baseline",
+    "selection_only": true,
+    "certified": false,
+    "proxy_score": 127494.1350932709,
+    "predicted_oil_tonnes": 131408.64887994673,
+    "oil_uncertainty_tonnes": 1135.8637866758434,
+    "max_ood_score": 0.4330660353474191
+  },
+  "replay": {
+    "status": "success",
+    "returncode": 0,
+    "final_opm_replay_performed": true,
+    "canonical_chdd_csv_rows": 38213,
+    "canonical_chdd_csv_sha256": "446c24eaa063710422835a745be157abdce66d602c75f33de50a8e75881d3884",
+    "opm_run_manifest_sha256": "e4eba3f347d5e46d9319a8c52592c39635c3f2192974166e866fdc42b5bcb617",
+    "summary_report_sha256": "844d7afe9fdeeda5a907badb32e70c85486e9d7b45fbd64cbf00fd405a234e67",
+    "summary_extraction_sha256": "2587105e3b4d14f26855d6a575408f6db921321436611f0ee0b915f727611b15",
+    "canonical_export_manifest_sha256": "d278ed996767450a9406ce4f7b1479a5c46270a12f7e06e434649b4ded312a48",
+    "economics_manifest_sha256": "6c7ae0866582847a07cae10463ddf88467c58118167c1e79faf9a96d9615ba92"
+  },
+  "economics": {
+    "official_calculator_profile": "operational_sunk_assets",
+    "start_year": 2007,
+    "charge_initial_pump": false,
+    "total_chdd_m": 11918.789227262983,
+    "unit": "million_rubles",
+    "verified_from_authenticated_replay": true
+  },
+  "certification": {
+    "self_replay_authenticated": true,
+    "organizer_certified": false
+  },
+  "limitations": [
+    "Выбран базовый кандидат; улучшение относительно базового управления не заявляется.",
+    "Поиск ранжировал кандидатов суррогатным риск-скорректированным прокси, а не официальным ЧДД.",
+    "Неопределённость суррогатной модели является разбросом ансамбля и не имеет конформной калибровки.",
+    "Результат воспроизведён в OPM Flow; расхождение с tНавигатором должно оцениваться с допуском организаторов.",
+    "Комплект не сертифицирован организаторами: organizer_certified=false."
+  ]
+}

@@ -1,0 +1,16 @@
+%% Трек 1: один месяц MPC — фиксация только первого шага, состояние из полной ГДМ
+flowchart LR
+    restart_t["restart_t"] --> diag["диагностика"]
+    diag --> intents["намерения агентов"]
+    intents --> actions["допустимые действия"]
+    actions --> crm["CRM prescreen"]
+    crm --> gdm["полная ГДМ финалистов"]
+    gdm --> chdd["CHDD_PYTHON"]
+    chdd --> gate["защитный контур"]
+    gate --> lock["зафиксировать месяц t"]
+    lock --> sched["wells_schedule += месяц"]
+    sched --> nxt["restart_t+1"]
+
+    note_llm(["LLM не считает дебиты"]) -.-> intents
+    note_excel(["не сверка с Excel 2014–2015"]) -.-> diag
+    note_noop(["no-op если все кандидаты красные"]) -.-> gate

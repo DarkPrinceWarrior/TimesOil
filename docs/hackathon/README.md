@@ -22,6 +22,10 @@
 - результаты запуска на тестовом кейсе.
 
 Без полного пакета к автоматической валидации не допускают. Подробный чеклист: [notes/submission.md](notes/submission.md).
+Текущий КТ2-комплект индексирован в [deliverables](deliverables/README.md),
+квитанции и неизменяемая история неуспешных попыток — в
+[evidence](evidence/README.md). Комплект Track 2 воспроизведён внутренне, но не
+сертифицирован организаторами.
 
 ## Как проверяют
 
@@ -40,28 +44,70 @@
 | 1 | `models/model_y/Model_Y (3).zip` | 01.01.2014 |
 | 2 | `models/model_z_final_opm/Model_Z_final_OPM.zip` | 01.01.2007 |
 
-Model Z в архиве `Model_Z_final_OPM.zip` подготовлен для OPM Flow: сетка без ключей tNavigator, расписание на `COMPDAT`. Горизонт Z: 01 NOV 1994 … 01 SEP 2025, 103 добывающие, 41 нагнетательная. Подробности: [notes/models.md](notes/models.md).
+Model Z в архиве `Model_Z_final_OPM.zip` подготовлен для OPM Flow: сетка без
+ключей tNavigator, расписание на `COMPDAT`. Горизонт Z: 01 NOV 1994 …
+01 SEP 2025. В модели **103 уникальные скважины**: 92 встречаются в
+`WCONPROD`, 41 — в `WCONINJE`, 30 меняют роль, поэтому категории нельзя
+складывать. Подробности: [notes/models.md](notes/models.md).
 
 Картины гидродинамики и данные для суррогата организаторы не выкладывают — их нужно снять самим прогоном симулятора: tNavigator (если есть лицензия), [OPM Flow](https://opm-project.org/?page_id=19), [MRST](https://www.sintef.no/projectweb/mrst/). Открытые датасеты (OPM, Volve, ORSD, модели ТПУ) — только для учёбы, не объект конкурса.
 
-**Эталонный расчётчик дохода** — каталог [chdd/CHDD_PYTHON](chdd/CHDD_PYTHON). Считать ЧДД только им; методика — `sources/Методика_расчета_ЧДД_скорректированная.docx`. Положить вход в `input/`, указать имя в `ВХОДНОЙ_ФАЙЛ.txt`, проверить `Нормативы_ЧДД.xlsx`, запустить `РАСЧЕТ_ЧДД.py`. Команды и контрольные суммы: [notes/chdd_usage.md](notes/chdd_usage.md), [notes/npv.md](notes/npv.md).
+**Эталонный расчётчик дохода** — каталог [chdd/CHDD_PYTHON](chdd/CHDD_PYTHON). Считать ЧДД только им; методика — `sources/Методика_расчета_ЧДД_скорректированная.docx`. Положить вход в `input/`, указать имя в `ВХОДНОЙ_ФАЙЛ.txt`, проверить `Нормативы_ЧДД.xlsx`, запустить `РАСЧЕТ_ЧДД.py`. Команды и контрольные суммы: [notes/chdd_usage.md](notes/chdd_usage.md), [notes/npv.md](notes/npv.md). Базовые расчёты Model Y/Model Z из OPM Flow и tNavigator, полученные 31.08.2026, лежат отдельно в [chdd/reference_baselines](chdd/reference_baselines/README.md).
 
-Отрицательные `WLPT_Diff` / `WOMT_Diff` / `WWIT_Diff` выкидывают всю месячную строку из экономики. Контроль на полном CSV: 4418.1319744583 млн руб. Автотесты калькулятора: 14 прошли, 2 пропущены (паритет с веб-ядром, нужен Node).
+Отрицательные `WLPT_Diff` / `WOMT_Diff` / `WWIT_Diff` выкидывают всю месячную
+строку из экономики. Поэтому OPM-экспорт использует массовые показатели
+нефти/жидкости и проверяет их до вызова неизменённого калькулятора
+`CHDD_PYTHON`. Для полной истории от начала модели профиль организаторов
+учитывает первоначальный парк УЭЦН; для операционного горизонта существующие
+насосы считаются уже понесёнными затратами.
+
+Сквозная сверка Model Y закрыта: `5334,357811` млн руб. против организаторского
+OPM `5326,453466` за 2007–2015 (отклонение `7,904346` меньше опубликованного
+разрыва между симуляторами `65,294662`), а от 2014 — `1082,233753351` против
+`1082,233695354`. Для Model Z получено `5181,184136` против OPM
+`5157,016330`; отклонение `24,167807` также меньше межсимуляторного разрыва
+`61,928578`. Исправление единиц закреплено тестом и манифестами. Текущий
+локальный шлюз: **173 passed, 2 skipped, 9 subtests passed**; отдельно тесты
+калькулятора — 14 прошли, 2 пропущены.
+
+Track 1 source-bound v2.1 выбрал no-op: `110,782383361` против
+`110,776225880` млн руб. у alternative, но только на одном месяце. Для Track 2
+завершены четыре OPM-сценария, обучение и proxy-search. На отложенном сценарии
+WAPE суррогата составил `7,7940 %` по нефти и `5,1943 %` по жидкости,
+pressure RMSE — `8,808 bar`, OOD-rate — `0,5464 %`; nominal 90%-coverage равен
+только `40,50 %` и не откалиброван конформно. Search выбрал baseline по proxy,
+а не по ЧДД; улучшение baseline не заявляется. Выбранное расписание прошло
+полный OPM replay с кодом 0, а официальный калькулятор с профилем
+`operational_sunk_assets` дал ЧДД `11918,789227263` млн руб. Терминальные
+receipt/audit имеют SHA-256 `359bd379d77adedb8d4bfb39f267335af40f64fcd67314e4cb8111d45fed483c`
+и `3c6d50e5cf355b08f0c67d5feaadee9e319050499d91162c6061e87a650dda32`.
+Это authenticated self-replay, но `organizer_certified=false`. Docker v5
+terminal runtime/security закрыт receipt
+[`docker_a100_v5.json`](evidence/docker_a100_v5.json); Qwen workflow в нём не
+вызывался; 11/11 source hashes совпадают с текущим деревом. Отдельный host-side
+live receipt Qwen v3
+[`qwen36_agent_tool_registry_a100_v3.json`](evidence/qwen36_agent_tool_registry_a100_v3.json)
+имеет SHA-256 `6098179b0f21362a8cde72c58a5156616f5986729c1fffea978272b53ed8b1c5`:
+8/8 ответов провайдера, четыре роли, 4 actual read-tool calls и явный отказ
+критика. Проверено только 412 из 618 действий; full plan подтверждён отдельно
+OPM replay, а не агентным tool.
 
 ## С чего читать дальше
 
 1. [notes/tz.md](notes/tz.md) — сжатая выжимка ТЗ.
-2. [extracted/tz.md](extracted/tz.md) — полный текст технического задания.
-3. [extracted/official_post.md](extracted/official_post.md) — дубль ключевой информации из канала.
-4. [notes/submission.md](notes/submission.md) — что сдавать и как дисквалифицируют.
-5. [notes/tracks.md](notes/tracks.md) — трек 1 против трека 2.
-6. [notes/dialog.md](notes/dialog.md) — разбор циклов треков, шага, ЧДД и TimesOil из чата 17.08.2026.
-7. [notes/models.md](notes/models.md) — какая модель актуальна.
-8. [notes/chdd_usage.md](notes/chdd_usage.md) и [notes/npv.md](notes/npv.md) — расчёт ЧДД.
-9. [notes/timesoil_map.md](notes/timesoil_map.md) — что уже есть в репозитории TimesOil.
-10. [notes/track1_channel.md](notes/track1_channel.md) — ответы организаторов из канала трека 1 (ресурсы, LLM, вода, компенсация).
-11. [notes/faq.md](notes/faq.md) — суррогат, симуляторы, архив Model Z.
-12. [notes/lectures.md](notes/lectures.md) — кратко по лекциям; полные тексты в `extracted/`.
+2. [checkpoint_2_2026-08-31.md](checkpoint_2_2026-08-31.md) — фактическое
+   состояние и сценарий показа KT2.
+3. [extracted/tz.md](extracted/tz.md) — полный текст технического задания.
+4. [extracted/official_post.md](extracted/official_post.md) — дубль ключевой информации из канала.
+5. [notes/submission.md](notes/submission.md) — что сдавать и как дисквалифицируют.
+6. [notes/tracks.md](notes/tracks.md) — трек 1 против трека 2.
+7. [notes/dialog.md](notes/dialog.md) — разбор циклов треков, шага, ЧДД и TimesOil из чата 17.08.2026.
+8. [notes/models.md](notes/models.md) — какая модель актуальна.
+9. [notes/chdd_usage.md](notes/chdd_usage.md) и [notes/npv.md](notes/npv.md) — расчёт ЧДД.
+10. [notes/timesoil_map.md](notes/timesoil_map.md) — что уже есть в репозитории TimesOil.
+11. [notes/track1_channel.md](notes/track1_channel.md) — ответы организаторов из канала трека 1 (ресурсы, LLM, вода, компенсация).
+12. [notes/faq.md](notes/faq.md) — суррогат, симуляторы, архив Model Z.
+13. [notes/lectures.md](notes/lectures.md) — кратко по лекциям; полные тексты в `extracted/`.
 
 ## Карта каталога
 
@@ -71,7 +117,7 @@ Model Z в архиве `Model_Z_final_OPM.zip` подготовлен для OP
 | `notes/` | сжатый справочник (читать) |
 | `extracted/` | полный текст лекций, ТЗ и методик |
 | `sources/` | исходные pptx / pdf / docx / zip |
-| `chdd/` | эталонный расчётчик ЧДД |
+| `chdd/` | калькулятор и неизменяемые базовые расчёты организаторов |
 | `models/` | архивы Model Y и Model Z (OPM) |
 | `canvas/` | копия панели разбора из чата |
 | `sync_desktop.sh` | копия справочника на рабочий стол |

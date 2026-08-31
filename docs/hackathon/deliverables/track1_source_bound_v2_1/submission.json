@@ -1,0 +1,98 @@
+{
+  "schema": "timesoil.hackathon.track1-source-bound-deliverable/v2.1",
+  "purpose": "checkpoint_2_source_bound_proof",
+  "competition_submission": false,
+  "track": 1,
+  "model": "Model Y",
+  "simulator": {
+    "name": "OPM Flow 2026.04",
+    "image": "openporousmedia/opmreleases:2026.04_amd64",
+    "digest": "sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+    "replay_mode": "authenticated-full-replay/v1",
+    "binary_restart": false
+  },
+  "source_archive": {
+    "remote_path": "/tmp/timesoil-kt2/model_y/Model_Y (3).zip",
+    "sha256": "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e"
+  },
+  "execution": {
+    "run_id": "track1-fe409eb2670bf3af14f784ee",
+    "selected_run_id": "opm-full-replay-41bda657ce77290fbd1de404",
+    "candidate_run_ids": [
+      "opm-full-replay-2538e01468d2b09edc04357a",
+      "opm-full-replay-41bda657ce77290fbd1de404"
+    ],
+    "candidate_count": 2
+  },
+  "evaluation": {
+    "start_inclusive": "2014-01-01",
+    "end_exclusive": "2014-02-01",
+    "elapsed_months": 1,
+    "economics_profile": "canonical",
+    "start_year": 2014,
+    "charge_initial_pump": false,
+    "selected_chdd_million_rub": 110.78238336080598,
+    "other_candidate_chdd_million_rub": 110.77622588043093,
+    "selected_minus_other_chdd_million_rub": 0.006157480375051705
+  },
+  "selected_schedule": {
+    "path": "wells_schedule.inc",
+    "sha256": "5a21c8a293e0b48502d67b7240125733fba9091cd2c4a82024975402f8881cb4",
+    "bytes": 1974,
+    "controls_only": true,
+    "copied_byte_exact_from_authenticated_output": true
+  },
+  "copied_terminal_artifacts": {
+    "result": {
+      "path": "result.json",
+      "sha256": "e7328a1a830dee4907a322551eeb6b95b7ed8f30dc6ff5922f168e4460a9d0e8",
+      "bytes": 35548
+    },
+    "proof": {
+      "path": "proof.json",
+      "sha256": "42c55947dbfb513d3e9d9e5e9aa8c9899b49a6c9f092d3a714cab098320dbff8",
+      "bytes": 2074
+    },
+    "manifest": {
+      "path": "manifest.json",
+      "sha256": "f5ed00bf7788b92ff83c75e9223f69db19589d218c5a51ec966e6c040f5d5bd1",
+      "bytes": 1519
+    },
+    "manifest_sidecar": {
+      "path": "manifest.sha256",
+      "sha256": "ada0d1a30e5898fa0ce0bb2cb27cb36fe5d10838213569d509643429e7d7ee44",
+      "bytes": 80,
+      "declared_manifest_sha256": "f5ed00bf7788b92ff83c75e9223f69db19589d218c5a51ec966e6c040f5d5bd1"
+    }
+  },
+  "selected_remote_evidence": {
+    "opm_run_manifest": {
+      "path": "/tmp/timesoil-kt2/track1-v2.1/output/results/model-y-track1-candidates-20260831-a100-v3/opm-full-replay-41bda657ce77290fbd1de404/manifest.json",
+      "sha256": "387b0a235a5e20bc086fd467f6e9da9693992d604a9d2cc5b93b65a362ddba44"
+    },
+    "lineage": {
+      "path": "/tmp/timesoil-kt2/track1-v2.1/output/results/model-y-track1-candidates-20260831-a100-v3/opm-full-replay-41bda657ce77290fbd1de404/lineage.json",
+      "sha256": "35160edcad6ebca2179f628088d4f8bcc78597ab94f91a1589ea1738d6ba8a3d"
+    },
+    "canonical_chdd": {
+      "path": "/tmp/timesoil-kt2/track1-v2.1/output/results/model-y-track1-candidates-20260831-a100-v3/opm-full-replay-41bda657ce77290fbd1de404/canonical/chdd.csv",
+      "sha256": "d7e2ab894a6b1d776b92841df90e6f715ec60bb42aa68219371018f69e14bdb4"
+    },
+    "economics_result": {
+      "path": "/tmp/timesoil-kt2/track1-v2.1/output/results/model-y-track1-candidates-20260831-a100-v3/opm-full-replay-41bda657ce77290fbd1de404/economics/result.json",
+      "sha256": "9b6ce94459671132c95c91fe3a308685017715612852ea18e4d05aea58b481ba"
+    }
+  },
+  "completion_receipt": {
+    "local_path": "../../evidence/model_y_track1_source_bound_a100_v2_1.json",
+    "remote_path": "/tmp/timesoil-kt2/track1-v2.1/evidence/completion-terminal-receipt.json",
+    "sha256": "b3aebefce30a0a948a84702d3b6fd7598aa183c735f296d9cb7ae5a0003cf050"
+  },
+  "claim_limits": {
+    "organizer_certified": false,
+    "global_optimum_claimed": false,
+    "full_horizon_claimed": false,
+    "six_month_certification": false,
+    "track1_one_month_closed_loop_proof": true
+  }
+}

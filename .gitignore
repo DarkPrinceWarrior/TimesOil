@@ -18,6 +18,7 @@ env/
 .ruff_cache/
 .mypy_cache/
 .ipynb_checkpoints/
+.serena/memories/
 
 # --- секреты / env ---
 .env
@@ -61,3 +62,4 @@ docs/hackathon/sources/
 docs/hackathon/models/
 docs/hackathon/**/*.zip
 !docs/hackathon/chdd/**/*.xlsx
+!docs/hackathon/chdd/reference_baselines/*.csv

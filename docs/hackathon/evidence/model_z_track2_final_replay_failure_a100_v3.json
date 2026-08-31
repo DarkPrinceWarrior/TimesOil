@@ -1,0 +1,147 @@
+{
+  "artifacts": {
+    "canonical_export_manifest": {
+      "bytes": 31222,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/search-final-opm/canonical/manifest.json",
+      "sha256": "a9c547843e5692e6a95ccb732d0bbbb595925a71edbac83fe44c4961a8616a9f"
+    },
+    "chdd_csv": {
+      "bytes": 4646753,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/search-final-opm/canonical/chdd.csv",
+      "sha256": "446c24eaa063710422835a745be157abdce66d602c75f33de50a8e75881d3884"
+    },
+    "exact_opm_input_schedule": {
+      "bytes": 1585440,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/search-final-opm/input/Model_Z/Model_Z_sch.inc",
+      "sha256": "4fa3d5efb189bb365b426c6c6acca98cd41894ad88a53749b4d7742a83d0af35"
+    },
+    "opm_manifest_sidecar": {
+      "bytes": 80,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/search-final-opm/manifest.sha256",
+      "sha256": "92211340be0aaa13925c9965464bb424b71d0d3679de453691b30dbc3fab3da7"
+    },
+    "opm_run_manifest": {
+      "bytes": 12462,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/search-final-opm/manifest.json",
+      "sha256": "1028f0c59f4c2f8f507c59e09ce4184b83079b1dfe54fd1d179d8ce688e13376"
+    },
+    "summary_extraction": {
+      "bytes": 1016837,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/search-final-opm/summary-extraction.json",
+      "sha256": "5a5fddae31aef936e771b799efda804ae715d4cf5c152a33092a552824f6c1dd"
+    },
+    "summary_report": {
+      "bytes": 88598498,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/search-final-opm/summary-report.txt",
+      "sha256": "844d7afe9fdeeda5a907badb32e70c85486e9d7b45fbd64cbf00fd405a234e67"
+    },
+    "trajectory_csv": {
+      "bytes": 3849826,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/search-final-opm/canonical/trajectory.csv",
+      "sha256": "b968d06447559a197262a762c242e6290347b0313c3f3df0c68890208db77668"
+    }
+  },
+  "complete": false,
+  "deep_validation": {
+    "canonical_export_manifest_authenticated_without_size_cap": true,
+    "canonical_row_counts_authenticated": true,
+    "exact_opm_input_schedule_authenticated": true,
+    "opm_manifest_artifact_count": 22,
+    "opm_manifest_authenticated": true,
+    "raw_summary_artifact_count": 3,
+    "source_inputs_unchanged": true,
+    "summary_extraction_authenticated": true,
+    "summary_report_authenticated_without_size_cap": true
+  },
+  "effects": {
+    "canonical_export_created": true,
+    "economics_created": false,
+    "final_replay_receipt_created": false,
+    "official_chdd_invoked": false,
+    "opm_completed_successfully": true,
+    "opm_invocation_count": 1,
+    "opm_invoked": true,
+    "retry_invoked": false,
+    "summary_extraction_created": true
+  },
+  "execution": {
+    "argv": [
+      "uv",
+      "run",
+      "python",
+      "scripts/search_track2_schedule.py",
+      "replay",
+      "/tmp/timesoil-kt2/model_z/Model_Z_final_OPM.zip",
+      "/tmp/timesoil-kt2/track2-terminal-v3/search",
+      "/tmp/timesoil-kt2/track2-terminal-v3/search-final-opm",
+      "--deck",
+      "Model_Z/Model_Z.data",
+      "--schedule-relative-path",
+      "Model_Z/Model_Z_sch.inc",
+      "--timeout-seconds",
+      "3600.0",
+      "--parsing-strictness",
+      "low"
+    ],
+    "command_receipt": {
+      "bytes": 3674,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/replay-evidence/replay-command.json",
+      "sha256": "bc6f757ea7d3f1b0e9c42265f7c190e865c288dee25d22e811e12f82511078f7"
+    },
+    "cwd": "/tmp/timesoil-kt2/track2-terminal-v3/code",
+    "environment_key_names": [
+      "HOME",
+      "LANG",
+      "PATH",
+      "PYTHONDONTWRITEBYTECODE",
+      "PYTHONPATH",
+      "UV_OFFLINE",
+      "UV_PROJECT_ENVIRONMENT"
+    ],
+    "exit_code": 2,
+    "exit_code_artifact": {
+      "bytes": 2,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/replay-evidence/replay-exit-code",
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    "launch_ordinal": 1,
+    "log": {
+      "bytes": 669,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/replay-evidence/replay.log",
+      "sha256": "db7460cc5ca70403a6953de321c9c20a6f45515cc9c86ea62581aee1d9ec8c2e"
+    },
+    "runner": {
+      "bytes": 944,
+      "path": "/tmp/timesoil-kt2/track2-terminal-v3/replay-evidence/replay-runner.sh",
+      "sha256": "018f3ed527311d8a1a213cf847d4aac2a49a6870dd9ad42c738fbde6ac4bd7db"
+    },
+    "terminal_process_absent": true
+  },
+  "failure": {
+    "actual_summary_report_bytes": 88598498,
+    "built_in_final_replay_receipt_created": false,
+    "configured_limit_bytes": 67108864,
+    "fail_closed": true,
+    "message": "linked SUMMARY report exceeds 67108864 bytes",
+    "phase": "canonical_export_authentication"
+  },
+  "host": "a100",
+  "missing_success_evidence": [
+    "official_chdd_economics_manifest",
+    "official_chdd_result",
+    "built_in_final_replay_receipt_v2"
+  ],
+  "observed_at": "2026-08-31T06:43:46.672941+00:00",
+  "organizer_certified": false,
+  "reasoning_or_secrets_persisted": false,
+  "restart_authorized": false,
+  "schema": "timesoil.aios.track2-final-replay-terminal-failure/v3",
+  "simulator": {
+    "deck": "Model_Z/Model_Z.data",
+    "deck_sha256": "29dec80ba1e3faf4915ab7444c6fea59d8875575224262acff7507cc0ab8e0dc",
+    "image": "openporousmedia/opmreleases:2026.04_amd64",
+    "image_digest": "sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+    "image_reference": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+  },
+  "terminal": true
+}
