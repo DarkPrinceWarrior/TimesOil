@@ -1,0 +1,115 @@
+{
+  "schema": "timesoil.hackathon.track1-model-y-deliverable/v3",
+  "purpose": "checkpoint_2_six_month_source_bound_mpc_proof",
+  "competition_submission": false,
+  "track": 1,
+  "model": "Model Y",
+  "certification": {
+    "self_certified": true,
+    "organizer_certified": false,
+    "global_optimum_claimed": false,
+    "selection_scope": "best of three declared candidates per month"
+  },
+  "simulator": {
+    "name": "OPM Flow 2026.04",
+    "image": "openporousmedia/opmreleases:2026.04_amd64",
+    "digest": "sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+    "replay_mode": "authenticated-full-replay/v1",
+    "binary_restart": false
+  },
+  "source": {
+    "repository_commit": "f142d2343395fe3865a3fd1178ccea9394846449",
+    "archive_remote_path": "/tmp/timesoil-kt2/model_y/Model_Y (3).zip",
+    "archive_sha256": "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e"
+  },
+  "execution": {
+    "run_id": "track1-658094d8f598d7ae6112ad91",
+    "candidate_count": 18,
+    "candidate_count_per_month": 3,
+    "selected_run_ids": [
+      "opm-full-replay-9e283e98fb8680a671f5d131",
+      "opm-full-replay-b42cc51ca742c8db63b249e5",
+      "opm-full-replay-88047e4e3335b107e5db8026",
+      "opm-full-replay-c4aa8372a564266957eb2c7d",
+      "opm-full-replay-59ebb5c892c66c1116a28def",
+      "opm-full-replay-dbd64fe8c722bf46759c1199"
+    ],
+    "output_root": "/tmp/timesoil-kt2/track1-six-month-v1/output"
+  },
+  "evaluation": {
+    "start_inclusive": "2014-01-01",
+    "end_exclusive": "2014-07-01",
+    "elapsed_months": 6,
+    "economics_profile": "canonical",
+    "selected_chdd_million_rub": 361.95624753135576,
+    "baseline_chdd_million_rub": 361.7478381787023,
+    "selected_minus_baseline_chdd_million_rub": 0.2084093526534616
+  },
+  "constraints": {
+    "well_count_per_month": 49,
+    "producer_count_per_month": 33,
+    "injector_count_per_month": 16,
+    "selected_invariant_violations": [],
+    "passed": true
+  },
+  "selected_schedule": {
+    "path": "wells_schedule.inc",
+    "sha256": "bfa490a903e3df261efb2b537431b4ee0f8201fb1fc238f9d52ab0d16c401c24",
+    "bytes": 11644,
+    "controls_only": true,
+    "copied_byte_exact_from_authenticated_output": true,
+    "difference_from_baseline": "injector well 2: WRAT 150 to 160 m3/day in each of six months"
+  },
+  "baseline_schedule": {
+    "path": "baseline_wells_schedule.inc",
+    "sha256": "bf7f995dce250b890cf6cbb2a3858d1b14907a3fbd11964ffc5edf9eaa85ceda",
+    "bytes": 11644,
+    "controls_only": true,
+    "copied_byte_exact_from_authenticated_output": true
+  },
+  "copied_terminal_artifacts": {
+    "result": {
+      "path": "result.json",
+      "sha256": "7bb287a71174ca2838ab1a9cdd8eed307ea30a5450fc8c48d66532ad5b928097",
+      "bytes": 206776
+    },
+    "proof": {
+      "path": "proof.json",
+      "sha256": "01a3ec7bdf3fd3bdcc8209a7d8ecee6881f923e2cbd0b24636dff0de2010b3b0",
+      "bytes": 4914
+    },
+    "manifest": {
+      "path": "manifest.json",
+      "sha256": "1a83c78f37cc04f89dca009f90c386dd3d9cce96d24ea39401a99330db2fd5a0",
+      "bytes": 1739
+    },
+    "manifest_sidecar": {
+      "path": "manifest.sha256",
+      "sha256": "da5a61880b8cae834a7f5d7408392ab2914a1b50616a8b1a82841b552139896e",
+      "bytes": 80,
+      "declared_manifest_sha256": "1a83c78f37cc04f89dca009f90c386dd3d9cce96d24ea39401a99330db2fd5a0"
+    },
+    "terminal_lineage": {
+      "path": "terminal_lineage/lineage.json",
+      "sha256": "ad6da3a159363ae81555ff0c99cb4ae518f743bb47e029bdc46da5c130ba9265",
+      "bytes": 77773
+    },
+    "terminal_lineage_sidecar": {
+      "path": "terminal_lineage/lineage.sha256",
+      "sha256": "98a98ddf64bf7946c8e3b3e008ecfc05b713a50ecbee629d20befa625aaa4beb",
+      "bytes": 79,
+      "declared_lineage_sha256": "ad6da3a159363ae81555ff0c99cb4ae518f743bb47e029bdc46da5c130ba9265"
+    }
+  },
+  "completion_receipt": {
+    "local_path": "../../evidence/model_y_track1_six_month_a100_v3.json",
+    "sha256": "175a73d9fc7608841b52ade7d64e34ebc313bed08c19fb5f2780286891118e39"
+  },
+  "claim_limits": {
+    "organizer_certified": false,
+    "global_optimum_claimed": false,
+    "six_month_source_bound_mpc_proof": true,
+    "full_field_controls_replayed": true,
+    "note": "Internal certified flags attest reproducibility and declared invariants only."
+  }
+}
