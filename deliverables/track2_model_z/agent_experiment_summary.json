@@ -1,0 +1,20 @@
+{
+  "schema": "scorp.track2.agent-experiment/v1",
+  "terminal": true,
+  "experiment_complete": true,
+  "workflow_approved": false,
+  "organizer_certified": false,
+  "model": "qwen3.6-35b-a3b",
+  "local_language_model_used": false,
+  "provider_attempts": 8,
+  "provider_responses": 8,
+  "roles": [
+    "coordinator",
+    "reservoir_analyst",
+    "planner",
+    "critic"
+  ],
+  "allowed_tool_calls": 4,
+  "critic_approved": false,
+  "interpretation": "Критик штатно отклонил неполные численные доказательства."
+}

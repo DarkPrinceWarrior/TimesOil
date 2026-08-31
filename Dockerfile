@@ -11,7 +11,9 @@ ENV PATH="/app/.venv/bin:$PATH" \
     UV_NO_CACHE=1
 
 WORKDIR /app
-
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends libgomp1 libstdc++6 \
+    && rm -rf /var/lib/apt/lists/*
 RUN useradd --create-home --uid 10001 timesoil
 
 COPY pyproject.toml uv.lock ./
@@ -19,18 +21,18 @@ RUN uv sync --locked --no-dev --no-install-project
 
 COPY src ./src
 COPY docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py \
-    docs/hackathon/chdd/CHDD_PYTHON/chdd_model.py \
-    docs/hackathon/chdd/CHDD_PYTHON/excel_io.py \
-    ./docs/hackathon/chdd/CHDD_PYTHON/
+     docs/hackathon/chdd/CHDD_PYTHON/chdd_model.py \
+     docs/hackathon/chdd/CHDD_PYTHON/excel_io.py \
+     ./docs/hackathon/chdd/CHDD_PYTHON/
 COPY docs/hackathon/chdd/CHDD_PYTHON/input/Нормативы_ЧДД.xlsx \
-    ./docs/hackathon/chdd/CHDD_PYTHON/input/Нормативы_ЧДД.xlsx
+     ./docs/hackathon/chdd/CHDD_PYTHON/input/Нормативы_ЧДД.xlsx
+COPY deliverables/track2_model_z/surrogate/model/ ./model-z-surrogate-v4/
 
 RUN uv sync --locked --no-dev --no-editable \
     && mkdir -p /app/runs \
     && chown timesoil:timesoil /app/runs
 
 USER timesoil
-
 EXPOSE 8000
 VOLUME ["/app/runs"]
 

@@ -1,8 +1,9 @@
-"""Fail-closed client for Tatneft Qwen3.6 through its LiteLLM API."""
+"""Fail-closed client for Qwen3.6 through an external OpenAI-compatible API."""
 
 from __future__ import annotations
 
 import asyncio
+from ipaddress import ip_address
 import json
 import os
 import re
@@ -13,7 +14,6 @@ from urllib.parse import urlsplit
 
 import httpx
 
-APPROVED_BASE_URL = "https://litellm.tatneft.guru/v1"
 APPROVED_MODEL = "qwen3.6-35b-a3b"
 _MAX_REASONING_CHARS = 32_768
 _MAX_CONTENT_CHARS = 65_536
@@ -21,7 +21,7 @@ _NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]{0,63}$")
 
 
 class LLMError(RuntimeError):
-    """Tatneft generation failed or returned an invalid response."""
+    """External Qwen generation failed or returned an invalid response."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,16 +29,17 @@ class LLMConfig:
     """Runtime settings; only the approved remote model is accepted."""
 
     api_key: str = field(repr=False)
-    base_url: str = APPROVED_BASE_URL
+    base_url: str
     model: str = APPROVED_MODEL
     timeout_seconds: float = 60.0
     max_output_tokens: int = 4096
 
     def __post_init__(self) -> None:
         parsed = urlsplit(self.base_url)
+        hostname = parsed.hostname or ""
         if (
             parsed.scheme != "https"
-            or parsed.hostname != "litellm.tatneft.guru"
+            or not hostname
             or parsed.port not in (None, 443)
             or parsed.path.rstrip("/") != "/v1"
             or parsed.username is not None
@@ -46,7 +47,20 @@ class LLMConfig:
             or parsed.query
             or parsed.fragment
         ):
-            raise ValueError("LLM_BASE_URL is not the approved Tatneft LiteLLM endpoint")
+            raise ValueError("LLM_BASE_URL must be an external HTTPS /v1 endpoint")
+        normalized_host = hostname.rstrip(".").lower()
+        try:
+            address = ip_address(normalized_host)
+        except ValueError:
+            if (
+                "." not in normalized_host
+                or normalized_host == "localhost"
+                or normalized_host.endswith(".localhost")
+            ):
+                raise ValueError("LLM_BASE_URL must use an external host") from None
+        else:
+            if not address.is_global:
+                raise ValueError("LLM_BASE_URL must use a global address")
         if self.model != APPROVED_MODEL:
             raise ValueError("LLM_MODEL must be qwen3.6-35b-a3b")
         if (
@@ -65,7 +79,7 @@ class LLMConfig:
         source = os.environ if environ is None else environ
         return cls(
             api_key=source.get("LLM_API_KEY", ""),
-            base_url=source.get("LLM_BASE_URL", APPROVED_BASE_URL),
+            base_url=source.get("LLM_BASE_URL", ""),
             model=source.get("LLM_MODEL", APPROVED_MODEL),
             timeout_seconds=_env_float(source, "LLM_TIMEOUT_SECONDS", 60.0),
             max_output_tokens=_env_int(source, "LLM_MAX_OUTPUT_TOKENS", 4096),
@@ -120,7 +134,7 @@ class LLMResponse:
     model: str | None = None
 
 
-class TatneftLLMClient:
+class ExternalQwenClient:
     """Small OpenAI-compatible client with no provider or local fallback."""
 
     def __init__(
@@ -132,7 +146,7 @@ class TatneftLLMClient:
         if http_client is not None and http_client.follow_redirects:
             raise ValueError("LLM transport must not follow redirects")
         if http_client is not None and str(http_client.base_url).rstrip("/") != config.base_url:
-            raise ValueError("LLM transport base URL must match the approved endpoint")
+            raise ValueError("LLM transport base URL must match configured endpoint")
         self.config = config
         self._owns_client = http_client is None
         self._client = http_client or httpx.AsyncClient(
@@ -240,9 +254,12 @@ class TatneftLLMClient:
                 )
             response.raise_for_status()
             body = response.json()
-            return _parse_response(body)
+            result = _parse_response(body)
+            if result.model != self.config.model:
+                raise LLMError("external Qwen response model mismatch")
+            return result
         except (TimeoutError, httpx.HTTPError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
-            raise LLMError("Tatneft LiteLLM request failed") from exc
+            raise LLMError("external Qwen request failed") from exc
 
 
 def _parse_response(body: Any) -> LLMResponse:

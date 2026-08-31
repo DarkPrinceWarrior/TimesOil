@@ -43,7 +43,11 @@ from timesoil.aios.surrogate import Track2Surrogate, _validated_surrogate_artifa
 from timesoil.aios.track2 import (
     MODEL_Z_SOURCE_SHA256,
     MAX_TRACK2_SEARCH_CANDIDATES,
+    MODEL_Z_SCENARIO_ACTIONS_SHA256,
+    MODEL_Z_SCENARIO_EXPORTED_ACTIONS_SHA256,
+    MODEL_Z_SCENARIO_INDEX_SHA256,
     Track2SearchCandidate,
+    _trajectory_controls,
     load_trajectory_dataset,
     search_track2_schedule,
 )
@@ -70,6 +74,14 @@ _ECONOMICS_CALCULATOR_ARTIFACT_KEYS = {
 FileSnapshot = tuple[bytes, tuple[int, int, int, int, int, int]]
 _MAX_REGULAR_FILE_BYTES = 64 * 1024**2
 _MAX_SUMMARY_REPORT_BYTES = 128 * 1024**2
+_TRAINING_LINEAGE_SCHEMA = "timesoil.aios.track2-training-lineage/v1"
+_SCENARIO_RUN_SCHEMA = "timesoil.aios.track2-scenario-run/v2"
+_MODEL_Z_SCENARIO_INDEX_SHA256 = MODEL_Z_SCENARIO_INDEX_SHA256
+_EXPECTED_SCENARIO_ACTIONS_SHA256 = dict(MODEL_Z_SCENARIO_ACTIONS_SHA256)
+_EXPECTED_EXPORTED_ACTIONS_SHA256 = dict(
+    MODEL_Z_SCENARIO_EXPORTED_ACTIONS_SHA256
+)
+_EXPECTED_SCENARIO_IDS = tuple(_EXPECTED_SCENARIO_ACTIONS_SHA256)
 EconomicsSourceSnapshot = dict[str, tuple[Path, FileSnapshot]]
 
 
@@ -592,7 +604,7 @@ def _validated_training(
     trajectories: list[Any],
     model_manifest: dict[str, Any],
     model_manifest_sha256: str,
-) -> None:
+) -> dict[str, Any]:
     if not getattr(trajectories, "model_z_identity", False):
         raise ValueError("trajectory provenance is not verified as official Model Z OPM")
     if metrics.get("model_z_ready") is not True or metrics.get("pipeline_proof_only") is not False:
@@ -610,6 +622,79 @@ def _validated_training(
         raise ValueError("training metrics and surrogate artifact hashes disagree")
     if metrics.get("surrogate_manifest_sha256") != model_manifest_sha256:
         raise ValueError("training metrics and surrogate manifest hashes disagree")
+    scenario_batch = metrics.get("scenario_batch")
+    if not isinstance(scenario_batch, dict) or scenario_batch != training.get(
+        "scenario_batch"
+    ):
+        raise ValueError("training metrics and surrogate scenario lineage disagree")
+    if set(scenario_batch) != {
+        "schema",
+        "scenario_run_schema",
+        "batch_manifest_sha256",
+        "official_source_sha256",
+        "scenario_index_sha256",
+        "scenario_ids",
+        "scenarios",
+    }:
+        raise ValueError("training scenario lineage fields are not canonical")
+    digest_fields = (
+        "batch_manifest_sha256",
+        "scenario_index_sha256",
+    )
+    if any(
+        not isinstance(scenario_batch.get(field), str)
+        or len(scenario_batch[field]) != 64
+        or any(
+            character not in "0123456789abcdef"
+            for character in scenario_batch[field]
+        )
+        for field in digest_fields
+    ):
+        raise ValueError("training scenario lineage contains an invalid SHA-256")
+    if (
+        scenario_batch.get("schema") != _TRAINING_LINEAGE_SCHEMA
+        or scenario_batch.get("scenario_run_schema") != _SCENARIO_RUN_SCHEMA
+        or scenario_batch.get("official_source_sha256") != MODEL_Z_SOURCE_SHA256
+        or scenario_batch.get("scenario_index_sha256")
+        != _MODEL_Z_SCENARIO_INDEX_SHA256
+        or scenario_batch.get("scenario_ids") != list(_EXPECTED_SCENARIO_IDS)
+    ):
+        raise ValueError("surrogate is not linked to the frozen Track 2 scenario batch")
+    scenario_records = scenario_batch.get("scenarios")
+    if not isinstance(scenario_records, list) or len(scenario_records) != len(
+        _EXPECTED_SCENARIO_IDS
+    ):
+        raise ValueError("training scenario lineage records are incomplete")
+    for expected_id, record in zip(
+        _EXPECTED_SCENARIO_IDS, scenario_records, strict=True
+    ):
+        if not isinstance(record, dict) or set(record) != {
+            "scenario_id",
+            "actions_sha256",
+            "dataset_sha256",
+            "export_manifest_sha256",
+        }:
+            raise ValueError("training scenario lineage record fields are not canonical")
+        if (
+            record.get("scenario_id") != expected_id
+            or record.get("actions_sha256")
+            != _EXPECTED_SCENARIO_ACTIONS_SHA256[expected_id]
+            or any(
+            not isinstance(record.get(field), str)
+            or len(record[field]) != 64
+            or any(character not in "0123456789abcdef" for character in record[field])
+            for field in (
+                "actions_sha256",
+                "dataset_sha256",
+                "export_manifest_sha256",
+            )
+            )
+        ):
+            raise ValueError("training scenario lineage record is invalid")
+    if len({record["actions_sha256"] for record in scenario_records}) != len(
+        scenario_records
+    ):
+        raise ValueError("training scenario action hashes are not unique")
     calibration = metrics.get("conformal_calibration")
     artifact_calibration = training.get("conformal_calibration")
     calibration_ids = (
@@ -625,16 +710,18 @@ def _validated_training(
         or model.conformal_level < 0.9
         or isinstance(calibration.get("scenario_count"), bool)
         or not isinstance(calibration.get("scenario_count"), int)
-        or calibration["scenario_count"] < 10
+        or calibration["scenario_count"] != len(_EXPECTED_SCENARIO_IDS)
         or not isinstance(calibration_ids, list)
         or len(calibration_ids) != calibration["scenario_count"]
         or len(set(calibration_ids)) != len(calibration_ids)
-        or set(calibration_ids) != set(training.get("scenario_ids", []))
+        or calibration_ids != list(_EXPECTED_SCENARIO_IDS)
+        or training.get("scenario_ids") != list(_EXPECTED_SCENARIO_IDS)
         or calibration.get("quantile_rank")
         != ceil((calibration["scenario_count"] + 1) * model.conformal_level - 1e-12)
         or calibration.get("independent_validation") is not False
     ):
         raise ValueError("surrogate lacks valid whole-scenario 90% LOSO calibration")
+    return scenario_batch
 
 
 def _replay_argv(
@@ -713,7 +800,7 @@ def _search(args: argparse.Namespace) -> Path:
     _verify_regular_snapshot(
         export_manifest, "Model Z export manifest", export_snapshot
     )
-    _validated_training(
+    scenario_batch = _validated_training(
         model, metrics, trajectories, model_manifest, _sha256(model_manifest_bytes)
     )
     matches = [item for item in trajectories if item.scenario_id == args.scenario_id]
@@ -725,6 +812,24 @@ def _search(args: argparse.Namespace) -> Path:
         raise ValueError("selected trajectory is absent from surrogate training metadata")
     if scenario_hashes[trajectory.scenario_id] != trajectory.content_hash:
         raise ValueError("selected trajectory hash disagrees with surrogate training metadata")
+    scenario_record = next(
+        (
+            record
+            for record in scenario_batch["scenarios"]
+            if record["scenario_id"] == trajectory.scenario_id
+        ),
+        None,
+    )
+    if not isinstance(scenario_record, dict):
+        raise ValueError("selected trajectory is absent from scenario batch lineage")
+    if scenario_record["dataset_sha256"] != _sha256(dataset_bytes):
+        raise ValueError("selected trajectory hash disagrees with scenario batch lineage")
+    if scenario_record["export_manifest_sha256"] != _sha256(manifest_bytes):
+        raise ValueError("selected export manifest disagrees with scenario batch lineage")
+    if _actions_sha256(_trajectory_controls(trajectory)) != (
+        _EXPECTED_EXPORTED_ACTIONS_SHA256[trajectory.scenario_id]
+    ):
+        raise ValueError("selected trajectory controls disagree with scenario index")
     start = date.fromisoformat(args.start_date)
     if start.day != 1:
         raise ValueError("start-date must be the first day of a month")
@@ -769,7 +874,8 @@ def _search(args: argparse.Namespace) -> Path:
         "start_date": result.start_date.isoformat(),
         "horizon_months": result.horizon_months,
         "score": {
-            "kind": "risk_adjusted_oil_minus_injection_proxy",
+            "kind": "risk_adjusted_producer_control_oil_proxy",
+            "control_scope": "producer_controls_only",
             "official_chdd": False,
             "uncertainty": "scenario_loso_conformal_half_width",
             "nominal_coverage": model.conformal_level,
@@ -784,8 +890,9 @@ def _search(args: argparse.Namespace) -> Path:
             "accepted_candidates": len(result.accepted),
             "rejected_ood": list(result.rejected_ood),
             "candidate_cap": MAX_TRACK2_SEARCH_CANDIDATES,
+            "control_scope": "producer_controls_only",
             "gates": [
-                "unchanged_monthly_total_injection",
+                "baseline_per_well_injection_controls_frozen",
                 "surrogate_ood",
                 "physical_state_constraints",
                 "final_opm_and_chdd_replay",
@@ -799,6 +906,11 @@ def _search(args: argparse.Namespace) -> Path:
             "metrics_sha256": _sha256(metrics_bytes),
             "surrogate_artifact_hash": model_manifest["artifact_hash"],
             "surrogate_manifest_sha256": _sha256(model_manifest_bytes),
+            "scenario_batch_manifest_sha256": scenario_batch[
+                "batch_manifest_sha256"
+            ],
+            "scenario_index_sha256": scenario_batch["scenario_index_sha256"],
+            "scenario_actions_sha256": scenario_record["actions_sha256"],
             "source_schedule_sha256": _sha256(schedule_bytes),
             "schedule_relative_path": str(schedule_relative),
             "deck_relative_path": str(deck_relative),

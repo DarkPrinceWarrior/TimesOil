@@ -1,1 +1,1 @@
-"""AIOS runtime for both hackathon tracks."""
+"""AIOS runtime for numerical scenario optimization."""

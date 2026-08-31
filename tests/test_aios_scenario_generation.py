@@ -3,7 +3,9 @@ from __future__ import annotations
 import csv
 from dataclasses import FrozenInstanceError
 from datetime import date
+from hashlib import sha256
 from math import fsum, isclose
+from pathlib import Path
 
 import pytest
 
@@ -60,6 +62,25 @@ def _records() -> list[dict[str, object]]:
             ]
         )
     return rows
+
+
+def test_bundled_model_z_baseline_controls_are_exact() -> None:
+    source = (
+        Path(__file__).resolve().parents[1]
+        / "examples"
+        / "model_z_baseline_controls_v4.csv"
+    )
+    assert sha256(source.read_bytes()).hexdigest() == (
+        "1a92c1e031ab7dca843f3f8824070f7fe85a2955fa270d45eb66b0638e88752f"
+    )
+    controls = load_control_csv(source)
+    assert len(controls) == 38_213
+    assert len({item.month for item in controls}) == 371
+    assert len({item.well for item in controls}) == 103
+    assert (controls[0].month, controls[-1].month) == (
+        date(1994, 11, 1),
+        date(2025, 9, 1),
+    )
 
 
 def test_generation_is_deterministic_diverse_and_immutable() -> None:
@@ -159,6 +180,34 @@ def test_invariants_injection_preservation_cap_and_role_switch() -> None:
                 and action.target is ControlTarget.LIQUID_RATE
             )
             assert liquid <= 350 + 1e-12
+
+
+def test_producer_only_search_scenarios_freeze_injection_controls() -> None:
+    baseline = load_control_records(_records())
+    scenarios = generate_control_scenarios(
+        baseline,
+        ScenarioGeneratorConfig(
+            seed=29,
+            perturbation_fraction=0.3,
+            perturb_injection=False,
+        ),
+    )
+    expected = {
+        (action.month, action.well): action
+        for action in baseline
+        if action.target is ControlTarget.WATER_INJECTION_RATE
+    }
+    for scenario in scenarios[1:]:
+        assert {
+            (action.month, action.well): action
+            for action in scenario.actions
+            if action.target is ControlTarget.WATER_INJECTION_RATE
+        } == expected
+    assert any(
+        candidate.value != original.value
+        for candidate, original in zip(scenarios[1].actions, baseline, strict=True)
+        if original.target is not ControlTarget.WATER_INJECTION_RATE
+    )
 
 
 def test_csv_roundtrip(tmp_path) -> None:

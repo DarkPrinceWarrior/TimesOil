@@ -18,42 +18,48 @@ from timesoil.aios.agents import (
     ToolDefinition,
     ToolNotAllowedError,
     ToolRegistry,
+    WorkflowError,
 )
 from timesoil.aios.economics import CHDD_FIELDS, CHDDEconomicsAdapter
 from timesoil.aios.llm import (
-    APPROVED_BASE_URL,
     APPROVED_MODEL,
     ChatMessage,
+    ExternalQwenClient,
     LLMConfig,
     LLMError,
     LLMResponse,
-    TatneftLLMClient,
     ToolCall,
 )
+
+_TEST_BASE_URL = "https://qwen.example/v1"
 
 
 def _http_client(handler: Any) -> httpx.AsyncClient:
     return httpx.AsyncClient(
-        base_url=APPROVED_BASE_URL + "/",
+        base_url=_TEST_BASE_URL + "/",
         transport=httpx.MockTransport(handler),
         follow_redirects=False,
     )
 
 
 def _config() -> LLMConfig:
-    return LLMConfig(api_key="test-only-key", timeout_seconds=2)
+    return LLMConfig(
+        api_key="test-only-key", base_url=_TEST_BASE_URL, timeout_seconds=2
+    )
 
 
 def test_llm_config_is_qwen36_only_and_hides_secret() -> None:
     config = _config()
     assert config.model == APPROVED_MODEL
     assert "test-only-key" not in repr(config)
-    with pytest.raises(ValueError, match="approved Tatneft"):
-        LLMConfig(api_key="x", base_url="http://127.0.0.1:8000/v1")
+    with pytest.raises(ValueError, match="external HTTPS"):
+        LLMConfig(api_key="x", base_url="http://qwen.example/v1")
     with pytest.raises(ValueError, match="qwen3.6"):
-        LLMConfig(api_key="x", model="local-qwen")
+        LLMConfig(api_key="x", base_url=_TEST_BASE_URL, model="unsupported-qwen")
     with pytest.raises(ValueError, match="LLM_API_KEY"):
-        LLMConfig.from_env({})
+        LLMConfig.from_env({"LLM_BASE_URL": _TEST_BASE_URL})
+    with pytest.raises(ValueError, match="LLM_BASE_URL"):
+        LLMConfig.from_env({"LLM_API_KEY": "x"})
 
 
 def test_reasoning_content_and_tool_calls_are_normalized_with_mock_transport() -> None:
@@ -92,7 +98,7 @@ def test_reasoning_content_and_tool_calls_are_normalized_with_mock_transport() -
     async def scenario() -> LLMResponse:
         transport = _http_client(handler)
         try:
-            client = TatneftLLMClient(_config(), http_client=transport)
+            client = ExternalQwenClient(_config(), http_client=transport)
             return await client.chat(
                 [ChatMessage("user", "inspect")],
                 tools=[
@@ -144,7 +150,7 @@ def test_structured_output_disables_thinking_and_uses_json_schema() -> None:
     async def scenario() -> dict[str, Any]:
         transport = _http_client(handler)
         try:
-            client = TatneftLLMClient(_config(), http_client=transport)
+            client = ExternalQwenClient(_config(), http_client=transport)
             result, _ = await client.structured(
                 [ChatMessage("user", "return JSON")], schema=schema, schema_name="Output"
             )
@@ -168,9 +174,31 @@ def test_provider_error_fails_closed() -> None:
     async def scenario() -> None:
         transport = _http_client(handler)
         try:
-            client = TatneftLLMClient(_config(), http_client=transport)
-            with pytest.raises(LLMError, match="Tatneft LiteLLM request failed"):
+            client = ExternalQwenClient(_config(), http_client=transport)
+            with pytest.raises(LLMError, match="external Qwen request failed"):
                 await client.chat([ChatMessage("user", "do not fall back")])
+        finally:
+            await transport.aclose()
+
+    asyncio.run(scenario())
+
+
+def test_response_model_mismatch_fails_closed() -> None:
+    def handler(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "choices": [{"message": {"content": "unexpected"}, "finish_reason": "stop"}],
+                "model": "different-model",
+            },
+        )
+
+    async def scenario() -> None:
+        transport = _http_client(handler)
+        try:
+            client = ExternalQwenClient(_config(), http_client=transport)
+            with pytest.raises(LLMError, match="model mismatch"):
+                await client.chat([ChatMessage("user", "verify")])
         finally:
             await transport.aclose()
 
@@ -251,13 +279,13 @@ def test_four_role_workflow_is_fixed_and_tools_are_allow_listed() -> None:
         registry,
         role_tools={AgentRole.COORDINATOR: ("inspect_state",)},
     )
-    state = asyncio.run(workflow.run({"track": 1, "month": "2014-01"}))
+    state = asyncio.run(workflow.run({"track": 2, "month": "2014-01"}))
 
     assert tuple(decision.role for decision in state.decisions) == ROLE_ORDER
     assert tuple(llm.roles) == tuple(role.value for role in ROLE_ORDER)
     assert state.complete and state.critic_approved
     assert tool_calls == [{"month": 1}]
-    assert state.decisions[0].tool_evidence[0].output["track"] == 1
+    assert state.decisions[0].tool_evidence[0].output["track"] == 2
     assert workflow.transitions == tuple(pairwise(ROLE_ORDER))
 
     with pytest.raises(ToolNotAllowedError):
@@ -266,6 +294,9 @@ def test_four_role_workflow_is_fixed_and_tools_are_allow_listed() -> None:
                 ToolCall("bad", "write_schedule", {}), allowed=("inspect_state",)
             )
         )
+
+    with pytest.raises(WorkflowError, match="sensitive key"):
+        asyncio.run(workflow.run({"track": 2, "access_token": "test-only"}))
 
 
 def _chdd_row(date_value: str, well: str, *, producer: bool) -> dict[str, Any]:

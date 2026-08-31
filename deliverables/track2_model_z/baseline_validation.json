@@ -1,0 +1,22 @@
+{
+  "schema": "scorp.track2.baseline-validation/v1",
+  "complete": true,
+  "organizer_certified": false,
+  "model": "Model Z",
+  "canonical_chdd_sha256": "446c24eaa063710422835a745be157abdce66d602c75f33de50a8e75881d3884",
+  "reference_million_rub": {
+    "opm_flow": 5157.016329811206,
+    "tnavigator": 5218.9449080841405
+  },
+  "reproduced_million_rub": {
+    "field_inception_compatible_profile": 5181.184136469775,
+    "inside_reference_envelope": true,
+    "operational_rebase_2007": 11918.789227262983
+  },
+  "semantics": {
+    "validation_start_year": 1991,
+    "validation_initial_pumps_charged": true,
+    "operational_start_year": 2007,
+    "operational_initial_pumps_charged": false
+  }
+}
