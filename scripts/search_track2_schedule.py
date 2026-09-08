@@ -855,6 +855,7 @@ def _search(args: argparse.Namespace) -> Path:
         injection_cost_equivalent=args.injection_cost_equivalent,
         perturb_injection=getattr(args, "perturb_injection", False),
         candidate_rank=getattr(args, "candidate_rank", 0),
+        injection_only=getattr(args, "injection_only", False),
     )
     selected = result.selected
     overlay = apply_schedule_overlay(
@@ -875,6 +876,8 @@ def _search(args: argparse.Namespace) -> Path:
     candidates = [_candidate(item) for item in result.accepted]
     injection_enabled = getattr(args, "perturb_injection", False)
     control_scope = "producer_and_injection_controls" if injection_enabled else "producer_controls_only"
+    if getattr(args, "injection_only", False):
+        control_scope = "injection_controls_only"
     manifest = {
         "schema": "timesoil.aios.track2-surrogate-search/v1",
         "selection_only": True,
@@ -1335,6 +1338,7 @@ def _parser() -> argparse.ArgumentParser:
     search.add_argument("--uncertainty-weight", type=float, default=1.0)
     search.add_argument("--injection-cost-equivalent", type=float, default=0.01)
     search.add_argument("--perturb-injection", action="store_true")
+    search.add_argument("--injection-only", action="store_true", help="hold production controls fixed to isolate injection response")
     search.add_argument("--candidate-rank", type=int, default=0, help="zero-based proxy rank for separate final OPM replays")
     search.add_argument("--deck", default="Model_Z/Model_Z.data")
     search.add_argument(

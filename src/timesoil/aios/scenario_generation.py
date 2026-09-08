@@ -41,6 +41,7 @@ class ScenarioGeneratorConfig:
     liquid_rate_scale: float = 1.0
     monthly_liquid_rate_cap: float | None = None
     perturb_injection: bool = True
+    perturb_production: bool = True
 
     def __post_init__(self) -> None:
         if isinstance(self.scenario_count, bool) or self.scenario_count < 4:
@@ -58,6 +59,10 @@ class ScenarioGeneratorConfig:
             raise ScenarioGenerationError("liquid_rate_scale must be finite and positive")
         if not isinstance(self.perturb_injection, bool):
             raise ScenarioGenerationError("perturb_injection must be a boolean")
+        if not isinstance(self.perturb_production, bool):
+            raise ScenarioGenerationError("perturb_production must be a boolean")
+        if not self.perturb_production and self.liquid_rate_scale != 1.0:
+            raise ScenarioGenerationError("fixed production requires liquid_rate_scale=1")
         cap = self.monthly_liquid_rate_cap
         if cap is not None and (not isfinite(cap) or cap <= 0):
             raise ScenarioGenerationError(
@@ -287,6 +292,8 @@ def _perturb(
                 values[index] = value
 
         lrat: list[int] = []
+        if not config.perturb_production:
+            continue
         for index in indices:
             action = baseline[index]
             if action.status is WellStatus.SHUT or action.value == 0:
@@ -348,4 +355,5 @@ def _artifact(
         ("liquid_rate_scale", config.liquid_rate_scale),
         ("monthly_liquid_rate_cap", config.monthly_liquid_rate_cap),
     ) + (() if config.perturb_injection else (("perturb_injection", False),))
+    parameters += () if config.perturb_production else (("perturb_production", False),)
     return ScenarioArtifact(scenario_id, actions, _actions_sha256(actions), parameters)
