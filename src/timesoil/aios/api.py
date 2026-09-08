@@ -11,9 +11,9 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt
 
-from .agents import AgentState, AgentWorkflow
+from .agents import AgentState, AgentWorkflow, WorkflowError
 from .economics import CHDDEconomicsAdapter, EconomicResult
-from .llm import APPROVED_MODEL, LLMConfig, TatneftLLMClient
+from .llm import APPROVED_MODEL, ExternalQwenClient, LLMConfig
 from .tools import GROUNDED_ROLE_TOOLS, build_grounded_tool_registry
 from .ui import OPERATOR_PAGE, UI_HEADERS
 
@@ -27,7 +27,7 @@ class HealthResponse(APIModel):
 
 
 class QwenCapability(APIModel):
-    model: Literal["qwen3.6-35b-a3b"]
+    model: Literal["qwen3.6-35b-a3b", "qwen-3.8-27b"]
     configured: bool
     connectivity_verified: bool
 
@@ -119,9 +119,9 @@ async def get_agent_workflow() -> AsyncIterator[AgentWorkflow]:
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Qwen3.6 is not configured",
+            detail="Qwen is not configured",
         ) from None
-    async with TatneftLLMClient(config) as client:
+    async with ExternalQwenClient(config) as client:
         yield AgentWorkflow(
             client,
             build_grounded_tool_registry(),
@@ -180,10 +180,11 @@ def health() -> HealthResponse:
 
 @app.get("/v1/capabilities")
 def capabilities() -> CapabilitiesResponse:
+    configured = _qwen_configured()
     return CapabilitiesResponse(
         qwen=QwenCapability(
-            model=APPROVED_MODEL,
-            configured=_qwen_configured(),
+            model=os.environ.get("LLM_MODEL", APPROVED_MODEL) if configured else APPROVED_MODEL,
+            configured=configured,
             connectivity_verified=False,
         ),
         track1=TrackCapability(component_available=True, certified=False),
@@ -201,7 +202,13 @@ async def run_agent_experiment(
     request: AgentExperimentRequest,
     workflow: AgentWorkflowDep,
 ) -> AgentExperimentResponse:
-    state: AgentState = await workflow.run(request.context)
+    try:
+        state: AgentState = await workflow.run(request.context)
+    except WorkflowError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="agent context or response violated the bounded contract",
+        ) from None
     return AgentExperimentResponse(
         run_id=state.run_id,
         complete=state.complete,

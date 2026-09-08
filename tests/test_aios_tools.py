@@ -28,10 +28,7 @@ def _context() -> dict[str, Any]:
         "case_id": "model-y",
         "track": 1,
         "month": "2014-01-01",
-        "facts": {
-            "field_oil_rate": 100.0,
-            "api_key": "must-not-leak",
-        },
+        "facts": {"field_oil_rate": 100.0},
         "constraints": {"fixed_total_injection": True},
         "readiness": {
             "track1_certified": True,
@@ -71,6 +68,7 @@ def _context() -> dict[str, Any]:
 def test_grounded_tools_are_request_scoped_redacted_and_fail_closed() -> None:
     registry = build_grounded_tool_registry()
     context = _context()
+    context["facts"]["api_key"] = "must-not-leak"
     allowed = tuple(registry.names)
 
     state = asyncio.run(
@@ -208,4 +206,27 @@ def test_agent_api_executes_grounded_tool_and_returns_safe_trace() -> None:
     assert planner["tools"][0]["tool"] == VALIDATE_CANDIDATE_CONTROLS
     assert planner["tools"][0]["output"]["valid"] is True
     assert "private reasoning" not in response.text
+    assert "must-not-leak" not in response.text
+
+
+def test_agent_api_rejects_sensitive_context_without_leaking_it() -> None:
+    context = _context()
+    context["facts"]["api_key"] = "must-not-leak"
+    workflow = AgentWorkflow(
+        _ToolCallingLLM(),
+        build_grounded_tool_registry(),
+        role_tools=GROUNDED_ROLE_TOOLS,
+    )
+    app.dependency_overrides[get_agent_workflow] = lambda: workflow
+    try:
+        response = TestClient(app).post(
+            "/v1/experiments/agents", json={"context": context}
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": "agent context or response violated the bounded contract"
+    }
     assert "must-not-leak" not in response.text

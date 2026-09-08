@@ -34,7 +34,15 @@ class CLITest(unittest.TestCase):
     def test_doctor_is_json_and_never_prints_secrets(self) -> None:
         secret = "api-key-must-not-leak"
         output = io.StringIO()
-        with patch.dict("os.environ", {"LLM_API_KEY": secret}, clear=False), patch(
+        with patch.dict(
+            "os.environ",
+            {
+                "LLM_API_KEY": secret,
+                "LLM_BASE_URL": "https://api.cerebras.ai/v1",
+                "LLM_MODEL": "qwen-3.8-27b",
+            },
+            clear=False,
+        ), patch(
             "timesoil.aios.cli.shutil.which", return_value=None
         ), patch("sys.stdout", output):
             self.assertEqual(cli.main(["doctor"]), 0)
@@ -44,7 +52,7 @@ class CLITest(unittest.TestCase):
         self.assertEqual(
             report["qwen"],
             {
-                "model": "qwen3.6-35b-a3b",
+                "model": "qwen-3.8-27b",
                 "configured": True,
                 "connectivity_verified": False,
             },

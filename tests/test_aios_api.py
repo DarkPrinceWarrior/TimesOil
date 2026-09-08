@@ -20,6 +20,8 @@ def _chdd_row() -> dict[str, Any]:
 
 def test_health_and_capabilities_do_not_expose_secret(monkeypatch) -> None:
     secret = "do-not-return-this-key"
+    monkeypatch.delenv("LLM_BASE_URL", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
     monkeypatch.setenv("LLM_API_KEY", secret)
 
     with TestClient(app) as client:
@@ -29,7 +31,7 @@ def test_health_and_capabilities_do_not_expose_secret(monkeypatch) -> None:
     assert health.json() == {"status": "ok"}
     payload = capabilities.json()
     assert payload["qwen"] == {
-        "model": "qwen3.6-35b-a3b",
+        "model": "qwen-3.8-27b",
         "configured": True,
         "connectivity_verified": False,
     }
@@ -41,6 +43,18 @@ def test_health_and_capabilities_do_not_expose_secret(monkeypatch) -> None:
     }
     assert payload["chdd"]["component_available"] is True
     assert secret not in health.text + capabilities.text
+
+
+def test_capabilities_report_configured_legacy_model(monkeypatch) -> None:
+    monkeypatch.setenv("LLM_API_KEY", "test-only-key")
+    monkeypatch.setenv("LLM_BASE_URL", "https://litellm.tatneft.guru/v1")
+    monkeypatch.setenv("LLM_MODEL", "qwen3.6-35b-a3b")
+
+    response = TestClient(app).get("/v1/capabilities")
+
+    assert response.status_code == 200
+    assert response.json()["qwen"]["model"] == "qwen3.6-35b-a3b"
+    assert response.json()["qwen"]["configured"] is True
 
 
 def test_agent_experiment_uses_dependency_and_filters_internal_data() -> None:
@@ -99,7 +113,7 @@ def test_agent_experiment_fails_closed_without_qwen_env(monkeypatch) -> None:
     )
 
     assert response.status_code == 503
-    assert response.json() == {"detail": "Qwen3.6 is not configured"}
+    assert response.json() == {"detail": "Qwen is not configured"}
 
 
 def test_chdd_uses_typed_records_and_server_runs_dir(tmp_path: Path) -> None:

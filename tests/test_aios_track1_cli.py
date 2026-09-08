@@ -7,6 +7,8 @@ from pathlib import Path
 import sys
 from typing import Any, Callable
 
+from timesoil.aios.agents import ROLE_ORDER
+from timesoil.aios.llm import LLMResponse, ToolCall
 from timesoil.aios.opm import OpmGdmBackend
 from timesoil.aios.track1 import DeterministicGdmBackend
 
@@ -17,6 +19,43 @@ assert SPEC is not None and SPEC.loader is not None
 cli = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = cli
 SPEC.loader.exec_module(cli)
+
+
+class _AgentClient:
+    selected_index = 1
+    rejected_role: str | None = None
+
+    def __init__(self, _: Any) -> None:
+        pass
+
+    async def __aenter__(self) -> _AgentClient:
+        return self
+
+    async def __aexit__(self, *_: object) -> None:
+        pass
+
+    async def chat(self, _: Any, **kwargs: Any) -> LLMResponse:
+        calls = (
+            (ToolCall("select-1", "select_candidate", {"index": self.selected_index}),)
+            if kwargs.get("tools")
+            else ()
+        )
+        return LLMResponse("preliminary", None, "tool_calls" if calls else "stop", calls)
+
+    async def structured(
+        self, _: Any, *, schema: dict[str, Any], **__: Any
+    ) -> tuple[dict[str, Any], LLMResponse]:
+        role = schema["properties"]["role"]["const"]
+        return (
+            {
+                "role": role,
+                "summary": f"summary {role}",
+                "recommendation": f"recommendation {role}",
+                "evidence": ["deterministic evidence"],
+                "approved": role != self.rejected_role,
+            },
+            LLMResponse("{}", None, "stop"),
+        )
 
 
 def _raises(error: type[BaseException], match: str, action: Callable[[], Any]) -> None:
@@ -263,4 +302,82 @@ def test_cli_manifest_pins_and_rechecks_executed_scripts(tmp_path: Path) -> None
             DeterministicGdmBackend(),
             script_source_contract=contract,
         ),
+    )
+
+
+def test_agent_mode_selects_one_candidate_and_records_each_month(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    payload = _payload()
+    case = payload["case"]
+    candidates = payload["candidates"]
+    assert isinstance(case, dict) and isinstance(candidates, dict)
+    case["end"] = "2014-02-01"
+    candidates["2014-02-01"] = candidates["2014-01-01"]
+    (tmp_path / "model.DATA").write_text("RUNSPEC\nEND\n", encoding="utf-8")
+    config_path = tmp_path / "track1.json"
+    config_path.write_text(json.dumps(payload), encoding="utf-8")
+    secret = "test-secret-must-not-leak"
+    monkeypatch.setenv("LLM_API_KEY", secret)
+    monkeypatch.setattr(cli, "TatneftLLMClient", _AgentClient)
+    _AgentClient.selected_index = 1
+    _AgentClient.rejected_role = None
+
+    agent_log = tmp_path / "agent.jsonl"
+    outputs, summary = cli.execute(
+        cli.load_config(config_path),
+        DeterministicGdmBackend(),
+        agent=True,
+        agent_log=agent_log,
+    )
+    result = json.loads(outputs[Path("result.json")])
+    trajectories = result["evidence"]["trajectories"]
+    records = result["agent"]["records"]
+
+    assert [
+        (item["month"], item["next_state"]["month"]) for item in trajectories
+    ] == [("2014-01-01", "2014-02-01"), ("2014-02-01", "2014-03-01")]
+    assert {
+        item["value"]
+        for item in result["schedule"]["actions"]
+        if item["well"] == "P1"
+    } == {100.0}
+    assert [item["phase"] for item in records] == [
+        "planning",
+        "terminal_month_review",
+        "planning",
+        "terminal_month_review",
+    ]
+    assert all(
+        tuple(decision["role"] for decision in item["agent"]["decisions"])
+        == tuple(role.value for role in ROLE_ORDER)
+        for item in records
+        if item["phase"] == "terminal_month_review"
+    )
+    assert secret not in outputs[Path("result.json")].decode()
+    assert secret not in agent_log.read_text(encoding="utf-8")
+    assert secret not in json.dumps(summary)
+
+
+def test_agent_mode_fails_closed_on_invalid_choice_and_critic_rejection(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    monkeypatch.setenv("LLM_API_KEY", "test-secret")
+    monkeypatch.setattr(cli, "TatneftLLMClient", _AgentClient)
+    config = _config(tmp_path)
+
+    _AgentClient.selected_index = 2
+    _AgentClient.rejected_role = None
+    _raises(
+        ValueError,
+        "candidate index outside configured options",
+        lambda: cli.execute(config, DeterministicGdmBackend(), agent=True),
+    )
+
+    _AgentClient.selected_index = 1
+    _AgentClient.rejected_role = "critic"
+    _raises(
+        RuntimeError,
+        "critic rejected simulated month",
+        lambda: cli.execute(config, DeterministicGdmBackend(), agent=True),
     )

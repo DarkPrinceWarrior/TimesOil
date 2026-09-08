@@ -272,6 +272,8 @@ def test_release_delivery_contract() -> None:
         "!uv.lock",
         "!src/",
         "!src/**",
+        "!scripts/",
+        "!scripts/run_track1_mpc.py",
         "!docs/",
         "!docs/hackathon/",
         "!docs/hackathon/chdd/",
