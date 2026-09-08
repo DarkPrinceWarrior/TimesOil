@@ -12,6 +12,9 @@ import stat
 from typing import Any
 
 from timesoil.aios import surrogate as _surrogate_module
+from timesoil.aios import interwell as _interwell_module
+from timesoil.aios import opm as _opm_module
+from timesoil.aios import opm_chdd as _opm_chdd_module
 from timesoil.aios import track2 as _track2_module
 from timesoil.aios.scenario_generation import _actions_sha256
 from timesoil.aios.track2 import (
@@ -112,7 +115,7 @@ def _read_regular(path: Path, label: str, *, limit: int = _MAX_SOURCE_BYTES) -> 
 
 def _snapshot_executed_sources() -> list[dict[str, str]]:
     sources: list[dict[str, str]] = []
-    for module_file in (__file__, _track2_module.__file__, _surrogate_module.__file__):
+    for module_file in (__file__, _track2_module.__file__, _surrogate_module.__file__, _interwell_module.__file__, _opm_module.__file__, _opm_chdd_module.__file__):
         if not isinstance(module_file, str) or not module_file:
             raise ValueError("executed source module has no __file__")
         path = Path(module_file).absolute()
@@ -416,6 +419,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--horizon", type=int, default=6)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--conformal-level", type=float, default=0.9)
+    parser.add_argument("--interwell-source", type=Path, help="immutable Model Z source ZIP for geological allocation")
     return parser.parse_args()
 
 
@@ -433,6 +437,11 @@ def main() -> int:
     )
     trajectories = load_trajectory_dataset(args.dataset, manifest=args.manifest)
     _verify_trajectory_actions(trajectories)
+    connectivity = None
+    if args.interwell_source is not None:
+        connectivity = _interwell_module.WellConnectivity.from_source(args.interwell_source, trajectories[0].well_ids)
+        if connectivity.provenance["source_sha256"] != _track2_module.MODEL_Z_SOURCE_SHA256:
+            raise ValueError("interwell geometry must come from the authenticated Model Z source")
     run = fit_track2_surrogate(
         trajectories,
         test_fraction=args.test_fraction,
@@ -441,6 +450,7 @@ def main() -> int:
         horizon=args.horizon,
         seed=args.seed,
         conformal_level=args.conformal_level,
+        connectivity=connectivity,
     )
     if _validated_batch_lineage(
         args.batch_manifest,
