@@ -591,22 +591,22 @@ def test_full_cycle_cleans_prepared_tree_after_qwen_rejection(tmp_path: Path) ->
     request = CycleRequest.from_mapping(_request(tmp_path))
     runner = _Runner()
     run_dir = tmp_path / "run"
-
     with patch(
         "timesoil.aios.workflow._capture_execution_source_binding",
         return_value=_execution_binding(),
     ), pytest.raises(CycleError, match="planning rejected"):
         asyncio.run(
             FullCycleWorkflow(
-                _PlannerRejectingLLM(),
-                runner=runner,
-                economics=_Economics(),
-                exporter=_exporter,
+                _PlannerRejectingLLM(), runner=runner,
+                economics=_Economics(), exporter=_exporter,
             ).run(request, run_dir, run_id="planning-rejected")
         )
-
     assert runner.executions == 0
     assert not run_dir.exists()
+    rejected = json.loads((tmp_path / "planning-rejected.planning-rejected.json").read_text())
+    assert rejected["status"] == "planning_rejected_before_opm"
+    assert rejected["controls_sha256"] == request.controls_sha256
+    assert any(not decision["approved"] for decision in rejected["decisions"])
 
 
 def test_pre_execution_cleanup_refuses_replaced_directory(tmp_path: Path) -> None:
