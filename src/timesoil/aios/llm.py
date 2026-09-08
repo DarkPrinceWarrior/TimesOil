@@ -319,7 +319,8 @@ class ExternalQwenClient:
                 raise LLMError("external Qwen response model mismatch")
             return result
         except (TimeoutError, httpx.HTTPError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
-            raise LLMError("external Qwen request failed") from exc
+            reason = f"HTTP {exc.response.status_code}" if isinstance(exc, httpx.HTTPStatusError) else type(exc).__name__
+            raise LLMError(f"external Qwen request failed: {reason}") from exc
 
 
 # Backward-compatible public name used by Track 1 workflow and external callers.

@@ -374,6 +374,16 @@ def test_agent_mode_fails_closed_on_invalid_choice_and_critic_rejection(
         lambda: cli.execute(config, DeterministicGdmBackend(), agent=True),
     )
 
+    from dataclasses import replace
+    earlier_economics = replace(
+        config, case=replace(config.case, economics_start=config.case.start.replace(year=2013))
+    )
+    _raises(
+        ValueError,
+        "economics_start must equal",
+        lambda: cli.execute(earlier_economics, DeterministicGdmBackend(), agent=True),
+    )
+
     _AgentClient.selected_index = 1
     _AgentClient.rejected_role = "critic"
     _raises(
