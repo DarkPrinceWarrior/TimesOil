@@ -16,7 +16,7 @@
 - расчёт ЧДД официальным Python-калькулятором;
 - AIOS с четырьмя ролями: координатор, инженер по разработке, планировщик,
   критик;
-- внешний Qwen `qwen3.6-35b-a3b` только через API; локальная LLM не используется;
+- внешний Qwen `qwen-3.8-27b` через Cerebras API; локальная LLM не используется;
 - Docker-образ API, конфигурация запуска и CI.
 
 ## Сквозной контур
@@ -50,7 +50,7 @@ deliverables/        публичные ограниченные сводки р
 ```bash
 uv sync --locked
 uv run python -m compileall -q src scripts
-uv run pytest -q
+uv run pytest tests -q
 uv run timesoil-aios doctor
 ```
 
@@ -93,3 +93,6 @@ JSON в `deliverables/track2_model_z/` — публичные сводки с о
 
 Текущий уровень готовности, архитектура и границы доказанных утверждений
 зафиксированы в `docs/KT2_STATUS.md`.
+
+Проверки перед КТ3, ограничение межскважинного отклика и отдельный эксперимент
+TimesFM 3.0 на A100: [docs/KT3_PREFLIGHT.md](docs/KT3_PREFLIGHT.md).

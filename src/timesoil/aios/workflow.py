@@ -33,7 +33,7 @@ from .economics import (
     EconomicResult,
     normalize_chdd_rows,
 )
-from .llm import APPROVED_MODEL, ExternalQwenClient
+from .llm import APPROVED_MODELS, ExternalQwenClient
 from .opm import OPM_IMAGE, OpmFlowRunner
 from .opm_chdd import export_opm_chdd
 from .schedule_overlay import (
@@ -338,7 +338,7 @@ class FullCycleWorkflow:
     ) -> None:
         if (
             not isinstance(llm, ExternalQwenClient)
-            or llm.config.model != APPROVED_MODEL
+            or llm.config.model not in APPROVED_MODELS
         ):
             raise CycleError("full cycle requires the configured external Qwen client")
         self._llm = llm
@@ -554,6 +554,7 @@ class FullCycleWorkflow:
             prepared.source_sha256,
             execution_binding,
             self._dependency_mode,
+            self._llm.config.model,
         )
         receipt_path = result.run_dir / "full-cycle-receipt.json"
         receipt_bytes = _json_bytes(receipt, indent=2)
@@ -891,6 +892,7 @@ def _receipt(
     source_sha256: str,
     execution_binding: Mapping[str, Any],
     dependency_mode: str,
+    model_name: str,
 ) -> dict[str, Any]:
     artifacts = {
         "exact_opm_input_schedule": _artifact(schedule, run_dir),
@@ -944,7 +946,7 @@ def _receipt(
             "transport": (
                 "external_openai_compatible_api" if production else "injected_test"
             ),
-            "model": APPROVED_MODEL if production else None,
+            "model": model_name if production else None,
             "decisions": [_decision(decision) for decision in state.decisions],
         },
         "terminal_evidence": public_terminal_evidence,

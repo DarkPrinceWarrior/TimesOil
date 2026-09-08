@@ -1,0 +1,223 @@
+{
+  "schema": "timesoil.kt3-preflight-summary/v1",
+  "date": "2026-09-08",
+  "execution_host": "A100",
+  "editing_host": "WSL",
+  "base_commit": "85623d7a1a86ddb893a7596ba69fd336adf6f3f3",
+  "validation_checkout": "/tmp/timesoil-kt3-20260908/code",
+  "main_deployed": false,
+  "organizer_certified": false,
+  "full_cycle_success_receipt": false,
+  "forecast_benchmark": {
+    "model": "google/timesfm-3.0-pytorch",
+    "model_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+    "upstream_commit": "8cb7eda91c2b416b37e99a979afc50f2a18e1791",
+    "script_sha256": "0a1cc31ceec4103841388f1a739c1699096e1c51413d933858953726886546ef",
+    "packages": {
+      "timesfm": "3.0.1",
+      "torch": "2.9.1+cu128",
+      "numpy": "2.1.3",
+      "pandas": "2.3.3",
+      "lightgbm": "4.6.0"
+    },
+    "train_scenarios": [
+      "baseline",
+      "perturbation-002",
+      "perturbation-004",
+      "perturbation-005",
+      "perturbation-006",
+      "perturbation-007",
+      "perturbation-008",
+      "perturbation-009"
+    ],
+    "test_scenarios": [
+      "perturbation-001",
+      "perturbation-003"
+    ],
+    "field_windows": 12,
+    "wells": 103,
+    "horizon_months": 6,
+    "context_months": 128,
+    "metrics": {
+      "persistence": {
+        "oil_wape": 0.046201273556687315,
+        "liquid_wape": 0.03549029012724336,
+        "pressure_rmse_bar": 2.022297074234567
+      },
+      "crm_lightgbm": {
+        "oil_wape": 0.03656021502610908,
+        "liquid_wape": 0.030526455651280336,
+        "pressure_rmse_bar": 2.0333040704868317
+      },
+      "timesfm3_per_well_history": {
+        "oil_wape": 0.03617424531204625,
+        "liquid_wape": 0.029846999527290856,
+        "pressure_rmse_bar": 1.792077842731472
+      },
+      "timesfm3_joint_history": {
+        "oil_wape": 0.03516110595611177,
+        "liquid_wape": 0.029127401482274353,
+        "pressure_rmse_bar": 1.7405550221373127
+      },
+      "timesfm3_joint_controls": {
+        "oil_wape": 0.036149516982391564,
+        "liquid_wape": 0.028933124768752823,
+        "pressure_rmse_bar": 1.8067044796665077
+      }
+    },
+    "inference_seconds": {
+      "timesfm3_per_well_history": 5.697,
+      "timesfm3_joint_history": 4.853,
+      "timesfm3_joint_controls": 147.952
+    },
+    "official_chdd_evaluated": false,
+    "new_opm_replay": false,
+    "limitations": [
+      "Offline hash-verified snapshot; not a new OPM extraction receipt.",
+      "Last 6 complete six-month windows per held-out scenario, not the full KT2 test set.",
+      "TimesFM receives observed history; CRM uses the current state and eight training scenarios.",
+      "Joint modes forecast 309 well targets; controls mode sees 412 planned rate/status channels.",
+      "No explicit geological connectivity features; attention alone does not prove causal validity.",
+      "No tuning on test outcomes, no independently calibrated uncertainty, no NPV improvement claim."
+    ]
+  },
+  "injection_diagnostic": {
+    "scenario_coverage": {
+      "baseline": {
+        "changed_injection_controls": 0,
+        "max_injection_change_m3d": 0.0
+      },
+      "perturbation-001": {
+        "changed_injection_controls": 9393,
+        "max_injection_change_m3d": 48.0
+      },
+      "perturbation-002": {
+        "changed_injection_controls": 9393,
+        "max_injection_change_m3d": 41.37460800000002
+      },
+      "perturbation-003": {
+        "changed_injection_controls": 9393,
+        "max_injection_change_m3d": 46.84312799999998
+      },
+      "perturbation-004": {
+        "changed_injection_controls": 9393,
+        "max_injection_change_m3d": 37.50475899999998
+      },
+      "perturbation-005": {
+        "changed_injection_controls": 9393,
+        "max_injection_change_m3d": 45.94290799999999
+      },
+      "perturbation-006": {
+        "changed_injection_controls": 9393,
+        "max_injection_change_m3d": 41.23757599999999
+      },
+      "perturbation-007": {
+        "changed_injection_controls": 9393,
+        "max_injection_change_m3d": 48.63752299999999
+      },
+      "perturbation-008": {
+        "changed_injection_controls": 9393,
+        "max_injection_change_m3d": 41.30428599999999
+      },
+      "perturbation-009": {
+        "changed_injection_controls": 9393,
+        "max_injection_change_m3d": 50.8689
+      }
+    },
+    "current_shipped_surrogate_sensitivity": [
+      {
+        "injection_factor": 0.8,
+        "changed_controls": 246,
+        "max_producer_oil_prediction_change_tpd": 0.0,
+        "ood_steps": 0
+      },
+      {
+        "injection_factor": 1.2,
+        "changed_controls": 246,
+        "max_producer_oil_prediction_change_tpd": 0.0,
+        "ood_steps": 0
+      }
+    ],
+    "surrogate_manifest_sha256": "de825094812f4f3faf83b8c5e2e3338a519bc866a2ac728322080bbd0a17ec8a",
+    "seed": 20260831,
+    "n_estimators": 160
+  },
+  "llm": {
+    "tatneft_qwen36": {
+      "model": "qwen3.6-35b-a3b",
+      "success": true,
+      "complete": true,
+      "critic_approved": false,
+      "seconds": 283.157,
+      "full_cycle": false,
+      "requests": 8,
+      "successful_requests": 8,
+      "length_truncated_requests": 3,
+      "roles": [
+        "coordinator",
+        "reservoir_analyst",
+        "planner",
+        "critic"
+      ]
+    },
+    "cerebras_qwen38": {
+      "model": "qwen-3.8-27b",
+      "success": true,
+      "complete": true,
+      "critic_approved": false,
+      "seconds": 16.787,
+      "full_cycle": false,
+      "requests": 10,
+      "successful_requests": 10,
+      "length_truncated_requests": 0,
+      "roles": [
+        "coordinator",
+        "reservoir_analyst",
+        "planner",
+        "critic"
+      ]
+    },
+    "cerebras_endpoint": "https://api.cerebras.ai/v1",
+    "cerebras_direct_a100_http": 403,
+    "cerebras_a100_proxy": "http://127.0.0.1:18889",
+    "route": "A100 loopback:18889 -> reverse SSH -> WSL loopback:10809 -> Cerebras HTTPS",
+    "requires_live_wsl_proxy_and_ssh": true
+  },
+  "validation": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src /root/projects/TimesOil/.venv/bin/python -m pytest tests -q",
+    "passed": 162,
+    "subtests_passed": 9,
+    "warnings": 1,
+    "seconds": 7.5
+  },
+  "artifacts": [
+    {
+      "path": "results/kt3-preflight-20260908/timesfm3-v1/metrics.json",
+      "sha256": "164d1013295198c1810cab0cac302bc8e1f124883f58c58b6c6635c09490c98a"
+    },
+    {
+      "path": "results/kt3-preflight-20260908/timesfm3-v1/predictions.npz",
+      "sha256": "157e79e8573c1386af2a9533e7c8ed9d01cab572e5d225d0c415843ea5f71532"
+    },
+    {
+      "path": "results/kt3-preflight-20260908/injection-diagnostic.json",
+      "sha256": "45dc7d19fb2b2c53dd0128ffed1eb75c33bdd62797ab283e80d22c4ae39a84ee"
+    },
+    {
+      "path": "results/kt3-preflight-20260908/qwen-bounded.jsonl",
+      "sha256": "a6e0fb5294a921281e74d45ca64bc5a7c418329fe2977271b02927c2c09b184d"
+    },
+    {
+      "path": "results/kt3-preflight-20260908/cerebras-qwen38.json",
+      "sha256": "101ada814a930a3d5896743f62af775bd4f402d6312f3f260fbb0a497b32e931"
+    },
+    {
+      "path": "results/kt3-preflight-20260908/cerebras-qwen38-tunnel.json",
+      "sha256": "de394e0b660b58942ae3ece17df86760061175be089cf4c3baf45bfe2cfee022"
+    },
+    {
+      "path": "results/kt3-preflight-20260908/requirements.txt",
+      "sha256": "41c42c70baea7b8e2b7ed4ac365d198ad15b8fe0ed12f339fffb5983356acb75"
+    }
+  ]
+}
