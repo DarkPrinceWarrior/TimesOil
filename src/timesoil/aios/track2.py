@@ -823,6 +823,7 @@ def search_track2_schedule(
     injection_cost_equivalent: float = 0.01,
     perturb_injection: bool = False,
     candidate_rank: int = 0,
+    injection_only: bool = False,
 ) -> Track2ScheduleSearch:
     """Rank six-month schedules with a risk-adjusted proxy, never as final CHDD."""
 
@@ -845,6 +846,8 @@ def search_track2_schedule(
         raise ValueError("injection_cost_equivalent must be finite and non-negative")
     if type(perturb_injection) is not bool or type(candidate_rank) is not int or candidate_rank < 0:
         raise ValueError("injection switch must be boolean and candidate rank a non-negative integer")
+    if type(injection_only) is not bool or (injection_only and (not perturb_injection or liquid_rate_scale != 1.0)):
+        raise ValueError("injection-only search requires enabled injection and unchanged production scale")
     connectivity = model.baseline.connectivity
     if perturb_injection and connectivity is None:
         raise ValueError("injection optimization requires a calibrated interwell model")
@@ -860,6 +863,7 @@ def search_track2_schedule(
             perturbation_fraction=perturbation_fraction,
             liquid_rate_scale=liquid_rate_scale,
             perturb_injection=perturb_injection,
+            perturb_production=not injection_only,
         ),
     )
     months = tuple(
@@ -881,6 +885,8 @@ def search_track2_schedule(
         )
         if not same_injectors or (not perturb_injection and not same_injection_controls):
             raise ValueError("candidate changed the baseline injection controls")
+        if injection_only and not np.array_equal(cube[~baseline_injectors], baseline_cube[~baseline_injectors]):
+            raise ValueError("injection-only candidate changed production controls")
         if perturb_injection and (
             not np.array_equal(cube[..., 1:], baseline_cube[..., 1:])
             or not np.allclose(_injection_totals(cube), _injection_totals(baseline_cube), rtol=0, atol=1e-6)

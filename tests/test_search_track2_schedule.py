@@ -483,19 +483,23 @@ def test_search_consumes_rollout_and_preserves_bounds_and_injection() -> None:
         )
 
 
-def test_search_allows_bounded_injection_only_with_interwell_model() -> None:
+@pytest.mark.parametrize("injection_only", [False, True])
+def test_search_allows_bounded_injection_only_with_interwell_model(injection_only: bool) -> None:
     model = _FakeSurrogate()
     trajectory = _trajectory()
     with pytest.raises(ValueError, match="interwell model"):
         search_track2_schedule(model, trajectory, start_index=0, perturb_injection=True)
     model.baseline.connectivity = SimpleNamespace(well_ids=trajectory.well_ids)
     result = search_track2_schedule(model, trajectory, start_index=0, candidate_count=8,
-                                    seed=7, perturb_injection=True, candidate_rank=1)
+                                    seed=7, perturb_injection=True, candidate_rank=1,
+                                    injection_only=injection_only)
     assert result.selected == sorted(result.accepted, key=lambda item: (-item.proxy_score, item.candidate_id))[1]
     baseline = model.calls[0]
     assert any(not np.array_equal(cube[:, :2, 0], baseline[:, :2, 0]) for cube in model.calls[1:])
     for cube in model.calls:
         np.testing.assert_array_equal(cube[..., 1:], baseline[..., 1:])
+        if injection_only:
+            np.testing.assert_array_equal(cube[:, 2:], baseline[:, 2:])
         np.testing.assert_allclose(cube[:, :2, 0].sum(axis=1), 100, rtol=0, atol=1e-6)
         assert np.all(np.abs(cube[:, :2, 0] - baseline[:, :2, 0]) <= .05 * baseline[:, :2, 0] + 1e-6)
 
