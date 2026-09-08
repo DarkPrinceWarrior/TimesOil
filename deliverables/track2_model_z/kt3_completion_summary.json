@@ -1,0 +1,877 @@
+{
+  "schema": "timesoil.kt3-completion-summary/v1",
+  "date": "2026-09-08",
+  "status": "rehearsal_complete",
+  "organizer_certified": false,
+  "execution_host": "A100",
+  "source_model_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+  "management_period": {
+    "end_exclusive": "2007-07-01",
+    "historical_cash_flows_included": false,
+    "history_use": "pump/activity state and official calendar-year tax allocation",
+    "months": [
+      "2007-01",
+      "2007-02",
+      "2007-03",
+      "2007-04",
+      "2007-05",
+      "2007-06"
+    ],
+    "profitability_index": 1.261569208767587,
+    "start_inclusive": "2007-01-01",
+    "total_chdd_m": 795.9207824631455
+  },
+  "surrogate": {
+    "version": "v5",
+    "architecture": "geological allocation + pooled CRM/material-balance + LightGBM residual ensemble",
+    "model_directory": "deliverables/track2_model_z/surrogate_v5/model",
+    "model_manifest_sha256": "964fd6117f251f7274b10dfa8831022f449acf1f2163f3627873585313cf0f6b",
+    "artifact_hash": "e77099ccd7a6e2571dd796dff43565c42c88ff6bd36f68e2084cd266856d2f7b",
+    "dataset_hash": "d4cb67af5920b45f6a60f694b72d87eca37c8174ebb433c309437d58c2db5d32",
+    "model_z_ready": true,
+    "train_scenarios": [
+      "baseline",
+      "perturbation-002",
+      "perturbation-004",
+      "perturbation-005",
+      "perturbation-006",
+      "perturbation-007",
+      "perturbation-008",
+      "perturbation-009"
+    ],
+    "test_scenarios": [
+      "perturbation-001",
+      "perturbation-003"
+    ],
+    "train_metrics": {
+      "oil_wape": 0.06749019083853858,
+      "liquid_wape": 0.044683682059001896,
+      "pressure_rmse_bar": 7.129313362878103,
+      "mean_rollout_oil_wape": 0.0893716755444938,
+      "mean_rollout_liquid_wape": 0.08083116741770566,
+      "raw_ensemble_90_coverage": 0.42076060622137335,
+      "ood_step_rate": 0.0,
+      "rollouts": 488,
+      "points": 301584,
+      "horizon_months": 6
+    },
+    "test_metrics": {
+      "oil_wape": 0.06938183207682226,
+      "liquid_wape": 0.04685536400813041,
+      "pressure_rmse_bar": 7.253233452160011,
+      "mean_rollout_oil_wape": 0.09109062647516007,
+      "mean_rollout_liquid_wape": 0.08292132043742019,
+      "raw_ensemble_90_coverage": 0.40982280227067747,
+      "ood_step_rate": 0.0,
+      "rollouts": 122,
+      "points": 75396,
+      "horizon_months": 6
+    },
+    "conformal_calibration": {
+      "method": "scenario_loso_max_normalized_residual",
+      "nominal_coverage": 0.9,
+      "scenario_count": 10,
+      "scenario_ids": [
+        "baseline",
+        "perturbation-001",
+        "perturbation-002",
+        "perturbation-003",
+        "perturbation-004",
+        "perturbation-005",
+        "perturbation-006",
+        "perturbation-007",
+        "perturbation-008",
+        "perturbation-009"
+      ],
+      "quantile_rank": 10,
+      "finite_sample_denominator": 11,
+      "simultaneous_within_scenario_per_target": true,
+      "independent_validation": false,
+      "independent_validation_note": "coverage below is calibration-fold empirical coverage, not an independent claim",
+      "floor_fraction_of_state_scale": 0.01,
+      "scale_by_target": {
+        "oil_tpd": 2818.4753107625656,
+        "liquid_tpd": 1960.2768430967953,
+        "pressure_bar": 153.96445125946275
+      },
+      "calibration_group_coverage_by_target": {
+        "oil_tpd": 1.0,
+        "liquid_tpd": 1.0,
+        "pressure_bar": 1.0
+      },
+      "calibration_point_coverage_by_target": {
+        "oil_tpd": 1.0,
+        "liquid_tpd": 1.0,
+        "pressure_bar": 1.0
+      },
+      "loso_oil_wape": 0.06818083005237367,
+      "loso_liquid_wape": 0.045529914105287596,
+      "loso_pressure_rmse_bar": 7.069519056779751,
+      "mean_interval_width_by_target": {
+        "oil_tpd": 204.1642191815585,
+        "liquid_tpd": 285.63756112679334,
+        "pressure_bar": 382.60404999773704
+      },
+      "median_interval_width_by_target": {
+        "oil_tpd": 83.87107299934233,
+        "liquid_tpd": 73.91564826844396,
+        "pressure_bar": 345.70582351302295
+      },
+      "scenario_scores": {
+        "baseline": {
+          "oil_tpd": 2770.533270497561,
+          "liquid_tpd": 737.7556615374556,
+          "pressure_bar": 68.53225140025492
+        },
+        "perturbation-001": {
+          "oil_tpd": 2689.515267252044,
+          "liquid_tpd": 737.9738993230515,
+          "pressure_bar": 153.96445125946275
+        },
+        "perturbation-002": {
+          "oil_tpd": 2245.502248507641,
+          "liquid_tpd": 546.8224236954601,
+          "pressure_bar": 64.61460794408826
+        },
+        "perturbation-003": {
+          "oil_tpd": 2818.4753107625656,
+          "liquid_tpd": 913.7323866758854,
+          "pressure_bar": 81.31723677291814
+        },
+        "perturbation-004": {
+          "oil_tpd": 2537.5715652412605,
+          "liquid_tpd": 1500.577877606889,
+          "pressure_bar": 61.90074148365105
+        },
+        "perturbation-005": {
+          "oil_tpd": 2531.557564101633,
+          "liquid_tpd": 1960.2768430967953,
+          "pressure_bar": 64.14745316065927
+        },
+        "perturbation-006": {
+          "oil_tpd": 2530.7142836430053,
+          "liquid_tpd": 1935.5091615875003,
+          "pressure_bar": 67.5835490930915
+        },
+        "perturbation-007": {
+          "oil_tpd": 2571.9229308897043,
+          "liquid_tpd": 883.2604071609305,
+          "pressure_bar": 63.00777414692139
+        },
+        "perturbation-008": {
+          "oil_tpd": 2817.8397086996856,
+          "liquid_tpd": 1115.9512261145487,
+          "pressure_bar": 97.20642259441026
+        },
+        "perturbation-009": {
+          "oil_tpd": 2356.300473938478,
+          "liquid_tpd": 578.2400706840544,
+          "pressure_bar": 66.33714470235545
+        }
+      }
+    },
+    "test_metrics_scope": "8-scenario model evaluated on 2 held-out scenarios; delivered LOSO-calibrated artifact refit on all 10",
+    "geometry_limitations": [
+      "geological prior, not OPM transmissibility",
+      "PINCH/NNC not modeled",
+      "no Model Y blocks or fixed BHP copied",
+      "no per-pair CRMP time constants claimed"
+    ]
+  },
+  "full_cycle": {
+    "complete": true,
+    "critic_approved": true,
+    "dependency_mode": "production_cli",
+    "external_qwen_used": true,
+    "organizer_certified": false,
+    "run_id": "baseline-v3",
+    "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+    "controls": {
+      "action_count": 618,
+      "canonical_actions_sha256": "09c33725f9c661b0a566523044207d8a6bae702fb9741c5bf62ce1030e541e3a",
+      "canonical_schedule_sha256": "2cf99d0e70901d3881c8ce14b9901b82fa21e0ee2945ff6f1ee82a35429af372",
+      "complete_six_month_horizon": true,
+      "months": [
+        "2007-01-01",
+        "2007-02-01",
+        "2007-03-01",
+        "2007-04-01",
+        "2007-05-01",
+        "2007-06-01"
+      ],
+      "source_control_inventory_sha256": "7aa076b18844a37a525bba6b3110fdf8912a4bbf6ddb25a49efa02ccf877507f",
+      "source_pre_control_action_count": 114,
+      "source_well_count": 103,
+      "verified": true,
+      "well_count": 103
+    },
+    "economics": {
+      "management_period": {
+        "end_exclusive": "2007-07-01",
+        "historical_cash_flows_included": false,
+        "history_use": "pump/activity state and official calendar-year tax allocation",
+        "months": [
+          "2007-01",
+          "2007-02",
+          "2007-03",
+          "2007-04",
+          "2007-05",
+          "2007-06"
+        ],
+        "profitability_index": 1.261569208767587,
+        "start_inclusive": "2007-01-01",
+        "total_chdd_m": 795.9207824631455
+      },
+      "profitability_index": 1.261569208767587,
+      "start_year": 2007,
+      "total_chdd_m": 795.9207824631455
+    },
+    "source_commit": "7e65bb117dc469db1f4f6093e460761912a1df3e",
+    "receipt_sha256": "760c66a4f770654721c0be767d2d3e1b91ef6739c0a2bea7ca2a1476a6347a26",
+    "scope": "baseline integration replay; candidate optimization evaluated through separate authenticated OPM replays"
+  },
+  "docker": {
+    "started_at": "2026-09-08T13:31:13.107181+00:00",
+    "container": "scorp-kt3-v5-validation-api-1",
+    "network_mode": "host",
+    "bind_address": "127.0.0.1:18082",
+    "/health": {
+      "status": "ok"
+    },
+    "/v1/capabilities": {
+      "qwen": {
+        "model": "qwen-3.8-27b",
+        "configured": true,
+        "connectivity_verified": false
+      },
+      "track2": {
+        "component_available": true,
+        "certified": false,
+        "model_z_trained": true
+      },
+      "chdd": {
+        "component_available": true,
+        "ready": true
+      }
+    },
+    "agent_status_code": 200,
+    "seconds": 11.784741081297398,
+    "image_id": "sha256:2f83f917c7de1294a89896ccbffd2e351453c80d30c7744eab5c436e40b94606",
+    "health": "healthy",
+    "read_only_root": true,
+    "no_docker_socket": true,
+    "api_process_credentials": [
+      "Uid:\t10001\t10001\t10001\t10001",
+      "Gid:\t10001\t10001\t10001\t10001",
+      "CapEff:\t0000000000000000",
+      "NoNewPrivs:\t1"
+    ],
+    "init_process_credentials": [
+      "Uid:\t0\t0\t0\t0",
+      "Gid:\t0\t0\t0\t0",
+      "CapEff:\t00000000000000c4",
+      "NoNewPrivs:\t1"
+    ]
+  },
+  "tests": {
+    "passed": 166,
+    "subtests_passed": 9,
+    "warnings": 1,
+    "warning": "Starlette/httpx deprecation",
+    "seconds": 8.32,
+    "command": "PYTHONPATH=src /root/projects/TimesOil/.venv/bin/python -m pytest tests -q",
+    "source_commit": "0b204eb248bd0b9fb095fed886d55f1470c451ec"
+  },
+  "rehearsal_only": true,
+  "pending_organizer_inputs": [
+    "constraints expected September 11 at 15:00",
+    "development history expected September 11 at 17:00"
+  ],
+  "artifact_roots": {
+    "a100": "/root/projects/TimesOil/results/kt3-model-z-v5",
+    "wsl": "results/kt3-model-z-v5"
+  },
+  "evidence": {
+    "baseline-full-cycle-receipt.json": {
+      "path": "results/kt3-model-z-v5/baseline-full-cycle-receipt.json",
+      "sha256": "760c66a4f770654721c0be767d2d3e1b91ef6739c0a2bea7ca2a1476a6347a26"
+    },
+    "injection-diagnostic-v5.json": {
+      "path": "results/kt3-model-z-v5/injection-diagnostic-v5.json",
+      "sha256": "81361369e188e478882e8f36b37b225ee89fbbb0c23c7c188eff3c5cafb80784"
+    },
+    "docker-validation-v5.json": {
+      "path": "results/kt3-model-z-v5/docker-validation-v5.json",
+      "sha256": "e6ca13b459857ec5673b6bab11daed70e3db05ced2418ac53ae961d23571f12d"
+    },
+    "training-v1/metrics.json": {
+      "path": "results/kt3-model-z-v5/training-v1/metrics.json",
+      "sha256": "0dfc463f523ff84e66355e862e82d2a822236fb32b329c36b1fd650d2ca17c85"
+    },
+    "comparison-1.json": {
+      "path": "results/kt3-model-z-v5/comparison-1.json",
+      "sha256": "d4ae4ccbccdd69b135c81b67dbc82c004a9b53e2f0f196e336e51dc5836a34be"
+    },
+    "comparison-2.json": {
+      "path": "results/kt3-model-z-v5/comparison-2.json",
+      "sha256": "f41217a41c00f62bfd5c5f2a34c3273da76e34d4387375241e0f0ed2b664a9aa"
+    },
+    "economics-drivers.json": {
+      "path": "results/kt3-model-z-v5/economics-drivers.json",
+      "sha256": "268957f1d8c574d85da890c2ecf55c0dcb0d95a51a1bb20425ecd8965379703b"
+    },
+    "source-snapshots/index.json": {
+      "path": "results/kt3-model-z-v5/source-snapshots/index.json",
+      "sha256": "441baf8a74ccc1eee32626866e4c4ed6ff0719336434fab18a32e267c6af9a9d"
+    },
+    "comparison-3.json": {
+      "path": "results/kt3-model-z-v5/comparison-3.json",
+      "sha256": "3ecd9e2994090022d7b8b89ad315190539a8f72bdabe417c6e89cfb3ac58a3c9"
+    }
+  },
+  "comparisons": [
+    {
+      "directory": "/root/projects/TimesOil/results/kt3-model-z-v5/search-injection-0-final-opm",
+      "receipt_sha256": "4051b81c62bf25f804a934a3a22001817ef4c4cf11e290afe9a159926a7bc29e",
+      "total_chdd_m": 800.2466164462826,
+      "profitability_index": 1.2616789498869792,
+      "actual_oil_tonnes": 137798.94233053664,
+      "actual_liquid_tonnes": 154680.64348895763,
+      "actual_injection_m3": 225631.27575600002,
+      "monthly": [
+        {
+          "month": "2007-01",
+          "oilT": 23091.06102569194,
+          "liquidT": 25784.131529427934,
+          "injectionM3": 38288.90362599999,
+          "chddM": 130.79814243479638
+        },
+        {
+          "month": "2007-02",
+          "oilT": 20971.359658999245,
+          "liquidT": 23452.11243357423,
+          "injectionM3": 33747.588256,
+          "chddM": 121.6846958936471
+        },
+        {
+          "month": "2007-03",
+          "oilT": 23640.71909289631,
+          "liquidT": 26503.67325421435,
+          "injectionM3": 39218.89263800001,
+          "chddM": 138.06960813403867
+        },
+        {
+          "month": "2007-04",
+          "oilT": 22909.629614577396,
+          "liquidT": 25759.47667456239,
+          "injectionM3": 36604.86413399999,
+          "chddM": 135.70030748979298
+        },
+        {
+          "month": "2007-05",
+          "oilT": 23709.42617224574,
+          "liquidT": 26709.85544529674,
+          "injectionM3": 38968.44751199999,
+          "chddM": 136.84057287256354
+        },
+        {
+          "month": "2007-06",
+          "oilT": 23476.746766126005,
+          "liquidT": 26471.39415188199,
+          "injectionM3": 38802.57959000002,
+          "chddM": 137.15328962144397
+        }
+      ],
+      "control_verification": {
+        "from_authenticated_export": true,
+        "action_count": 618,
+        "roles_and_statuses_unchanged": true,
+        "max_abs_monthly_injection_target_sum_delta_m3d": 4.000000014769967e-06,
+        "max_abs_producer_control_delta_m3d": 0.0,
+        "injection_per_well_relative_bound": 0.15,
+        "control_serialization_decimals": 6,
+        "injection_target_sum_fixed_to_serialization_precision": true,
+        "actual_injection_volume_fixed": false
+      },
+      "search_name": "search-injection-0",
+      "selected": {
+        "actions_sha256": "57c1a1173cd54fa526bf83a201526d2b454cc9a22f7c82f4808111201a7c6739",
+        "candidate_id": "perturbation-290",
+        "certified": false,
+        "injected_water_m3": 277865.0,
+        "max_ood_score": 0.34102574430787524,
+        "oil_uncertainty_tonnes": 3406346.7414296726,
+        "predicted_oil_tonnes": 133053.9823196506,
+        "proxy_score": -3276071.409110022,
+        "selection_only": true,
+        "wells_schedule_sha256": "83f90a744a723dfa802cb13832c1b781f6e167d784bd18a6da94bb388f144c6e"
+      },
+      "delta_chdd_m": 4.325833983137045,
+      "delta_oil_tonnes": 699.3146498218412,
+      "delta_actual_injection_m3": 292.2520740000182,
+      "max_abs_well_oil_response_tpd": 2.0359142612801353,
+      "max_abs_well_pressure_response_bar": 114.02468900000002,
+      "management_months_source_reports": "2007-02-01 through 2007-07-01",
+      "improvement_over_baseline": true
+    },
+    {
+      "directory": "/root/projects/TimesOil/results/kt3-model-z-v5/search-joint-0-final-opm",
+      "receipt_sha256": "2a0bcce4a684d4f56987461744f3d34b828f527209cee593d06d7d556ad27479",
+      "total_chdd_m": 786.7311317535633,
+      "profitability_index": 1.2582444504990604,
+      "actual_oil_tonnes": 136899.64774665076,
+      "actual_liquid_tonnes": 153738.2948808288,
+      "actual_injection_m3": 223301.66675,
+      "monthly": [
+        {
+          "month": "2007-01",
+          "oilT": 23056.17904906698,
+          "liquidT": 25749.282031528997,
+          "injectionM3": 37060.18123,
+          "chddM": 124.60969240761034
+        },
+        {
+          "month": "2007-02",
+          "oilT": 20712.50387036872,
+          "liquidT": 23195.16634488871,
+          "injectionM3": 33238.03825400001,
+          "chddM": 120.19240593063019
+        },
+        {
+          "month": "2007-03",
+          "oilT": 23470.53452282843,
+          "liquidT": 26319.131447940443,
+          "injectionM3": 38461.311032999976,
+          "chddM": 135.03343710129613
+        },
+        {
+          "month": "2007-04",
+          "oilT": 22784.601454330972,
+          "liquidT": 25620.25496939094,
+          "injectionM3": 36730.71289100001,
+          "chddM": 132.82399095590344
+        },
+        {
+          "month": "2007-05",
+          "oilT": 23718.302769485697,
+          "liquidT": 26708.994041931735,
+          "injectionM3": 39349.19091900001,
+          "chddM": 136.88772701585305
+        },
+        {
+          "month": "2007-06",
+          "oilT": 23157.526080569973,
+          "liquidT": 26145.46604514797,
+          "injectionM3": 38462.232422999994,
+          "chddM": 137.1838783422702
+        }
+      ],
+      "control_verification": {
+        "from_authenticated_export": true,
+        "action_count": 618,
+        "roles_and_statuses_unchanged": true,
+        "max_abs_monthly_injection_target_sum_delta_m3d": 1.999999977186917e-06,
+        "max_abs_producer_control_delta_m3d": 10.192096000000006,
+        "injection_per_well_relative_bound": 0.15,
+        "control_serialization_decimals": 6,
+        "injection_target_sum_fixed_to_serialization_precision": true,
+        "actual_injection_volume_fixed": false
+      },
+      "search_name": "search-joint-0",
+      "selected": {
+        "actions_sha256": "b55c535b6b27afacc488dc97eba3bafc9655732d450501de1b6d2516e7eddb28",
+        "candidate_id": "perturbation-475",
+        "certified": false,
+        "injected_water_m3": 277865.0,
+        "max_ood_score": 0.3423781828236406,
+        "oil_uncertainty_tonnes": 2731995.5054654405,
+        "predicted_oil_tonnes": 132680.31986128565,
+        "proxy_score": -2602093.8356041545,
+        "selection_only": true,
+        "wells_schedule_sha256": "a4e601cb0de76c1b85d5c1a94fa5d793a7d8f61c300aedd1b10f958356f03b66"
+      },
+      "delta_chdd_m": -9.189650709582224,
+      "delta_oil_tonnes": -199.9799340640311,
+      "delta_actual_injection_m3": -2037.3569319999951,
+      "max_abs_well_oil_response_tpd": 2.6904239951682296,
+      "max_abs_well_pressure_response_bar": 28.717856999999995,
+      "management_months_source_reports": "2007-02-01 through 2007-07-01",
+      "improvement_over_baseline": false
+    },
+    {
+      "directory": "/root/projects/TimesOil/results/kt3-model-z-v5/search-injection-0-oil-final-opm",
+      "receipt_sha256": "b894bc4bfb61b8a935df714bfd3ce12091d5755ee81094a47902c403f60c12de",
+      "total_chdd_m": 794.4404341562625,
+      "profitability_index": 1.2623718265353918,
+      "actual_oil_tonnes": 136512.8091008401,
+      "actual_liquid_tonnes": 153401.9217938631,
+      "actual_injection_m3": 222877.10095400002,
+      "monthly": [
+        {
+          "month": "2007-01",
+          "oilT": 22860.135896309657,
+          "liquidT": 25551.998153184664,
+          "injectionM3": 36634.84889299999,
+          "chddM": 129.40486810828025
+        },
+        {
+          "month": "2007-02",
+          "oilT": 20762.822201369454,
+          "liquidT": 23254.584566581434,
+          "injectionM3": 33492.14835900001,
+          "chddM": 122.49772802201538
+        },
+        {
+          "month": "2007-03",
+          "oilT": 23330.88805896746,
+          "liquidT": 26181.960419016446,
+          "injectionM3": 37506.139342999995,
+          "chddM": 138.28963296308217
+        },
+        {
+          "month": "2007-04",
+          "oilT": 22679.25048410233,
+          "liquidT": 25532.552435391368,
+          "injectionM3": 37179.802248000015,
+          "chddM": 134.2599135520873
+        },
+        {
+          "month": "2007-05",
+          "oilT": 23540.453340628505,
+          "liquidT": 26546.840465791483,
+          "injectionM3": 39395.501036999995,
+          "chddM": 135.78373063747384
+        },
+        {
+          "month": "2007-06",
+          "oilT": 23339.25911946268,
+          "liquidT": 26333.985753897683,
+          "injectionM3": 38668.661074,
+          "chddM": 134.20456087332363
+        }
+      ],
+      "control_verification": {
+        "from_authenticated_export": true,
+        "action_count": 618,
+        "roles_and_statuses_unchanged": true,
+        "max_abs_monthly_injection_target_sum_delta_m3d": 1.9999999842923444e-06,
+        "max_abs_producer_control_delta_m3d": 0.0,
+        "injection_per_well_relative_bound": 0.15,
+        "control_serialization_decimals": 6,
+        "injection_target_sum_fixed_to_serialization_precision": true,
+        "actual_injection_volume_fixed": false
+      },
+      "search_name": "search-injection-0-oil",
+      "selected": {
+        "actions_sha256": "0eaca6dc579780fb26769e3b0037844c15c739e96c3daea6f0ceaf4f0367fde7",
+        "candidate_id": "perturbation-270",
+        "certified": false,
+        "injected_water_m3": 277865.0,
+        "max_ood_score": 0.342358177584825,
+        "oil_uncertainty_tonnes": 3478407.423582875,
+        "predicted_oil_tonnes": 133110.02241486488,
+        "proxy_score": 130331.37241486489,
+        "selection_only": true,
+        "wells_schedule_sha256": "a12c24929873bf97767b4d6d45637030e6f2de27f064ae747a32037c61843d39"
+      },
+      "delta_chdd_m": -1.480348306883002,
+      "delta_oil_tonnes": -586.8185798746999,
+      "delta_actual_injection_m3": -2461.922727999976,
+      "max_abs_well_oil_response_tpd": 0.5314708374584818,
+      "max_abs_well_pressure_response_bar": 18.292258999999987,
+      "management_months_source_reports": "2007-02-01 through 2007-07-01",
+      "improvement_over_baseline": false
+    }
+  ],
+  "economics_drivers": {
+    "joint-475": {
+      "nominal_delta": {
+        "oilT": -199.97993406402384,
+        "liquidT": -245.10594705299445,
+        "injectionM3": -2037.3569320000024,
+        "mainRevenueM": -5.599438153792335,
+        "revenueM": -5.599438153792335,
+        "oilOpexM": -0.00799919736256105,
+        "liquidOpexM": -0.024510594705299926,
+        "injectionOpexM": -0.06112070795999991,
+        "pumpCapexM": 2.6,
+        "pumpOperationM": 7.2,
+        "startStopCount": 0.0,
+        "conversionCount": 0.0,
+        "startStopCostM": 0.0,
+        "conversionOpexM": 0.0,
+        "propertyTaxM": 0.0,
+        "profitTaxM": -2.1965502365273863,
+        "capexM": 2.6,
+        "opexM": 7.106369499972143,
+        "deductionsM": -3.91960670765485,
+        "chddM": -9.189650709582168,
+        "discountedInflowM": -5.599438153792335,
+        "discountedOutflowM": 3.5902125557900035
+      },
+      "monthly_events": [
+        {
+          "month": "2007-01",
+          "pumpCapexM": {
+            "baseline": 0.0,
+            "candidate": 1.9500000000000002
+          },
+          "pumpOperationM": {
+            "baseline": 0.0,
+            "candidate": 5.4
+          }
+        },
+        {
+          "month": "2007-02",
+          "pumpCapexM": {
+            "baseline": 0.75,
+            "candidate": 0.65
+          }
+        },
+        {
+          "month": "2007-03",
+          "pumpCapexM": {
+            "baseline": 0.75,
+            "candidate": 1.4
+          },
+          "pumpOperationM": {
+            "baseline": 1.8,
+            "candidate": 3.6
+          }
+        },
+        {
+          "month": "2007-04",
+          "pumpCapexM": {
+            "baseline": 0.0,
+            "candidate": 0.75
+          },
+          "pumpOperationM": {
+            "baseline": 0.0,
+            "candidate": 1.8
+          }
+        },
+        {
+          "month": "2007-05"
+        },
+        {
+          "month": "2007-06",
+          "pumpCapexM": {
+            "baseline": 0.65,
+            "candidate": 0.0
+          },
+          "pumpOperationM": {
+            "baseline": 1.8,
+            "candidate": 0.0
+          }
+        }
+      ]
+    },
+    "injection-290": {
+      "nominal_delta": {
+        "oilT": 699.3146498218375,
+        "liquidT": 697.2426610758484,
+        "injectionM3": 292.2520740000109,
+        "mainRevenueM": 19.58081019501151,
+        "revenueM": 19.58081019501151,
+        "oilOpexM": 0.027972585992873555,
+        "liquidOpexM": 0.0697242661075852,
+        "injectionOpexM": 0.008767562220000302,
+        "pumpCapexM": 0.0,
+        "pumpOperationM": 0.0,
+        "startStopCount": 0.0,
+        "conversionCount": 0.0,
+        "startStopCostM": 0.0,
+        "conversionOpexM": 0.0,
+        "propertyTaxM": 0.0,
+        "profitTaxM": 1.4419446610457243,
+        "capexM": 0.0,
+        "opexM": 0.10646441432046316,
+        "deductionsM": 13.706567136508,
+        "chddM": 4.325833983137144,
+        "discountedInflowM": 19.58081019501151,
+        "discountedOutflowM": 15.25497621187418
+      },
+      "monthly_events": [
+        {
+          "month": "2007-01"
+        },
+        {
+          "month": "2007-02"
+        },
+        {
+          "month": "2007-03"
+        },
+        {
+          "month": "2007-04"
+        },
+        {
+          "month": "2007-05"
+        },
+        {
+          "month": "2007-06"
+        }
+      ]
+    },
+    "legacy-249": {
+      "nominal_delta": {
+        "oilT": -115.15854642663544,
+        "liquidT": -106.31335159757873,
+        "injectionM3": -7.506836000000476,
+        "mainRevenueM": -3.2244392999456295,
+        "revenueM": -3.2244392999456295,
+        "oilOpexM": -0.0046063418570655434,
+        "liquidOpexM": -0.010631335159758226,
+        "injectionOpexM": -0.00022520508000023476,
+        "pumpCapexM": 3.25,
+        "pumpOperationM": 9.0,
+        "startStopCount": 0.0,
+        "conversionCount": 0.0,
+        "startStopCostM": 0.0,
+        "conversionOpexM": 0.0,
+        "propertyTaxM": 0.0,
+        "profitTaxM": -2.4879672269716906,
+        "capexM": 3.25,
+        "opexM": 8.984537117903175,
+        "deductionsM": -2.2571075099620543,
+        "chddM": -10.713901680915086,
+        "discountedInflowM": -3.2244392999456295,
+        "discountedOutflowM": 7.489462380969371
+      },
+      "monthly_events": [
+        {
+          "month": "2007-01",
+          "pumpCapexM": {
+            "baseline": 0.0,
+            "candidate": 2.6
+          },
+          "pumpOperationM": {
+            "baseline": 0.0,
+            "candidate": 7.2
+          }
+        },
+        {
+          "month": "2007-02"
+        },
+        {
+          "month": "2007-03"
+        },
+        {
+          "month": "2007-04"
+        },
+        {
+          "month": "2007-05",
+          "pumpCapexM": {
+            "baseline": 0.0,
+            "candidate": 0.65
+          },
+          "pumpOperationM": {
+            "baseline": 0.0,
+            "candidate": 1.8
+          }
+        },
+        {
+          "month": "2007-06"
+        }
+      ]
+    },
+    "injection-270": {
+      "nominal_delta": {
+        "oilT": -586.8185798747145,
+        "liquidT": -581.4790340187064,
+        "injectionM3": -2461.9227279999905,
+        "mainRevenueM": -16.430920236491716,
+        "revenueM": -16.430920236491716,
+        "oilOpexM": -0.0234727431949886,
+        "liquidOpexM": -0.05814790340187059,
+        "injectionOpexM": -0.07385768183999963,
+        "pumpCapexM": -0.7500000000000001,
+        "pumpOperationM": -1.8,
+        "startStopCount": 0.0,
+        "conversionCount": 0.0,
+        "startStopCostM": 0.0,
+        "conversionOpexM": 0.0,
+        "propertyTaxM": 0.0,
+        "profitTaxM": -0.7434494356276389,
+        "capexM": -0.7500000000000001,
+        "opexM": -1.9554783284368575,
+        "deductionsM": -11.501644165544349,
+        "chddM": -1.4803483068829166,
+        "discountedInflowM": -16.430920236491716,
+        "discountedOutflowM": -14.950571929608884
+      },
+      "monthly_events": [
+        {
+          "month": "2007-01"
+        },
+        {
+          "month": "2007-02",
+          "pumpCapexM": {
+            "baseline": 0.75,
+            "candidate": 0.0
+          },
+          "pumpOperationM": {
+            "baseline": 1.8,
+            "candidate": 0.0
+          }
+        },
+        {
+          "month": "2007-03",
+          "pumpCapexM": {
+            "baseline": 0.75,
+            "candidate": 0.0
+          },
+          "pumpOperationM": {
+            "baseline": 1.8,
+            "candidate": 0.0
+          }
+        },
+        {
+          "month": "2007-04"
+        },
+        {
+          "month": "2007-05"
+        },
+        {
+          "month": "2007-06",
+          "pumpCapexM": {
+            "baseline": 0.65,
+            "candidate": 1.4
+          },
+          "pumpOperationM": {
+            "baseline": 1.8,
+            "candidate": 3.6
+          }
+        }
+      ]
+    }
+  },
+  "selected": {
+    "search_name": "search-injection-0",
+    "candidate_id": "perturbation-290",
+    "total_chdd_m": 800.2466164462826,
+    "baseline_chdd_m": 795.9207824631455,
+    "delta_chdd_m": 4.325833983137045,
+    "wells_schedule_path": "deliverables/track2_model_z/kt3/wells_schedule.inc",
+    "wells_schedule_sha256": "83f90a744a723dfa802cb13832c1b781f6e167d784bd18a6da94bb388f144c6e",
+    "receipt_sha256": "4051b81c62bf25f804a934a3a22001817ef4c4cf11e290afe9a159926a7bc29e",
+    "final_selection": true,
+    "decision": "accept_opm_verified_injection_candidate_290",
+    "global_optimality_claimed": false,
+    "replay_count": 3,
+    "management_months": {
+      "start_inclusive": "2007-01-01",
+      "end_exclusive": "2007-07-01",
+      "historical_cash_flows_included": false
+    }
+  },
+  "completed": {
+    "model_z_interwell_adaptation": true,
+    "a100_training_and_validation": true,
+    "bounded_injection_search": true,
+    "three_new_opm_replays": true,
+    "management_period_only_economics": true,
+    "external_qwen_baseline_full_cycle": true,
+    "docker_build_and_live_agent_probe": true,
+    "management_only_submission_schedule": true
+  }
+}
