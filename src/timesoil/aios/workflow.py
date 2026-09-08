@@ -626,7 +626,7 @@ def _receipt(
         },
         "controls": _controls_evidence(request),
         "agent": {
-            "provider": "Tatneft LiteLLM",
+            "provider": "external Qwen HTTPS API",
             "endpoint": APPROVED_BASE_URL,
             "model": APPROVED_MODEL,
             "decisions": [_decision(decision) for decision in state.decisions],

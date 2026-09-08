@@ -103,7 +103,8 @@ class MonthlyMPC:
         return self._select(case, state, proposed)
 
     def run(
-        self, case: Case, initial_state: State, candidates: CandidateProvider
+        self, case: Case, initial_state: State, candidates: CandidateProvider,
+        *, on_step: Callable[[GdmResult], None] | None = None,
     ) -> Track1Result:
         self.backend.validate_case(case)
         if initial_state.case_id != case.case_id or initial_state.month != case.start:
@@ -130,6 +131,8 @@ class MonthlyMPC:
             best = self._select(case, state, proposed)
             if best.trajectory.run_id in run_ids:
                 raise CertificationError("backend reused run_id across MPC months")
+            if on_step is not None:
+                on_step(best)
             run_ids.add(best.trajectory.run_id)
             accepted_actions.extend(best.trajectory.actions)
             trajectories.append(best.trajectory)

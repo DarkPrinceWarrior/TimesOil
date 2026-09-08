@@ -4,7 +4,8 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
+import asyncio
+from dataclasses import asdict, dataclass
 from datetime import date
 from hashlib import sha256
 import json
@@ -12,7 +13,11 @@ from math import isfinite
 import os
 from pathlib import Path
 import tempfile
+from time import monotonic
 from typing import Any
+
+from timesoil.aios.agents import AgentRole, AgentWorkflow, ToolDefinition, ToolRegistry
+from timesoil.aios.llm import LLMConfig, TatneftLLMClient
 
 from timesoil.aios.contracts import (
     Case,
@@ -24,6 +29,7 @@ from timesoil.aios.contracts import (
     WellStatus,
 )
 from timesoil.aios.opm import OpmFlowRunner, OpmGdmBackend, _source_digest
+from timesoil.aios.schedule import ScheduleCompiler
 from timesoil.aios.track1 import Candidate, GdmBackend, MonthlyMPC, Track1Result
 
 
@@ -430,12 +436,84 @@ def execute(
     backend: GdmBackend,
     *,
     script_source_contract: dict[str, dict[str, str]] | None = None,
+    agent: bool = False,
+    agent_log: Path | None = None,
 ) -> tuple[dict[Path, bytes], dict[str, Any]]:
+    started = monotonic()
     source_contract = script_source_contract or _script_source_contract()
+    agent_records: list[dict[str, Any]] = []
+    planning = None
+    llm_config = LLMConfig.from_env() if agent else None
+
+    def record(item: dict[str, Any]) -> None:
+        agent_records.append(item)
+        if agent_log is not None:
+            with agent_log.open("a", encoding="utf-8") as stream:
+                stream.write(json.dumps(item, ensure_ascii=False, allow_nan=False) + "\n")
+                stream.flush()
+                os.fsync(stream.fileno())
+
+    async def choose(state: State) -> Any:
+        options = tuple(ScheduleCompiler().validate(config.case, option) for option in config.candidates[state.month])
+        context = {
+            "track": 1, "phase": "planning", "surrogate_used": False,
+            "source_sha256": config.source_sha256,
+            "state": _state_payload(state),
+            "candidates": [[_action_payload(a) for a in option] for option in options],
+            "selection_policy": "Choose one candidate for full OPM and official CHDD; numerical results are not known yet. Candidate index is zero-based. No global optimality claim.",
+        }
+
+        def select(arguments: Any, _: Any) -> dict[str, Any]:
+            index = arguments["index"]
+            if isinstance(index, bool) or not isinstance(index, int) or not 0 <= index < len(options):
+                raise ValueError("candidate index outside configured options")
+            return {"selected_index": index, "constraint_check": "configured candidate; deterministic validation precedes OPM"}
+
+        registry = ToolRegistry((ToolDefinition(
+            "select_candidate", "Select one configured candidate index for the current month.",
+            {"type": "object", "properties": {"index": {"type": "integer"}},
+             "required": ["index"], "additionalProperties": False}, select,
+        ),))
+        async with TatneftLLMClient(llm_config) as client:
+            workflow = AgentWorkflow(client, registry,
+                role_tools={AgentRole.PLANNER: ("select_candidate",)},
+                required_tools={AgentRole.PLANNER: ("select_candidate",)})
+            plan = await workflow.run_plan(context)
+        selections = plan.decisions[-1].tool_evidence
+        record({"phase": "planning", "month": state.month.isoformat(), "agent": asdict(plan)})
+        if not all(decision.approved for decision in plan.decisions):
+            raise RuntimeError("agent rejected planning; see agent decision log")
+        if len(selections) != 1 or selections[0].tool != "select_candidate":
+            raise RuntimeError("planner must select exactly one configured candidate")
+        return plan, (options[selections[0].output["selected_index"]],)
+
+    def candidates(state: State) -> Any:
+        nonlocal planning
+        if not agent:
+            return config.candidates[state.month]
+        planning, selected = asyncio.run(choose(state))
+        return selected
+
+    async def review(result: Any) -> None:
+        context = {
+            "track": 1, "phase": "terminal_month_review", "surrogate_used": False,
+            "source_sha256": config.source_sha256,
+            "trajectory": asdict(result.trajectory), "economics": asdict(result.economics),
+            "claim_limits": "No surrogate used; UQ/OOD not applicable. No NPV improvement or global optimality claim. Deterministic MPC gates already passed.",
+        }
+        # Dates belong to the typed simulator result, not to model-generated data.
+        context = json.loads(json.dumps(context, default=str, allow_nan=False))
+        async with TatneftLLMClient(llm_config) as client:
+            reviewed = await AgentWorkflow(client, ToolRegistry()).run_critic(planning, context)
+        record({"phase": "terminal_month_review", "month": result.trajectory.month.isoformat(), "agent": asdict(reviewed)})
+        if not reviewed.critic_approved:
+            raise RuntimeError("critic rejected simulated month; see agent decision log")
+
     result: Track1Result = MonthlyMPC(backend).run(
         config.case,
         config.initial_state,
-        lambda state: config.candidates[state.month],
+        candidates,
+        on_step=(lambda step: asyncio.run(review(step))) if agent else None,
     )
     if _source_digest(config.source) != config.source_sha256:
         raise RuntimeError("OPM source changed while Track 1 was running")
@@ -479,6 +557,11 @@ def execute(
             ],
         },
     }
+    if agent:
+        payload["agent"] = {"model": llm_config.model, "base_url": llm_config.base_url,
+                            "elapsed_seconds": monotonic() - started,
+                            "selection_policy": "one configured candidate per month, full OPM then critic",
+                            "records": agent_records}
     result_bytes = _json(payload)
     schedule_bytes = result.schedule.text.encode("utf-8")
     manifest = {
@@ -559,6 +642,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("config", type=Path)
     parser.add_argument("--runs-dir", type=Path, required=True)
     parser.add_argument("--proof-script", type=Path)
+    parser.add_argument("--agent", action="store_true", help="Use external Qwen to select one candidate per month, then review each full OPM/CHDD result")
     return parser
 
 
@@ -568,10 +652,19 @@ def main(argv: list[str] | None = None) -> int:
     try:
         source_contract = _script_source_contract(args.proof_script)
         config = load_config(args.config)
+        agent_log = None
+        if args.agent:
+            args.runs_dir.mkdir(parents=True, exist_ok=True)
+            _reject_symlink_components(args.runs_dir.absolute())
+            agent_log = args.runs_dir / f"{config.run_id}-agent.jsonl"
+            with agent_log.open("x", encoding="utf-8"):
+                pass
         outputs, summary = execute(
             config,
             build_backend(config),
             script_source_contract=source_contract,
+            agent=args.agent,
+            agent_log=agent_log,
         )
         run_dir = publish(args.runs_dir, config.run_id, outputs)
     except (KeyError, OSError, RuntimeError, TypeError, ValueError) as exc:

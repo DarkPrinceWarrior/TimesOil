@@ -1,15 +1,15 @@
-name: timesoil-kt2
+name: timesoil-track1-kt3
 
 services:
   api:
     build:
       context: .
-    image: timesoil-kt2-api:local
+    image: timesoil-track1-kt3:local
     init: true
     ports:
       - "127.0.0.1:${AIOS_PORT:-8000}:8000"
     env_file:
-      - ./config/aios.env
+      - ${AIOS_ENV_FILE:-./config/aios.env}
     secrets:
       - qwen_api_key
     volumes:

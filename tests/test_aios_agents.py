@@ -6,6 +6,7 @@ from collections.abc import Mapping, Sequence
 from itertools import pairwise
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 from zipfile import ZipFile
 
 import httpx
@@ -24,6 +25,7 @@ from timesoil.aios.llm import (
     APPROVED_BASE_URL,
     APPROVED_MODEL,
     ChatMessage,
+    ExternalQwenClient,
     LLMConfig,
     LLMError,
     LLMResponse,
@@ -44,16 +46,41 @@ def _config() -> LLMConfig:
     return LLMConfig(api_key="test-only-key", timeout_seconds=2)
 
 
-def test_llm_config_is_qwen36_only_and_hides_secret() -> None:
+def test_llm_config_accepts_approved_qwen_and_hides_secret() -> None:
     config = _config()
     assert config.model == APPROVED_MODEL
     assert "test-only-key" not in repr(config)
-    with pytest.raises(ValueError, match="approved Tatneft"):
-        LLMConfig(api_key="x", base_url="http://127.0.0.1:8000/v1")
-    with pytest.raises(ValueError, match="qwen3.6"):
-        LLMConfig(api_key="x", model="local-qwen")
+    assert TatneftLLMClient is ExternalQwenClient
+    with pytest.raises(ValueError, match="external HTTPS"):
+        LLMConfig(api_key="x", base_url="http://qwen.example/v1")
+    with pytest.raises(ValueError, match="approved external Qwen"):
+        LLMConfig(api_key="x", model="unsupported-qwen")
+    with pytest.raises(ValueError, match="Cerebras Qwen requires"):
+        LLMConfig(api_key="x", base_url="https://wrong-provider.example/v1")
     with pytest.raises(ValueError, match="LLM_API_KEY"):
         LLMConfig.from_env({})
+
+
+def test_explicit_proxy_preserves_external_endpoint_and_transport_guards() -> None:
+    config = LLMConfig.from_env(
+        {
+            "LLM_API_KEY": "test-only-key",
+            "LLM_PROXY_URL": "http://127.0.0.1:18889",
+        }
+    )
+    with patch("timesoil.aios.llm.httpx.AsyncClient") as transport:
+        ExternalQwenClient(config)
+    assert transport.call_args.kwargs["proxy"] == "http://127.0.0.1:18889"
+    assert transport.call_args.kwargs["base_url"] == APPROVED_BASE_URL + "/"
+    assert transport.call_args.kwargs["trust_env"] is False
+    assert transport.call_args.kwargs["follow_redirects"] is False
+    for proxy in (
+        "socks5://localhost:1080",
+        "http://user:secret@localhost",
+        "http://localhost/path",
+    ):
+        with pytest.raises(ValueError, match="LLM_PROXY_URL"):
+            LLMConfig(api_key="x", proxy_url=proxy)
 
 
 def test_reasoning_content_and_tool_calls_are_normalized_with_mock_transport() -> None:
@@ -92,7 +119,7 @@ def test_reasoning_content_and_tool_calls_are_normalized_with_mock_transport() -
     async def scenario() -> LLMResponse:
         transport = _http_client(handler)
         try:
-            client = TatneftLLMClient(_config(), http_client=transport)
+            client = ExternalQwenClient(_config(), http_client=transport)
             return await client.chat(
                 [ChatMessage("user", "inspect")],
                 tools=[
@@ -116,7 +143,8 @@ def test_reasoning_content_and_tool_calls_are_normalized_with_mock_transport() -
     assert response.usage.total_tokens == 14
     assert captured["payload"]["model"] == APPROVED_MODEL
     assert captured["payload"]["temperature"] == 0.0
-    assert captured["payload"]["chat_template_kwargs"] == {"enable_thinking": True}
+    assert captured["payload"]["reasoning_effort"] == "medium"
+    assert "chat_template_kwargs" not in captured["payload"]
     assert captured["authorization"] == "Bearer test-only-key"
 
 
@@ -144,7 +172,7 @@ def test_structured_output_disables_thinking_and_uses_json_schema() -> None:
     async def scenario() -> dict[str, Any]:
         transport = _http_client(handler)
         try:
-            client = TatneftLLMClient(_config(), http_client=transport)
+            client = ExternalQwenClient(_config(), http_client=transport)
             result, _ = await client.structured(
                 [ChatMessage("user", "return JSON")], schema=schema, schema_name="Output"
             )
@@ -153,12 +181,77 @@ def test_structured_output_disables_thinking_and_uses_json_schema() -> None:
             await transport.aclose()
 
     assert asyncio.run(scenario()) == {"value": 7}
-    assert captured["chat_template_kwargs"] == {"enable_thinking": False}
+    assert captured["reasoning_effort"] == "none"
+    assert "chat_template_kwargs" not in captured
     assert captured["response_format"]["json_schema"] == {
         "name": "Output",
         "strict": True,
         "schema": schema,
     }
+
+
+def test_cerebras_schema_translation_and_legacy_tatneft_dialect() -> None:
+    from timesoil.aios.llm import _cerebras_json_schema
+
+    original = {
+        "type": "object",
+        "properties": {
+            "role": {"type": "string", "const": "critic"},
+            "summary": {"type": "string", "maxLength": 10_000},
+            "maxLength": {"type": "integer"},
+        },
+    }
+    translated = _cerebras_json_schema(original)
+    assert translated["properties"]["role"] == {
+        "type": "string",
+        "enum": ["critic"],
+    }
+    assert "maxLength" not in translated["properties"]["summary"]
+    assert translated["properties"]["maxLength"] == {"type": "integer"}
+    assert original["properties"]["summary"]["maxLength"] == 10_000
+
+    captured: list[dict[str, Any]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json={
+                "model": "qwen3.6-35b-a3b",
+                "choices": [
+                    {"message": {"content": "{}"}, "finish_reason": "stop"}
+                ],
+            },
+        )
+
+    async def scenario() -> None:
+        config = LLMConfig(
+            api_key="test-only-key",
+            base_url="https://litellm.tatneft.guru/v1",
+            model="qwen3.6-35b-a3b",
+            timeout_seconds=2,
+        )
+        transport = httpx.AsyncClient(
+            base_url=config.base_url + "/",
+            transport=httpx.MockTransport(handler),
+            follow_redirects=False,
+        )
+        try:
+            client = ExternalQwenClient(config, http_client=transport)
+            await client.chat([ChatMessage("user", "legacy probe")])
+            await client.structured(
+                [ChatMessage("user", "legacy JSON")],
+                schema=original,
+                schema_name="Legacy",
+            )
+        finally:
+            await transport.aclose()
+
+    asyncio.run(scenario())
+    assert captured[0]["chat_template_kwargs"] == {"enable_thinking": True}
+    assert captured[1]["chat_template_kwargs"] == {"enable_thinking": False}
+    assert captured[1]["response_format"]["json_schema"]["schema"] == original
+    assert all("reasoning_effort" not in payload for payload in captured)
 
 
 def test_provider_error_fails_closed() -> None:
@@ -168,9 +261,36 @@ def test_provider_error_fails_closed() -> None:
     async def scenario() -> None:
         transport = _http_client(handler)
         try:
-            client = TatneftLLMClient(_config(), http_client=transport)
-            with pytest.raises(LLMError, match="Tatneft LiteLLM request failed"):
+            client = ExternalQwenClient(_config(), http_client=transport)
+            with pytest.raises(LLMError, match="external Qwen request failed"):
                 await client.chat([ChatMessage("user", "do not fall back")])
+        finally:
+            await transport.aclose()
+
+    asyncio.run(scenario())
+
+
+def test_response_model_mismatch_fails_closed() -> None:
+    def handler(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "message": {"content": "unexpected"},
+                        "finish_reason": "stop",
+                    }
+                ],
+                "model": "different-model",
+            },
+        )
+
+    async def scenario() -> None:
+        transport = _http_client(handler)
+        try:
+            client = ExternalQwenClient(_config(), http_client=transport)
+            with pytest.raises(LLMError, match="model mismatch"):
+                await client.chat([ChatMessage("user", "verify")])
         finally:
             await transport.aclose()
 
