@@ -82,6 +82,7 @@ def _scenario_batch(
 
 class _FakeSurrogate:
     def __init__(self, *, baseline_ood: bool = False) -> None:
+        self.baseline = SimpleNamespace(connectivity=None)
         self.calls: list[np.ndarray] = []
         self.baseline_ood = baseline_ood
         self.conformal_level = 0.9
@@ -327,7 +328,7 @@ def _fake_export(
     chdd_csv.write_text(
         "DATA,well,WLPT,WLPR,WOMT,WOMR,WWIR,WWIT,THP,BHP,WEFF,"
         "WLPT_Diff,WOMT_Diff,WWIT_Diff\n"
-        "2007-01-01,P1,1,1,1,1,0,0,100,100,1,1,1,0\n",
+        + "".join(f"2020-{month:02d}-01,P1,1,1,1,1,0,0,100,100,1,1,1,0\n" for month in range(1, 8)),
         encoding="utf-8",
     )
     trajectory_csv.write_text("trajectory\n", encoding="utf-8")
@@ -388,10 +389,12 @@ class _FakeEconomics:
         input_path = output_dir / "input.csv"
         MODULE.economics_module._write_csv(input_path, rows)
         raw_result = {
-            "startDate": "2007-01-01",
-            "maxDate": "2007-01-01",
+            "startDate": "2020-01-01",
+            "maxDate": "2020-06-01",
             "diagnostics": {},
             "summary": {"totalChddM": 123.0, "profitabilityIndex": 1.0},
+            "fieldMonthly": [dict(month=f"2020-{month:02d}", chddM=20.5,
+                                  discountedInflowM=40, discountedOutflowM=19.5) for month in range(1, 7)],
         }
         result_path = output_dir / "result.json"
         result_path.write_text(json.dumps(raw_result), encoding="utf-8")
@@ -400,7 +403,7 @@ class _FakeEconomics:
         manifest_value = {
             "schema_version": 1,
             "adapter": "timesoil.aios.CHDDEconomicsAdapter",
-            "start_year": 2007,
+            "start_year": kwargs["start_year"],
             "fields": list(MODULE.economics_module.CHDD_FIELDS),
             "row_count": len(rows),
             "input_sha256": sha256(input_path.read_bytes()).hexdigest(),
@@ -422,6 +425,7 @@ class _FakeEconomics:
                 "effective_norms": "norms-effective.xlsx",
             },
             "summary": raw_result["summary"],
+            "management_period": MODULE.economics_module.management_period_summary(raw_result, kwargs["management_period"]),
         }
         manifest = output_dir / "manifest.json"
         manifest.write_bytes(MODULE._json_bytes(manifest_value))
@@ -477,6 +481,23 @@ def test_search_consumes_rollout_and_preserves_bounds_and_injection() -> None:
             start_index=0,
             candidate_count=4,
         )
+
+
+def test_search_allows_bounded_injection_only_with_interwell_model() -> None:
+    model = _FakeSurrogate()
+    trajectory = _trajectory()
+    with pytest.raises(ValueError, match="interwell model"):
+        search_track2_schedule(model, trajectory, start_index=0, perturb_injection=True)
+    model.baseline.connectivity = SimpleNamespace(well_ids=trajectory.well_ids)
+    result = search_track2_schedule(model, trajectory, start_index=0, candidate_count=8,
+                                    seed=7, perturb_injection=True, candidate_rank=1)
+    assert result.selected == sorted(result.accepted, key=lambda item: (-item.proxy_score, item.candidate_id))[1]
+    baseline = model.calls[0]
+    assert any(not np.array_equal(cube[:, :2, 0], baseline[:, :2, 0]) for cube in model.calls[1:])
+    for cube in model.calls:
+        np.testing.assert_array_equal(cube[..., 1:], baseline[..., 1:])
+        np.testing.assert_allclose(cube[:, :2, 0].sum(axis=1), 100, rtol=0, atol=1e-6)
+        assert np.all(np.abs(cube[:, :2, 0] - baseline[:, :2, 0]) <= .05 * baseline[:, :2, 0] + 1e-6)
 
 
 def test_search_cli_writes_uncertified_lineage_and_replay_command(
@@ -803,16 +824,18 @@ def test_final_replay_records_operational_sunk_assets_profile(
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     assert calls == [
         {
-            "start_year": 2007,
-            "output_dir": tmp_path / "replay/economics-2007",
+            "start_year": 2020,
+            "output_dir": tmp_path / "replay/economics-2020",
             "charge_initial_pump": False,
+            "management_period": (date(2020, 1, 1), date(2020, 7, 1)),
         }
     ]
     assert receipt["economics_profile"] == {
-        "name": "operational_sunk_assets",
+        "name": "management_period_sunk_assets",
         "charge_initial_pump": False,
+        "management_period": {"start_inclusive": "2020-01-01", "end_exclusive": "2020-07-01"},
         "semantics": (
-            "existing ESPs on 2007-01-01 are sunk assets and are not charged again"
+            "existing ESPs at management start are sunk assets; reported CHDD includes management months only, OPM report dates shifted back one month"
         ),
     }
     assert receipt["schema"] == "timesoil.aios.track2-final-replay/v2"

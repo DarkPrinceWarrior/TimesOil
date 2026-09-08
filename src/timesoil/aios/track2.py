@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from .interwell import WellConnectivity
 from hashlib import sha256
 import json
 from math import ceil, fsum
@@ -478,6 +479,7 @@ def _loso_conformal_calibration(
     horizon: int,
     seed: int,
     floor_fraction: float = 0.01,
+    connectivity: WellConnectivity | None = None,
 ) -> tuple[np.ndarray, dict[str, Any]]:
     """Leakage-free LOSO scores; one simultaneous score per whole scenario/target."""
 
@@ -495,6 +497,7 @@ def _loso_conformal_calibration(
             ensemble_size=ensemble_size,
             n_estimators=n_estimators,
             seed=seed + 1009 * (fold + 1),
+            connectivity=connectivity,
         )
         fold_errors, fold_widths, fold_truths, fold_predictions = [], [], [], []
         item_horizon = min(horizon, len(holdout.dates) - 1)
@@ -614,12 +617,13 @@ def fit_track2_surrogate(
     horizon: int = 6,
     seed: int = 42,
     conformal_level: float | None = None,
+    connectivity: WellConnectivity | None = None,
 ) -> TrainingRun:
     if conformal_level is not None:
         _conformal_rank(len(trajectories), conformal_level)
     train, test = split_scenarios(trajectories, test_fraction=test_fraction, seed=seed)
     evaluation_model = Track2Surrogate.fit(
-        train, ensemble_size=ensemble_size, n_estimators=n_estimators, seed=seed
+        train, ensemble_size=ensemble_size, n_estimators=n_estimators, seed=seed, connectivity=connectivity
     )
     scenario_hashes = {item.scenario_id: item.content_hash for item in sorted(trajectories, key=lambda x: x.scenario_id)}
     dataset_hash = sha256(
@@ -638,12 +642,14 @@ def fit_track2_surrogate(
             n_estimators=n_estimators,
             horizon=horizon,
             seed=seed,
+            connectivity=connectivity,
         )
         model = Track2Surrogate.fit(
             trajectories,
             ensemble_size=ensemble_size,
             n_estimators=n_estimators,
             seed=seed,
+            connectivity=connectivity,
         )
         model._apply_conformal_calibration(
             level=conformal_level, scale=scale, floor_fraction=0.01
@@ -815,6 +821,8 @@ def search_track2_schedule(
     liquid_rate_scale: float = 1.0,
     uncertainty_weight: float = 1.0,
     injection_cost_equivalent: float = 0.01,
+    perturb_injection: bool = False,
+    candidate_rank: int = 0,
 ) -> Track2ScheduleSearch:
     """Rank six-month schedules with a risk-adjusted proxy, never as final CHDD."""
 
@@ -835,6 +843,13 @@ def search_track2_schedule(
         raise ValueError("liquid_rate_scale must be finite and positive")
     if not np.isfinite(injection_cost_equivalent) or injection_cost_equivalent < 0:
         raise ValueError("injection_cost_equivalent must be finite and non-negative")
+    if type(perturb_injection) is not bool or type(candidate_rank) is not int or candidate_rank < 0:
+        raise ValueError("injection switch must be boolean and candidate rank a non-negative integer")
+    connectivity = model.baseline.connectivity
+    if perturb_injection and connectivity is None:
+        raise ValueError("injection optimization requires a calibrated interwell model")
+    if connectivity is not None and connectivity.well_ids != trajectory.well_ids:
+        raise ValueError("search well order differs from interwell model")
 
     baseline_actions = _window_controls(trajectory, start_index)
     generated = generate_control_scenarios(
@@ -844,7 +859,7 @@ def search_track2_schedule(
             seed=seed,
             perturbation_fraction=perturbation_fraction,
             liquid_rate_scale=liquid_rate_scale,
-            perturb_injection=False,
+            perturb_injection=perturb_injection,
         ),
     )
     months = tuple(
@@ -864,8 +879,15 @@ def search_track2_schedule(
         same_injection_controls = np.array_equal(
             cube[baseline_injectors], baseline_cube[baseline_injectors]
         )
-        if not same_injectors or not same_injection_controls:
+        if not same_injectors or (not perturb_injection and not same_injection_controls):
             raise ValueError("candidate changed the baseline injection controls")
+        if perturb_injection and (
+            not np.array_equal(cube[..., 1:], baseline_cube[..., 1:])
+            or not np.allclose(_injection_totals(cube), _injection_totals(baseline_cube), rtol=0, atol=1e-6)
+            or np.any(np.abs(cube[..., 0][baseline_injectors] - baseline_cube[..., 0][baseline_injectors])
+                      > perturbation_fraction * baseline_cube[..., 0][baseline_injectors] + 1e-6)
+        ):
+            raise ValueError("injection redistribution violates roles, status, total or per-well bounds")
         rollout = model.rollout(trajectory.states[start_index], cube)
         _validated_rollout(rollout, horizon=6, wells=len(trajectory.well_ids))
         if np.asarray(rollout.ood, dtype=bool).any():
@@ -906,7 +928,9 @@ def search_track2_schedule(
         raise ValueError("fewer than two physically valid in-domain schedules remain")
     if accepted[0].candidate_id != "baseline":
         raise RuntimeError("baseline schedule was not retained")
-    selected = min(accepted, key=lambda item: (-item.proxy_score, item.candidate_id))
+    if candidate_rank >= len(accepted):
+        raise ValueError("candidate rank exceeds the accepted candidate set")
+    selected = sorted(accepted, key=lambda item: (-item.proxy_score, item.candidate_id))[candidate_rank]
     return Track2ScheduleSearch(
         baseline_scenario_id=trajectory.scenario_id,
         start_date=months[0],

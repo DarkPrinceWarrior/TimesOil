@@ -79,6 +79,7 @@ def _args(output: Path) -> argparse.Namespace:
         horizon=2,
         seed=42,
         conformal_level=0.9,
+        interwell_source=None,
     )
 
 
@@ -189,6 +190,9 @@ class TrainTrack2SurrogateSourceContractTest(unittest.TestCase):
                 Path(MODULE.__file__).absolute(),
                 Path(MODULE._track2_module.__file__).absolute(),
                 Path(MODULE._surrogate_module.__file__).absolute(),
+                Path(MODULE._interwell_module.__file__).absolute(),
+                Path(MODULE._opm_module.__file__).absolute(),
+                Path(MODULE._opm_chdd_module.__file__).absolute(),
             )
             self.assertEqual(
                 metrics["executed_sources"],

@@ -17,6 +17,7 @@ from typing import Any
 
 import timesoil.aios.contracts as contracts_module
 import timesoil.aios.economics as economics_module
+import timesoil.aios.interwell as interwell_module
 import timesoil.aios.opm as opm_module
 import timesoil.aios.opm_chdd as opm_chdd_module
 import timesoil.aios.scenario_generation as scenario_generation_module
@@ -61,6 +62,7 @@ _EXECUTION_SOURCE_PATHS = {
     ).absolute(),
     "timesoil.aios.track2": Path(track2_module.__file__).absolute(),
     "timesoil.aios.surrogate": Path(surrogate_module.__file__).absolute(),
+    "timesoil.aios.interwell": Path(interwell_module.__file__).absolute(),
     "timesoil.aios.schedule_overlay": Path(schedule_overlay_module.__file__).absolute(),
     "timesoil.aios.opm": Path(opm_module.__file__).absolute(),
     "timesoil.aios.opm_chdd": Path(opm_chdd_module.__file__).absolute(),
@@ -515,6 +517,8 @@ def _authenticated_economics(
     manifest, manifest_bytes = _json_object(
         manifest_path, "official CHDD economics manifest"
     )
+    period_spec = profile.get("management_period", {})
+    period = (date.fromisoformat(period_spec["start_inclusive"]), date.fromisoformat(period_spec["end_exclusive"]))
     artifacts = manifest.get("artifacts")
     expected_artifacts = {
         "input": "input.csv",
@@ -525,11 +529,11 @@ def _authenticated_economics(
     if (
         manifest.get("schema_version") != 1
         or manifest.get("adapter") != "timesoil.aios.CHDDEconomicsAdapter"
-        or manifest.get("start_year") != 2007
+        or manifest.get("start_year") != period[0].year
         or manifest.get("fields") != list(economics_module.CHDD_FIELDS)
         or manifest.get("assumption_overrides")
         != {"chargeInitialPump": profile.get("charge_initial_pump")}
-        or profile.get("name") != "operational_sunk_assets"
+        or profile.get("name") != "management_period_sunk_assets"
         or profile.get("charge_initial_pump") is not False
         or artifacts != expected_artifacts
     ):
@@ -564,16 +568,18 @@ def _authenticated_economics(
     if (
         manifest.get("input_sha256") != _sha256(input_bytes)
         or economics_module.normalize_chdd_rows(input_records)
-        != economics_module.normalize_chdd_rows(_records(source_chdd))
+        != economics_module.opm_management_rows(_records(source_chdd), period)
     ):
         raise ValueError("official CHDD input does not match canonical CHDD")
     raw_result, result_bytes = _json_object(result_path, "official CHDD result")
-    validated = economics_module._validated_result(raw_result, expected_start_year=2007)
+    economics_module._validated_result(raw_result, expected_start_year=period[0].year)
+    validated = economics_module.management_period_summary(raw_result, period)
     if (
         manifest.get("result_sha256") != _sha256(result_bytes)
         or manifest.get("summary") != raw_result.get("summary")
         or manifest.get("row_count") != len(input_records)
         or validated["total_chdd_m"] != result.total_chdd_m
+        or manifest.get("management_period") != validated
     ):
         raise ValueError("official CHDD result lineage mismatch")
     links = {
@@ -847,6 +853,8 @@ def _search(args: argparse.Namespace) -> Path:
         liquid_rate_scale=getattr(args, "liquid_rate_scale", 1.0),
         uncertainty_weight=args.uncertainty_weight,
         injection_cost_equivalent=args.injection_cost_equivalent,
+        perturb_injection=getattr(args, "perturb_injection", False),
+        candidate_rank=getattr(args, "candidate_rank", 0),
     )
     selected = result.selected
     overlay = apply_schedule_overlay(
@@ -865,6 +873,8 @@ def _search(args: argparse.Namespace) -> Path:
         args.parsing_strictness,
     )
     candidates = [_candidate(item) for item in result.accepted]
+    injection_enabled = getattr(args, "perturb_injection", False)
+    control_scope = "producer_and_injection_controls" if injection_enabled else "producer_controls_only"
     manifest = {
         "schema": "timesoil.aios.track2-surrogate-search/v1",
         "selection_only": True,
@@ -874,8 +884,8 @@ def _search(args: argparse.Namespace) -> Path:
         "start_date": result.start_date.isoformat(),
         "horizon_months": result.horizon_months,
         "score": {
-            "kind": "risk_adjusted_producer_control_oil_proxy",
-            "control_scope": "producer_controls_only",
+            "kind": "risk_adjusted_oil_proxy",
+            "control_scope": control_scope,
             "official_chdd": False,
             "uncertainty": "scenario_loso_conformal_half_width",
             "nominal_coverage": model.conformal_level,
@@ -890,9 +900,10 @@ def _search(args: argparse.Namespace) -> Path:
             "accepted_candidates": len(result.accepted),
             "rejected_ood": list(result.rejected_ood),
             "candidate_cap": MAX_TRACK2_SEARCH_CANDIDATES,
-            "control_scope": "producer_controls_only",
+            "control_scope": control_scope,
+            "candidate_rank": getattr(args, "candidate_rank", 0),
             "gates": [
-                "baseline_per_well_injection_controls_frozen",
+                "monthly_injection_total_and_per_well_bounds" if injection_enabled else "baseline_per_well_injection_controls_frozen",
                 "surrogate_ood",
                 "physical_state_constraints",
                 "final_opm_and_chdd_replay",
@@ -1166,19 +1177,21 @@ def _replay(args: argparse.Namespace) -> Path:
         trajectory_csv,
     )
     economics_profile = {
-        "name": "operational_sunk_assets",
+        "name": "management_period_sunk_assets",
         "charge_initial_pump": False,
+        "management_period": {"start_inclusive": start.isoformat(), "end_exclusive": end_exclusive.isoformat()},
         "semantics": (
-            "existing ESPs on 2007-01-01 are sunk assets and are not charged again"
+            "existing ESPs at management start are sunk assets; reported CHDD includes management months only, OPM report dates shifted back one month"
         ),
     }
     adapter = CHDDEconomicsAdapter.from_env()
     economics_source_snapshot = _economics_source_snapshot(adapter)
     economics = adapter.calculate(
-        _records(chdd_csv),
-        start_year=2007,
-        output_dir=result.run_dir / "economics-2007",
+        economics_module.opm_management_rows(_records(chdd_csv), (start, end_exclusive)),
+        start_year=start.year,
+        output_dir=result.run_dir / f"economics-{start.year}",
         charge_initial_pump=False,
+        management_period=(start, end_exclusive),
     )
     economics_manifest_sha256, economics_artifacts = _authenticated_economics(
         adapter,
@@ -1269,7 +1282,7 @@ def _replay(args: argparse.Namespace) -> Path:
         "artifacts": receipt_artifacts,
         "execution_sources": execution_sources,
         "total_chdd_m": economics.total_chdd_m,
-        "start_year": 2007,
+        "start_year": start.year,
         "economics_profile": economics_profile,
     }
     receipt_path = result.run_dir / "final-replay-receipt.json"
@@ -1321,6 +1334,8 @@ def _parser() -> argparse.ArgumentParser:
     search.add_argument("--liquid-rate-scale", type=float, default=1.0)
     search.add_argument("--uncertainty-weight", type=float, default=1.0)
     search.add_argument("--injection-cost-equivalent", type=float, default=0.01)
+    search.add_argument("--perturb-injection", action="store_true")
+    search.add_argument("--candidate-rank", type=int, default=0, help="zero-based proxy rank for separate final OPM replays")
     search.add_argument("--deck", default="Model_Z/Model_Z.data")
     search.add_argument(
         "--schedule-relative-path", default="Model_Z/Model_Z_sch.inc"
