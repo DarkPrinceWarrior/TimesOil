@@ -1,0 +1,13 @@
+{
+  "name": "baseline",
+  "canonical_path": "/tmp/timesoil-kt2/track1-v1/results/model-y-baseline-20260831-a100-v4/canonical/chdd.csv",
+  "canonical_sha256": "48b0cc42cfd93bbb89abbcf363ccd744e57ebf2d9d2bdaff95164c3b2a98e42c",
+  "period_start": "2014-01-01",
+  "period_end_exclusive": "2014-07-01",
+  "npv_million_rub": 310.40301575623704,
+  "result_start": "2014-01-01",
+  "result_max_date": "2014-06-01",
+  "manifest_path": "/root/projects/TimesOil-track1-kt3-check/results/kt3-repriced-20260908-v2/baseline/manifest.json",
+  "manifest_sha256": "ce0cccb00e16178f5e280cfcf7bbd82f448f02dc6d6f207500bedcb37cca99e4",
+  "charge_initial_pump": false
+}

@@ -1,0 +1,121 @@
+{
+  "schema": "timesoil.track1.kt3-preparation/v1",
+  "status": "code_updated_agent_rehearsal_incomplete",
+  "organizer_certified": false,
+  "competition_submission": false,
+  "period": {
+    "start_inclusive": "2014-01-01",
+    "end_exclusive": "2014-07-01"
+  },
+  "economics": {
+    "baseline_million_rub": 310.40301575623704,
+    "selected_million_rub": 310.6114251088905,
+    "gain_million_rub": 0.2084093526534616,
+    "initial_pumps_charged": false,
+    "historical_period_excluded": true,
+    "old_absolute_npvs_superseded": [
+      361.7478381787023,
+      361.95624753135576
+    ]
+  },
+  "selected_schedule": {
+    "path": "wells_schedule.inc",
+    "sha256": "bfa490a903e3df261efb2b537431b4ee0f8201fb1fc238f9d52ab0d16c401c24",
+    "source": "Previously OPM-verified six-month winner, repriced with corrected management period",
+    "new_agent_winner": false,
+    "global_optimum": false
+  },
+  "agent_rehearsal": {
+    "execution_source_commit": "73704d91574f682db778489a02f8f3eeb5691973",
+    "model": "qwen-3.8-27b",
+    "provider": "Cerebras",
+    "requested_months": 6,
+    "opm_completed_months": [
+      "2014-01-01",
+      "2014-02-01",
+      "2014-03-01",
+      "2014-04-01"
+    ],
+    "original_critic_approved_months": [
+      "2014-01-01",
+      "2014-02-01",
+      "2014-03-01"
+    ],
+    "corrected_critic_approved_months": [
+      "2014-01-01",
+      "2014-02-01",
+      "2014-03-01"
+    ],
+    "complete": false,
+    "terminal_failure": "External Qwen request failed during April critic; failure propagated, no six-month agent submission emitted",
+    "planning_inputs_include_npv": false,
+    "legacy_economics_repriced_without_resimulating": true,
+    "agent_log_path": "/root/projects/TimesOil-track1-kt3/results/kt3-20260908/delivery/track1-d0d7793c1db4003fc082b25e-agent.jsonl",
+    "agent_log_sha256": "e9f0bbaf270db7ec8b5cec1b77fa3a7da30d7d5c60409c5cd1cfa7186f927d57",
+    "fresh_final_code_january_attempts": {
+      "count": 2,
+      "complete": false,
+      "failure": "External Qwen request failed during planning before OPM"
+    }
+  },
+  "tests": {
+    "source_commit": "b50607bf3d5d72624480014f496fd785b75db3d6",
+    "passed": 178,
+    "skipped": 2,
+    "subtests_passed": 9,
+    "warnings": 1,
+    "host": "A100",
+    "command": "PYTHONPATH=src /root/projects/TimesOil/.venv/bin/python -m pytest tests -q"
+  },
+  "docker_validation": {
+    "commit": "b50607bf3d5d72624480014f496fd785b75db3d6",
+    "/health": {
+      "status": "ok"
+    },
+    "/v1/capabilities": {
+      "qwen": {
+        "model": "qwen-3.8-27b",
+        "configured": true,
+        "connectivity_verified": false
+      },
+      "track1": {
+        "component_available": true,
+        "certified": false
+      },
+      "track2": {
+        "component_available": true,
+        "certified": false,
+        "model_z_trained": false
+      },
+      "chdd": {
+        "component_available": true,
+        "ready": true
+      }
+    },
+    "image_id": "sha256:9328922bc4fbe2afe419bd87870b5e17e7d14affe8760c79a53544d51d71e418",
+    "container": "timesoil-track1-kt3-api-1"
+  },
+  "pending": [
+    "Complete a fresh six-month agent run once provider requests succeed reliably",
+    "Apply new September 11 constraints and development history; compute a separate final management-only submission"
+  ],
+  "raw_results_root": "/root/projects/TimesOil-track1-kt3-check/results/kt3-repriced-20260908-v2",
+  "artifacts": {
+    "wells_schedule.inc": {
+      "sha256": "bfa490a903e3df261efb2b537431b4ee0f8201fb1fc238f9d52ab0d16c401c24",
+      "bytes": 11644
+    },
+    "monthly.json": {
+      "sha256": "59c2c4f46526cb5c74e589c37ca9842ac28937e88ac392cf5c75485c07b086c9",
+      "bytes": 4103
+    },
+    "legacy-winner.json": {
+      "sha256": "b6ee8bcd971ab89ce9e1892db686bc0aca752a6aa5cc1b9d6e5b82e1716d2add",
+      "bytes": 723
+    },
+    "baseline.json": {
+      "sha256": "72ec61cd8ebe14fa7be771fa871fb7fbeffbb6d398881fee97fee3812a442018",
+      "bytes": 647
+    }
+  }
+}

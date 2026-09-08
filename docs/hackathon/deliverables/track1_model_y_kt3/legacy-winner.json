@@ -1,0 +1,13 @@
+{
+  "name": "legacy-winner",
+  "canonical_path": "/tmp/timesoil-kt2/track1-six-month-v1/output/results/model-y-track1-candidates-20260831-a100-v3/opm-full-replay-dbd64fe8c722bf46759c1199/canonical/chdd.csv",
+  "canonical_sha256": "5fb6c46f1e87e7a5fb271972eff93b683b14ac031556700a284231a42095a969",
+  "period_start": "2014-01-01",
+  "period_end_exclusive": "2014-07-01",
+  "npv_million_rub": 310.6114251088905,
+  "result_start": "2014-01-01",
+  "result_max_date": "2014-06-01",
+  "manifest_path": "/root/projects/TimesOil-track1-kt3-check/results/kt3-repriced-20260908-v2/legacy-winner/manifest.json",
+  "manifest_sha256": "87ab8f539295e646f574d7440189f8362af56afb2e938d3e7051ae71f7b68e36",
+  "charge_initial_pump": false
+}
