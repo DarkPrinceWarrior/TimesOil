@@ -56,10 +56,18 @@
       "count": 2,
       "complete": false,
       "failure": "External Qwen request failed during planning before OPM"
+    },
+    "followup_llm_diagnostic": {
+      "source_commit": "63d20185883415e72a0593d4b6e1fc29e4c95194",
+      "real_january_context_planning_passed": true,
+      "exact_cli_planning_to_simulator_boundary_passed": true,
+      "opm_executed_in_diagnostic": false,
+      "original_failure_reproduced": false,
+      "original_root_cause": "unknown; old handler discarded status/type from CLI output"
     }
   },
   "tests": {
-    "source_commit": "b50607bf3d5d72624480014f496fd785b75db3d6",
+    "source_commit": "63d20185883415e72a0593d4b6e1fc29e4c95194",
     "passed": 178,
     "skipped": 2,
     "subtests_passed": 9,
