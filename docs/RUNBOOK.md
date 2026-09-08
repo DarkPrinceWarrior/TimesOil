@@ -4,7 +4,7 @@
 
 ```bash
 uv sync --locked
-uv run pytest -q
+uv run pytest tests -q
 ```
 
 Крупные входы хранить вне Git. Для каждого входа заранее зафиксировать SHA-256.
@@ -126,10 +126,12 @@ sha256sum \
 Обязательное окружение и один запуск без перезаписи:
 
 ```bash
-export LLM_BASE_URL=https://qwen-api.example/v1
-export LLM_MODEL=qwen3.6-35b-a3b
+export LLM_BASE_URL=https://api.cerebras.ai/v1
+export LLM_MODEL=qwen-3.8-27b
 export LLM_TIMEOUT_SECONDS=120
 export LLM_MAX_OUTPUT_TOKENS=4096
+# При запущенном обратном SSH-туннеле на A100:
+# export LLM_PROXY_URL=http://127.0.0.1:18889
 test -s secrets/qwen_api_key
 export LLM_API_KEY="$(<secrets/qwen_api_key)"
 
@@ -225,3 +227,22 @@ uv run timesoil-aios agent-experiment examples/agent_context.json
 
 Контекст намеренно незавершён: корректный критик должен потребовать численные
 доказательства, а не объявить готовность по текстовой рекомендации.
+
+### Выход A100 через WSL без VPN на сервере
+
+Проверенный маршрут: A100 `127.0.0.1:18889` → обратный SSH-туннель →
+WSL `127.0.0.1:10809` → Cerebras. В WSL должен быть доступен HTTP CONNECT-прокси
+на порту 10809. Из WSL держать отдельную сессию:
+
+```bash
+ssh -N -o ControlPath=none -o ExitOnForwardFailure=yes \
+  -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+  -R 127.0.0.1:18889:127.0.0.1:10809 a100-remote
+```
+
+На хосте A100 добавить `LLM_PROXY_URL=http://127.0.0.1:18889` в окружение
+CLI. `LLM_BASE_URL` остаётся `https://api.cerebras.ai/v1`; TLS проверяется
+клиентом, ключ не передаётся прокси открытым текстом. Системные `HTTP_PROXY`
+и `HTTPS_PROXY` клиент не читает. Остановка SSH-сессии закрывает маршрут.
+Эта команда предназначена для CLI на хосте: `127.0.0.1` внутри API-контейнера
+обозначает сам контейнер и не ведёт к туннелю хоста.
