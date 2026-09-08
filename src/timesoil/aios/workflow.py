@@ -11,7 +11,7 @@ import shutil
 import stat
 import subprocess
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import date, timedelta
 from hashlib import sha256
 from pathlib import Path, PurePosixPath
@@ -442,6 +442,16 @@ class FullCycleWorkflow:
             planning_context = _agent_context(request, controls_evidence)
             planning = await agents.run_plan(planning_context, run_id=run_id)
             if not all(decision.approved for decision in planning.decisions):
+                _write_immutable(
+                    destination.parent / f"{run_id}.planning-rejected.json",
+                    _json_bytes({
+                        "run_id": run_id,
+                        "status": "planning_rejected_before_opm",
+                        "request_sha256": request.request_sha256,
+                        "controls_sha256": request.controls_sha256,
+                        "decisions": [asdict(decision) for decision in planning.decisions],
+                    }, indent=2),
+                )
                 raise CycleRejected(
                     "Qwen planning rejected controls before OPM execution"
                 )
