@@ -369,7 +369,7 @@ def test_agent_mode_fails_closed_on_invalid_choice_and_critic_rejection(
     _AgentClient.selected_index = 2
     _AgentClient.rejected_role = None
     _raises(
-        ValueError,
+        RuntimeError,
         "candidate index outside configured options",
         lambda: cli.execute(config, DeterministicGdmBackend(), agent=True),
     )

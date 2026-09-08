@@ -1428,7 +1428,7 @@ class OpmGdmBackend:
     def run_from_restart(
         self, case: Case, state: State, actions: tuple[ControlAction, ...]
     ) -> GdmResult:
-        from .economics import CHDDEconomicsAdapter
+        from .economics import CHDDEconomicsAdapter, opm_management_rows
         from .opm_chdd import export_opm_chdd
         from .schedule import ScheduleCompiler
         from .track1 import GdmResult
@@ -1533,16 +1533,14 @@ class OpmGdmBackend:
 
         with chdd_csv.open("r", encoding="utf-8-sig", newline="") as stream:
             records = list(csv.DictReader(stream))
-        economic_records = [
-            record
-            for record in records
-            if date.fromisoformat(str(record["DATA"])) >= case.economics_start
-        ]
+        management_period = (case.economics_start, next_month)
+        economic_records = opm_management_rows(records, management_period)
         adapter = self.economics or CHDDEconomicsAdapter.from_env()
         economic_result = adapter.calculate(
             economic_records,
             start_year=case.economics_start.year,
             output_dir=result.run_dir / "economics",
+            management_period=management_period,
         )
         if economic_result.start_date != case.economics_start.isoformat():
             raise OpmCertificationError(

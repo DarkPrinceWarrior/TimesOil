@@ -14,7 +14,7 @@ import sys
 import tempfile
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
@@ -102,6 +102,7 @@ class CHDDEconomicsAdapter:
         start_year: int,
         output_dir: str | Path,
         charge_initial_pump: bool | None = None,
+        management_period: tuple[date, date] | None = None,
     ) -> EconomicResult:
         if isinstance(start_year, bool) or not isinstance(start_year, int) or not 1900 <= start_year <= 9999:
             raise ValueError("start_year must be an explicit four-digit year")
@@ -111,6 +112,12 @@ class CHDDEconomicsAdapter:
         if destination.exists():
             raise FileExistsError(f"CHDD run directory already exists: {destination}")
         rows = normalize_chdd_rows(records)
+        if management_period is not None:
+            start, end = _management_months(management_period)
+            if start.year != start_year:
+                raise ValueError("start_year must match the AIOS management period")
+            # Preserve earlier pump/activity history; later production must not affect taxes.
+            rows = [row for row in rows if str(row["DATA"]) < end.isoformat()]
         if not any(int(str(row["DATA"])[:4]) >= start_year for row in rows):
             raise ValueError("CHDD input contains no records at or after start_year")
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -180,6 +187,14 @@ class CHDDEconomicsAdapter:
                 effective_norms=effective_norms,
                 assumption_overrides=overrides,
             )
+            if management_period is not None:
+                period = management_period_summary(raw_result, management_period)
+                manifest["management_period"] = period
+                result.update(
+                    total_chdd_m=period["total_chdd_m"],
+                    profitability_index=period["profitability_index"],
+                    start_date=period["start_inclusive"],
+                )
             (work / "manifest.json").write_text(
                 json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True),
                 encoding="utf-8",
@@ -203,6 +218,7 @@ class CHDDEconomicsAdapter:
         start_year: int,
         output_dir: str | Path,
         charge_initial_pump: bool | None = None,
+        management_period: tuple[date, date] | None = None,
     ) -> EconomicResult:
         materialized = list(records)
         return await asyncio.to_thread(
@@ -211,7 +227,87 @@ class CHDDEconomicsAdapter:
             start_year=start_year,
             output_dir=output_dir,
             charge_initial_pump=charge_initial_pump,
+            management_period=management_period,
         )
+
+
+def _management_months(period: tuple[date, date]) -> tuple[date, date]:
+    if (
+        not isinstance(period, tuple)
+        or len(period) != 2
+        or any(type(value) is not date or value.day != 1 for value in period)
+        or period[0] >= period[1]
+    ):
+        raise ValueError("management period requires first-of-month start < exclusive end")
+    return period
+
+
+def opm_management_rows(
+    records: Iterable[Mapping[str, Any]], period: tuple[date, date]
+) -> list[dict[str, str | float]]:
+    """Map monthly OPM report endpoints to elapsed production months, keeping history."""
+    start, end = _management_months(period)
+    rows = normalize_chdd_rows(records)
+    by_date: dict[date, set[str]] = {}
+    for row in rows:
+        stamp = date.fromisoformat(str(row["DATA"]))
+        if stamp.day != 1:
+            raise ValueError("OPM management economics requires monthly report endpoints")
+        by_date.setdefault(stamp, set()).add(str(row["well"]))
+    wells = by_date.get(start)
+    cursor = start
+    while cursor <= end:
+        if not wells or by_date.get(cursor) != wells:
+            raise ValueError("OPM management period lacks a complete date × well grid")
+        cursor = (cursor.replace(day=28) + timedelta(days=4)).replace(day=1)
+    result = []
+    for row in rows:
+        stamp = date.fromisoformat(str(row["DATA"]))
+        if stamp <= end:
+            result.append(
+                {**row, "DATA": (stamp - timedelta(days=1)).replace(day=1).isoformat()}
+            )
+    return result
+
+
+def management_period_summary(
+    raw: Mapping[str, Any], period: tuple[date, date]
+) -> dict[str, Any]:
+    """Select only managed monthly cash flows from the unchanged official calculation.
+
+    Earlier rows still determine pump state and the organizer's calendar-year tax
+    allocation. No cash flow outside the requested months enters the submitted NPV.
+    """
+    start, end = _management_months(period)
+    monthly = raw.get("fieldMonthly")
+    if not isinstance(monthly, list) or any(not isinstance(row, dict) for row in monthly):
+        raise EconomicsError("official CHDD result lacks monthly cash flows")
+    expected, cursor = [], start
+    while cursor < end:
+        expected.append(cursor.isoformat()[:7])
+        cursor = (cursor.replace(day=28) + timedelta(days=4)).replace(day=1)
+    selected = [row for row in monthly if row.get("month") in expected]
+    if sorted(row["month"] for row in selected) != expected:
+        raise EconomicsError("official CHDD result lacks the exact management months")
+    inflow = math.fsum(
+        _finite_result(row.get("discountedInflowM"), "discountedInflowM")
+        for row in selected
+    )
+    outflow = math.fsum(
+        _finite_result(row.get("discountedOutflowM"), "discountedOutflowM")
+        for row in selected
+    )
+    return {
+        "start_inclusive": start.isoformat(),
+        "end_exclusive": end.isoformat(),
+        "months": expected,
+        "total_chdd_m": math.fsum(
+            _finite_result(row.get("chddM"), "chddM") for row in selected
+        ),
+        "profitability_index": inflow / outflow if outflow else 0.0,
+        "historical_cash_flows_included": False,
+        "history_use": "pump/activity state and official calendar-year tax allocation",
+    }
 
 
 def normalize_chdd_rows(records: Iterable[Mapping[str, Any]]) -> list[dict[str, str | float]]:

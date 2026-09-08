@@ -17,7 +17,7 @@ from timesoil.aios.contracts import (
     WellState,
     WellStatus,
 )
-from timesoil.aios.economics import CHDD_FIELDS, EconomicResult
+from timesoil.aios.economics import CHDD_FIELDS, EconomicResult, opm_management_rows
 from timesoil.aios.opm import (
     OPM_IMAGE,
     OPM_IMAGE_DIGEST,
@@ -107,9 +107,16 @@ def _summary_report() -> str:
 
 
 class _Economics:
-    def calculate(self, records, *, start_year: int, output_dir: Path) -> EconomicResult:
+    def calculate(
+        self,
+        records,
+        *,
+        start_year: int,
+        output_dir: Path,
+        management_period: tuple[date, date],
+    ) -> EconomicResult:
         assert list(records)
-        assert start_year == 2014
+        assert start_year == management_period[0].year
         output_dir.mkdir()
         manifest = output_dir / "manifest.json"
         _write_json(manifest, {"official": True})
@@ -118,12 +125,44 @@ class _Economics:
         return EconomicResult(
             42.5,
             1.2,
-            "2014-01-01",
-            "2014-03-01",
+            management_period[0].isoformat(),
+            management_period[1].isoformat(),
             {},
             output_dir,
             manifest,
         )
+
+
+@pytest.mark.parametrize(
+    ("period", "endpoints", "expected"),
+    [
+        (
+            (date(2014, 1, 1), date(2014, 2, 1)),
+            ("2014-01-01", "2014-02-01"),
+            ("2013-12-01", "2014-01-01"),
+        ),
+        (
+            (date(2014, 6, 1), date(2014, 7, 1)),
+            ("2014-05-01", "2014-06-01", "2014-07-01"),
+            ("2014-04-01", "2014-05-01", "2014-06-01"),
+        ),
+    ],
+)
+def test_opm_management_rows_use_elapsed_month_endpoints(
+    period: tuple[date, date],
+    endpoints: tuple[str, ...],
+    expected: tuple[str, ...],
+) -> None:
+    rows = [
+        {
+            "DATA": endpoint,
+            "well": "P1",
+            **{field: 0.0 for field in CHDD_FIELDS[2:]},
+        }
+        for endpoint in endpoints
+    ]
+
+    assert tuple(row["DATA"] for row in opm_management_rows(rows, period)) == expected
 
 
 def test_wells_at_uses_deck_start_for_whitespace_time_summary(
@@ -306,18 +345,19 @@ def test_full_replay_carries_authenticated_controls_and_emits_lineage(
         with Path(chdd).open("w", newline="") as stream:
             writer = csv.DictWriter(stream, fieldnames=CHDD_FIELDS)
             writer.writeheader()
-            writer.writerow(
-                {
-                    field: (
-                        "2014-01-01"
-                        if field == "DATA"
-                        else "P1"
-                        if field == "well"
-                        else 0
-                    )
-                    for field in CHDD_FIELDS
-                }
-            )
+            for endpoint in ("2014-01-01", "2014-02-01", "2014-03-01"):
+                writer.writerow(
+                    {
+                        field: (
+                            endpoint
+                            if field == "DATA"
+                            else "P1"
+                            if field == "well"
+                            else 0
+                        )
+                        for field in CHDD_FIELDS
+                    }
+                )
         Path(trajectory).write_text("scenario_id\n")
         _write_json(Path(manifest), {"certified": True})
         return {"certified": True}

@@ -440,6 +440,8 @@ def execute(
     agent_log: Path | None = None,
 ) -> tuple[dict[Path, bytes], dict[str, Any]]:
     started = monotonic()
+    if agent and config.case.economics_start != config.case.start:
+        raise ValueError("agent economics_start must equal the AIOS management start")
     source_contract = script_source_contract or _script_source_contract()
     agent_records: list[dict[str, Any]] = []
     planning = None
