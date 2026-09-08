@@ -1,4 +1,4 @@
-"""Fail-closed client for Qwen3.6 through an external OpenAI-compatible API."""
+"""Fail-closed client for approved Qwen models through external APIs."""
 
 from __future__ import annotations
 
@@ -14,7 +14,8 @@ from urllib.parse import urlsplit
 
 import httpx
 
-APPROVED_MODEL = "qwen3.6-35b-a3b"
+APPROVED_MODEL = "qwen-3.8-27b"
+APPROVED_MODELS = frozenset({APPROVED_MODEL, "qwen3.6-35b-a3b"})
 _MAX_REASONING_CHARS = 32_768
 _MAX_CONTENT_CHARS = 65_536
 _NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]{0,63}$")
@@ -22,6 +23,30 @@ _NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]{0,63}$")
 
 class LLMError(RuntimeError):
     """External Qwen generation failed or returned an invalid response."""
+
+
+def _cerebras_json_schema(schema: Mapping[str, Any]) -> dict[str, Any]:
+    """Use agent_rag's Cerebras dialect; role parsers retain local constraints."""
+    unsupported = {"pattern", "format", "minItems", "maxItems", "minLength", "maxLength", "uniqueItems", "discriminator"}
+
+    def walk(value: Any, *, names: bool = False) -> Any:
+        if isinstance(value, dict):
+            result = {}
+            for key, item in value.items():
+                if names:
+                    result[key] = walk(item)
+                elif key == "const":
+                    result["enum"] = [item]
+                elif key not in unsupported:
+                    result["anyOf" if key == "oneOf" else key] = walk(
+                        item, names=key in {"properties", "$defs", "definitions"}
+                    )
+            return result
+        if isinstance(value, list):
+            return [walk(item) for item in value]
+        return value
+
+    return walk(dict(schema))
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,6 +58,7 @@ class LLMConfig:
     model: str = APPROVED_MODEL
     timeout_seconds: float = 60.0
     max_output_tokens: int = 4096
+    proxy_url: str | None = None
 
     def __post_init__(self) -> None:
         parsed = urlsplit(self.base_url)
@@ -61,8 +87,10 @@ class LLMConfig:
         else:
             if not address.is_global:
                 raise ValueError("LLM_BASE_URL must use a global address")
-        if self.model != APPROVED_MODEL:
-            raise ValueError("LLM_MODEL must be qwen3.6-35b-a3b")
+        if self.model not in APPROVED_MODELS:
+            raise ValueError("LLM_MODEL must be an approved external Qwen model")
+        if self.model == APPROVED_MODEL and self.base_url.rstrip("/") != "https://api.cerebras.ai/v1":
+            raise ValueError("Cerebras Qwen requires https://api.cerebras.ai/v1")
         if (
             not self.api_key
             or self.api_key != self.api_key.strip()
@@ -73,6 +101,19 @@ class LLMConfig:
             raise ValueError("LLM_TIMEOUT_SECONDS must be in (0, 3600]")
         if not 1 <= self.max_output_tokens <= 32_768:
             raise ValueError("LLM_MAX_OUTPUT_TOKENS must be in [1, 32768]")
+        if self.proxy_url is not None:
+            proxy = urlsplit(self.proxy_url)
+            if (
+                proxy.scheme not in {"http", "https"}
+                or not proxy.hostname
+                or proxy.username is not None
+                or proxy.password is not None
+                or proxy.path not in {"", "/"}
+                or proxy.query
+                or proxy.fragment
+            ):
+                raise ValueError("LLM_PROXY_URL must be an HTTP(S) proxy without credentials or path")
+            proxy.port  # Validate the optional port before constructing the transport.
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> LLMConfig:
@@ -83,6 +124,7 @@ class LLMConfig:
             model=source.get("LLM_MODEL", APPROVED_MODEL),
             timeout_seconds=_env_float(source, "LLM_TIMEOUT_SECONDS", 60.0),
             max_output_tokens=_env_int(source, "LLM_MAX_OUTPUT_TOKENS", 4096),
+            proxy_url=source.get("LLM_PROXY_URL") or None,
         )
 
 
@@ -154,6 +196,7 @@ class ExternalQwenClient:
             headers={"Authorization": f"Bearer {config.api_key}"},
             timeout=httpx.Timeout(config.timeout_seconds),
             trust_env=False,
+            proxy=config.proxy_url,
             follow_redirects=False,
         )
 
@@ -178,7 +221,10 @@ class ExternalQwenClient:
         timeout_seconds: float | None = None,
     ) -> LLMResponse:
         payload = self._base_payload(messages, max_tokens=max_tokens)
-        payload["chat_template_kwargs"] = {"enable_thinking": reasoning}
+        if self.config.model == APPROVED_MODEL:
+            payload["reasoning_effort"] = "medium" if reasoning else "none"
+        else:
+            payload["chat_template_kwargs"] = {"enable_thinking": reasoning}
         if tools is not None:
             payload["tools"] = list(tools)
         if tool_choice is not None:
@@ -199,7 +245,11 @@ class ExternalQwenClient:
         if not _NAME_RE.fullmatch(schema_name):
             raise ValueError("invalid JSON schema name")
         payload = self._base_payload(messages, max_tokens=max_tokens)
-        payload["chat_template_kwargs"] = {"enable_thinking": False}
+        if self.config.model == APPROVED_MODEL:
+            payload["reasoning_effort"] = "none"
+            schema = _cerebras_json_schema(schema)
+        else:
+            payload["chat_template_kwargs"] = {"enable_thinking": False}
         payload["response_format"] = {
             "type": "json_schema",
             "json_schema": {"name": schema_name, "strict": True, "schema": dict(schema)},

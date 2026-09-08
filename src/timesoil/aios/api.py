@@ -34,7 +34,7 @@ class HealthResponse(APIModel):
 
 
 class QwenCapability(APIModel):
-    model: Literal["qwen3.6-35b-a3b"]
+    model: Literal["qwen3.6-35b-a3b", "qwen-3.8-27b"]
     configured: bool
     connectivity_verified: bool
 
@@ -209,10 +209,11 @@ def health() -> HealthResponse:
 
 @app.get("/v1/capabilities")
 def capabilities() -> CapabilitiesResponse:
+    configured = _qwen_configured()
     return CapabilitiesResponse(
         qwen=QwenCapability(
-            model=APPROVED_MODEL,
-            configured=_qwen_configured(),
+            model=os.environ.get("LLM_MODEL", APPROVED_MODEL) if configured else APPROVED_MODEL,
+            configured=configured,
             connectivity_verified=False,
         ),
         track2=Track2Capability(

@@ -6,6 +6,7 @@ from collections.abc import Mapping, Sequence
 from itertools import pairwise
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 from zipfile import ZipFile
 
 import httpx
@@ -31,7 +32,7 @@ from timesoil.aios.llm import (
     ToolCall,
 )
 
-_TEST_BASE_URL = "https://qwen.example/v1"
+_TEST_BASE_URL = "https://api.cerebras.ai/v1"
 
 
 def _http_client(handler: Any) -> httpx.AsyncClient:
@@ -48,18 +49,36 @@ def _config() -> LLMConfig:
     )
 
 
-def test_llm_config_is_qwen36_only_and_hides_secret() -> None:
+def test_llm_config_accepts_approved_qwen_and_hides_secret() -> None:
     config = _config()
     assert config.model == APPROVED_MODEL
     assert "test-only-key" not in repr(config)
     with pytest.raises(ValueError, match="external HTTPS"):
         LLMConfig(api_key="x", base_url="http://qwen.example/v1")
-    with pytest.raises(ValueError, match="qwen3.6"):
+    with pytest.raises(ValueError, match="approved external Qwen"):
         LLMConfig(api_key="x", base_url=_TEST_BASE_URL, model="unsupported-qwen")
+    with pytest.raises(ValueError, match="Cerebras Qwen requires"):
+        LLMConfig(api_key="x", base_url="https://wrong-provider.example/v1")
     with pytest.raises(ValueError, match="LLM_API_KEY"):
         LLMConfig.from_env({"LLM_BASE_URL": _TEST_BASE_URL})
     with pytest.raises(ValueError, match="LLM_BASE_URL"):
         LLMConfig.from_env({"LLM_API_KEY": "x"})
+
+
+def test_explicit_proxy_preserves_external_endpoint_and_transport_guards() -> None:
+    config = LLMConfig.from_env({
+        "LLM_API_KEY": "test-only-key", "LLM_BASE_URL": _TEST_BASE_URL,
+        "LLM_PROXY_URL": "http://127.0.0.1:18889",
+    })
+    with patch("timesoil.aios.llm.httpx.AsyncClient") as transport:
+        ExternalQwenClient(config)
+    assert transport.call_args.kwargs["proxy"] == "http://127.0.0.1:18889"
+    assert transport.call_args.kwargs["base_url"] == _TEST_BASE_URL + "/"
+    assert transport.call_args.kwargs["trust_env"] is False
+    assert transport.call_args.kwargs["follow_redirects"] is False
+    for proxy in ("socks5://localhost:1080", "http://user:secret@localhost", "http://localhost/path"):
+        with pytest.raises(ValueError, match="LLM_PROXY_URL"):
+            LLMConfig(api_key="x", base_url=_TEST_BASE_URL, proxy_url=proxy)
 
 
 def test_reasoning_content_and_tool_calls_are_normalized_with_mock_transport() -> None:
@@ -122,7 +141,8 @@ def test_reasoning_content_and_tool_calls_are_normalized_with_mock_transport() -
     assert response.usage.total_tokens == 14
     assert captured["payload"]["model"] == APPROVED_MODEL
     assert captured["payload"]["temperature"] == 0.0
-    assert captured["payload"]["chat_template_kwargs"] == {"enable_thinking": True}
+    assert captured["payload"]["reasoning_effort"] == "medium"
+    assert "chat_template_kwargs" not in captured["payload"]
     assert captured["authorization"] == "Bearer test-only-key"
 
 
@@ -159,12 +179,49 @@ def test_structured_output_disables_thinking_and_uses_json_schema() -> None:
             await transport.aclose()
 
     assert asyncio.run(scenario()) == {"value": 7}
-    assert captured["chat_template_kwargs"] == {"enable_thinking": False}
+    assert captured["reasoning_effort"] == "none"
+    assert "chat_template_kwargs" not in captured
     assert captured["response_format"]["json_schema"] == {
         "name": "Output",
         "strict": True,
         "schema": schema,
     }
+
+
+def test_cerebras_schema_translation_preserves_names_and_legacy_wire() -> None:
+    from timesoil.aios.agents import _decision_schema, _parse_decision
+    from timesoil.aios.llm import _cerebras_json_schema
+
+    original = _decision_schema(AgentRole.CRITIC)
+    translated = _cerebras_json_schema(original)
+    assert translated["properties"]["role"] == {"type": "string", "enum": ["critic"]}
+    assert "maxLength" not in translated["properties"]["summary"]
+    assert original["properties"]["summary"]["maxLength"] == 10_000
+    assert _cerebras_json_schema({"properties": {"maxLength": {"type": "integer"}}}) == {"properties": {"maxLength": {"type": "integer"}}}
+    with pytest.raises(WorkflowError, match="invalid structured values"):
+        _parse_decision({"role": "critic", "summary": "x" * 10_001,
+                         "recommendation": "reject", "evidence": [], "approved": False},
+                        expected_role=AgentRole.CRITIC, tool_evidence=())
+
+    captured = []
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append(json.loads(request.content))
+        return httpx.Response(200, json={"model": "qwen3.6-35b-a3b",
+            "choices": [{"message": {"content": "{}"}, "finish_reason": "stop"}]})
+
+    async def scenario() -> None:
+        config = LLMConfig(api_key="test-only-key", base_url=_TEST_BASE_URL,
+                           model="qwen3.6-35b-a3b", timeout_seconds=2)
+        async with _http_client(handler) as transport:
+            client = ExternalQwenClient(config, http_client=transport)
+            await client.chat([ChatMessage("user", "legacy probe")])
+            await client.structured([ChatMessage("user", "legacy JSON")],
+                                    schema=original, schema_name="Legacy")
+    asyncio.run(scenario())
+    assert captured[0]["chat_template_kwargs"] == {"enable_thinking": True}
+    assert captured[1]["chat_template_kwargs"] == {"enable_thinking": False}
+    assert captured[1]["response_format"]["json_schema"]["schema"] == original
+    assert all("reasoning_effort" not in payload for payload in captured)
 
 
 def test_provider_error_fails_closed() -> None:

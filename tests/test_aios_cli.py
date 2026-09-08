@@ -36,7 +36,7 @@ class CLITest(unittest.TestCase):
         output = io.StringIO()
         with patch.dict(
             "os.environ",
-            {"LLM_API_KEY": secret, "LLM_BASE_URL": "https://qwen.example/v1"},
+        {"LLM_API_KEY": secret, "LLM_BASE_URL": "https://api.cerebras.ai/v1"},
             clear=True,
         ), patch(
             "timesoil.aios.cli.shutil.which", return_value=None
@@ -48,7 +48,7 @@ class CLITest(unittest.TestCase):
         self.assertEqual(
             report["qwen"],
             {
-                "model": "qwen3.6-35b-a3b",
+        "model": "qwen-3.8-27b",
                 "configured": True,
                 "connectivity_verified": False,
             },

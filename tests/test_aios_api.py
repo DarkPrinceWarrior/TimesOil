@@ -28,7 +28,7 @@ def _chdd_row() -> dict[str, Any]:
 def test_health_and_capabilities_do_not_expose_secret(monkeypatch) -> None:
     secret = "do-not-return-this-key"
     monkeypatch.setenv("LLM_API_KEY", secret)
-    monkeypatch.setenv("LLM_BASE_URL", "https://qwen.example/v1")
+    monkeypatch.setenv("LLM_BASE_URL", "https://api.cerebras.ai/v1")
 
     with TestClient(app) as client:
         health = client.get("/health")
@@ -37,7 +37,7 @@ def test_health_and_capabilities_do_not_expose_secret(monkeypatch) -> None:
     assert health.json() == {"status": "ok"}
     payload = capabilities.json()
     assert payload["qwen"] == {
-        "model": "qwen3.6-35b-a3b",
+        "model": "qwen-3.8-27b",
         "configured": True,
         "connectivity_verified": False,
     }
