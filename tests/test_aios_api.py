@@ -76,7 +76,7 @@ def test_model_z_capability_requires_pinned_verified_artifact(
 
 
 def test_bundled_model_z_artifact_matches_pin(monkeypatch) -> None:
-    artifact = ROOT / "deliverables/track2_model_z/surrogate/model"
+    artifact = ROOT / "deliverables/track2_model_z/surrogate_v5/model"
     manifest = artifact / "manifest.json"
     assert sha256(manifest.read_bytes()).hexdigest() == (
         api_module.MODEL_Z_SURROGATE_MANIFEST_SHA256
@@ -89,6 +89,8 @@ def test_bundled_model_z_artifact_matches_pin(monkeypatch) -> None:
     assert model.training_metadata["model_z_ready"] is True
     assert model.training_metadata["pipeline_proof_only"] is False
     assert model.training_metadata["source_models"] == ["model_z_opm"]
+    assert model.baseline.connectivity is not None
+    assert len(model.baseline.connectivity.well_ids) == 103
 
     monkeypatch.setenv("MODEL_Z_SURROGATE_DIR", str(artifact))
     assert api_module._model_z_trained() is True
@@ -97,7 +99,7 @@ def test_bundled_model_z_artifact_matches_pin(monkeypatch) -> None:
         (ROOT / "deliverables/track2_model_z/model_z_v4_summary.json").read_text()
     )
     assert summary["surrogate"]["model_manifest_sha256"] == (
-        api_module.MODEL_Z_SURROGATE_MANIFEST_SHA256
+        "de825094812f4f3faf83b8c5e2e3338a519bc866a2ac728322080bbd0a17ec8a"
     )
     assert summary["final_replay"]["complete"] is True
     assert summary["final_replay"]["improvement_over_operational_baseline"] is False
@@ -228,7 +230,7 @@ def test_agent_experiment_fails_closed_without_qwen_env(monkeypatch) -> None:
     )
 
     assert response.status_code == 503
-    assert response.json() == {"detail": "Qwen3.6 is not configured"}
+    assert response.json() == {"detail": "Qwen is not configured"}
 
 
 def test_agent_experiment_returns_bounded_error() -> None:

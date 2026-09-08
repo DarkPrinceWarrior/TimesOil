@@ -20,9 +20,9 @@ from .ui import OPERATOR_PAGE, UI_HEADERS
 
 
 MODEL_Z_SURROGATE_MANIFEST_SHA256 = (
-    "de825094812f4f3faf83b8c5e2e3338a519bc866a2ac728322080bbd0a17ec8a"
+    "964fd6117f251f7274b10dfa8831022f449acf1f2163f3627873585313cf0f6b"
 )
-_MODEL_Z_SURROGATE_DIR = "/app/model-z-surrogate-v4"
+_MODEL_Z_SURROGATE_DIR = "/app/model-z-surrogate-v5"
 
 
 class APIModel(BaseModel):
@@ -125,7 +125,7 @@ async def get_agent_workflow() -> AsyncIterator[AgentWorkflow]:
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Qwen3.6 is not configured",
+            detail="Qwen is not configured",
         ) from None
     async with ExternalQwenClient(config) as client:
         yield AgentWorkflow(

@@ -1,0 +1,294 @@
+{
+  "dataset_contract": "scenario_trajectory_v1",
+  "dataset_hash": "d4cb67af5920b45f6a60f694b72d87eca37c8174ebb433c309437d58c2db5d32",
+  "source_models": [
+    "model_z_opm"
+  ],
+  "model_z_ready": true,
+  "pipeline_proof_only": false,
+  "architecture": "CRM/material-balance baseline + LightGBM residual ensemble",
+  "training_objective": "per-output L1 residual with train-only OOB shrinkage",
+  "uncertainty": "scenario-level LOSO cross-conformal intervals",
+  "train_scenarios": [
+    "baseline",
+    "perturbation-002",
+    "perturbation-004",
+    "perturbation-005",
+    "perturbation-006",
+    "perturbation-007",
+    "perturbation-008",
+    "perturbation-009"
+  ],
+  "test_scenarios": [
+    "perturbation-001",
+    "perturbation-003"
+  ],
+  "train_metrics": {
+    "oil_wape": 0.06749019083853858,
+    "liquid_wape": 0.044683682059001896,
+    "pressure_rmse_bar": 7.129313362878103,
+    "mean_rollout_oil_wape": 0.0893716755444938,
+    "mean_rollout_liquid_wape": 0.08083116741770566,
+    "raw_ensemble_90_coverage": 0.42076060622137335,
+    "ood_step_rate": 0.0,
+    "rollouts": 488,
+    "points": 301584,
+    "horizon_months": 6
+  },
+  "test_metrics": {
+    "oil_wape": 0.06938183207682226,
+    "liquid_wape": 0.04685536400813041,
+    "pressure_rmse_bar": 7.253233452160011,
+    "mean_rollout_oil_wape": 0.09109062647516007,
+    "mean_rollout_liquid_wape": 0.08292132043742019,
+    "raw_ensemble_90_coverage": 0.40982280227067747,
+    "ood_step_rate": 0.0,
+    "rollouts": 122,
+    "points": 75396,
+    "horizon_months": 6
+  },
+  "physical_baseline_train_metrics": {
+    "oil_wape": 0.08915497268679826,
+    "liquid_wape": 0.05913875939046575,
+    "pressure_rmse_bar": 12.422688802803929,
+    "mean_rollout_oil_wape": 0.11561042607375167,
+    "mean_rollout_liquid_wape": 0.1045721202855158,
+    "rollouts": 488,
+    "points": 301584,
+    "horizon_months": 6
+  },
+  "physical_baseline_test_metrics": {
+    "oil_wape": 0.09075866888560007,
+    "liquid_wape": 0.06098826074639066,
+    "pressure_rmse_bar": 12.495113603240075,
+    "mean_rollout_oil_wape": 0.11711361019056962,
+    "mean_rollout_liquid_wape": 0.1062940633874675,
+    "rollouts": 122,
+    "points": 75396,
+    "horizon_months": 6
+  },
+  "conformal_calibration": {
+    "method": "scenario_loso_max_normalized_residual",
+    "nominal_coverage": 0.9,
+    "scenario_count": 10,
+    "scenario_ids": [
+      "baseline",
+      "perturbation-001",
+      "perturbation-002",
+      "perturbation-003",
+      "perturbation-004",
+      "perturbation-005",
+      "perturbation-006",
+      "perturbation-007",
+      "perturbation-008",
+      "perturbation-009"
+    ],
+    "quantile_rank": 10,
+    "finite_sample_denominator": 11,
+    "simultaneous_within_scenario_per_target": true,
+    "independent_validation": false,
+    "independent_validation_note": "coverage below is calibration-fold empirical coverage, not an independent claim",
+    "floor_fraction_of_state_scale": 0.01,
+    "scale_by_target": {
+      "oil_tpd": 2818.4753107625656,
+      "liquid_tpd": 1960.2768430967953,
+      "pressure_bar": 153.96445125946275
+    },
+    "calibration_group_coverage_by_target": {
+      "oil_tpd": 1.0,
+      "liquid_tpd": 1.0,
+      "pressure_bar": 1.0
+    },
+    "calibration_point_coverage_by_target": {
+      "oil_tpd": 1.0,
+      "liquid_tpd": 1.0,
+      "pressure_bar": 1.0
+    },
+    "loso_oil_wape": 0.06818083005237367,
+    "loso_liquid_wape": 0.045529914105287596,
+    "loso_pressure_rmse_bar": 7.069519056779751,
+    "mean_interval_width_by_target": {
+      "oil_tpd": 204.1642191815585,
+      "liquid_tpd": 285.63756112679334,
+      "pressure_bar": 382.60404999773704
+    },
+    "median_interval_width_by_target": {
+      "oil_tpd": 83.87107299934233,
+      "liquid_tpd": 73.91564826844396,
+      "pressure_bar": 345.70582351302295
+    },
+    "scenario_scores": {
+      "baseline": {
+        "oil_tpd": 2770.533270497561,
+        "liquid_tpd": 737.7556615374556,
+        "pressure_bar": 68.53225140025492
+      },
+      "perturbation-001": {
+        "oil_tpd": 2689.515267252044,
+        "liquid_tpd": 737.9738993230515,
+        "pressure_bar": 153.96445125946275
+      },
+      "perturbation-002": {
+        "oil_tpd": 2245.502248507641,
+        "liquid_tpd": 546.8224236954601,
+        "pressure_bar": 64.61460794408826
+      },
+      "perturbation-003": {
+        "oil_tpd": 2818.4753107625656,
+        "liquid_tpd": 913.7323866758854,
+        "pressure_bar": 81.31723677291814
+      },
+      "perturbation-004": {
+        "oil_tpd": 2537.5715652412605,
+        "liquid_tpd": 1500.577877606889,
+        "pressure_bar": 61.90074148365105
+      },
+      "perturbation-005": {
+        "oil_tpd": 2531.557564101633,
+        "liquid_tpd": 1960.2768430967953,
+        "pressure_bar": 64.14745316065927
+      },
+      "perturbation-006": {
+        "oil_tpd": 2530.7142836430053,
+        "liquid_tpd": 1935.5091615875003,
+        "pressure_bar": 67.5835490930915
+      },
+      "perturbation-007": {
+        "oil_tpd": 2571.9229308897043,
+        "liquid_tpd": 883.2604071609305,
+        "pressure_bar": 63.00777414692139
+      },
+      "perturbation-008": {
+        "oil_tpd": 2817.8397086996856,
+        "liquid_tpd": 1115.9512261145487,
+        "pressure_bar": 97.20642259441026
+      },
+      "perturbation-009": {
+        "oil_tpd": 2356.300473938478,
+        "liquid_tpd": 578.2400706840544,
+        "pressure_bar": 66.33714470235545
+      }
+    }
+  },
+  "scenario_batch": {
+    "schema": "timesoil.aios.track2-training-lineage/v1",
+    "scenario_run_schema": "timesoil.aios.track2-scenario-run/v2",
+    "batch_manifest_sha256": "3282072c910ba75d3023c2780e3d2ee36219a1b984cc00d6be8cd36a12b27157",
+    "official_source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+    "scenario_index_sha256": "69697fede3bafe9fd50f7ba568a7aaec3d2f98a9726fde94595feea82f10e317",
+    "scenario_ids": [
+      "baseline",
+      "perturbation-001",
+      "perturbation-002",
+      "perturbation-003",
+      "perturbation-004",
+      "perturbation-005",
+      "perturbation-006",
+      "perturbation-007",
+      "perturbation-008",
+      "perturbation-009"
+    ],
+    "scenarios": [
+      {
+        "scenario_id": "baseline",
+        "actions_sha256": "826a77efad0c8dc848b3e26f1da70ea00ce34b19e30cf69df574348899ef4c85",
+        "dataset_sha256": "cc7e768be45162d5883f20780177724e75e5a3096797541621b00147920797fe",
+        "export_manifest_sha256": "4273b2677e44f8b6f7d294263208ff7ea5bca31f8da9c91ffb33101af35e1c16"
+      },
+      {
+        "scenario_id": "perturbation-001",
+        "actions_sha256": "4b5a1cdef9c00eb633b91d1acf0750f11afc0a5b56a0359d6bcd1cde952c3cb4",
+        "dataset_sha256": "c08ca1affc08fcdba192dec8306c0423fbf09724ac71460ab0d32e1dc3611641",
+        "export_manifest_sha256": "d83b04b580793403411ec958460915daa9afcee6b286e794d6356ee51ea935b1"
+      },
+      {
+        "scenario_id": "perturbation-002",
+        "actions_sha256": "951a90621ab3705fcd0cbe97ae5ddfe4866cb570a31589f014fe68038ebd1b53",
+        "dataset_sha256": "32e925dfd379f40b3eafaeac7569d0efb92c78afda229f12897eb1d715a44bb5",
+        "export_manifest_sha256": "c5a9118296f8e016969c8d101502d77a096caed8a250cbcb96d129016dad8d71"
+      },
+      {
+        "scenario_id": "perturbation-003",
+        "actions_sha256": "8f298be7162158bc785933be1b922e7358e4ebdae251311c7a2af381ab1031dd",
+        "dataset_sha256": "bd08edc7b3d2e186bfa33eeb740e30987cb7da90a909f0c145ddb90e5bbc0e83",
+        "export_manifest_sha256": "13ea50029284fc1e8fc80ffe49a6f1567fad4c558db093441daecdc31534877a"
+      },
+      {
+        "scenario_id": "perturbation-004",
+        "actions_sha256": "876c355b40ad8222a96bbb1c2104b538e3808795970ad41dd6247f9ecd603c43",
+        "dataset_sha256": "8092ba805e13a827618e6168a85ba5536d4dbcddf5d2f0329aad60982b875846",
+        "export_manifest_sha256": "6559a00cdd8d837fc00418cfa44b10148b504fcb753cfaccb45a3952e12a48f4"
+      },
+      {
+        "scenario_id": "perturbation-005",
+        "actions_sha256": "1fa828a1b4a646eb609ca9d29dd34f7b75142ee3c22d0fca71773c508ebf8de6",
+        "dataset_sha256": "dcb61460c121cb2b02e945f72a58e6be2ab6a8968bb713a04e26dd4bd71d6d2a",
+        "export_manifest_sha256": "5983a34673a3d077d7ea9994965debaa2878a4f2d0564f6423b37cf10ff207ae"
+      },
+      {
+        "scenario_id": "perturbation-006",
+        "actions_sha256": "562659552e8609871de4b973e68e889ce670ed793d927200b8f909453f8c42a4",
+        "dataset_sha256": "ee9b3fa00a158e667ec96a857c9f41752acc6ddfd55aa43f1134c71a555b5a84",
+        "export_manifest_sha256": "0034eee430c989598b583c184d5fb5c5339db7fbbbf748934dfb00fbb4bcc125"
+      },
+      {
+        "scenario_id": "perturbation-007",
+        "actions_sha256": "a5b9aead89a8f35a38b88734b23bb89a4277c2577062fb8d3c002c53ebd210ff",
+        "dataset_sha256": "cbe64486aa9a4b9ae4ac31de3fa9b460444ab8b9845ac34d11149135215e3f94",
+        "export_manifest_sha256": "f8d66920617876a43c445023b5318f9f1cfa226914c494f9b57376eb12901c33"
+      },
+      {
+        "scenario_id": "perturbation-008",
+        "actions_sha256": "b2a4ab007987076a41d7873af7b5d0d9ccc77f7fb73767812a333780a83edbe5",
+        "dataset_sha256": "c11d0a5243fc4966044bda92f1fabf1859a1d6ce3c73366fa1f799eaa48fa132",
+        "export_manifest_sha256": "2473e68fb1f03d4c01240507350cab84ee15296050c5dbe5171d31ff3501595f"
+      },
+      {
+        "scenario_id": "perturbation-009",
+        "actions_sha256": "ff914a5c5cf47b3568e4f01c345ce65c9d8ce1e3053159cd033ec42337d761c8",
+        "dataset_sha256": "d435247cf2549ba4dbc153609fe71c572f6d14e9c6cc1b3b0fa60c5f453f37af",
+        "export_manifest_sha256": "db8a1feac0404a665bfd045c30a8083ee2db8c5086727f1a0fd905b38ad5cb34"
+      }
+    ]
+  },
+  "canonical_columns": [
+    "scenario_id",
+    "source_model",
+    "date",
+    "well",
+    "oil_tpd",
+    "liquid_tpd",
+    "pressure_bar",
+    "control_value",
+    "control_target",
+    "status"
+  ],
+  "executed_sources": [
+    {
+      "path": "/tmp/timesoil-kt3-20260908/code/scripts/train_track2_surrogate.py",
+      "sha256": "6efaa87246475d3d4e491d7b85e58786c3f1dbe6ee5378190b23561a158cbde7"
+    },
+    {
+      "path": "/tmp/timesoil-kt3-20260908/code/src/timesoil/aios/track2.py",
+      "sha256": "abfab3af3f56fb9c28212f6393edc6d49eea20c94d2375b41dc06e13fcc65e8f"
+    },
+    {
+      "path": "/tmp/timesoil-kt3-20260908/code/src/timesoil/aios/surrogate.py",
+      "sha256": "f166a17fad6fc8548c4ee5109a327428c386d36479c93522521541aa38df91db"
+    },
+    {
+      "path": "/tmp/timesoil-kt3-20260908/code/src/timesoil/aios/interwell.py",
+      "sha256": "1e924a4623c1e1840975dca17ab7b42d0b8a18f0960549910bd54e33243dcda3"
+    },
+    {
+      "path": "/tmp/timesoil-kt3-20260908/code/src/timesoil/aios/opm.py",
+      "sha256": "8c6f0fff04575756a9b2255891532e333ea349078249560aa84eaf9958e2ccf7"
+    },
+    {
+      "path": "/tmp/timesoil-kt3-20260908/code/src/timesoil/aios/opm_chdd.py",
+      "sha256": "9b6c3c47b5c345f908f322043b91b08b2f0e6ef39ee95861e5ab3c00b4ae5572"
+    }
+  ],
+  "surrogate_artifact_hash": "e77099ccd7a6e2571dd796dff43565c42c88ff6bd36f68e2084cd266856d2f7b",
+  "surrogate_manifest_sha256": "964fd6117f251f7274b10dfa8831022f449acf1f2163f3627873585313cf0f6b"
+}

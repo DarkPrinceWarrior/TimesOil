@@ -26,7 +26,7 @@ COPY docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py \
      ./docs/hackathon/chdd/CHDD_PYTHON/
 COPY docs/hackathon/chdd/CHDD_PYTHON/input/Нормативы_ЧДД.xlsx \
      ./docs/hackathon/chdd/CHDD_PYTHON/input/Нормативы_ЧДД.xlsx
-COPY deliverables/track2_model_z/surrogate/model/ ./model-z-surrogate-v4/
+COPY deliverables/track2_model_z/surrogate_v5/model/ ./model-z-surrogate-v5/
 
 RUN uv sync --locked --no-dev --no-editable \
     && mkdir -p /app/runs \
