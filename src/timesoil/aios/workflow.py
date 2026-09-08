@@ -12,7 +12,7 @@ import stat
 import subprocess
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from hashlib import sha256
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable
@@ -31,7 +31,9 @@ from .economics import (
     CHDD_FIELDS,
     CHDDEconomicsAdapter,
     EconomicResult,
+    management_period_summary,
     normalize_chdd_rows,
+    opm_management_rows,
 )
 from .llm import APPROVED_MODELS, ExternalQwenClient
 from .opm import OPM_IMAGE, OpmFlowRunner
@@ -259,6 +261,8 @@ def _validate_cycle_request(request: CycleRequest) -> None:
         or not 1900 <= request.start_year <= 9999
     ):
         raise CycleError("start_year must be a four-digit integer")
+    if request.start_year != min(action.month for action in controls).year:
+        raise CycleError("start_year must match the AIOS management period")
     if request.parsing_strictness not in {"strict", "low"}:
         raise CycleError("parsing_strictness must be strict or low")
     if request.charge_initial_pump is not None and not isinstance(
@@ -493,14 +497,19 @@ class FullCycleWorkflow:
             chdd_csv,
             trajectory_csv,
         )
+        management_period = (
+            control_months[0],
+            (control_months[-1].replace(day=28) + timedelta(days=4)).replace(day=1),
+        )
         economics = self._economics.calculate(
-            _csv_rows(chdd_csv),
+            opm_management_rows(_csv_rows(chdd_csv), management_period),
             start_year=request.start_year,
             output_dir=result.run_dir / f"economics-{request.start_year}",
             charge_initial_pump=request.charge_initial_pump,
+            management_period=management_period,
         )
         economics_sha256 = _authenticate_economics(
-            economics, chdd_csv, request.start_year
+            economics, chdd_csv, request.start_year, management_period
         )
         terminal_evidence.update(
             {
@@ -529,6 +538,12 @@ class FullCycleWorkflow:
                     "manifest_sha256": economics_sha256,
                     "total_chdd_m": economics.total_chdd_m,
                     "profitability_index": economics.profitability_index,
+                    "management_period": {
+                        "start_inclusive": management_period[0].isoformat(),
+                        "end_exclusive": management_period[1].isoformat(),
+                        "opm_report_date_shift_months": -1,
+                        "historical_cash_flows_included": False,
+                    },
                 },
             }
         )
@@ -842,7 +857,8 @@ def _authenticate_export(
 
 
 def _authenticate_economics(
-    result: EconomicResult, source_chdd: Path, start_year: int
+    result: EconomicResult, source_chdd: Path, start_year: int,
+    management_period: tuple[date, date],
 ) -> str:
     manifest, raw = _json_file(result.manifest_path, "economics manifest")
     artifacts = manifest.get("artifacts")
@@ -860,15 +876,17 @@ def _authenticate_economics(
         manifest.get("input_sha256") != _sha256_file(input_path)
         or manifest.get("result_sha256") != _sha256_file(result_path)
         or normalize_chdd_rows(_csv_rows(input_path))
-        != normalize_chdd_rows(_csv_rows(source_chdd))
+        != opm_management_rows(_csv_rows(source_chdd), management_period)
     ):
         raise CycleError("economics input or result lineage mismatch")
     calculated, _ = _json_file(result_path, "economics result")
     summary = calculated.get("summary")
+    period = management_period_summary(calculated, management_period)
     if (
         not isinstance(summary, dict)
-        or summary.get("totalChddM") != result.total_chdd_m
-        or summary.get("profitabilityIndex") != result.profitability_index
+        or period["total_chdd_m"] != result.total_chdd_m
+        or period["profitability_index"] != result.profitability_index
+        or manifest.get("management_period") != period
         or manifest.get("summary") != summary
     ):
         raise CycleError("economics result summary mismatch")
@@ -955,6 +973,7 @@ def _receipt(
                 "start_year": request.start_year,
                 "total_chdd_m": economics.total_chdd_m,
                 "profitability_index": economics.profitability_index,
+                "management_period": economics_manifest["management_period"],
             }
             if production
             else {"official_chdd_complete": False}

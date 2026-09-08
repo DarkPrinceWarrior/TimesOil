@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import csv
+from datetime import date
 from hashlib import sha256
 import io
 import json
@@ -14,7 +15,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from timesoil.aios.economics import CHDD_FIELDS, EconomicResult
+from timesoil.aios.economics import CHDD_FIELDS, EconomicResult, management_period_summary
 from timesoil.aios.llm import (
     APPROVED_MODEL,
     ChatMessage,
@@ -222,8 +223,9 @@ def _exporter(
     with chdd_csv.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=list(CHDD_FIELDS), lineterminator="\n")
         writer.writeheader()
-        writer.writerow(
-            {"DATA": "2007-01-01", "well": "P1", **{name: 1 for name in CHDD_FIELDS[2:]}}
+        writer.writerows(
+            {"DATA": f"2007-{month:02d}-01", "well": "P1", **{name: 1 for name in CHDD_FIELDS[2:]}}
+            for month in range(1, 8)
         )
     trajectory_csv.write_text("scenario_id\nselected\n", encoding="utf-8")
     opm_manifest = Path(kwargs["opm_run_manifest"])
@@ -259,6 +261,7 @@ class _Economics:
         start_year: int,
         output_dir: Path,
         charge_initial_pump: bool | None,
+        management_period: tuple[date, date],
     ) -> EconomicResult:
         assert start_year == 2007 and charge_initial_pump is False
         output_dir.mkdir()
@@ -269,7 +272,12 @@ class _Economics:
             writer.writerows(records)
         result_path = output_dir / "result.json"
         summary = {"totalChddM": 12.5, "profitabilityIndex": 1.2}
-        result_path.write_text(json.dumps({"summary": summary}) + "\n", encoding="utf-8")
+        raw = {"summary": summary, "fieldMonthly": [
+            {"month": f"2007-{month:02d}", "chddM": 12.5 / 6,
+             "discountedInflowM": 12.0, "discountedOutflowM": 10.0}
+            for month in range(1, 7)
+        ]}
+        result_path.write_text(json.dumps(raw) + "\n", encoding="utf-8")
         (output_dir / "report.xlsx").write_bytes(b"xlsx")
         manifest = {
             "schema_version": 1,
@@ -278,6 +286,7 @@ class _Economics:
             "input_sha256": _sha(input_path),
             "result_sha256": _sha(result_path),
             "summary": summary,
+            "management_period": management_period_summary(raw, management_period),
             "artifacts": {"input": "input.csv", "result": "result.json", "report": "report.xlsx"},
         }
         manifest_path = output_dir / "manifest.json"

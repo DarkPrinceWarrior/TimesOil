@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from datetime import date
 from collections.abc import Mapping, Sequence
 from itertools import pairwise
 from pathlib import Path
@@ -21,7 +22,9 @@ from timesoil.aios.agents import (
     ToolRegistry,
     WorkflowError,
 )
-from timesoil.aios.economics import CHDD_FIELDS, CHDDEconomicsAdapter
+from timesoil.aios.economics import (
+    CHDD_FIELDS, CHDDEconomicsAdapter, management_period_summary, opm_management_rows,
+)
 from timesoil.aios.llm import (
     APPROVED_MODEL,
     ChatMessage,
@@ -437,3 +440,25 @@ def test_chdd_adapter_records_initial_pump_profile(tmp_path: Path) -> None:
         core = archive.read("docProps/core.xml")
     assert b"<dcterms:modified" in core
     assert b">2000-01-01T00:00:00Z</dcterms:modified>" in core
+
+
+def test_management_period_uses_elapsed_opm_months_and_preserves_history(tmp_path: Path) -> None:
+    period = (date(2014, 2, 1), date(2014, 4, 1))
+    reports = [_chdd_row(f"2014-{month:02d}-01", "1", producer=True) for month in range(1, 6)]
+    rows = opm_management_rows(reports, period)
+    assert [row["DATA"] for row in rows] == ["2013-12-01", "2014-01-01", "2014-02-01", "2014-03-01"]
+    assert rows[2]["WOMT_Diff"] == reports[2]["WOMT_Diff"]
+    with pytest.raises(ValueError, match="complete date"):
+        opm_management_rows(reports[:-2], period)
+    run = CHDDEconomicsAdapter(timeout_seconds=30).calculate(
+        rows, start_year=2014, output_dir=tmp_path / "period", management_period=period,
+        charge_initial_pump=False,
+    )
+    raw = json.loads((run.output_dir / "result.json").read_text())
+    selected = management_period_summary(raw, period)
+    manifest = json.loads(run.manifest_path.read_text())
+    assert selected["months"] == ["2014-02", "2014-03"]
+    assert run.total_chdd_m == selected["total_chdd_m"]
+    assert manifest["management_period"] == selected
+    assert [row["month"] for row in raw["fieldMonthly"]] == ["2014-01", "2014-02", "2014-03"]
+    assert run.total_chdd_m != raw["summary"]["totalChddM"]
