@@ -1,0 +1,476 @@
+{
+  "agent": {
+    "decisions": [
+      {
+        "approved": true,
+        "evidence": [
+          "full_controls.verified: true",
+          "full_controls.canonical_schedule_sha256: 4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac",
+          "constraints.candidate_requires_final_opm: true",
+          "constraints.surrogate_chdd_is_final: false",
+          "facts.optimization_improvement_claimed: false"
+        ],
+        "recommendation": "Запустить симулятор для вычисления финальных показателей OPM и официального ЧДД для выбранного кандидата. Суррогатные значения не используются как финальные.",
+        "role": "coordinator",
+        "summary": "Кандидатская политика (TimesFM, 6 месяцев, 618 действий) верифицирована по хешам и полноте горизонта. Ограничения требуют финального OPM и запрещают использование суррогатного ЧДД как финального. Обучение модели Z не подтверждено, но это не блокирует расчёт baseline без суррогата. Следующий шаг — запуск симулятора для получения финальных метрик OPM и ЧДД.",
+        "tools": [
+          {
+            "call_id": "91bca77d5",
+            "output": {
+              "available": true,
+              "source": "current_request",
+              "state": {
+                "case_id": "model-z-kt3-baseline-full-cycle",
+                "facts": {
+                  "full_controls": {
+                    "action_count": 618,
+                    "canonical_actions_sha256": "77465b7bc31f32bd10981cbd4879ea07ca8a52fe31308e8611fa7dc8fa3249ee",
+                    "canonical_schedule_sha256": "4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac",
+                    "complete_management_horizon": true,
+                    "complete_six_month_horizon": true,
+                    "horizon_months": 6,
+                    "months": [
+                      "2007-01-01",
+                      "2007-02-01",
+                      "2007-03-01",
+                      "2007-04-01",
+                      "2007-05-01",
+                      "2007-06-01"
+                    ],
+                    "source_control_inventory_sha256": "7aa076b18844a37a525bba6b3110fdf8912a4bbf6ddb25a49efa02ccf877507f",
+                    "source_pre_control_action_count": 114,
+                    "source_well_count": 103,
+                    "verified": true,
+                    "well_count": 103
+                  },
+                  "optimization_improvement_claimed": false,
+                  "schedule_kind": "timesfm_policy_candidate"
+                },
+                "field_state": {
+                  "candidate_selected": true
+                },
+                "track": 2
+              }
+            },
+            "tool": "read_context_state"
+          },
+          {
+            "call_id": "fa6b94fd4",
+            "output": {
+              "available": true,
+              "constraints": {
+                "candidate_controls_are_full_management_schedule": true,
+                "candidate_controls_are_full_six_month_schedule": true,
+                "candidate_controls_scope": "exact_full_management_period_operator_input",
+                "candidate_requires_final_opm": true,
+                "full_controls_hash_tool": "verify_full_controls",
+                "full_controls_validated_by_agent_tool": true,
+                "qwen_recommendation_only": true,
+                "surrogate_chdd_is_final": false
+              },
+              "source": "current_request"
+            },
+            "tool": "read_constraints"
+          },
+          {
+            "call_id": "21905a545",
+            "output": {
+              "evidence": [],
+              "reported": {},
+              "source": "current_request_unverified",
+              "verified": {
+                "model_z_trained": false
+              }
+            },
+            "tool": "read_evidence_readiness"
+          }
+        ]
+      },
+      {
+        "approved": true,
+        "evidence": [
+          "full_controls.verified: true",
+          "full_controls.canonical_schedule_sha256: 4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac",
+          "screening.controls_sha256: 4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac (совпадает с full_controls)",
+          "constraints.candidate_requires_final_opm: true",
+          "constraints.surrogate_chdd_is_final: false",
+          "facts.optimization_improvement_claimed: false",
+          "model_z_trained: false (не блокирует расчёт baseline без суррогата)"
+        ],
+        "recommendation": "Запустить симулятор для вычисления финальных показателей OPM и официального ЧДД для выбранного кандидата. Суррогатные значения не используются как финальные.",
+        "role": "reservoir_analyst",
+        "summary": "Кандидатская политика (TimesFM, 6 месяцев, 103 скважины, 618 действий) верифицирована по хешам и полноте горизонта. Скрининг дал интегральную оценку добычи (169 210 т жидкости, 152 268 т нефти), однако эти значения не являются финальными (is_official_chdd: false). Ограничения требуют вычисления финального OPM и официального ЧДД. Отсутствие обучения модели Z не блокирует расчёт baseline без суррогата. Блокирующих факторов для запуска симулятора не обнаружено.",
+        "tools": []
+      },
+      {
+        "approved": true,
+        "evidence": [
+          "full_controls.verified: true",
+          "full_controls.canonical_schedule_sha256: 4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac",
+          "constraints.candidate_requires_final_opm: true",
+          "constraints.surrogate_chdd_is_final: false",
+          "facts.optimization_improvement_claimed: false",
+          "model_z_trained: false (не блокирует расчёт baseline без суррогата)"
+        ],
+        "recommendation": "Запустить симулятор для вычисления финальных показателей OPM и официального ЧДД для выбранного кандидата. Суррогатные значения не используются как финальные.",
+        "role": "planner",
+        "summary": "Кандидатская политика (TimesFM, 6 месяцев, 618 действий) верифицирована инструментом verify_full_controls. Полнота горизонта и хеши подтверждены. Ограничения требуют финального OPM и официального ЧДД, суррогатные значения не являются финальными. Отсутствие обучения суррогата не блокирует расчёт baseline. Блокирующих факторов для запуска симулятора нет.",
+        "tools": [
+          {
+            "call_id": "7e61476f5",
+            "output": {
+              "action_count": 618,
+              "canonical_actions_sha256": "77465b7bc31f32bd10981cbd4879ea07ca8a52fe31308e8611fa7dc8fa3249ee",
+              "canonical_schedule_sha256": "4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac",
+              "complete_management_horizon": true,
+              "complete_six_month_horizon": true,
+              "horizon_months": 6,
+              "months": [
+                "2007-01-01",
+                "2007-02-01",
+                "2007-03-01",
+                "2007-04-01",
+                "2007-05-01",
+                "2007-06-01"
+              ],
+              "source_control_inventory_sha256": "7aa076b18844a37a525bba6b3110fdf8912a4bbf6ddb25a49efa02ccf877507f",
+              "source_pre_control_action_count": 114,
+              "source_well_count": 103,
+              "verified": true,
+              "well_count": 103
+            },
+            "tool": "verify_full_controls"
+          }
+        ]
+      },
+      {
+        "approved": true,
+        "evidence": [
+          "full_controls.verified: true",
+          "full_controls.canonical_schedule_sha256: 4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac",
+          "opm.simulator_executed: true",
+          "opm.pinned_image_verified: true",
+          "economics.official_chdd_complete: true",
+          "economics.profitability_index: 1.2604561349200334",
+          "economics.total_chdd_m: 840.1154059875723",
+          "constraints.surrogate_chdd_is_final: false",
+          "facts.optimization_improvement_claimed: false"
+        ],
+        "recommendation": "Одобрить план. Результаты OPM и официального ЧДД (PI: 1.26, CHDD: 840.12 млн) являются финальными для данного кандидата. Следующим шагом является проведение парного сравнения с базовым сценарием для оценки улучшения.",
+        "role": "critic",
+        "summary": "План одобрен. Все обязательные доказательства для расчёта исходного baseline без суррогата присутствуют: полные управляющие параметры верифицированы, симулятор OPM выполнен, официальное ЧДД рассчитано. Требования к UQ/OOD и обучению суррогата не применяются, так как выбор кандидата не опирался на суррогат для финального решения, а расчёт является baseline. Улучшение ЧДД не подтверждается, так как сравнение с базовым сценарием не проводилось.",
+        "tools": [
+          {
+            "call_id": "1b0ef3c96",
+            "output": {
+              "available": true,
+              "controls": {
+                "action_count": 618,
+                "canonical_actions_sha256": "77465b7bc31f32bd10981cbd4879ea07ca8a52fe31308e8611fa7dc8fa3249ee",
+                "canonical_schedule_sha256": "4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac",
+                "complete_management_horizon": true,
+                "complete_six_month_horizon": true,
+                "horizon_months": 6,
+                "months": [
+                  "2007-01-01",
+                  "2007-02-01",
+                  "2007-03-01",
+                  "2007-04-01",
+                  "2007-05-01",
+                  "2007-06-01"
+                ],
+                "source_control_inventory_sha256": "7aa076b18844a37a525bba6b3110fdf8912a4bbf6ddb25a49efa02ccf877507f",
+                "source_pre_control_action_count": 114,
+                "source_well_count": 103,
+                "verified": true,
+                "well_count": 103
+              },
+              "economics": {
+                "management_period": {
+                  "end_exclusive": "2007-07-01",
+                  "historical_cash_flows_included": false,
+                  "opm_report_date_shift_months": -1,
+                  "start_inclusive": "2007-01-01"
+                },
+                "manifest_sha256": "34dfda4b33379a5aa0da18b2da1e698c71258da5eb4fe1f12972953bd1cb8610",
+                "official_chdd_complete": true,
+                "profitability_index": 1.2604561349200334,
+                "total_chdd_m": 840.1154059875723
+              },
+              "export": {
+                "authenticated": true,
+                "manifest_sha256": "2f29a71dc158c9fd861cc3e611d7f7ee96eeabcbe9eb154b63a8cdc8dfe29fa9"
+              },
+              "opm": {
+                "complete": true,
+                "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+                "manifest_sha256": "993ad087989c3e7d50d5b4a8d06cf75d746231f1dff405c08a5ef5f7624a356d",
+                "pinned_image_verified": true,
+                "simulator_executed": true
+              },
+              "schedule": {
+                "action_count": 618,
+                "input_sha256": "dddd222d7816c54b5d8d8a7714e8c1c2b224efcf1f04d1f066b13fc9982dc920",
+                "overlay_sha256": "dddd222d7816c54b5d8d8a7714e8c1c2b224efcf1f04d1f066b13fc9982dc920"
+              },
+              "summary": {
+                "authenticated": true,
+                "extraction_manifest_sha256": "42aec088f9a1355e05aa330ab2040e4e5db5274cab78366c8ef05f644539fc7a",
+                "report_sha256": "8eae1fb13e0688555fa21b3c12494ebd5d6e976a151fccde466ee3a56ae01b9f"
+              }
+            },
+            "tool": "verify_terminal_evidence"
+          }
+        ]
+      }
+    ],
+    "model": "qwen-3.8-27b",
+    "transport": "external_openai_compatible_api"
+  },
+  "approval_is_recommendation_only": true,
+  "artifacts": {
+    "canonical_chdd_csv": {
+      "bytes": 1781776,
+      "path": "canonical/chdd.csv",
+      "sha256": "51d5dc5f678c7a3e4dd58d193a6c8d9102182f3b21eb598cba00f816edba8c91"
+    },
+    "canonical_export_manifest": {
+      "bytes": 31225,
+      "path": "canonical/manifest.json",
+      "sha256": "2f29a71dc158c9fd861cc3e611d7f7ee96eeabcbe9eb154b63a8cdc8dfe29fa9"
+    },
+    "canonical_trajectory_csv": {
+      "bytes": 1602383,
+      "path": "canonical/trajectory.csv",
+      "sha256": "669efa32e015020771ca299d4c7518c58d1a479c4264764bde84527b721307c5"
+    },
+    "economics_effective_norms": {
+      "bytes": 8485,
+      "path": "economics-2007/norms-effective.xlsx",
+      "sha256": "0291a8b2296ad3d6bc229c8a0f5c3e7b810aa7844cdb8bb78041323114cec015"
+    },
+    "economics_input": {
+      "bytes": 1797536,
+      "path": "economics-2007/input.csv",
+      "sha256": "8818778575d2d1f5058c4b0a875f2422ce3acd0a752a651d341270c28577bc9c"
+    },
+    "economics_manifest": {
+      "bytes": 2165,
+      "path": "economics-2007/manifest.json",
+      "sha256": "34dfda4b33379a5aa0da18b2da1e698c71258da5eb4fe1f12972953bd1cb8610"
+    },
+    "economics_report": {
+      "bytes": 9716,
+      "path": "economics-2007/report.xlsx",
+      "sha256": "cf2677bd731f167fe2dff65dcd24ecaec1545c2c7a03fc4c6762192baeece255"
+    },
+    "economics_result": {
+      "bytes": 19690,
+      "path": "economics-2007/result.json",
+      "sha256": "bdb9758a0ea87b7e8802b60d80fba7bdd8f4afdfce1791313f4c2bbb72d60d8e"
+    },
+    "exact_opm_input_schedule": {
+      "bytes": 1585770,
+      "path": "input/Model_Z/Model_Z_sch.inc",
+      "sha256": "dddd222d7816c54b5d8d8a7714e8c1c2b224efcf1f04d1f066b13fc9982dc920"
+    },
+    "opm_run_manifest": {
+      "bytes": 12513,
+      "path": "manifest.json",
+      "sha256": "993ad087989c3e7d50d5b4a8d06cf75d746231f1dff405c08a5ef5f7624a356d"
+    },
+    "summary_extraction_manifest": {
+      "bytes": 1016905,
+      "path": "summary-extraction.json",
+      "sha256": "42aec088f9a1355e05aa330ab2040e4e5db5274cab78366c8ef05f644539fc7a"
+    },
+    "summary_report": {
+      "bytes": 36677874,
+      "path": "summary-report.txt",
+      "sha256": "8eae1fb13e0688555fa21b3c12494ebd5d6e976a151fccde466ee3a56ae01b9f"
+    }
+  },
+  "complete": true,
+  "controls": {
+    "action_count": 618,
+    "canonical_actions_sha256": "77465b7bc31f32bd10981cbd4879ea07ca8a52fe31308e8611fa7dc8fa3249ee",
+    "canonical_schedule_sha256": "4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac",
+    "complete_management_horizon": true,
+    "complete_six_month_horizon": true,
+    "horizon_months": 6,
+    "months": [
+      "2007-01-01",
+      "2007-02-01",
+      "2007-03-01",
+      "2007-04-01",
+      "2007-05-01",
+      "2007-06-01"
+    ],
+    "source_control_inventory_sha256": "7aa076b18844a37a525bba6b3110fdf8912a4bbf6ddb25a49efa02ccf877507f",
+    "source_pre_control_action_count": 114,
+    "source_well_count": 103,
+    "verified": true,
+    "well_count": 103
+  },
+  "critic_approved": true,
+  "dependency_mode": "production_cli",
+  "economics": {
+    "management_period": {
+      "end_exclusive": "2007-07-01",
+      "historical_cash_flows_included": false,
+      "history_use": "pump/activity state and official calendar-year tax allocation",
+      "months": [
+        "2007-01",
+        "2007-02",
+        "2007-03",
+        "2007-04",
+        "2007-05",
+        "2007-06"
+      ],
+      "profitability_index": 1.2604561349200334,
+      "start_inclusive": "2007-01-01",
+      "total_chdd_m": 840.1154059875723
+    },
+    "profitability_index": 1.2604561349200334,
+    "start_year": 2007,
+    "total_chdd_m": 840.1154059875723
+  },
+  "execution_source_binding": {
+    "git_commit": "915f396185be2c820da5bb514e630b1596b79fdf",
+    "git_scoped_sources_clean": true,
+    "source_count": 16,
+    "source_map_sha256": "7b833081fa8730fd245289158bda77cb2e4c4752242c480eb0ab328b72061e5b",
+    "sources": {
+      "docs/hackathon/chdd/CHDD_PYTHON/chdd_model.py": {
+        "bytes": 38481,
+        "sha256": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e"
+      },
+      "docs/hackathon/chdd/CHDD_PYTHON/excel_io.py": {
+        "bytes": 35535,
+        "sha256": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5"
+      },
+      "docs/hackathon/chdd/CHDD_PYTHON/input/Нормативы_ЧДД.xlsx": {
+        "bytes": 8673,
+        "sha256": "4f96a304db486f158994173be6e86b45d63858b8d851470cab8168c86b366358"
+      },
+      "docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py": {
+        "bytes": 4964,
+        "sha256": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+      },
+      "pyproject.toml": {
+        "bytes": 654,
+        "sha256": "00120ba263513894a2299d930a1076a70138bc792498879b32f916c438f9c049"
+      },
+      "src/timesoil/aios/agents.py": {
+        "bytes": 21066,
+        "sha256": "41e673e1d403f27bdcfc8ebfa81333ea1da2b43ff131b2b11659c9700e7f203f"
+      },
+      "src/timesoil/aios/cli.py": {
+        "bytes": 12052,
+        "sha256": "3e8c3e91111f7683a3437ad7ec7e8202d8c4de14e11365caaef1831b912150c4"
+      },
+      "src/timesoil/aios/contracts.py": {
+        "bytes": 7883,
+        "sha256": "8cae38050f0027795f0bc2b673788801200f1483ff569c566a1539151a489454"
+      },
+      "src/timesoil/aios/economics.py": {
+        "bytes": 20362,
+        "sha256": "6e11e2e580bf789e6389049bfcb17df4fbdcae6279679251490e10c542b331b4"
+      },
+      "src/timesoil/aios/llm.py": {
+        "bytes": 17210,
+        "sha256": "22e2c71cd6a317655079be2253f521cd778d7d870484cb94c335fe726b8f8c00"
+      },
+      "src/timesoil/aios/opm.py": {
+        "bytes": 50307,
+        "sha256": "6f04d87bf4578b00a097da5ad9b504d4f02c4d76a5976246fa99b48988ceca13"
+      },
+      "src/timesoil/aios/opm_chdd.py": {
+        "bytes": 52889,
+        "sha256": "9b6c3c47b5c345f908f322043b91b08b2f0e6ef39ee95861e5ab3c00b4ae5572"
+      },
+      "src/timesoil/aios/schedule_overlay.py": {
+        "bytes": 17631,
+        "sha256": "90fadec990322c1112371de78e3ded5ceb0aaa4ae68a7442a174f0b40b7cc01c"
+      },
+      "src/timesoil/aios/tools.py": {
+        "bytes": 10182,
+        "sha256": "60f132a5aa126ed2806b73cbc43d6686a7d5dc5be69bf8cfead822537591dd89"
+      },
+      "src/timesoil/aios/workflow.py": {
+        "bytes": 48969,
+        "sha256": "27d7ea1c77132e283e97ae78dc40e4c61c16339edc03bd0464c1bcd89c30ede7"
+      },
+      "uv.lock": {
+        "bytes": 44727,
+        "sha256": "4c6079570159187ba53b1aa921f117c1ed3f2aea1f2a3325880f6908bdef8a5e"
+      }
+    },
+    "unchanged_after_execution": true,
+    "verified": true
+  },
+  "experimental": true,
+  "external_qwen_used": true,
+  "organizer_certified": false,
+  "request_sha256": "27838341e071a8b89a784a59985a758dcaf4610687a4f29c4fd3bebbb20b8e77",
+  "run_id": "policy-09-six-months",
+  "schema": "timesoil.aios.track2-full-cycle/v1",
+  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+  "terminal_evidence": {
+    "available": true,
+    "controls": {
+      "action_count": 618,
+      "canonical_actions_sha256": "77465b7bc31f32bd10981cbd4879ea07ca8a52fe31308e8611fa7dc8fa3249ee",
+      "canonical_schedule_sha256": "4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac",
+      "complete_management_horizon": true,
+      "complete_six_month_horizon": true,
+      "horizon_months": 6,
+      "months": [
+        "2007-01-01",
+        "2007-02-01",
+        "2007-03-01",
+        "2007-04-01",
+        "2007-05-01",
+        "2007-06-01"
+      ],
+      "source_control_inventory_sha256": "7aa076b18844a37a525bba6b3110fdf8912a4bbf6ddb25a49efa02ccf877507f",
+      "source_pre_control_action_count": 114,
+      "source_well_count": 103,
+      "verified": true,
+      "well_count": 103
+    },
+    "economics": {
+      "management_period": {
+        "end_exclusive": "2007-07-01",
+        "historical_cash_flows_included": false,
+        "opm_report_date_shift_months": -1,
+        "start_inclusive": "2007-01-01"
+      },
+      "manifest_sha256": "34dfda4b33379a5aa0da18b2da1e698c71258da5eb4fe1f12972953bd1cb8610",
+      "official_chdd_complete": true,
+      "profitability_index": 1.2604561349200334,
+      "total_chdd_m": 840.1154059875723
+    },
+    "export": {
+      "authenticated": true,
+      "manifest_sha256": "2f29a71dc158c9fd861cc3e611d7f7ee96eeabcbe9eb154b63a8cdc8dfe29fa9"
+    },
+    "opm": {
+      "complete": true,
+      "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+      "manifest_sha256": "993ad087989c3e7d50d5b4a8d06cf75d746231f1dff405c08a5ef5f7624a356d",
+      "pinned_image_verified": true,
+      "simulator_executed": true
+    },
+    "schedule": {
+      "action_count": 618,
+      "input_sha256": "dddd222d7816c54b5d8d8a7714e8c1c2b224efcf1f04d1f066b13fc9982dc920",
+      "overlay_sha256": "dddd222d7816c54b5d8d8a7714e8c1c2b224efcf1f04d1f066b13fc9982dc920"
+    },
+    "summary": {
+      "authenticated": true,
+      "extraction_manifest_sha256": "42aec088f9a1355e05aa330ab2040e4e5db5274cab78366c8ef05f644539fc7a",
+      "report_sha256": "8eae1fb13e0688555fa21b3c12494ebd5d6e976a151fccde466ee3a56ae01b9f"
+    }
+  }
+}

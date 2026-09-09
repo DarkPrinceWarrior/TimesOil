@@ -1,0 +1,47 @@
+{
+  "date": "2026-09-09",
+  "tracks": [
+    {
+      "track": 1,
+      "steps": 15
+    },
+    {
+      "track": 2,
+      "steps": 21
+    }
+  ],
+  "browser_checks": [
+    "first and last step",
+    "arrow keys",
+    "expand and collapse all",
+    "search matches and empty results",
+    "desktop 1600x1000",
+    "mobile 390x844",
+    "no browser script errors",
+    "print layout: expanded content, no clipped text"
+  ],
+  "external_runtime_dependencies": 0,
+  "drawio": {
+    "pages": 2,
+    "tracks": [
+      {
+        "track": 1,
+        "nodes": 37,
+        "edges": 37
+      },
+      {
+        "track": 2,
+        "nodes": 49,
+        "edges": 49
+      }
+    ],
+    "checks": [
+      "XML parsed",
+      "all edge endpoints exist",
+      "HTML zoom and navigation",
+      "details toggled",
+      "no clipped labels",
+      "390px viewport"
+    ]
+  }
+}

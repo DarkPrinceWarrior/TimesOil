@@ -1,0 +1,234 @@
+{
+  "review": {
+    "run_id": "policy09-corrected-review-v2",
+    "context": {
+      "action_support": {
+        "checked_open_producer_actions": 340,
+        "interpretation": "Range diagnostic, not calibrated probabilistic OOD. Full OPM confirms this candidate only; surrogate uncertainty remains uncertified.",
+        "outside_training_same_month_range": 340,
+        "outside_well_count": 57,
+        "schema": "timesoil.action-support-diagnostic/v1"
+      },
+      "case_id": "timesfm-policy09-post-opm-audit",
+      "constraints": {
+        "future_competition_case_not_supplied": true,
+        "producer_liquid_max_m3d": 500
+      },
+      "facts": {
+        "candidate_producer_lrat_scale": 5,
+        "independent_surrogate_uq_calibrated": false,
+        "is_baseline": false,
+        "original_critic_misclassified_candidate_as_baseline": true,
+        "original_receipt_sha256": "d8965af1948dc5c36c66582f65dded42a71cbb1fe9cf19b7ee6027c292aea5b0",
+        "schedule_kind": "timesfm_policy_candidate",
+        "surrogate_used_for_candidate_selection": true
+      },
+      "objective": "Audit the candidate and the paired numerical improvement using the actual evidence. Distinguish a verified OPM result from surrogate model readiness. No new simulator run is requested.",
+      "paired": {
+        "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+        "artifacts_verified": true,
+        "baseline": {
+          "chdd_m": 795.9207824631455,
+          "max_liquid_m3d": 41.975807,
+          "opm_seconds": 364.72168608009815,
+          "receipt_sha256": "3be0e5912e2625af6895cf541a96d401a2d754dc8ac429122dc4417501892eeb",
+          "reported_critic_approved": true,
+          "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-preserved-8threads",
+          "summary": {
+            "conversionCount": 2,
+            "profitabilityIndex": 1.261569208767587,
+            "pumpChanges": 3.0,
+            "startStopCount": 3,
+            "totalCapexM": 2.15,
+            "totalChddM": 795.9207824631455,
+            "totalConversionOpexM": 10.0,
+            "totalFcfM": 795.9207824631455,
+            "totalInjectionK": 225.339023682,
+            "totalLiquidKt": 153.98340082788178,
+            "totalOilKt": 137.0996276807148,
+            "totalOpexM": 87.54249590047677,
+            "totalRevenueM": 3838.789575060014,
+            "years": 1
+          }
+        },
+        "candidate": {
+          "chdd_m": 840.1154059875723,
+          "max_liquid_m3d": 41.314255,
+          "opm_seconds": 395.5264207459986,
+          "receipt_sha256": "d8965af1948dc5c36c66582f65dded42a71cbb1fe9cf19b7ee6027c292aea5b0",
+          "reported_critic_approved": true,
+          "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/policy-09-six-months",
+          "summary": {
+            "conversionCount": 2,
+            "profitabilityIndex": 1.2604561349200334,
+            "pumpChanges": 6.0,
+            "startStopCount": 3,
+            "totalCapexM": 4.1,
+            "totalChddM": 840.1154059875723,
+            "totalConversionOpexM": 10.0,
+            "totalFcfM": 840.1154059875723,
+            "totalInjectionK": 225.457334472,
+            "totalLiquidKt": 162.08550905348977,
+            "totalOilKt": 145.20248950433876,
+            "totalOpexM": 94.08037051968253,
+            "totalRevenueM": 4065.6697061214854,
+            "years": 1
+          }
+        },
+        "delta_chdd_m": 44.19462352442679,
+        "end_exclusive": "2007-07-01",
+        "identical_pre_control_history": true,
+        "months": 6,
+        "schema": "timesoil.paired-cycle-audit/v1",
+        "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+        "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+        "start_inclusive": "2007-01-01",
+        "uplift_percent": 5.552640978623158,
+        "well_count": 103
+      },
+      "track": 2
+    },
+    "decisions": [
+      {
+        "role": "coordinator",
+        "summary": "Кандидатская политика (TimesFM, 6 месяцев, 618 действий) верифицирована по хешам и полноте горизонта. Ограничения требуют финального OPM и запрещают использование суррогатного ЧДД как финального. Обучение модели Z не подтверждено, но это не блокирует расчёт baseline без суррогата. Следующий шаг — запуск симулятора для получения финальных метрик OPM и ЧДД.",
+        "recommendation": "Запустить симулятор для вычисления финальных показателей OPM и официального ЧДД для выбранного кандидата. Суррогатные значения не используются как финальные.",
+        "evidence": [
+          "full_controls.verified: true",
+          "full_controls.canonical_schedule_sha256: 4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac",
+          "constraints.candidate_requires_final_opm: true",
+          "constraints.surrogate_chdd_is_final: false",
+          "facts.optimization_improvement_claimed: false"
+        ],
+        "approved": true,
+        "tool_evidence": []
+      },
+      {
+        "role": "reservoir_analyst",
+        "summary": "Кандидатская политика (TimesFM, 6 месяцев, 103 скважины, 618 действий) верифицирована по хешам и полноте горизонта. Скрининг дал интегральную оценку добычи (169 210 т жидкости, 152 268 т нефти), однако эти значения не являются финальными (is_official_chdd: false). Ограничения требуют вычисления финального OPM и официального ЧДД. Отсутствие обучения модели Z не блокирует расчёт baseline без суррогата. Блокирующих факторов для запуска симулятора не обнаружено.",
+        "recommendation": "Запустить симулятор для вычисления финальных показателей OPM и официального ЧДД для выбранного кандидата. Суррогатные значения не используются как финальные.",
+        "evidence": [
+          "full_controls.verified: true",
+          "full_controls.canonical_schedule_sha256: 4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac",
+          "screening.controls_sha256: 4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac (совпадает с full_controls)",
+          "constraints.candidate_requires_final_opm: true",
+          "constraints.surrogate_chdd_is_final: false",
+          "facts.optimization_improvement_claimed: false",
+          "model_z_trained: false (не блокирует расчёт baseline без суррогата)"
+        ],
+        "approved": true,
+        "tool_evidence": []
+      },
+      {
+        "role": "planner",
+        "summary": "Кандидатская политика (TimesFM, 6 месяцев, 618 действий) верифицирована инструментом verify_full_controls. Полнота горизонта и хеши подтверждены. Ограничения требуют финального OPM и официального ЧДД, суррогатные значения не являются финальными. Отсутствие обучения суррогата не блокирует расчёт baseline. Блокирующих факторов для запуска симулятора нет.",
+        "recommendation": "Запустить симулятор для вычисления финальных показателей OPM и официального ЧДД для выбранного кандидата. Суррогатные значения не используются как финальные.",
+        "evidence": [
+          "full_controls.verified: true",
+          "full_controls.canonical_schedule_sha256: 4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac",
+          "constraints.candidate_requires_final_opm: true",
+          "constraints.surrogate_chdd_is_final: false",
+          "facts.optimization_improvement_claimed: false",
+          "model_z_trained: false (не блокирует расчёт baseline без суррогата)"
+        ],
+        "approved": true,
+        "tool_evidence": []
+      },
+      {
+        "role": "critic",
+        "summary": "Аудит подтверждает наличие парного OPM и официального ЧДД для кандидата и baseline. Численное улучшение ЧДД (+44.19 млн руб) подтверждено для проверенных входов и периода. Однако суррогатная модель не имеет подтверждённого UQ/OOD, что блокирует её допуск, несмотря на подтверждённый численный результат.",
+        "recommendation": "Рекомендовать графу принять численный результат OPM как верифицированный для данного кейса. Запретить использование суррогатной модели для новых кейсов или переноса результатов до подтверждения UQ/OOD. Кандидат не является baseline.",
+        "evidence": [
+          "paired.artifacts_verified: true",
+          "paired.baseline.chdd_m: 795.9207824631455",
+          "paired.candidate.chdd_m: 840.1154059875723",
+          "paired.delta_chdd_m: 44.19462352442679",
+          "facts.surrogate_used_for_candidate_selection: true",
+          "facts.independent_surrogate_uq_calibrated: false",
+          "action_support.interpretation: 'Range diagnostic, not calibrated probabilistic OOD. Full OPM confirms this candidate only; surrogate uncertainty remains uncertified.'"
+        ],
+        "approved": true,
+        "tool_evidence": [
+          {
+            "call_id": "a1b03e2bd",
+            "tool": "verify_paired_evidence",
+            "output": {
+              "action_support": {
+                "checked_open_producer_actions": 340,
+                "interpretation": "Range diagnostic, not calibrated probabilistic OOD. Full OPM confirms this candidate only; surrogate uncertainty remains uncertified.",
+                "outside_training_same_month_range": 340,
+                "outside_well_count": 57,
+                "schema": "timesoil.action-support-diagnostic/v1"
+              },
+              "paired": {
+                "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+                "artifacts_verified": true,
+                "baseline": {
+                  "chdd_m": 795.9207824631455,
+                  "max_liquid_m3d": 41.975807,
+                  "opm_seconds": 364.72168608009815,
+                  "receipt_sha256": "3be0e5912e2625af6895cf541a96d401a2d754dc8ac429122dc4417501892eeb",
+                  "reported_critic_approved": true,
+                  "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-preserved-8threads",
+                  "summary": {
+                    "conversionCount": 2,
+                    "profitabilityIndex": 1.261569208767587,
+                    "pumpChanges": 3.0,
+                    "startStopCount": 3,
+                    "totalCapexM": 2.15,
+                    "totalChddM": 795.9207824631455,
+                    "totalConversionOpexM": 10.0,
+                    "totalFcfM": 795.9207824631455,
+                    "totalInjectionK": 225.339023682,
+                    "totalLiquidKt": 153.98340082788178,
+                    "totalOilKt": 137.0996276807148,
+                    "totalOpexM": 87.54249590047677,
+                    "totalRevenueM": 3838.789575060014,
+                    "years": 1
+                  }
+                },
+                "candidate": {
+                  "chdd_m": 840.1154059875723,
+                  "max_liquid_m3d": 41.314255,
+                  "opm_seconds": 395.5264207459986,
+                  "receipt_sha256": "d8965af1948dc5c36c66582f65dded42a71cbb1fe9cf19b7ee6027c292aea5b0",
+                  "reported_critic_approved": true,
+                  "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/policy-09-six-months",
+                  "summary": {
+                    "conversionCount": 2,
+                    "profitabilityIndex": 1.2604561349200334,
+                    "pumpChanges": 6.0,
+                    "startStopCount": 3,
+                    "totalCapexM": 4.1,
+                    "totalChddM": 840.1154059875723,
+                    "totalConversionOpexM": 10.0,
+                    "totalFcfM": 840.1154059875723,
+                    "totalInjectionK": 225.457334472,
+                    "totalLiquidKt": 162.08550905348977,
+                    "totalOilKt": 145.20248950433876,
+                    "totalOpexM": 94.08037051968253,
+                    "totalRevenueM": 4065.6697061214854,
+                    "years": 1
+                  }
+                },
+                "delta_chdd_m": 44.19462352442679,
+                "end_exclusive": "2007-07-01",
+                "identical_pre_control_history": true,
+                "months": 6,
+                "schema": "timesoil.paired-cycle-audit/v1",
+                "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+                "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+                "start_inclusive": "2007-01-01",
+                "uplift_percent": 5.552640978623158,
+                "well_count": 103
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_commit": "b2ebad2",
+  "prior_decisions_source_receipt_sha256": "d8965af1948dc5c36c66582f65dded42a71cbb1fe9cf19b7ee6027c292aea5b0",
+  "new_opm_run": false
+}

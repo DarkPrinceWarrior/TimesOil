@@ -1,0 +1,73 @@
+{
+  "schema": "timesoil.paired-cycle-audit/v1",
+  "baseline": {
+    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-preserved-8threads",
+    "receipt_sha256": "3be0e5912e2625af6895cf541a96d401a2d754dc8ac429122dc4417501892eeb",
+    "chdd_m": 795.9207824631455,
+    "summary": {
+      "totalOilKt": 137.0996276807148,
+      "totalLiquidKt": 153.98340082788178,
+      "totalInjectionK": 225.339023682,
+      "totalRevenueM": 3838.789575060014,
+      "totalOpexM": 87.54249590047677,
+      "totalCapexM": 2.15,
+      "totalFcfM": 795.9207824631455,
+      "totalChddM": 795.9207824631455,
+      "profitabilityIndex": 1.261569208767587,
+      "pumpChanges": 3.0,
+      "startStopCount": 3,
+      "conversionCount": 2,
+      "totalConversionOpexM": 10.0,
+      "years": 1
+    },
+    "max_liquid_m3d": 41.975807,
+    "opm_seconds": 364.72168608009815,
+    "reported_critic_approved": true
+  },
+  "candidate": {
+    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/policy-09-six-months",
+    "receipt_sha256": "d8965af1948dc5c36c66582f65dded42a71cbb1fe9cf19b7ee6027c292aea5b0",
+    "chdd_m": 840.1154059875723,
+    "summary": {
+      "totalOilKt": 145.20248950433876,
+      "totalLiquidKt": 162.08550905348977,
+      "totalInjectionK": 225.457334472,
+      "totalRevenueM": 4065.6697061214854,
+      "totalOpexM": 94.08037051968253,
+      "totalCapexM": 4.1,
+      "totalFcfM": 840.1154059875723,
+      "totalChddM": 840.1154059875723,
+      "profitabilityIndex": 1.2604561349200334,
+      "pumpChanges": 6.0,
+      "startStopCount": 3,
+      "conversionCount": 2,
+      "totalConversionOpexM": 10.0,
+      "years": 1
+    },
+    "max_liquid_m3d": 41.314255,
+    "opm_seconds": 395.5264207459986,
+    "reported_critic_approved": true
+  },
+  "start_inclusive": "2007-01-01",
+  "end_exclusive": "2007-07-01",
+  "well_count": 103,
+  "months": 6,
+  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+  "artifacts_verified": true,
+  "identical_pre_control_history": true,
+  "delta_chdd_m": 44.19462352442679,
+  "uplift_percent": 5.552640978623158,
+  "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+  "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+  "selection": "Highest verified six-month experimental CHDD among the three new OPM policies",
+  "schedule_sha256": "4f0743549c599f06f46e06428a3e2d67d7c50e8b34cb4eaf042d45966e5f30ac",
+  "policy": {
+    "producer_scale": 5,
+    "injector_scale": 1,
+    "shut_wells": [],
+    "well_scales": []
+  },
+  "surrogate_uncertainty_calibrated": false,
+  "organizer_certified": false,
+  "critic_classification_error": "Original critic called a TimesFM-selected candidate baseline; its approval does not certify surrogate UQ/OOD."
+}
