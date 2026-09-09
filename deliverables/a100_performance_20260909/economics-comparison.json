@@ -1,0 +1,13 @@
+{
+  "serial": {
+    "npv_million_rub": 11874.341091411583,
+    "manifest": "/root/projects/TimesOil/results/audit-20260909/opm-speed-20260909/serial-economics/manifest.json",
+    "months": 224
+  },
+  "mpi16": {
+    "npv_million_rub": 11873.620636581927,
+    "manifest": "/root/projects/TimesOil/results/audit-20260909/opm-speed-20260909/mpi16-economics/manifest.json",
+    "months": 224
+  },
+  "mpi_delta_pct": -0.006067324697089926
+}

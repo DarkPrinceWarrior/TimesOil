@@ -1,0 +1,50 @@
+{
+  "report_rows": 371,
+  "well_count": 103,
+  "same_report_times": true,
+  "reference_manifest": "/root/projects/TimesOil/results/audit-20260909/bhp-training-v2-20260909/reference-run/manifest.json",
+  "metrics": {
+    "WOPR": {
+      "wape_pct": 0.2738919405431027,
+      "max_absolute": 8.652618,
+      "p99_absolute": 0.11736831999999997,
+      "terminal_field_delta_pct": -0.20391942898647408
+    },
+    "WWPR": {
+      "wape_pct": 0.2603111945746077,
+      "max_absolute": 10.167673,
+      "p99_absolute": 0.10651043999999923,
+      "terminal_field_delta_pct": 0.03953382280176478
+    },
+    "WWIR": {
+      "wape_pct": 0.027539050053114997,
+      "max_absolute": 14.562928,
+      "p99_absolute": 0.03360183999999982,
+      "terminal_field_delta_pct": -0.00303017307041641
+    },
+    "WBHP": {
+      "wape_pct": 0.04482352926407009,
+      "max_absolute": 21.083680000000015,
+      "p99_absolute": 0.44474936000000104,
+      "terminal_field_delta_pct": 0.008965095076431983
+    },
+    "WOPT": {
+      "wape_pct": 0.08552441092920783,
+      "max_absolute": 1276.453125,
+      "p99_absolute": 329.2784377199951,
+      "terminal_field_delta_pct": -0.0361635149935761
+    },
+    "WWPT": {
+      "wape_pct": 0.15126076114365225,
+      "max_absolute": 1375.0234369999962,
+      "p99_absolute": 345.64136695999963,
+      "terminal_field_delta_pct": 0.044211036413983926
+    },
+    "WWIT": {
+      "wape_pct": 0.033785390692925736,
+      "max_absolute": 885.96875,
+      "p99_absolute": 516.8125,
+      "terminal_field_delta_pct": 0.012478527261891702
+    }
+  }
+}

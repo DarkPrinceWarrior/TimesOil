@@ -1,0 +1,50 @@
+{
+  "report_rows": 103,
+  "well_count": 49,
+  "same_report_times": true,
+  "reference_manifest": "/root/projects/TimesOil/results/audit-20260909/track1-lifecycle-23-v3-20260909/opm/opm-full-replay-f8f1f5b6ad9556e56f322c19/manifest.json",
+  "metrics": {
+    "WOPR": {
+      "wape_pct": 0.06994593606563168,
+      "max_absolute": 2.324481999999996,
+      "p99_absolute": 0.11403370000000042,
+      "terminal_field_delta_pct": 0.0038187973528540334
+    },
+    "WWPR": {
+      "wape_pct": 0.02092019388239999,
+      "max_absolute": 1.891410999999998,
+      "p99_absolute": 0.1101203200000045,
+      "terminal_field_delta_pct": -0.0006990408003877285
+    },
+    "WWIR": {
+      "wape_pct": 0.0002816650254488387,
+      "max_absolute": 0.10513299999996661,
+      "p99_absolute": 0.0,
+      "terminal_field_delta_pct": -0.00020083967981168057
+    },
+    "WBHP": {
+      "wape_pct": 0.018064589752913855,
+      "max_absolute": 6.31871000000001,
+      "p99_absolute": 0.1863076200000114,
+      "terminal_field_delta_pct": 0.0002694065405703167
+    },
+    "WOPT": {
+      "wape_pct": 0.027791982858961145,
+      "max_absolute": 85.6228030000002,
+      "p99_absolute": 23.194843519998244,
+      "terminal_field_delta_pct": 5.231912129157928e-05
+    },
+    "WWPT": {
+      "wape_pct": 0.01412967361090817,
+      "max_absolute": 107.65429700000095,
+      "p99_absolute": 52.85449299999891,
+      "terminal_field_delta_pct": -0.000528663134602427
+    },
+    "WWIT": {
+      "wape_pct": 0.00036530495434630863,
+      "max_absolute": 13.53125,
+      "p99_absolute": 6.377187499999977,
+      "terminal_field_delta_pct": -9.830417380139721e-05
+    }
+  }
+}

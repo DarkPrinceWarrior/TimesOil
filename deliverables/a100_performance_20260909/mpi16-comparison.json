@@ -1,0 +1,64 @@
+{
+  "report_rows": 371,
+  "well_count": 103,
+  "same_report_times": true,
+  "metrics": {
+    "WOPR": {
+      "wape_pct": 0.22091038337192218,
+      "max_absolute": 7.436764,
+      "p99_absolute": 0.10325107999999981,
+      "terminal_field_sum_reference": 317.81032500000003,
+      "terminal_field_sum_mpi16": 317.561121,
+      "terminal_field_delta_pct": -0.07841280801686357
+    },
+    "WWPR": {
+      "wape_pct": 0.20373144871265772,
+      "max_absolute": 9.593596999999999,
+      "p99_absolute": 0.09900603999999849,
+      "terminal_field_sum_reference": 1290.7302249999998,
+      "terminal_field_sum_mpi16": 1285.6532490000002,
+      "terminal_field_delta_pct": -0.39334137387226714
+    },
+    "WWIR": {
+      "wape_pct": 0.025218760521521114,
+      "max_absolute": 9.150483999999999,
+      "p99_absolute": 0.03147023999999481,
+      "terminal_field_sum_reference": 1941.671272,
+      "terminal_field_sum_mpi16": 1941.782721,
+      "terminal_field_delta_pct": 0.0057398490469087625
+    },
+    "WBHP": {
+      "wape_pct": 0.03727296212730999,
+      "max_absolute": 24.36740100000003,
+      "p99_absolute": 0.465363399999969,
+      "terminal_field_sum_reference": 12904.001465,
+      "terminal_field_sum_mpi16": 12888.527302,
+      "terminal_field_delta_pct": -0.11991755458157764
+    },
+    "WOPT": {
+      "wape_pct": 0.08535757196674001,
+      "max_absolute": 520.1210940000019,
+      "p99_absolute": 184.36437455999658,
+      "terminal_field_sum_reference": 5491415.677794999,
+      "terminal_field_sum_mpi16": 5490329.185285,
+      "terminal_field_delta_pct": -0.01978528987329508
+    },
+    "WWPT": {
+      "wape_pct": 0.11990546754628552,
+      "max_absolute": 499.25,
+      "p99_absolute": 286.97281272000083,
+      "terminal_field_sum_reference": 5157982.173607,
+      "terminal_field_sum_mpi16": 5155350.618391001,
+      "terminal_field_delta_pct": -0.05101908318847922
+    },
+    "WWIT": {
+      "wape_pct": 0.026195607461610874,
+      "max_absolute": 1113.578125,
+      "p99_absolute": 319.0,
+      "terminal_field_sum_reference": 13156506.753906,
+      "terminal_field_sum_mpi16": 13155081.542969,
+      "terminal_field_delta_pct": -0.010832745831849963
+    }
+  },
+  "interpretation": "MPI numerical comparison; original physics and solver tolerances unchanged; not a new optimized control policy"
+}
