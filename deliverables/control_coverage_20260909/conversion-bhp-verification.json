@@ -1,0 +1,32 @@
+{
+  "scope": "Model Y control regression: two committed months, each evaluated over the full provided planning horizon; not an optimization result.",
+  "source_sha256": "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e",
+  "script_sha256": "8fe31fbc1fa9d1408ab99ecfd787f7f1ea3e06886f8307e158b322588b290757",
+  "planning_end_exclusive": "2015-12-01",
+  "well_count": 49,
+  "steps": [
+    {
+      "month": "2014-01-01",
+      "restart_ref": "/root/projects/TimesOil/results/audit-20260909/control-conversion-bhp-20260909/opm/opm-full-replay-c20633dd18a26e811e0d0c45/lineage.json#sha256=471acf34e11bd0ee1b5eb6acf009be1be3e85ab928bd56dd97eff672f753e15b",
+      "conversion_count": 1,
+      "conversion_opex_m": 5,
+      "injection_m3d": 75.337502,
+      "injector_bhp_bar": 280.0,
+      "producer_bhp_bar": 77.192329,
+      "cumulative_chdd_m": 50.82284354865004,
+      "planning_chdd_m": 1001.6493299775841
+    },
+    {
+      "month": "2014-02-01",
+      "restart_ref": "/root/projects/TimesOil/results/audit-20260909/control-conversion-bhp-20260909/opm/opm-full-replay-78cf999fd53617db2f568c10/lineage.json#sha256=bedca6115da9d0d14b1a8c4c0a24d5b16837b8b1bc04ee6f413bf1d4096cb8c9",
+      "conversion_count": 1,
+      "conversion_opex_m": 5,
+      "injection_m3d": 67.789597,
+      "injector_bhp_bar": 280.0,
+      "producer_bhp_bar": 83.048553,
+      "cumulative_chdd_m": 99.0649589859379,
+      "planning_chdd_m": 1001.6493299775841
+    }
+  ],
+  "passed": true
+}
