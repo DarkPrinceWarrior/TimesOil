@@ -48,7 +48,7 @@ class CLITest(unittest.TestCase):
         self.assertEqual(
             report["qwen"],
             {
-        "model": "qwen-3.8-27b",
+        "model": "qwen3.8-27b",
                 "configured": True,
                 "connectivity_verified": False,
             },
