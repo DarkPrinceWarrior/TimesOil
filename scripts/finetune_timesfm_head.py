@@ -34,6 +34,46 @@ def self_check():
     print('normalized quantile loss and gradients verified', flush=True)
 
 
+def verified_y_batch(batch, expected_hash):
+    import pandas as pd
+    from timesoil.aios.track2 import load_trajectory_dataset
+    if sha256((batch / 'manifest.json').read_bytes()).hexdigest() != expected_hash:
+        raise ValueError('Model Y batch manifest hash mismatch')
+    manifest = json.loads((batch / 'manifest.json').read_text())
+    if (manifest.get('complete') is not True or manifest.get('start') != '2014-01-01'
+            or manifest.get('horizon_months') != 23
+            or manifest.get('train_cases') != [0, 1, 2, 4, 8]
+            or manifest.get('validation_cases') != [5] or manifest.get('test_cases') != [3, 6, 7]
+            or [r['index'] for r in manifest['scenarios']] != list(range(9))):
+        raise ValueError('nine complete Model Y scenarios and the frozen split required')
+    trajectories = []
+    for record in manifest['scenarios']:
+        root = Path(record['directory']).resolve()
+        if root != (batch / f"candidate-{record['index']:02d}").resolve():
+            raise ValueError('Model Y scenario directory mismatch')
+        for name, key in [('trajectory.csv', 'trajectory_sha256'), ('manifest.json', 'export_manifest_sha256')]:
+            if sha256((root / name).read_bytes()).hexdigest() != record[key]:
+                raise ValueError('Model Y scenario artifact hash mismatch')
+        metadata = json.loads((root / 'manifest.json').read_text())
+        if metadata['provenance']['opm_source_sha256'] != manifest['official_source_sha256']:
+            raise ValueError('Model Y scenarios have different reservoir sources')
+        data = load_trajectory_dataset(root / 'trajectory.csv', manifest=root / 'manifest.json')
+        if len(data) != 1 or data[0].scenario_id != f"physical-sweep-{record['index']:02d}":
+            raise ValueError('Model Y scenario identity mismatch')
+        trajectories.append(data[0])
+    baseline = trajectories[0]
+    origin = int(baseline.dates.get_loc(pd.Timestamp(manifest['start'])))
+    expected = pd.date_range('2014-01-01', periods=24, freq='MS')
+    for item in trajectories:
+        if (len(item.well_ids) != 49 or item.well_ids != baseline.well_ids or origin < 48
+                or item.actions.shape[-1] != 4 or not item.dates.equals(baseline.dates)
+                or not item.dates[origin:origin + 24].equals(expected)):
+            raise ValueError('Model Y historical or management grid mismatch')
+        np.testing.assert_allclose(item.states[:origin + 1], baseline.states[:origin + 1], rtol=0, atol=1e-6)
+        np.testing.assert_array_equal(item.actions[:origin], baseline.actions[:origin])
+    return trajectories, origin
+
+
 def main():
     os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
     parser = argparse.ArgumentParser(description=__doc__)
@@ -46,6 +86,7 @@ def main():
     parser.add_argument('--initial-head', type=Path)
     parser.add_argument('--initial-head-sha256')
     parser.add_argument('--unfreeze-last-layer', action='store_true')
+    parser.add_argument('--model-y', action='store_true')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -59,7 +100,14 @@ def main():
         parser.error('initial-head and its SHA-256 must be supplied together')
     args.output.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
-    trajectories, origin = verified_batch(args.batch, args.batch_sha256)
+    if args.model_y:
+        trajectories, origin = verified_y_batch(args.batch, args.batch_sha256)
+    else:
+        trajectories, origin = verified_batch(args.batch, args.batch_sha256)
+    horizon = 23 if args.model_y else 224
+    context = min(128, origin)
+    count = len(trajectories[0].well_ids)
+    targets_count = count * 3
     connectivity = None
     if args.connectivity:
         from timesoil.aios.interwell import WellConnectivity
@@ -73,6 +121,10 @@ def main():
                  'perturbation-005', 'perturbation-006']
     validation_ids = ['perturbation-009']
     test_ids = ['perturbation-004', 'perturbation-007', 'perturbation-008']
+    if args.model_y:
+        train_ids = [f'physical-sweep-{i:02d}' for i in (0, 1, 2, 4, 8)]
+        validation_ids = ['physical-sweep-05']
+        test_ids = [f'physical-sweep-{i:02d}' for i in (3, 6, 7)]
     assert set(train_ids + validation_ids + test_ids) == set(by_id)
     assert len(train_ids + validation_ids + test_ids) == len(by_id)
     import torch
@@ -110,21 +162,21 @@ def main():
     trainable = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.AdamW(trainable, lr=args.learning_rate, weight_decay=0)
     quantiles = torch.tensor(model.quantiles, device='cuda')
-    train_truth = np.stack([by_id[i].states[origin + 1:origin + 225] for i in train_ids])
+    train_truth = np.stack([by_id[i].states[origin + 1:origin + horizon + 1] for i in train_ids])
     feature_scale = np.maximum(np.abs(train_truth).mean(axis=(0, 1, 2)), 1.0)
-    scale = torch.tensor(np.tile(feature_scale, 103)[None, :, None], device='cuda', dtype=torch.float32)
+    scale = torch.tensor(np.tile(feature_scale, count)[None, :, None], device='cuda', dtype=torch.float32)
     examples = {}
     for name in train_ids + validation_ids:
         t = by_id[name]
         if connectivity is None:
-            target, cov = forecast_inputs(t.states, t.actions, origin, 128, 224)
-            target, cov = target.reshape(309, 128), cov[:, :-1].reshape(515, 352)
+            target, cov = forecast_inputs(t.states, t.actions, origin, context, horizon)
+            target, cov = target.reshape(targets_count, context), cov[:, :-1].reshape(count * 5, context + horizon)
         else:
-            target, cov = geological_inputs(t, origin, 128, 224, connectivity)
+            target, cov = geological_inputs(t, origin, context, horizon, connectivity)
         examples[name] = (
             torch.tensor(target[None], device='cuda'),
             torch.tensor(cov[None], device='cuda', dtype=torch.float32),
-            torch.tensor(t.states[origin + 1:origin + 225].transpose(1, 2, 0).reshape(1, 309, 224),
+            torch.tensor(t.states[origin + 1:origin + horizon + 1].transpose(1, 2, 0).reshape(1, targets_count, horizon),
                          device='cuda', dtype=torch.float32))
     decode = type(model).decode.__wrapped__  # Same pinned decoder, with autograd enabled.
     refine = torch.no_grad()(cpm_revin_refine.cpm_iterative_revin_refine)
@@ -133,20 +185,20 @@ def main():
         target, cov, truth = examples[name]
         # ponytail: process-local patch for this single-threaded trainer; replace with a native 3.0 trainer when available.
         with patch.object(cpm_revin_refine, 'cpm_iterative_revin_refine', refine):
-            prediction = decode(model, target, horizon=224, past_future_covariates=cov)[:, :309]
+            prediction = decode(model, target, horizon=horizon, past_future_covariates=cov)[:, :targets_count]
         return pinball_loss(prediction, truth, scale, quantiles)
 
     target, cov, _ = examples[train_ids[0]]
     with torch.no_grad():
         torch.manual_seed(20260909)
-        wrapped = model.decode(target, horizon=224, past_future_covariates=cov)
+        wrapped = model.decode(target, horizon=horizon, past_future_covariates=cov)
         torch.manual_seed(20260909)
-        unwrapped = decode(model, target, horizon=224, past_future_covariates=cov)
+        unwrapped = decode(model, target, horizon=horizon, past_future_covariates=cov)
         # Forecaster and loss consume targets only; predicted covariate outputs are discarded.
-        parity_error = float((wrapped[:, :309] - unwrapped[:, :309]).abs().max())
-        parity_scaled_error = float(((wrapped[:, :309] - unwrapped[:, :309]) / scale[..., None]).abs().max())
-        torch.testing.assert_close(wrapped[:, :309] / scale[..., None],
-                                   unwrapped[:, :309] / scale[..., None], rtol=0, atol=.001)
+        parity_error = float((wrapped[:, :targets_count] - unwrapped[:, :targets_count]).abs().max())
+        parity_scaled_error = float(((wrapped[:, :targets_count] - unwrapped[:, :targets_count]) / scale[..., None]).abs().max())
+        torch.testing.assert_close(wrapped[:, :targets_count] / scale[..., None],
+                                   unwrapped[:, :targets_count] / scale[..., None], rtol=0, atol=.001)
         best_loss = float(loss_for(validation_ids[0]))
     del wrapped, unwrapped
     checkpoint = args.output / ('last-layer-and-head.pt' if args.unfreeze_last_layer else 'output-head.pt')
@@ -169,7 +221,7 @@ def main():
         gradient_policy='stop gradients through iterative CPM-RevIN statistics; unchanged forward calculation',
         decoder_target_quantile_parity_max_scaled=parity_scaled_error,
         decoder_target_quantile_parity_atol_train_scale=.001,
-        epochs_requested=args.epochs, horizon_months=224, context_months=128, control_channels=examples[train_ids[0]][1].shape[1],
+        epochs_requested=args.epochs, horizon_months=horizon, context_months=context, control_channels=examples[train_ids[0]][1].shape[1],
         connectivity_sha256=sha256(args.connectivity.read_bytes()).hexdigest() if args.connectivity else None,
         static_conditioning=connectivity is not None,
         static_feature_names=connectivity.provenance.get('static_feature_names', ['permeability', 'porosity', 'net_thickness']) if connectivity else [],
@@ -179,16 +231,16 @@ def main():
         independent_uncertainty_calibrated=False, is_new_optimization_result=False,
         epochs=[], test_results=[])
 
-    def forecast(t, block=224, observe=False):
+    def forecast(t, block=horizon, observe=False):
         if connectivity is None:
-            return forecast_blocks(forecaster, t, origin, 224, 128, block, observe=observe)
+            return forecast_blocks(forecaster, t, origin, horizon, context, block, observe=observe)
         from benchmark_timesfm_layouts import forecast_layout
         results = []
-        for offset in range(0, 224, block):
-            size = min(block, 224 - offset)
+        for offset in range(0, horizon, block):
+            size = min(block, horizon - offset)
             if offset and not observe:
                 raise ValueError('geological block forecast requires actual observed updates')
-            results.append(forecast_layout(forecaster, t, origin + offset, size, 128,
+            results.append(forecast_layout(forecaster, t, origin + offset, size, context,
                                            'joint', connectivity=connectivity))
         return np.concatenate(results)
 
@@ -196,7 +248,7 @@ def main():
         t = by_id[name]
         pred = forecast(t)
         report['test_results'].append(dict(scenario_id=name, stage='initial_head' if args.initial_head else 'pretrained',
-            name='fixed_origin_direct', **metrics(t.states[origin + 1:origin + 225], pred)))
+            name='fixed_origin_direct', **metrics(t.states[origin + 1:origin + horizon + 1], pred)))
     for epoch in range(1, args.epochs + 1):
         losses = []
         for name in np.random.default_rng(20260909 + epoch).permutation(train_ids):
@@ -230,10 +282,10 @@ def main():
         model.transformer_stack.layers[-1].load_state_dict(selected['last_layer'])
     for name in test_ids:
         t = by_id[name]
-        for mode, block, observe in [('fixed_origin_direct', 224, False), ('observed_update_block_6', 6, True)]:
+        for mode, block, observe in [('fixed_origin_direct', horizon, False), ('observed_update_block_6', 6, True)]:
             pred = forecast(t, block, observe)
             row = dict(scenario_id=name, stage='selected_head', name=mode,
-                **metrics(t.states[origin + 1:origin + 225], pred))
+                **metrics(t.states[origin + 1:origin + horizon + 1], pred))
             report['test_results'].append(row)
             print(json.dumps(row), flush=True)
         if connectivity is not None:
@@ -242,7 +294,7 @@ def main():
             ablated = forecast(t)
             model.output_head.disabled = False
             report['test_results'].append(dict(scenario_id=name, stage='static_conditioning_disabled',
-                name='fixed_origin_direct', **metrics(t.states[origin + 1:origin + 225], ablated),
+                name='fixed_origin_direct', **metrics(t.states[origin + 1:origin + horizon + 1], ablated),
                 prediction_max_abs_change=float(np.abs(full - ablated).max())))
     report.update(complete=True, validation_loss_best=best_loss,
                   checkpoint_sha256=sha256(checkpoint.read_bytes()).hexdigest(),
