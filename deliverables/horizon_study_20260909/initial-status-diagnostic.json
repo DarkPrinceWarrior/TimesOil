@@ -1,0 +1,170 @@
+{
+  "scope": "Post-hoc diagnostic of saved baseline forecasts; group labels are known at origin, no causal attribution claim.",
+  "rows": [
+    {
+      "model": "model-y",
+      "horizon": 23,
+      "group": "initial_open_producer",
+      "wells": 33,
+      "method": "fixed_origin_direct",
+      "share_future_oil_rate_sum_percent": 100.00000000000003,
+      "share_absolute_error_percent": 100.0,
+      "oil_wape_percent": 10.079627183620053,
+      "npz_sha256": "b1800be48fcead328070637f6c0d85aa2a9832414589edbb2f897021f73390ff"
+    },
+    {
+      "model": "model-y",
+      "horizon": 23,
+      "group": "initial_open_producer",
+      "wells": 33,
+      "method": "fixed_origin_block_6",
+      "share_future_oil_rate_sum_percent": 100.00000000000003,
+      "share_absolute_error_percent": 100.00000000000003,
+      "oil_wape_percent": 12.093247563580617,
+      "npz_sha256": "b1800be48fcead328070637f6c0d85aa2a9832414589edbb2f897021f73390ff"
+    },
+    {
+      "model": "model-y",
+      "horizon": 23,
+      "group": "initial_open_producer",
+      "wells": 33,
+      "method": "observed_update_block_6",
+      "share_future_oil_rate_sum_percent": 100.00000000000003,
+      "share_absolute_error_percent": 100.0,
+      "oil_wape_percent": 3.5994651868630796,
+      "npz_sha256": "b1800be48fcead328070637f6c0d85aa2a9832414589edbb2f897021f73390ff"
+    },
+    {
+      "model": "model-y",
+      "horizon": 23,
+      "group": "initial_open_injector",
+      "wells": 16,
+      "method": "fixed_origin_direct",
+      "share_future_oil_rate_sum_percent": 0.0,
+      "share_absolute_error_percent": 0.0,
+      "oil_wape_percent": null,
+      "npz_sha256": "b1800be48fcead328070637f6c0d85aa2a9832414589edbb2f897021f73390ff"
+    },
+    {
+      "model": "model-y",
+      "horizon": 23,
+      "group": "initial_open_injector",
+      "wells": 16,
+      "method": "fixed_origin_block_6",
+      "share_future_oil_rate_sum_percent": 0.0,
+      "share_absolute_error_percent": 0.0,
+      "oil_wape_percent": null,
+      "npz_sha256": "b1800be48fcead328070637f6c0d85aa2a9832414589edbb2f897021f73390ff"
+    },
+    {
+      "model": "model-y",
+      "horizon": 23,
+      "group": "initial_open_injector",
+      "wells": 16,
+      "method": "observed_update_block_6",
+      "share_future_oil_rate_sum_percent": 0.0,
+      "share_absolute_error_percent": 0.0,
+      "oil_wape_percent": null,
+      "npz_sha256": "b1800be48fcead328070637f6c0d85aa2a9832414589edbb2f897021f73390ff"
+    },
+    {
+      "model": "model-z",
+      "horizon": 224,
+      "group": "initial_open_producer",
+      "wells": 57,
+      "method": "fixed_origin_direct",
+      "share_future_oil_rate_sum_percent": 86.67648235371126,
+      "share_absolute_error_percent": 85.91334782678484,
+      "oil_wape_percent": 93.74982706244472,
+      "npz_sha256": "49c2a56dda0023ea0b94fea30534d49834381b7f088a886bc5874873a4f100f8"
+    },
+    {
+      "model": "model-z",
+      "horizon": 224,
+      "group": "initial_open_producer",
+      "wells": 57,
+      "method": "fixed_origin_block_6",
+      "share_future_oil_rate_sum_percent": 86.67648235371126,
+      "share_absolute_error_percent": 91.77214554213224,
+      "oil_wape_percent": 171.45174436631635,
+      "npz_sha256": "49c2a56dda0023ea0b94fea30534d49834381b7f088a886bc5874873a4f100f8"
+    },
+    {
+      "model": "model-z",
+      "horizon": 224,
+      "group": "initial_open_producer",
+      "wells": 57,
+      "method": "observed_update_block_6",
+      "share_future_oil_rate_sum_percent": 86.67648235371126,
+      "share_absolute_error_percent": 64.18197624688766,
+      "oil_wape_percent": 1.869775050130279,
+      "npz_sha256": "49c2a56dda0023ea0b94fea30534d49834381b7f088a886bc5874873a4f100f8"
+    },
+    {
+      "model": "model-z",
+      "horizon": 224,
+      "group": "initial_open_injector",
+      "wells": 27,
+      "method": "fixed_origin_direct",
+      "share_future_oil_rate_sum_percent": 0.0,
+      "share_absolute_error_percent": 0.0,
+      "oil_wape_percent": null,
+      "npz_sha256": "49c2a56dda0023ea0b94fea30534d49834381b7f088a886bc5874873a4f100f8"
+    },
+    {
+      "model": "model-z",
+      "horizon": 224,
+      "group": "initial_open_injector",
+      "wells": 27,
+      "method": "fixed_origin_block_6",
+      "share_future_oil_rate_sum_percent": 0.0,
+      "share_absolute_error_percent": 0.0,
+      "oil_wape_percent": null,
+      "npz_sha256": "49c2a56dda0023ea0b94fea30534d49834381b7f088a886bc5874873a4f100f8"
+    },
+    {
+      "model": "model-z",
+      "horizon": 224,
+      "group": "initial_open_injector",
+      "wells": 27,
+      "method": "observed_update_block_6",
+      "share_future_oil_rate_sum_percent": 0.0,
+      "share_absolute_error_percent": 0.0,
+      "oil_wape_percent": null,
+      "npz_sha256": "49c2a56dda0023ea0b94fea30534d49834381b7f088a886bc5874873a4f100f8"
+    },
+    {
+      "model": "model-z",
+      "horizon": 224,
+      "group": "initial_shut",
+      "wells": 19,
+      "method": "fixed_origin_direct",
+      "share_future_oil_rate_sum_percent": 13.32351764628873,
+      "share_absolute_error_percent": 14.086652173215173,
+      "oil_wape_percent": 100.0,
+      "npz_sha256": "49c2a56dda0023ea0b94fea30534d49834381b7f088a886bc5874873a4f100f8"
+    },
+    {
+      "model": "model-z",
+      "horizon": 224,
+      "group": "initial_shut",
+      "wells": 19,
+      "method": "fixed_origin_block_6",
+      "share_future_oil_rate_sum_percent": 13.32351764628873,
+      "share_absolute_error_percent": 8.227854457867771,
+      "oil_wape_percent": 100.0,
+      "npz_sha256": "49c2a56dda0023ea0b94fea30534d49834381b7f088a886bc5874873a4f100f8"
+    },
+    {
+      "model": "model-z",
+      "horizon": 224,
+      "group": "initial_shut",
+      "wells": 19,
+      "method": "observed_update_block_6",
+      "share_future_oil_rate_sum_percent": 13.32351764628873,
+      "share_absolute_error_percent": 35.818023753112335,
+      "oil_wape_percent": 6.78828818596968,
+      "npz_sha256": "49c2a56dda0023ea0b94fea30534d49834381b7f088a886bc5874873a4f100f8"
+    }
+  ]
+}

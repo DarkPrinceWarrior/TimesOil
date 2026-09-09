@@ -1,0 +1,1634 @@
+{
+  "run_id": "0ecbdea5cad52330",
+  "context": {
+    "already_proposed": [
+      {
+        "actions": 23072,
+        "actual_chdd_known": false,
+        "controls_sha256": "2056169435b77eeb605f381d631c2d95d1be085e0178fbbe85eeda5d3df84798",
+        "months": 224,
+        "policy": {
+          "injector_scale": 1.3,
+          "producer_scale": 4,
+          "shut_wells": [],
+          "well_scales": [
+            {
+              "scale": 1.5,
+              "well": "6"
+            },
+            {
+              "scale": 1.5,
+              "well": "76"
+            },
+            {
+              "scale": 0.6,
+              "well": "66"
+            }
+          ]
+        },
+        "request": "/root/projects/TimesOil/results/audit-20260909/track2-additional-full-period-20260909/request-1.json"
+      }
+    ],
+    "constraints": {
+      "economic_costs_m": {
+        "active_well_per_year": 1,
+        "pump_capex": "0.55..8.05",
+        "pump_operation": 1.8,
+        "stop_start": 1
+      },
+      "original_BHP_limits_preserved": true,
+      "producer_liquid_max_m3d": 500,
+      "source_completions_and_role_changes_preserved": true
+    },
+    "field_state_at_management_start": [
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 45.0,
+          "well": "1"
+        },
+        "liquid_tpd": 12.828387314515648,
+        "oil_tpd": 12.828387314515648,
+        "pressure_bar": 68.832169,
+        "well": "1"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 45.0,
+          "well": "10"
+        },
+        "liquid_tpd": 29.656701956383003,
+        "oil_tpd": 17.562817415383,
+        "pressure_bar": 90.691124,
+        "well": "10"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 15.0,
+          "well": "100"
+        },
+        "liquid_tpd": 6.592298833114288,
+        "oil_tpd": 6.592298833114288,
+        "pressure_bar": 66.262642,
+        "well": "100"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 15.0,
+          "well": "101"
+        },
+        "liquid_tpd": 7.85102147702274,
+        "oil_tpd": 7.85102147702274,
+        "pressure_bar": 68.580185,
+        "well": "101"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 90.0,
+          "well": "102"
+        },
+        "liquid_tpd": 4.370421155200599,
+        "oil_tpd": 3.721368727200598,
+        "pressure_bar": 71.307785,
+        "well": "102"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 15.0,
+          "well": "103"
+        },
+        "liquid_tpd": 13.696148824836207,
+        "oil_tpd": 13.696148824836207,
+        "pressure_bar": 86.869003,
+        "well": "103"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 25.0,
+          "well": "104"
+        },
+        "liquid_tpd": 9.278982961596189,
+        "oil_tpd": 8.218583923596187,
+        "pressure_bar": 100.4263,
+        "well": "104"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "105"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "105"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 5.0,
+          "well": "106"
+        },
+        "liquid_tpd": 4.565382941612069,
+        "oil_tpd": 4.565382941612069,
+        "pressure_bar": 74.110649,
+        "well": "106"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 15.0,
+          "well": "107"
+        },
+        "liquid_tpd": 10.153522560988153,
+        "oil_tpd": 10.127193580988152,
+        "pressure_bar": 77.369865,
+        "well": "107"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 5.0,
+          "well": "108"
+        },
+        "liquid_tpd": 4.654003363109898,
+        "oil_tpd": 4.252868783109898,
+        "pressure_bar": 93.475395,
+        "well": "108"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 15.0,
+          "well": "109"
+        },
+        "liquid_tpd": 8.160068353515413,
+        "oil_tpd": 7.898774469515414,
+        "pressure_bar": 82.668121,
+        "well": "109"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 15.0,
+          "well": "11"
+        },
+        "liquid_tpd": 13.696148824836207,
+        "oil_tpd": 13.696148824836207,
+        "pressure_bar": 94.084709,
+        "well": "11"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 15.0,
+          "well": "110"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "110"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 15.0,
+          "well": "111"
+        },
+        "liquid_tpd": 13.696148824836207,
+        "oil_tpd": 13.696148824836207,
+        "pressure_bar": 95.786659,
+        "well": "111"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 15.0,
+          "well": "12"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "12"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 110.0,
+          "well": "13"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 180.509399,
+        "well": "13"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 10.0,
+          "well": "14"
+        },
+        "liquid_tpd": 9.130765883224138,
+        "oil_tpd": 9.130765883224138,
+        "pressure_bar": 149.35759,
+        "well": "14"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 25.0,
+          "well": "15"
+        },
+        "liquid_tpd": 18.556297462665764,
+        "oil_tpd": 18.527404146665763,
+        "pressure_bar": 140.868622,
+        "well": "15"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "16"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "16"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 90.0,
+          "well": "17"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "17"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 25.0,
+          "well": "18"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 177.555389,
+        "well": "18"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "19"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "19"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 15.0,
+          "well": "2"
+        },
+        "liquid_tpd": 4.253258666813112,
+        "oil_tpd": 4.253258666813112,
+        "pressure_bar": 68.10762,
+        "well": "2"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 25.0,
+          "well": "20"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 125.547729,
+        "well": "20"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "21"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "21"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 25.0,
+          "well": "22"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 156.121918,
+        "well": "22"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 15.0,
+          "well": "23"
+        },
+        "liquid_tpd": 11.566007322617072,
+        "oil_tpd": 11.447525154617072,
+        "pressure_bar": 79.547806,
+        "well": "23"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 5.0,
+          "well": "24"
+        },
+        "liquid_tpd": 4.756618595008901,
+        "oil_tpd": 3.891002835008901,
+        "pressure_bar": 78.034721,
+        "well": "24"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 35.0,
+          "well": "25"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 127.624504,
+        "well": "25"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "SHUT",
+          "target": "WRAT",
+          "value": 0,
+          "well": "26"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "26"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 80.0,
+          "well": "27"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 132.509354,
+        "well": "27"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "SHUT",
+          "target": "WRAT",
+          "value": 0,
+          "well": "28"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "28"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 70.0,
+          "well": "3"
+        },
+        "liquid_tpd": 27.052773231462,
+        "oil_tpd": 25.409746044462,
+        "pressure_bar": 121.735184,
+        "well": "3"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "30"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "30"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "31"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "31"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "32"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "32"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 30.0,
+          "well": "33"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 140.646057,
+        "well": "33"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "34"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "34"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "35"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "35"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "SHUT",
+          "target": "WRAT",
+          "value": 0,
+          "well": "36"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "36"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "37"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "37"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "SHUT",
+          "target": "WRAT",
+          "value": 0,
+          "well": "38"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "38"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "39"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "39"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "4"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "4"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 15.0,
+          "well": "42"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 144.814545,
+        "well": "42"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 20.0,
+          "well": "43"
+        },
+        "liquid_tpd": 11.392181950394544,
+        "oil_tpd": 11.387311654394544,
+        "pressure_bar": 119.465248,
+        "well": "43"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "44"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "44"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 20.0,
+          "well": "46"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 196.286636,
+        "well": "46"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 35.0,
+          "well": "47"
+        },
+        "liquid_tpd": 15.192614398478876,
+        "oil_tpd": 13.830957289478876,
+        "pressure_bar": 111.726738,
+        "well": "47"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 5.0,
+          "well": "48"
+        },
+        "liquid_tpd": 4.565382941612069,
+        "oil_tpd": 4.565382941612069,
+        "pressure_bar": 98.926834,
+        "well": "48"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 20.0,
+          "well": "49"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 205.255814,
+        "well": "49"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 15.0,
+          "well": "51"
+        },
+        "liquid_tpd": 13.696148824836207,
+        "oil_tpd": 13.696148824836207,
+        "pressure_bar": 178.617737,
+        "well": "51"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 5.0,
+          "well": "52"
+        },
+        "liquid_tpd": 3.25743451267398,
+        "oil_tpd": 3.25743451267398,
+        "pressure_bar": 131.970169,
+        "well": "52"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 100.0,
+          "well": "53"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 206.846252,
+        "well": "53"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 35.0,
+          "well": "54"
+        },
+        "liquid_tpd": 26.63263162433699,
+        "oil_tpd": 26.63263162433699,
+        "pressure_bar": 98.78212,
+        "well": "54"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 65.0,
+          "well": "55"
+        },
+        "liquid_tpd": 28.93777535304092,
+        "oil_tpd": 25.32119348304092,
+        "pressure_bar": 105.50927,
+        "well": "55"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 20.0,
+          "well": "56"
+        },
+        "liquid_tpd": 18.261531766448275,
+        "oil_tpd": 18.261531766448275,
+        "pressure_bar": 118.759598,
+        "well": "56"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 30.0,
+          "well": "57"
+        },
+        "liquid_tpd": 25.486696285508696,
+        "oil_tpd": 23.235041681508697,
+        "pressure_bar": 136.890015,
+        "well": "57"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 15.0,
+          "well": "58"
+        },
+        "liquid_tpd": 13.46821822174925,
+        "oil_tpd": 9.945095977749247,
+        "pressure_bar": 132.847946,
+        "well": "58"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 35.0,
+          "well": "59"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 187.012299,
+        "well": "59"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 180.0,
+          "well": "6"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 191.268982,
+        "well": "6"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 20.0,
+          "well": "60"
+        },
+        "liquid_tpd": 18.761946859184828,
+        "oil_tpd": 6.277383283184829,
+        "pressure_bar": 157.675735,
+        "well": "60"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 30.0,
+          "well": "61"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 242.564148,
+        "well": "61"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 35.0,
+          "well": "62"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 167.588516,
+        "well": "62"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 75.0,
+          "well": "63"
+        },
+        "liquid_tpd": 37.07932940942449,
+        "oil_tpd": 30.26805154142449,
+        "pressure_bar": 106.521233,
+        "well": "63"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 45.0,
+          "well": "64"
+        },
+        "liquid_tpd": 29.039538629437136,
+        "oil_tpd": 26.023783781437132,
+        "pressure_bar": 118.413948,
+        "well": "64"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 145.0,
+          "well": "65"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 181.805557,
+        "well": "65"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 95.0,
+          "well": "66"
+        },
+        "liquid_tpd": 21.665226280194062,
+        "oil_tpd": 19.743105079194063,
+        "pressure_bar": 110.398476,
+        "well": "66"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 10.0,
+          "well": "67"
+        },
+        "liquid_tpd": 6.0587573896124125,
+        "oil_tpd": 4.180580509612414,
+        "pressure_bar": 104.984291,
+        "well": "67"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 15.0,
+          "well": "68"
+        },
+        "liquid_tpd": 9.613834955203298,
+        "oil_tpd": 1.738605567203298,
+        "pressure_bar": 94.48159,
+        "well": "68"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 15.0,
+          "well": "7"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 159.137833,
+        "well": "7"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 15.0,
+          "well": "70"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 210.413727,
+        "well": "70"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 25.0,
+          "well": "71"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "71"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "SHUT",
+          "target": "LRAT",
+          "value": 0,
+          "well": "72"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "72"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 20.0,
+          "well": "73"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 175.173904,
+        "well": "73"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 20.0,
+          "well": "74"
+        },
+        "liquid_tpd": 18.261531766448275,
+        "oil_tpd": 18.261531766448275,
+        "pressure_bar": 110.71875,
+        "well": "74"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 55.0,
+          "well": "75"
+        },
+        "liquid_tpd": 37.70127756692657,
+        "oil_tpd": 34.69266159692657,
+        "pressure_bar": 112.205849,
+        "well": "75"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 180.0,
+          "well": "76"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 191.130066,
+        "well": "76"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 15.0,
+          "well": "77"
+        },
+        "liquid_tpd": 13.809400371563514,
+        "oil_tpd": 13.296774603563511,
+        "pressure_bar": 144.971832,
+        "well": "77"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 20.0,
+          "well": "78"
+        },
+        "liquid_tpd": 12.724714772524344,
+        "oil_tpd": 12.724714772524344,
+        "pressure_bar": 88.471664,
+        "well": "78"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 25.0,
+          "well": "79"
+        },
+        "liquid_tpd": 9.415812871796394,
+        "oil_tpd": 9.415812871796394,
+        "pressure_bar": 75.640053,
+        "well": "79"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 105.0,
+          "well": "8"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 210.536331,
+        "well": "8"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 25.0,
+          "well": "80"
+        },
+        "liquid_tpd": 9.559241780175638,
+        "oil_tpd": 7.919633704175639,
+        "pressure_bar": 76.699112,
+        "well": "80"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 20.0,
+          "well": "81"
+        },
+        "liquid_tpd": 18.31519136138626,
+        "oil_tpd": 8.492065157386257,
+        "pressure_bar": 145.64859,
+        "well": "81"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 20.0,
+          "well": "82"
+        },
+        "liquid_tpd": 18.261531766448275,
+        "oil_tpd": 18.261531766448275,
+        "pressure_bar": 111.466904,
+        "well": "82"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 40.0,
+          "well": "83"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 135.125839,
+        "well": "83"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "SHUT",
+          "target": "WRAT",
+          "value": 0,
+          "well": "84"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 0.0,
+        "well": "84"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 25.0,
+          "well": "85"
+        },
+        "liquid_tpd": 23.047069978257667,
+        "oil_tpd": 22.208303425257668,
+        "pressure_bar": 107.108452,
+        "well": "85"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 20.0,
+          "well": "86"
+        },
+        "liquid_tpd": 18.261531766448275,
+        "oil_tpd": 18.261531766448275,
+        "pressure_bar": 108.390099,
+        "well": "86"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 25.0,
+          "well": "87"
+        },
+        "liquid_tpd": 0.0,
+        "oil_tpd": 0.0,
+        "pressure_bar": 142.179291,
+        "well": "87"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 45.0,
+          "well": "88"
+        },
+        "liquid_tpd": 12.122861252408212,
+        "oil_tpd": 12.122861252408212,
+        "pressure_bar": 67.289703,
+        "well": "88"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 25.0,
+          "well": "89"
+        },
+        "liquid_tpd": 6.718713378778889,
+        "oil_tpd": 6.715745874778889,
+        "pressure_bar": 65.5784,
+        "well": "89"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 65.0,
+          "well": "90"
+        },
+        "liquid_tpd": 34.287980569183695,
+        "oil_tpd": 32.347618045183694,
+        "pressure_bar": 101.399963,
+        "well": "90"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 20.0,
+          "well": "91"
+        },
+        "liquid_tpd": 18.261531766448275,
+        "oil_tpd": 18.261531766448275,
+        "pressure_bar": 89.207893,
+        "well": "91"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 25.0,
+          "well": "92"
+        },
+        "liquid_tpd": 11.198554306131618,
+        "oil_tpd": 10.718444233131615,
+        "pressure_bar": 87.199089,
+        "well": "92"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 25.0,
+          "well": "93"
+        },
+        "liquid_tpd": 9.421907888114356,
+        "oil_tpd": 8.530201499114355,
+        "pressure_bar": 88.263916,
+        "well": "93"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 20.0,
+          "well": "94"
+        },
+        "liquid_tpd": 4.488806860455822,
+        "oil_tpd": 4.488806860455822,
+        "pressure_bar": 64.410675,
+        "well": "94"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 45.0,
+          "well": "95"
+        },
+        "liquid_tpd": 8.399341584494632,
+        "oil_tpd": 8.048429548494633,
+        "pressure_bar": 70.090858,
+        "well": "95"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 10.0,
+          "well": "96"
+        },
+        "liquid_tpd": 9.130765883224138,
+        "oil_tpd": 9.130765883224138,
+        "pressure_bar": 93.077477,
+        "well": "96"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 20.0,
+          "well": "97"
+        },
+        "liquid_tpd": 14.44007339283675,
+        "oil_tpd": 11.39673198783675,
+        "pressure_bar": 93.441666,
+        "well": "97"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 5.0,
+          "well": "98"
+        },
+        "liquid_tpd": 4.565382941612069,
+        "oil_tpd": 4.565382941612069,
+        "pressure_bar": 72.127838,
+        "well": "98"
+      },
+      {
+        "control": {
+          "month": "2007-01-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 10.0,
+          "well": "99"
+        },
+        "liquid_tpd": 4.565382941612069,
+        "oil_tpd": 4.565382941612069,
+        "pressure_bar": 73.291977,
+        "well": "99"
+      }
+    ],
+    "known_forecast_limitation": "Autonomous TimesFM forecasts over 224 months failed validation; they cannot rank the final full-period objective. Current proposals use physical experiment feedback, not a surrogate CHDD claim.",
+    "objective": "Propose exactly one NEW policy seeking a higher official CHDD on the complete 224-month period. Call propose_policy exactly once. Base producer_scale=1,injector_scale=1; best tested policy=5,1 gave only +1.216%. Explore another justified hypothesis, including injection or individual wells. No invented water quota. This is a training optimization experiment, not an untouched test or deployed surrogate.",
+    "phase": "offline_full_period_search",
+    "track": 2,
+    "verified_complete_comparison": {
+      "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+      "artifacts_verified": true,
+      "baseline": {
+        "chdd_m": 11874.341091411583,
+        "max_liquid_m3d": 56.152222,
+        "opm_seconds": 897.5974666923285,
+        "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+        "reported_critic_approved": true,
+        "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+        "summary": {
+          "conversionCount": 9,
+          "profitabilityIndex": 1.256334616831005,
+          "pumpChanges": 40.0,
+          "startStopCount": 23,
+          "totalCapexM": 28.06191,
+          "totalChddM": 11874.341091411583,
+          "totalConversionOpexM": 45.0,
+          "totalFcfM": 20502.836734599518,
+          "totalInjectionK": 11671.730859375,
+          "totalLiquidKt": 9559.847866730552,
+          "totalOilKt": 3662.101463945813,
+          "totalOpexM": 3387.1207710121375,
+          "totalRevenueM": 102538.84099048277,
+          "years": 19
+        }
+      },
+      "candidate": {
+        "chdd_m": 12018.756586411637,
+        "max_liquid_m3d": 52.928944,
+        "opm_seconds": 795.1401329822838,
+        "receipt_sha256": "91fc00f4698009bc4a3cef80c6c2c814ab6dc5131766ac1780be7f7d49718d99",
+        "reported_critic_approved": false,
+        "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/policy09-full-horizon-20260909",
+        "summary": {
+          "conversionCount": 9,
+          "profitabilityIndex": 1.256429876688801,
+          "pumpChanges": 40.0,
+          "startStopCount": 23,
+          "totalCapexM": 28.00794,
+          "totalChddM": 12018.756586411637,
+          "totalConversionOpexM": 45.0,
+          "totalFcfM": 20624.711838160827,
+          "totalInjectionK": 11746.755054688,
+          "totalLiquidKt": 9778.077017442332,
+          "totalOilKt": 3684.4102939712093,
+          "totalOpexM": 3412.0867651437215,
+          "totalRevenueM": 103163.48823119386,
+          "years": 19
+        }
+      },
+      "delta_chdd_m": 144.41549500005385,
+      "end_exclusive": "2025-09-01",
+      "identical_pre_control_history": true,
+      "months": 224,
+      "schema": "timesoil.paired-cycle-audit/v1",
+      "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+      "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+      "start_inclusive": "2007-01-01",
+      "uplift_percent": 1.216197967435062,
+      "well_count": 103
+    }
+  },
+  "decisions": [
+    {
+      "role": "coordinator",
+      "summary": "Анализ состояния показывает, что текущая фаза — offline_full_period_search (track 2). В контексте уже зарегистрировано предложение политики (request-1.json) с параметрами: producer_scale=4, injector_scale=1.3, well_scales для скважин 6, 76, 66. Однако в поле verified_complete_comparison указаны результаты только для baseline и candidate (policy09, который дал +1.216%). Предложенная политика (request-1) еще не имеет подтвержденных результатов симуляции (actual_chdd_known: false). Согласно правилам, отсутствие будущих квитанций не блокирует вычисление, но для принятия решения о следующем шаге необходимо проверить, была ли эта политика уже запущена или требуется запуск. Поскольку в already_proposed есть запись, а в verified_complete_comparison нет соответствующего результата для этой конкретной политики (sha256 controls не совпадает с candidate в verified_complete_comparison, который имеет свой receipt_sha256), логичным следующим шагом является запуск симулятора для проверки этой предложенной политики. Ограничения соблюдены: producer_liquid_max_m3d=500 (в baseline max_liquid_m3d=56.15, что в пределах), original_BHP_limits_preserved=true. Нет признаков нарушения ограничений. Обучение суррогата не требуется для повторного расчета baseline или проверки новой политики, если она не использует суррогат (в описании указано 'physical experiment feedback').",
+      "recommendation": "Запустить симулятор для проверки предложенной политики (request-1.json) с целью получения фактического значения CHDD и сравнения с baseline. Политика включает масштабирование производителей (x4), инжекторов (x1.3) и индивидуальные масштабы для скважин 6, 76, 66. Это допустимый шаг в фазе планирования до запуска симулятора, так как политика уже предложена и ожидает проверки.",
+      "evidence": [
+        "already_proposed содержит политику с controls_sha256 '2056169435b77eeb605f381d631c2d95d1be085e0178fbbe85eeda5d3df84798' и actual_chdd_known: false",
+        "verified_complete_comparison содержит результаты только для baseline (chdd_m: 11874.34) и candidate policy09 (chdd_m: 12018.75), но не для предложенной политики request-1",
+        "Ограничения producer_liquid_max_m3d=500 соблюдены в baseline (max_liquid_m3d=56.15)",
+        "original_BHP_limits_preserved=true, что соответствует требованиям",
+        "Фаза offline_full_period_search допускает запуск симулятора для проверки предложенных политик"
+      ],
+      "approved": true,
+      "tool_evidence": []
+    },
+    {
+      "role": "reservoir_analyst",
+      "summary": "Анализ предложенной политики (request-1) выявляет критическое нарушение ограничений. Политика задает producer_scale=4.0. В baseline максимальная жидкостная добыча по скважине составляет 37.7 м³/сут (скважина 75). При масштабировании x4 ожидаемая добыча составит ~150.8 м³/сут. Это превышает установленное ограничение producer_liquid_max_m3d=500? Нет, 150 < 500. Однако, проверим другие скважины. Скважина 63: 37.08 * 4 = 148.3. Скважина 75: 37.7 * 4 = 150.8. Все значения ниже 500. Но есть нюанс: ограничение producer_liquid_max_m3d=500 является глобальным или на скважину? В контексте указано 'producer_liquid_max_m3d': 500. Обычно это лимит на скважину или на объект. Если на скважину, то 150 < 500, ограничение соблюдено. Однако, посмотрим на injector_scale=1.3. Инжекторы имеют нулевую добычу жидкости (liquid_tpd=0), но есть напор. Масштабирование инжекторов влияет на закачку. В baseline totalInjectionK=11671. При scale 1.3 закачка вырастет. Ограничений на закачку в constraints явно не видно, кроме экономических. Но есть 'original_BHP_limits_preserved': true. Это означает, что BHP не должен выходить за пределы исходных. Масштабирование производительности (LRAT) может привести к падению BHP ниже минимального допустимого, если не будет компенсировано. Но главное: в предыдущем решении координатора было одобрено. Моя задача — диагностика. Проверим еще раз ограничения. 'producer_liquid_max_m3d': 500. В baseline max_liquid_m3d=56.15 (это, вероятно, суммарная или максимальная по скважине? В summary baseline max_liquid_m3d=56.15. В данных по скважинам max liquid_tpd = 37.7 (well 75). 56.15 не совпадает с max по скважине. Возможно, это пиковое значение за период или суммарное? Если max_liquid_m3d в summary — это максимальное значение по всем скважинам за весь период, то 56.15. При scale 4 оно станет ~224. Это < 500. Значит, ограничение по жидкости соблюдено. Однако, есть ли другие нарушения? 'pump_capex': '0.55..8.05'. Это диапазон стоимости насоса. Не влияет на запуск. 'stop_start': 1. Стоимость. Ключевой момент: 'actual_chdd_known': false. Политика еще не запущена. Запуск симулятора необходим для получения результата. Нарушений ограничений в самой спецификации политики (scale factors) не обнаружено, если считать, что лимит 500 м³/сут не будет превышен (ожидаемый max ~224 м³/сут). Но есть риск: если лимит 500 м³/сут — это суммарный по всем скважинам? В baseline totalLiquidKt=9559 за 19 лет. Среднее ~140 т/год? Нет, Kt — тысячи тонн. 9559 Kt = 9.5 млн тонн за 19 лет. ~500 тыс тонн в год. ~1400 т/сут. Это жидкостная добыча. Если лимит 500 м³/сут — это на скважину, то все ок. Если на объект, то 1400 т/сут (при плотности ~0.85, это ~1650 м³/сут) уже превышает 500. Но в baseline max_liquid_m3d=56.15. Это явно не суммарное. Скорее всего, это max по скважине. Тогда 56.15 * 4 = 224.6 < 500. Ограничение соблюдено. Таким образом, запуск допустим.",
+      "recommendation": "Одобрить запуск симулятора для предложенной политики (request-1.json). Ограничения по максимальной жидкостной добыче (500 м³/сут) не нарушены (ожидаемый максимум ~225 м³/сут при producer_scale=4). Ограничения по BHP сохранены (original_BHP_limits_preserved=true). Отсутствие результатов симуляции (actual_chdd_known=false) является нормальным состоянием перед запуском и не блокирует вычисление.",
+      "evidence": [
+        "producer_scale=4.0, injector_scale=1.3, well_scales: {6: 1.5, 76: 1.5, 66: 0.6}",
+        "Baseline max_liquid_m3d=56.15. Ожидаемый max при scale 4.0: 56.15 * 4.0 = 224.6 м³/сут",
+        "Ограничение producer_liquid_max_m3d=500. 224.6 < 500, ограничение соблюдено",
+        "original_BHP_limits_preserved=true в constraints",
+        "actual_chdd_known=false для предложенной политики, требуется запуск симулятора для получения данных"
+      ],
+      "approved": true,
+      "tool_evidence": []
+    },
+    {
+      "role": "planner",
+      "summary": "Предложена новая политика (request-2.json) с producer_scale=3.0, injector_scale=1.2 и индивидуальными масштабами для скважин 60, 68, 6, 76. Политика ожидает проверки симулятором (actual_chdd_known: false). Ограничения соблюдены: ожидаемая максимальная жидкостная добыча (~168 м³/сут) ниже лимита 500 м³/сут, BHP-лимиты сохранены.",
+      "recommendation": "Одобрить запуск симулятора для проверки предложенной политики (request-2.json). Политика отличается от предыдущей (request-1) и требует независимого вычисления CHDD для сравнения с baseline и candidate policy09. Отсутствие результатов симуляции не блокирует запуск, так как это стандартная фаза планирования до получения квитанций.",
+      "evidence": [
+        "already_proposed содержит политику request-2.json с controls_sha256 '8a4b2b3be29fa77e8d7a97744ad26c6a1366b55b1086a40325f136bb96ee2da7' и actual_chdd_known: false",
+        "producer_scale=3.0, injector_scale=1.2, well_scales: {60: 0.3, 68: 0.3, 6: 1.3, 76: 1.3}",
+        "Baseline max_liquid_m3d=56.15. Ожидаемый max при scale 3.0: 56.15 * 3.0 = 168.45 м³/сут",
+        "Ограничение producer_liquid_max_m3d=500. 168.45 < 500, ограничение соблюдено",
+        "original_BHP_limits_preserved=true в constraints",
+        "verified_complete_comparison содержит результаты только для baseline и candidate policy09, но не для request-2"
+      ],
+      "approved": true,
+      "tool_evidence": [
+        {
+          "call_id": "935a4fa7c",
+          "tool": "propose_policy",
+          "output": {
+            "actions": 23072,
+            "actual_chdd_known": false,
+            "controls_sha256": "8a4b2b3be29fa77e8d7a97744ad26c6a1366b55b1086a40325f136bb96ee2da7",
+            "months": 224,
+            "policy": {
+              "injector_scale": 1.2,
+              "producer_scale": 3,
+              "shut_wells": [],
+              "well_scales": [
+                {
+                  "scale": 0.3,
+                  "well": "60"
+                },
+                {
+                  "scale": 0.3,
+                  "well": "68"
+                },
+                {
+                  "scale": 1.3,
+                  "well": "6"
+                },
+                {
+                  "scale": 1.3,
+                  "well": "76"
+                }
+              ]
+            },
+            "request": "/root/projects/TimesOil/results/audit-20260909/track2-additional-full-period-20260909/request-2.json"
+          }
+        }
+      ]
+    }
+  ]
+}

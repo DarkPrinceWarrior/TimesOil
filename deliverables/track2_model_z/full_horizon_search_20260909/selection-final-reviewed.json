@@ -1,0 +1,1671 @@
+{
+  "schema": "timesoil.full-horizon-selection/v1",
+  "months": 224,
+  "baseline": {
+    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+    "chdd_m": 11874.341091411583,
+    "summary": {
+      "totalOilKt": 3662.101463945813,
+      "totalLiquidKt": 9559.847866730552,
+      "totalInjectionK": 11671.730859375,
+      "totalRevenueM": 102538.84099048277,
+      "totalOpexM": 3387.1207710121375,
+      "totalCapexM": 28.06191,
+      "totalFcfM": 20502.836734599518,
+      "totalChddM": 11874.341091411583,
+      "profitabilityIndex": 1.256334616831005,
+      "pumpChanges": 40.0,
+      "startStopCount": 23,
+      "conversionCount": 9,
+      "totalConversionOpexM": 45.0,
+      "years": 19
+    },
+    "max_liquid_m3d": 56.152222,
+    "opm_seconds": 897.5974666923285,
+    "reported_critic_approved": true
+  },
+  "selected": {
+    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-1-20260909",
+    "receipt_sha256": "a9a36d76f30ebb2bab6adce1f37a7696c5c680aca2a58717398ada9b76405d1d",
+    "chdd_m": 12855.566999571884,
+    "summary": {
+      "totalOilKt": 3881.053691282253,
+      "totalLiquidKt": 11588.378922436475,
+      "totalInjectionK": 14435.825570312001,
+      "totalRevenueM": 108669.50335590309,
+      "totalOpexM": 3715.854807004298,
+      "totalCapexM": 42.42779,
+      "totalFcfM": 21621.31935982497,
+      "totalChddM": 12855.566999571884,
+      "profitabilityIndex": 1.2557881228472476,
+      "pumpChanges": 59.0,
+      "startStopCount": 23,
+      "conversionCount": 9,
+      "totalConversionOpexM": 45.0,
+      "years": 19
+    },
+    "max_liquid_m3d": 65.524933,
+    "opm_seconds": 817.7243334166706,
+    "reported_critic_approved": false
+  },
+  "selection_metric": "official_chdd_over_identical_complete_period",
+  "comparisons": [
+    {
+      "schema": "timesoil.paired-cycle-audit/v1",
+      "baseline": {
+        "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+        "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+        "chdd_m": 11874.341091411583,
+        "summary": {
+          "totalOilKt": 3662.101463945813,
+          "totalLiquidKt": 9559.847866730552,
+          "totalInjectionK": 11671.730859375,
+          "totalRevenueM": 102538.84099048277,
+          "totalOpexM": 3387.1207710121375,
+          "totalCapexM": 28.06191,
+          "totalFcfM": 20502.836734599518,
+          "totalChddM": 11874.341091411583,
+          "profitabilityIndex": 1.256334616831005,
+          "pumpChanges": 40.0,
+          "startStopCount": 23,
+          "conversionCount": 9,
+          "totalConversionOpexM": 45.0,
+          "years": 19
+        },
+        "max_liquid_m3d": 56.152222,
+        "opm_seconds": 897.5974666923285,
+        "reported_critic_approved": true
+      },
+      "candidate": {
+        "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/policy09-full-horizon-20260909",
+        "receipt_sha256": "91fc00f4698009bc4a3cef80c6c2c814ab6dc5131766ac1780be7f7d49718d99",
+        "chdd_m": 12018.756586411637,
+        "summary": {
+          "totalOilKt": 3684.4102939712093,
+          "totalLiquidKt": 9778.077017442332,
+          "totalInjectionK": 11746.755054688,
+          "totalRevenueM": 103163.48823119386,
+          "totalOpexM": 3412.0867651437215,
+          "totalCapexM": 28.00794,
+          "totalFcfM": 20624.711838160827,
+          "totalChddM": 12018.756586411637,
+          "profitabilityIndex": 1.256429876688801,
+          "pumpChanges": 40.0,
+          "startStopCount": 23,
+          "conversionCount": 9,
+          "totalConversionOpexM": 45.0,
+          "years": 19
+        },
+        "max_liquid_m3d": 52.928944,
+        "opm_seconds": 795.1401329822838,
+        "reported_critic_approved": false
+      },
+      "start_inclusive": "2007-01-01",
+      "end_exclusive": "2025-09-01",
+      "well_count": 103,
+      "months": 224,
+      "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+      "artifacts_verified": true,
+      "verified_evidence": {
+        "simulator": {
+          "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+          "both_runs_successful": true
+        },
+        "constraints": {
+          "max_actual_liquid_m3d": 500,
+          "both_runs_within_limit": true,
+          "same_well_inventory_and_months": true
+        },
+        "economics": {
+          "calculator_sha256": {
+            "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+            "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+            "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+          },
+          "same_assumptions": true,
+          "metric": "official totalChddM",
+          "historical_cash_flows_included": false
+        }
+      },
+      "identical_pre_control_history": true,
+      "delta_chdd_m": 144.41549500005385,
+      "uplift_percent": 1.216197967435062,
+      "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+      "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD."
+    },
+    {
+      "schema": "timesoil.paired-cycle-audit/v1",
+      "baseline": {
+        "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+        "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+        "chdd_m": 11874.341091411583,
+        "summary": {
+          "totalOilKt": 3662.101463945813,
+          "totalLiquidKt": 9559.847866730552,
+          "totalInjectionK": 11671.730859375,
+          "totalRevenueM": 102538.84099048277,
+          "totalOpexM": 3387.1207710121375,
+          "totalCapexM": 28.06191,
+          "totalFcfM": 20502.836734599518,
+          "totalChddM": 11874.341091411583,
+          "profitabilityIndex": 1.256334616831005,
+          "pumpChanges": 40.0,
+          "startStopCount": 23,
+          "conversionCount": 9,
+          "totalConversionOpexM": 45.0,
+          "years": 19
+        },
+        "max_liquid_m3d": 56.152222,
+        "opm_seconds": 897.5974666923285,
+        "reported_critic_approved": true
+      },
+      "candidate": {
+        "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-1-20260909",
+        "receipt_sha256": "a9a36d76f30ebb2bab6adce1f37a7696c5c680aca2a58717398ada9b76405d1d",
+        "chdd_m": 12855.566999571884,
+        "summary": {
+          "totalOilKt": 3881.053691282253,
+          "totalLiquidKt": 11588.378922436475,
+          "totalInjectionK": 14435.825570312001,
+          "totalRevenueM": 108669.50335590309,
+          "totalOpexM": 3715.854807004298,
+          "totalCapexM": 42.42779,
+          "totalFcfM": 21621.31935982497,
+          "totalChddM": 12855.566999571884,
+          "profitabilityIndex": 1.2557881228472476,
+          "pumpChanges": 59.0,
+          "startStopCount": 23,
+          "conversionCount": 9,
+          "totalConversionOpexM": 45.0,
+          "years": 19
+        },
+        "max_liquid_m3d": 65.524933,
+        "opm_seconds": 817.7243334166706,
+        "reported_critic_approved": false
+      },
+      "start_inclusive": "2007-01-01",
+      "end_exclusive": "2025-09-01",
+      "well_count": 103,
+      "months": 224,
+      "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+      "artifacts_verified": true,
+      "verified_evidence": {
+        "simulator": {
+          "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+          "both_runs_successful": true
+        },
+        "constraints": {
+          "max_actual_liquid_m3d": 500,
+          "both_runs_within_limit": true,
+          "same_well_inventory_and_months": true
+        },
+        "economics": {
+          "calculator_sha256": {
+            "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+            "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+            "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+          },
+          "same_assumptions": true,
+          "metric": "official totalChddM",
+          "historical_cash_flows_included": false
+        }
+      },
+      "identical_pre_control_history": true,
+      "delta_chdd_m": 981.2259081603006,
+      "uplift_percent": 8.26341352843567,
+      "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+      "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD."
+    },
+    {
+      "schema": "timesoil.paired-cycle-audit/v1",
+      "baseline": {
+        "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+        "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+        "chdd_m": 11874.341091411583,
+        "summary": {
+          "totalOilKt": 3662.101463945813,
+          "totalLiquidKt": 9559.847866730552,
+          "totalInjectionK": 11671.730859375,
+          "totalRevenueM": 102538.84099048277,
+          "totalOpexM": 3387.1207710121375,
+          "totalCapexM": 28.06191,
+          "totalFcfM": 20502.836734599518,
+          "totalChddM": 11874.341091411583,
+          "profitabilityIndex": 1.256334616831005,
+          "pumpChanges": 40.0,
+          "startStopCount": 23,
+          "conversionCount": 9,
+          "totalConversionOpexM": 45.0,
+          "years": 19
+        },
+        "max_liquid_m3d": 56.152222,
+        "opm_seconds": 897.5974666923285,
+        "reported_critic_approved": true
+      },
+      "candidate": {
+        "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-2-20260909",
+        "receipt_sha256": "696f56eb1467e27cf827adf9f983ace8ff79573fbb51500444f6932c3f41d5d5",
+        "chdd_m": 12597.898962539626,
+        "summary": {
+          "totalOilKt": 3807.6144363851868,
+          "totalLiquidKt": 10896.890835202636,
+          "totalInjectionK": 13545.738980469,
+          "totalRevenueM": 106613.20421878523,
+          "totalOpexM": 3606.265830389741,
+          "totalCapexM": 37.81985,
+          "totalFcfM": 21245.45172643437,
+          "totalChddM": 12597.898962539626,
+          "profitabilityIndex": 1.2560951060124972,
+          "pumpChanges": 53.0,
+          "startStopCount": 23,
+          "conversionCount": 9,
+          "totalConversionOpexM": 45.0,
+          "years": 19
+        },
+        "max_liquid_m3d": 62.114914,
+        "opm_seconds": 819.754710920155,
+        "reported_critic_approved": true
+      },
+      "start_inclusive": "2007-01-01",
+      "end_exclusive": "2025-09-01",
+      "well_count": 103,
+      "months": 224,
+      "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+      "artifacts_verified": true,
+      "verified_evidence": {
+        "simulator": {
+          "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+          "both_runs_successful": true
+        },
+        "constraints": {
+          "max_actual_liquid_m3d": 500,
+          "both_runs_within_limit": true,
+          "same_well_inventory_and_months": true
+        },
+        "economics": {
+          "calculator_sha256": {
+            "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+            "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+            "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+          },
+          "same_assumptions": true,
+          "metric": "official totalChddM",
+          "historical_cash_flows_included": false
+        }
+      },
+      "identical_pre_control_history": true,
+      "delta_chdd_m": 723.5578711280432,
+      "uplift_percent": 6.093457022650073,
+      "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+      "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD."
+    }
+  ],
+  "claim": "Model-based training experiment; selection runs are not an untouched test set.",
+  "proposal_provenance": {
+    "additional_candidates": "Direct Qwen proposals using initial physical state and completed baseline/policy09 OPM comparisons; no TimesFM forecast used to propose or select these two candidates.",
+    "selection": "Maximum official CHDD of completed full-period OPM cycles including baseline.",
+    "request_hashes_verified": true,
+    "source_agent_records": [
+      "agent-1.json",
+      "agent-2.json"
+    ],
+    "scope": "Training-model adaptive search; not independent holdout."
+  },
+  "agent_review": {
+    "run_id": "afc5241eb1c108fe",
+    "context": {
+      "facts": {
+        "competition_result_claimed": false,
+        "paired_opm_and_economics_verified": true,
+        "surrogate_used_for_candidate_selection": false
+      },
+      "objective": "Audit full-period comparison using mandatory tool. It now explicitly provides simulator image, success, actual constraints and official calculator hash in comparisons.verified_evidence. Verify actual provenance; do not generalize to holdout or competition. Judge completed numerical experiment, not a future deployment.",
+      "phase": "completed_paired_numerical_audit",
+      "track": 2
+    },
+    "decisions": [
+      {
+        "role": "coordinator",
+        "summary": "The paired numerical audit for the full-period comparison is complete. The tool evidence confirms that the baseline and three candidate policies were evaluated using the same simulator image and official economic calculator. All runs are within the defined constraints (max liquid < 500 m3/d). The candidate 'qwen-full-period-extra-1' shows the highest CHDD uplift (+8.26%) compared to the baseline. The phase is marked as 'completed_paired_numerical_audit'.",
+        "recommendation": "No further computational steps are required for the current phase. The audit is complete, and the results are verified. The next step is to hand over the final receipts to the critic for evaluation, as per the workflow definition.",
+        "evidence": [
+          "Phase is 'completed_paired_numerical_audit'.",
+          "Tool 'read_verified_comparison' returned verified evidence for 3 candidate comparisons against the baseline.",
+          "Simulator image 'openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9' is consistent across all runs.",
+          "Economic calculator hashes (chdd_model.py, excel_io.py, \u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py) are consistent across all runs.",
+          "All runs satisfy the constraint 'both_runs_within_limit': true with max_actual_liquid_m3d: 500.",
+          "The selected candidate 'qwen-full-period-extra-1' has a CHDD of 12855.57M, which is higher than the baseline 11874.34M."
+        ],
+        "approved": true,
+        "tool_evidence": [
+          {
+            "call_id": "fdde7eb9e",
+            "tool": "read_verified_comparison",
+            "output": {
+              "baseline": {
+                "chdd_m": 11874.341091411583,
+                "max_liquid_m3d": 56.152222,
+                "opm_seconds": 897.5974666923285,
+                "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                "reported_critic_approved": true,
+                "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                "summary": {
+                  "conversionCount": 9,
+                  "profitabilityIndex": 1.256334616831005,
+                  "pumpChanges": 40.0,
+                  "startStopCount": 23,
+                  "totalCapexM": 28.06191,
+                  "totalChddM": 11874.341091411583,
+                  "totalConversionOpexM": 45.0,
+                  "totalFcfM": 20502.836734599518,
+                  "totalInjectionK": 11671.730859375,
+                  "totalLiquidKt": 9559.847866730552,
+                  "totalOilKt": 3662.101463945813,
+                  "totalOpexM": 3387.1207710121375,
+                  "totalRevenueM": 102538.84099048277,
+                  "years": 19
+                }
+              },
+              "claim": "Model-based training experiment; selection runs are not an untouched test set.",
+              "comparisons": [
+                {
+                  "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+                  "artifacts_verified": true,
+                  "baseline": {
+                    "chdd_m": 11874.341091411583,
+                    "max_liquid_m3d": 56.152222,
+                    "opm_seconds": 897.5974666923285,
+                    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256334616831005,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.06191,
+                      "totalChddM": 11874.341091411583,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20502.836734599518,
+                      "totalInjectionK": 11671.730859375,
+                      "totalLiquidKt": 9559.847866730552,
+                      "totalOilKt": 3662.101463945813,
+                      "totalOpexM": 3387.1207710121375,
+                      "totalRevenueM": 102538.84099048277,
+                      "years": 19
+                    }
+                  },
+                  "candidate": {
+                    "chdd_m": 12018.756586411637,
+                    "max_liquid_m3d": 52.928944,
+                    "opm_seconds": 795.1401329822838,
+                    "receipt_sha256": "91fc00f4698009bc4a3cef80c6c2c814ab6dc5131766ac1780be7f7d49718d99",
+                    "reported_critic_approved": false,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/policy09-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256429876688801,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.00794,
+                      "totalChddM": 12018.756586411637,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20624.711838160827,
+                      "totalInjectionK": 11746.755054688,
+                      "totalLiquidKt": 9778.077017442332,
+                      "totalOilKt": 3684.4102939712093,
+                      "totalOpexM": 3412.0867651437215,
+                      "totalRevenueM": 103163.48823119386,
+                      "years": 19
+                    }
+                  },
+                  "delta_chdd_m": 144.41549500005385,
+                  "end_exclusive": "2025-09-01",
+                  "identical_pre_control_history": true,
+                  "months": 224,
+                  "schema": "timesoil.paired-cycle-audit/v1",
+                  "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+                  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+                  "start_inclusive": "2007-01-01",
+                  "uplift_percent": 1.216197967435062,
+                  "verified_evidence": {
+                    "constraints": {
+                      "both_runs_within_limit": true,
+                      "max_actual_liquid_m3d": 500,
+                      "same_well_inventory_and_months": true
+                    },
+                    "economics": {
+                      "calculator_sha256": {
+                        "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+                        "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+                        "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+                      },
+                      "historical_cash_flows_included": false,
+                      "metric": "official totalChddM",
+                      "same_assumptions": true
+                    },
+                    "simulator": {
+                      "both_runs_successful": true,
+                      "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+                    }
+                  },
+                  "well_count": 103
+                },
+                {
+                  "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+                  "artifacts_verified": true,
+                  "baseline": {
+                    "chdd_m": 11874.341091411583,
+                    "max_liquid_m3d": 56.152222,
+                    "opm_seconds": 897.5974666923285,
+                    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256334616831005,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.06191,
+                      "totalChddM": 11874.341091411583,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20502.836734599518,
+                      "totalInjectionK": 11671.730859375,
+                      "totalLiquidKt": 9559.847866730552,
+                      "totalOilKt": 3662.101463945813,
+                      "totalOpexM": 3387.1207710121375,
+                      "totalRevenueM": 102538.84099048277,
+                      "years": 19
+                    }
+                  },
+                  "candidate": {
+                    "chdd_m": 12855.566999571884,
+                    "max_liquid_m3d": 65.524933,
+                    "opm_seconds": 817.7243334166706,
+                    "receipt_sha256": "a9a36d76f30ebb2bab6adce1f37a7696c5c680aca2a58717398ada9b76405d1d",
+                    "reported_critic_approved": false,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-1-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.2557881228472476,
+                      "pumpChanges": 59.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 42.42779,
+                      "totalChddM": 12855.566999571884,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 21621.31935982497,
+                      "totalInjectionK": 14435.825570312001,
+                      "totalLiquidKt": 11588.378922436475,
+                      "totalOilKt": 3881.053691282253,
+                      "totalOpexM": 3715.854807004298,
+                      "totalRevenueM": 108669.50335590309,
+                      "years": 19
+                    }
+                  },
+                  "delta_chdd_m": 981.2259081603006,
+                  "end_exclusive": "2025-09-01",
+                  "identical_pre_control_history": true,
+                  "months": 224,
+                  "schema": "timesoil.paired-cycle-audit/v1",
+                  "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+                  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+                  "start_inclusive": "2007-01-01",
+                  "uplift_percent": 8.26341352843567,
+                  "verified_evidence": {
+                    "constraints": {
+                      "both_runs_within_limit": true,
+                      "max_actual_liquid_m3d": 500,
+                      "same_well_inventory_and_months": true
+                    },
+                    "economics": {
+                      "calculator_sha256": {
+                        "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+                        "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+                        "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+                      },
+                      "historical_cash_flows_included": false,
+                      "metric": "official totalChddM",
+                      "same_assumptions": true
+                    },
+                    "simulator": {
+                      "both_runs_successful": true,
+                      "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+                    }
+                  },
+                  "well_count": 103
+                },
+                {
+                  "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+                  "artifacts_verified": true,
+                  "baseline": {
+                    "chdd_m": 11874.341091411583,
+                    "max_liquid_m3d": 56.152222,
+                    "opm_seconds": 897.5974666923285,
+                    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256334616831005,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.06191,
+                      "totalChddM": 11874.341091411583,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20502.836734599518,
+                      "totalInjectionK": 11671.730859375,
+                      "totalLiquidKt": 9559.847866730552,
+                      "totalOilKt": 3662.101463945813,
+                      "totalOpexM": 3387.1207710121375,
+                      "totalRevenueM": 102538.84099048277,
+                      "years": 19
+                    }
+                  },
+                  "candidate": {
+                    "chdd_m": 12597.898962539626,
+                    "max_liquid_m3d": 62.114914,
+                    "opm_seconds": 819.754710920155,
+                    "receipt_sha256": "696f56eb1467e27cf827adf9f983ace8ff79573fbb51500444f6932c3f41d5d5",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-2-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.2560951060124972,
+                      "pumpChanges": 53.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 37.81985,
+                      "totalChddM": 12597.898962539626,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 21245.45172643437,
+                      "totalInjectionK": 13545.738980469,
+                      "totalLiquidKt": 10896.890835202636,
+                      "totalOilKt": 3807.6144363851868,
+                      "totalOpexM": 3606.265830389741,
+                      "totalRevenueM": 106613.20421878523,
+                      "years": 19
+                    }
+                  },
+                  "delta_chdd_m": 723.5578711280432,
+                  "end_exclusive": "2025-09-01",
+                  "identical_pre_control_history": true,
+                  "months": 224,
+                  "schema": "timesoil.paired-cycle-audit/v1",
+                  "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+                  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+                  "start_inclusive": "2007-01-01",
+                  "uplift_percent": 6.093457022650073,
+                  "verified_evidence": {
+                    "constraints": {
+                      "both_runs_within_limit": true,
+                      "max_actual_liquid_m3d": 500,
+                      "same_well_inventory_and_months": true
+                    },
+                    "economics": {
+                      "calculator_sha256": {
+                        "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+                        "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+                        "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+                      },
+                      "historical_cash_flows_included": false,
+                      "metric": "official totalChddM",
+                      "same_assumptions": true
+                    },
+                    "simulator": {
+                      "both_runs_successful": true,
+                      "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+                    }
+                  },
+                  "well_count": 103
+                }
+              ],
+              "months": 224,
+              "proposal_provenance": {
+                "additional_candidates": "Direct Qwen proposals using initial physical state and completed baseline/policy09 OPM comparisons; no TimesFM forecast used to propose or select these two candidates.",
+                "request_hashes_verified": true,
+                "scope": "Training-model adaptive search; not independent holdout.",
+                "selection": "Maximum official CHDD of completed full-period OPM cycles including baseline.",
+                "source_agent_records": [
+                  "agent-1.json",
+                  "agent-2.json"
+                ]
+              },
+              "schema": "timesoil.full-horizon-selection/v1",
+              "selected": {
+                "chdd_m": 12855.566999571884,
+                "max_liquid_m3d": 65.524933,
+                "opm_seconds": 817.7243334166706,
+                "receipt_sha256": "a9a36d76f30ebb2bab6adce1f37a7696c5c680aca2a58717398ada9b76405d1d",
+                "reported_critic_approved": false,
+                "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-1-20260909",
+                "summary": {
+                  "conversionCount": 9,
+                  "profitabilityIndex": 1.2557881228472476,
+                  "pumpChanges": 59.0,
+                  "startStopCount": 23,
+                  "totalCapexM": 42.42779,
+                  "totalChddM": 12855.566999571884,
+                  "totalConversionOpexM": 45.0,
+                  "totalFcfM": 21621.31935982497,
+                  "totalInjectionK": 14435.825570312001,
+                  "totalLiquidKt": 11588.378922436475,
+                  "totalOilKt": 3881.053691282253,
+                  "totalOpexM": 3715.854807004298,
+                  "totalRevenueM": 108669.50335590309,
+                  "years": 19
+                }
+              },
+              "selection_metric": "official_chdd_over_identical_complete_period"
+            }
+          }
+        ]
+      },
+      {
+        "role": "reservoir_analyst",
+        "summary": "The paired numerical audit for the full-period comparison is complete and verified. The baseline and three candidate policies were evaluated using the same simulator image (OPM 2026.04) and official economic calculator. All runs satisfy the constraint of max liquid production < 500 m3/d. The selected candidate 'qwen-full-period-extra-1' demonstrates the highest CHDD uplift (+8.26%) compared to the baseline, with a CHDD of 12855.57M versus 11874.34M for the baseline. The provenance confirms this is a training-archive experiment, not an independent holdout or competition result.",
+        "recommendation": "No further computational steps are required for the current phase. The audit is complete, and the results are verified. The next step is to hand over the final receipts to the critic for evaluation, as per the workflow definition.",
+        "evidence": [
+          "Phase is 'completed_paired_numerical_audit'.",
+          "Tool 'read_verified_comparison' returned verified evidence for 3 candidate comparisons against the baseline.",
+          "Simulator image 'openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9' is consistent across all runs.",
+          "Economic calculator hashes (chdd_model.py, excel_io.py, \u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py) are consistent across all runs.",
+          "All runs satisfy the constraint 'both_runs_within_limit': true with max_actual_liquid_m3d: 500.",
+          "The selected candidate 'qwen-full-period-extra-1' has a CHDD of 12855.57M, which is higher than the baseline 11874.34M."
+        ],
+        "approved": true,
+        "tool_evidence": [
+          {
+            "call_id": "7726b462a",
+            "tool": "read_verified_comparison",
+            "output": {
+              "baseline": {
+                "chdd_m": 11874.341091411583,
+                "max_liquid_m3d": 56.152222,
+                "opm_seconds": 897.5974666923285,
+                "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                "reported_critic_approved": true,
+                "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                "summary": {
+                  "conversionCount": 9,
+                  "profitabilityIndex": 1.256334616831005,
+                  "pumpChanges": 40.0,
+                  "startStopCount": 23,
+                  "totalCapexM": 28.06191,
+                  "totalChddM": 11874.341091411583,
+                  "totalConversionOpexM": 45.0,
+                  "totalFcfM": 20502.836734599518,
+                  "totalInjectionK": 11671.730859375,
+                  "totalLiquidKt": 9559.847866730552,
+                  "totalOilKt": 3662.101463945813,
+                  "totalOpexM": 3387.1207710121375,
+                  "totalRevenueM": 102538.84099048277,
+                  "years": 19
+                }
+              },
+              "claim": "Model-based training experiment; selection runs are not an untouched test set.",
+              "comparisons": [
+                {
+                  "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+                  "artifacts_verified": true,
+                  "baseline": {
+                    "chdd_m": 11874.341091411583,
+                    "max_liquid_m3d": 56.152222,
+                    "opm_seconds": 897.5974666923285,
+                    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256334616831005,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.06191,
+                      "totalChddM": 11874.341091411583,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20502.836734599518,
+                      "totalInjectionK": 11671.730859375,
+                      "totalLiquidKt": 9559.847866730552,
+                      "totalOilKt": 3662.101463945813,
+                      "totalOpexM": 3387.1207710121375,
+                      "totalRevenueM": 102538.84099048277,
+                      "years": 19
+                    }
+                  },
+                  "candidate": {
+                    "chdd_m": 12018.756586411637,
+                    "max_liquid_m3d": 52.928944,
+                    "opm_seconds": 795.1401329822838,
+                    "receipt_sha256": "91fc00f4698009bc4a3cef80c6c2c814ab6dc5131766ac1780be7f7d49718d99",
+                    "reported_critic_approved": false,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/policy09-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256429876688801,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.00794,
+                      "totalChddM": 12018.756586411637,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20624.711838160827,
+                      "totalInjectionK": 11746.755054688,
+                      "totalLiquidKt": 9778.077017442332,
+                      "totalOilKt": 3684.4102939712093,
+                      "totalOpexM": 3412.0867651437215,
+                      "totalRevenueM": 103163.48823119386,
+                      "years": 19
+                    }
+                  },
+                  "delta_chdd_m": 144.41549500005385,
+                  "end_exclusive": "2025-09-01",
+                  "identical_pre_control_history": true,
+                  "months": 224,
+                  "schema": "timesoil.paired-cycle-audit/v1",
+                  "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+                  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+                  "start_inclusive": "2007-01-01",
+                  "uplift_percent": 1.216197967435062,
+                  "verified_evidence": {
+                    "constraints": {
+                      "both_runs_within_limit": true,
+                      "max_actual_liquid_m3d": 500,
+                      "same_well_inventory_and_months": true
+                    },
+                    "economics": {
+                      "calculator_sha256": {
+                        "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+                        "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+                        "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+                      },
+                      "historical_cash_flows_included": false,
+                      "metric": "official totalChddM",
+                      "same_assumptions": true
+                    },
+                    "simulator": {
+                      "both_runs_successful": true,
+                      "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+                    }
+                  },
+                  "well_count": 103
+                },
+                {
+                  "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+                  "artifacts_verified": true,
+                  "baseline": {
+                    "chdd_m": 11874.341091411583,
+                    "max_liquid_m3d": 56.152222,
+                    "opm_seconds": 897.5974666923285,
+                    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256334616831005,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.06191,
+                      "totalChddM": 11874.341091411583,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20502.836734599518,
+                      "totalInjectionK": 11671.730859375,
+                      "totalLiquidKt": 9559.847866730552,
+                      "totalOilKt": 3662.101463945813,
+                      "totalOpexM": 3387.1207710121375,
+                      "totalRevenueM": 102538.84099048277,
+                      "years": 19
+                    }
+                  },
+                  "candidate": {
+                    "chdd_m": 12855.566999571884,
+                    "max_liquid_m3d": 65.524933,
+                    "opm_seconds": 817.7243334166706,
+                    "receipt_sha256": "a9a36d76f30ebb2bab6adce1f37a7696c5c680aca2a58717398ada9b76405d1d",
+                    "reported_critic_approved": false,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-1-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.2557881228472476,
+                      "pumpChanges": 59.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 42.42779,
+                      "totalChddM": 12855.566999571884,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 21621.31935982497,
+                      "totalInjectionK": 14435.825570312001,
+                      "totalLiquidKt": 11588.378922436475,
+                      "totalOilKt": 3881.053691282253,
+                      "totalOpexM": 3715.854807004298,
+                      "totalRevenueM": 108669.50335590309,
+                      "years": 19
+                    }
+                  },
+                  "delta_chdd_m": 981.2259081603006,
+                  "end_exclusive": "2025-09-01",
+                  "identical_pre_control_history": true,
+                  "months": 224,
+                  "schema": "timesoil.paired-cycle-audit/v1",
+                  "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+                  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+                  "start_inclusive": "2007-01-01",
+                  "uplift_percent": 8.26341352843567,
+                  "verified_evidence": {
+                    "constraints": {
+                      "both_runs_within_limit": true,
+                      "max_actual_liquid_m3d": 500,
+                      "same_well_inventory_and_months": true
+                    },
+                    "economics": {
+                      "calculator_sha256": {
+                        "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+                        "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+                        "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+                      },
+                      "historical_cash_flows_included": false,
+                      "metric": "official totalChddM",
+                      "same_assumptions": true
+                    },
+                    "simulator": {
+                      "both_runs_successful": true,
+                      "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+                    }
+                  },
+                  "well_count": 103
+                },
+                {
+                  "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+                  "artifacts_verified": true,
+                  "baseline": {
+                    "chdd_m": 11874.341091411583,
+                    "max_liquid_m3d": 56.152222,
+                    "opm_seconds": 897.5974666923285,
+                    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256334616831005,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.06191,
+                      "totalChddM": 11874.341091411583,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20502.836734599518,
+                      "totalInjectionK": 11671.730859375,
+                      "totalLiquidKt": 9559.847866730552,
+                      "totalOilKt": 3662.101463945813,
+                      "totalOpexM": 3387.1207710121375,
+                      "totalRevenueM": 102538.84099048277,
+                      "years": 19
+                    }
+                  },
+                  "candidate": {
+                    "chdd_m": 12597.898962539626,
+                    "max_liquid_m3d": 62.114914,
+                    "opm_seconds": 819.754710920155,
+                    "receipt_sha256": "696f56eb1467e27cf827adf9f983ace8ff79573fbb51500444f6932c3f41d5d5",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-2-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.2560951060124972,
+                      "pumpChanges": 53.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 37.81985,
+                      "totalChddM": 12597.898962539626,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 21245.45172643437,
+                      "totalInjectionK": 13545.738980469,
+                      "totalLiquidKt": 10896.890835202636,
+                      "totalOilKt": 3807.6144363851868,
+                      "totalOpexM": 3606.265830389741,
+                      "totalRevenueM": 106613.20421878523,
+                      "years": 19
+                    }
+                  },
+                  "delta_chdd_m": 723.5578711280432,
+                  "end_exclusive": "2025-09-01",
+                  "identical_pre_control_history": true,
+                  "months": 224,
+                  "schema": "timesoil.paired-cycle-audit/v1",
+                  "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+                  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+                  "start_inclusive": "2007-01-01",
+                  "uplift_percent": 6.093457022650073,
+                  "verified_evidence": {
+                    "constraints": {
+                      "both_runs_within_limit": true,
+                      "max_actual_liquid_m3d": 500,
+                      "same_well_inventory_and_months": true
+                    },
+                    "economics": {
+                      "calculator_sha256": {
+                        "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+                        "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+                        "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+                      },
+                      "historical_cash_flows_included": false,
+                      "metric": "official totalChddM",
+                      "same_assumptions": true
+                    },
+                    "simulator": {
+                      "both_runs_successful": true,
+                      "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+                    }
+                  },
+                  "well_count": 103
+                }
+              ],
+              "months": 224,
+              "proposal_provenance": {
+                "additional_candidates": "Direct Qwen proposals using initial physical state and completed baseline/policy09 OPM comparisons; no TimesFM forecast used to propose or select these two candidates.",
+                "request_hashes_verified": true,
+                "scope": "Training-model adaptive search; not independent holdout.",
+                "selection": "Maximum official CHDD of completed full-period OPM cycles including baseline.",
+                "source_agent_records": [
+                  "agent-1.json",
+                  "agent-2.json"
+                ]
+              },
+              "schema": "timesoil.full-horizon-selection/v1",
+              "selected": {
+                "chdd_m": 12855.566999571884,
+                "max_liquid_m3d": 65.524933,
+                "opm_seconds": 817.7243334166706,
+                "receipt_sha256": "a9a36d76f30ebb2bab6adce1f37a7696c5c680aca2a58717398ada9b76405d1d",
+                "reported_critic_approved": false,
+                "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-1-20260909",
+                "summary": {
+                  "conversionCount": 9,
+                  "profitabilityIndex": 1.2557881228472476,
+                  "pumpChanges": 59.0,
+                  "startStopCount": 23,
+                  "totalCapexM": 42.42779,
+                  "totalChddM": 12855.566999571884,
+                  "totalConversionOpexM": 45.0,
+                  "totalFcfM": 21621.31935982497,
+                  "totalInjectionK": 14435.825570312001,
+                  "totalLiquidKt": 11588.378922436475,
+                  "totalOilKt": 3881.053691282253,
+                  "totalOpexM": 3715.854807004298,
+                  "totalRevenueM": 108669.50335590309,
+                  "years": 19
+                }
+              },
+              "selection_metric": "official_chdd_over_identical_complete_period"
+            }
+          }
+        ]
+      },
+      {
+        "role": "planner",
+        "summary": "The paired numerical audit for the full-period comparison is complete. The tool evidence confirms that the baseline and three candidate policies were evaluated using the same simulator image and official economic calculator. All runs are within the defined constraints (max liquid < 500 m3/d). The candidate 'qwen-full-period-extra-1' shows the highest CHDD uplift (+8.26%) compared to the baseline. The phase is marked as 'completed_paired_numerical_audit'.",
+        "recommendation": "No further computational steps are required for the current phase. The audit is complete, and the results are verified. The next step is to hand over the final receipts to the critic for evaluation, as per the workflow definition.",
+        "evidence": [
+          "Phase is 'completed_paired_numerical_audit'.",
+          "Tool 'read_verified_comparison' returned verified evidence for 3 candidate comparisons against the baseline.",
+          "Simulator image 'openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9' is consistent across all runs.",
+          "Economic calculator hashes (chdd_model.py, excel_io.py, \u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py) are consistent across all runs.",
+          "All runs satisfy the constraint 'both_runs_within_limit': true with max_actual_liquid_m3d: 500.",
+          "The selected candidate 'qwen-full-period-extra-1' has a CHDD of 12855.57M, which is higher than the baseline 11874.34M."
+        ],
+        "approved": true,
+        "tool_evidence": [
+          {
+            "call_id": "b228c739a",
+            "tool": "read_verified_comparison",
+            "output": {
+              "baseline": {
+                "chdd_m": 11874.341091411583,
+                "max_liquid_m3d": 56.152222,
+                "opm_seconds": 897.5974666923285,
+                "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                "reported_critic_approved": true,
+                "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                "summary": {
+                  "conversionCount": 9,
+                  "profitabilityIndex": 1.256334616831005,
+                  "pumpChanges": 40.0,
+                  "startStopCount": 23,
+                  "totalCapexM": 28.06191,
+                  "totalChddM": 11874.341091411583,
+                  "totalConversionOpexM": 45.0,
+                  "totalFcfM": 20502.836734599518,
+                  "totalInjectionK": 11671.730859375,
+                  "totalLiquidKt": 9559.847866730552,
+                  "totalOilKt": 3662.101463945813,
+                  "totalOpexM": 3387.1207710121375,
+                  "totalRevenueM": 102538.84099048277,
+                  "years": 19
+                }
+              },
+              "claim": "Model-based training experiment; selection runs are not an untouched test set.",
+              "comparisons": [
+                {
+                  "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+                  "artifacts_verified": true,
+                  "baseline": {
+                    "chdd_m": 11874.341091411583,
+                    "max_liquid_m3d": 56.152222,
+                    "opm_seconds": 897.5974666923285,
+                    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256334616831005,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.06191,
+                      "totalChddM": 11874.341091411583,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20502.836734599518,
+                      "totalInjectionK": 11671.730859375,
+                      "totalLiquidKt": 9559.847866730552,
+                      "totalOilKt": 3662.101463945813,
+                      "totalOpexM": 3387.1207710121375,
+                      "totalRevenueM": 102538.84099048277,
+                      "years": 19
+                    }
+                  },
+                  "candidate": {
+                    "chdd_m": 12018.756586411637,
+                    "max_liquid_m3d": 52.928944,
+                    "opm_seconds": 795.1401329822838,
+                    "receipt_sha256": "91fc00f4698009bc4a3cef80c6c2c814ab6dc5131766ac1780be7f7d49718d99",
+                    "reported_critic_approved": false,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/policy09-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256429876688801,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.00794,
+                      "totalChddM": 12018.756586411637,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20624.711838160827,
+                      "totalInjectionK": 11746.755054688,
+                      "totalLiquidKt": 9778.077017442332,
+                      "totalOilKt": 3684.4102939712093,
+                      "totalOpexM": 3412.0867651437215,
+                      "totalRevenueM": 103163.48823119386,
+                      "years": 19
+                    }
+                  },
+                  "delta_chdd_m": 144.41549500005385,
+                  "end_exclusive": "2025-09-01",
+                  "identical_pre_control_history": true,
+                  "months": 224,
+                  "schema": "timesoil.paired-cycle-audit/v1",
+                  "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+                  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+                  "start_inclusive": "2007-01-01",
+                  "uplift_percent": 1.216197967435062,
+                  "verified_evidence": {
+                    "constraints": {
+                      "both_runs_within_limit": true,
+                      "max_actual_liquid_m3d": 500,
+                      "same_well_inventory_and_months": true
+                    },
+                    "economics": {
+                      "calculator_sha256": {
+                        "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+                        "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+                        "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+                      },
+                      "historical_cash_flows_included": false,
+                      "metric": "official totalChddM",
+                      "same_assumptions": true
+                    },
+                    "simulator": {
+                      "both_runs_successful": true,
+                      "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+                    }
+                  },
+                  "well_count": 103
+                },
+                {
+                  "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+                  "artifacts_verified": true,
+                  "baseline": {
+                    "chdd_m": 11874.341091411583,
+                    "max_liquid_m3d": 56.152222,
+                    "opm_seconds": 897.5974666923285,
+                    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256334616831005,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.06191,
+                      "totalChddM": 11874.341091411583,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20502.836734599518,
+                      "totalInjectionK": 11671.730859375,
+                      "totalLiquidKt": 9559.847866730552,
+                      "totalOilKt": 3662.101463945813,
+                      "totalOpexM": 3387.1207710121375,
+                      "totalRevenueM": 102538.84099048277,
+                      "years": 19
+                    }
+                  },
+                  "candidate": {
+                    "chdd_m": 12855.566999571884,
+                    "max_liquid_m3d": 65.524933,
+                    "opm_seconds": 817.7243334166706,
+                    "receipt_sha256": "a9a36d76f30ebb2bab6adce1f37a7696c5c680aca2a58717398ada9b76405d1d",
+                    "reported_critic_approved": false,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-1-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.2557881228472476,
+                      "pumpChanges": 59.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 42.42779,
+                      "totalChddM": 12855.566999571884,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 21621.31935982497,
+                      "totalInjectionK": 14435.825570312001,
+                      "totalLiquidKt": 11588.378922436475,
+                      "totalOilKt": 3881.053691282253,
+                      "totalOpexM": 3715.854807004298,
+                      "totalRevenueM": 108669.50335590309,
+                      "years": 19
+                    }
+                  },
+                  "delta_chdd_m": 981.2259081603006,
+                  "end_exclusive": "2025-09-01",
+                  "identical_pre_control_history": true,
+                  "months": 224,
+                  "schema": "timesoil.paired-cycle-audit/v1",
+                  "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+                  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+                  "start_inclusive": "2007-01-01",
+                  "uplift_percent": 8.26341352843567,
+                  "verified_evidence": {
+                    "constraints": {
+                      "both_runs_within_limit": true,
+                      "max_actual_liquid_m3d": 500,
+                      "same_well_inventory_and_months": true
+                    },
+                    "economics": {
+                      "calculator_sha256": {
+                        "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+                        "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+                        "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+                      },
+                      "historical_cash_flows_included": false,
+                      "metric": "official totalChddM",
+                      "same_assumptions": true
+                    },
+                    "simulator": {
+                      "both_runs_successful": true,
+                      "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+                    }
+                  },
+                  "well_count": 103
+                },
+                {
+                  "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+                  "artifacts_verified": true,
+                  "baseline": {
+                    "chdd_m": 11874.341091411583,
+                    "max_liquid_m3d": 56.152222,
+                    "opm_seconds": 897.5974666923285,
+                    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256334616831005,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.06191,
+                      "totalChddM": 11874.341091411583,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20502.836734599518,
+                      "totalInjectionK": 11671.730859375,
+                      "totalLiquidKt": 9559.847866730552,
+                      "totalOilKt": 3662.101463945813,
+                      "totalOpexM": 3387.1207710121375,
+                      "totalRevenueM": 102538.84099048277,
+                      "years": 19
+                    }
+                  },
+                  "candidate": {
+                    "chdd_m": 12597.898962539626,
+                    "max_liquid_m3d": 62.114914,
+                    "opm_seconds": 819.754710920155,
+                    "receipt_sha256": "696f56eb1467e27cf827adf9f983ace8ff79573fbb51500444f6932c3f41d5d5",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-2-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.2560951060124972,
+                      "pumpChanges": 53.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 37.81985,
+                      "totalChddM": 12597.898962539626,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 21245.45172643437,
+                      "totalInjectionK": 13545.738980469,
+                      "totalLiquidKt": 10896.890835202636,
+                      "totalOilKt": 3807.6144363851868,
+                      "totalOpexM": 3606.265830389741,
+                      "totalRevenueM": 106613.20421878523,
+                      "years": 19
+                    }
+                  },
+                  "delta_chdd_m": 723.5578711280432,
+                  "end_exclusive": "2025-09-01",
+                  "identical_pre_control_history": true,
+                  "months": 224,
+                  "schema": "timesoil.paired-cycle-audit/v1",
+                  "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+                  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+                  "start_inclusive": "2007-01-01",
+                  "uplift_percent": 6.093457022650073,
+                  "verified_evidence": {
+                    "constraints": {
+                      "both_runs_within_limit": true,
+                      "max_actual_liquid_m3d": 500,
+                      "same_well_inventory_and_months": true
+                    },
+                    "economics": {
+                      "calculator_sha256": {
+                        "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+                        "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+                        "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+                      },
+                      "historical_cash_flows_included": false,
+                      "metric": "official totalChddM",
+                      "same_assumptions": true
+                    },
+                    "simulator": {
+                      "both_runs_successful": true,
+                      "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+                    }
+                  },
+                  "well_count": 103
+                }
+              ],
+              "months": 224,
+              "proposal_provenance": {
+                "additional_candidates": "Direct Qwen proposals using initial physical state and completed baseline/policy09 OPM comparisons; no TimesFM forecast used to propose or select these two candidates.",
+                "request_hashes_verified": true,
+                "scope": "Training-model adaptive search; not independent holdout.",
+                "selection": "Maximum official CHDD of completed full-period OPM cycles including baseline.",
+                "source_agent_records": [
+                  "agent-1.json",
+                  "agent-2.json"
+                ]
+              },
+              "schema": "timesoil.full-horizon-selection/v1",
+              "selected": {
+                "chdd_m": 12855.566999571884,
+                "max_liquid_m3d": 65.524933,
+                "opm_seconds": 817.7243334166706,
+                "receipt_sha256": "a9a36d76f30ebb2bab6adce1f37a7696c5c680aca2a58717398ada9b76405d1d",
+                "reported_critic_approved": false,
+                "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-1-20260909",
+                "summary": {
+                  "conversionCount": 9,
+                  "profitabilityIndex": 1.2557881228472476,
+                  "pumpChanges": 59.0,
+                  "startStopCount": 23,
+                  "totalCapexM": 42.42779,
+                  "totalChddM": 12855.566999571884,
+                  "totalConversionOpexM": 45.0,
+                  "totalFcfM": 21621.31935982497,
+                  "totalInjectionK": 14435.825570312001,
+                  "totalLiquidKt": 11588.378922436475,
+                  "totalOilKt": 3881.053691282253,
+                  "totalOpexM": 3715.854807004298,
+                  "totalRevenueM": 108669.50335590309,
+                  "years": 19
+                }
+              },
+              "selection_metric": "official_chdd_over_identical_complete_period"
+            }
+          }
+        ]
+      },
+      {
+        "role": "critic",
+        "summary": "The paired numerical audit for the full-period comparison is verified. The baseline and candidate 'qwen-full-period-extra-1' were evaluated using the same simulator image and official economic calculator. All runs satisfy the defined constraints (max liquid < 500 m3/d). The candidate demonstrates a CHDD uplift of +8.26% compared to the baseline. The provenance confirms this is a training-archive experiment, not an independent holdout or competition result. No surrogate was used for candidate selection, so UQ/OOD certification is not required for this specific numerical comparison.",
+        "recommendation": "Approve the numerical audit results for the specific inputs and period tested. Do not generalize these results to holdout sets, competition scenarios, or future constraints. The approval is a recommendation for the graph and does not replace the protective control loop.",
+        "evidence": [
+          "Simulator image 'openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9' is consistent across all runs.",
+          "Economic calculator hashes (chdd_model.py, excel_io.py, \u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py) are consistent across all runs.",
+          "All runs satisfy the constraint 'both_runs_within_limit': true with max_actual_liquid_m3d: 500.",
+          "The selected candidate 'qwen-full-period-extra-1' has a CHDD of 12855.57M, which is higher than the baseline 11874.34M.",
+          "Provenance confirms 'surrogate_used_for_candidate_selection': false, making UQ/OOD certification inapplicable for this specific numerical comparison.",
+          "Scope is explicitly defined as 'Training-archive experiment; competition end date and future constraints unconfirmed.'"
+        ],
+        "approved": true,
+        "tool_evidence": [
+          {
+            "call_id": "534ff23ca",
+            "tool": "read_verified_comparison",
+            "output": {
+              "baseline": {
+                "chdd_m": 11874.341091411583,
+                "max_liquid_m3d": 56.152222,
+                "opm_seconds": 897.5974666923285,
+                "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                "reported_critic_approved": true,
+                "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                "summary": {
+                  "conversionCount": 9,
+                  "profitabilityIndex": 1.256334616831005,
+                  "pumpChanges": 40.0,
+                  "startStopCount": 23,
+                  "totalCapexM": 28.06191,
+                  "totalChddM": 11874.341091411583,
+                  "totalConversionOpexM": 45.0,
+                  "totalFcfM": 20502.836734599518,
+                  "totalInjectionK": 11671.730859375,
+                  "totalLiquidKt": 9559.847866730552,
+                  "totalOilKt": 3662.101463945813,
+                  "totalOpexM": 3387.1207710121375,
+                  "totalRevenueM": 102538.84099048277,
+                  "years": 19
+                }
+              },
+              "claim": "Model-based training experiment; selection runs are not an untouched test set.",
+              "comparisons": [
+                {
+                  "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+                  "artifacts_verified": true,
+                  "baseline": {
+                    "chdd_m": 11874.341091411583,
+                    "max_liquid_m3d": 56.152222,
+                    "opm_seconds": 897.5974666923285,
+                    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256334616831005,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.06191,
+                      "totalChddM": 11874.341091411583,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20502.836734599518,
+                      "totalInjectionK": 11671.730859375,
+                      "totalLiquidKt": 9559.847866730552,
+                      "totalOilKt": 3662.101463945813,
+                      "totalOpexM": 3387.1207710121375,
+                      "totalRevenueM": 102538.84099048277,
+                      "years": 19
+                    }
+                  },
+                  "candidate": {
+                    "chdd_m": 12018.756586411637,
+                    "max_liquid_m3d": 52.928944,
+                    "opm_seconds": 795.1401329822838,
+                    "receipt_sha256": "91fc00f4698009bc4a3cef80c6c2c814ab6dc5131766ac1780be7f7d49718d99",
+                    "reported_critic_approved": false,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/policy09-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256429876688801,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.00794,
+                      "totalChddM": 12018.756586411637,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20624.711838160827,
+                      "totalInjectionK": 11746.755054688,
+                      "totalLiquidKt": 9778.077017442332,
+                      "totalOilKt": 3684.4102939712093,
+                      "totalOpexM": 3412.0867651437215,
+                      "totalRevenueM": 103163.48823119386,
+                      "years": 19
+                    }
+                  },
+                  "delta_chdd_m": 144.41549500005385,
+                  "end_exclusive": "2025-09-01",
+                  "identical_pre_control_history": true,
+                  "months": 224,
+                  "schema": "timesoil.paired-cycle-audit/v1",
+                  "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+                  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+                  "start_inclusive": "2007-01-01",
+                  "uplift_percent": 1.216197967435062,
+                  "verified_evidence": {
+                    "constraints": {
+                      "both_runs_within_limit": true,
+                      "max_actual_liquid_m3d": 500,
+                      "same_well_inventory_and_months": true
+                    },
+                    "economics": {
+                      "calculator_sha256": {
+                        "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+                        "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+                        "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+                      },
+                      "historical_cash_flows_included": false,
+                      "metric": "official totalChddM",
+                      "same_assumptions": true
+                    },
+                    "simulator": {
+                      "both_runs_successful": true,
+                      "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+                    }
+                  },
+                  "well_count": 103
+                },
+                {
+                  "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+                  "artifacts_verified": true,
+                  "baseline": {
+                    "chdd_m": 11874.341091411583,
+                    "max_liquid_m3d": 56.152222,
+                    "opm_seconds": 897.5974666923285,
+                    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256334616831005,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.06191,
+                      "totalChddM": 11874.341091411583,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20502.836734599518,
+                      "totalInjectionK": 11671.730859375,
+                      "totalLiquidKt": 9559.847866730552,
+                      "totalOilKt": 3662.101463945813,
+                      "totalOpexM": 3387.1207710121375,
+                      "totalRevenueM": 102538.84099048277,
+                      "years": 19
+                    }
+                  },
+                  "candidate": {
+                    "chdd_m": 12855.566999571884,
+                    "max_liquid_m3d": 65.524933,
+                    "opm_seconds": 817.7243334166706,
+                    "receipt_sha256": "a9a36d76f30ebb2bab6adce1f37a7696c5c680aca2a58717398ada9b76405d1d",
+                    "reported_critic_approved": false,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-1-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.2557881228472476,
+                      "pumpChanges": 59.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 42.42779,
+                      "totalChddM": 12855.566999571884,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 21621.31935982497,
+                      "totalInjectionK": 14435.825570312001,
+                      "totalLiquidKt": 11588.378922436475,
+                      "totalOilKt": 3881.053691282253,
+                      "totalOpexM": 3715.854807004298,
+                      "totalRevenueM": 108669.50335590309,
+                      "years": 19
+                    }
+                  },
+                  "delta_chdd_m": 981.2259081603006,
+                  "end_exclusive": "2025-09-01",
+                  "identical_pre_control_history": true,
+                  "months": 224,
+                  "schema": "timesoil.paired-cycle-audit/v1",
+                  "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+                  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+                  "start_inclusive": "2007-01-01",
+                  "uplift_percent": 8.26341352843567,
+                  "verified_evidence": {
+                    "constraints": {
+                      "both_runs_within_limit": true,
+                      "max_actual_liquid_m3d": 500,
+                      "same_well_inventory_and_months": true
+                    },
+                    "economics": {
+                      "calculator_sha256": {
+                        "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+                        "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+                        "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+                      },
+                      "historical_cash_flows_included": false,
+                      "metric": "official totalChddM",
+                      "same_assumptions": true
+                    },
+                    "simulator": {
+                      "both_runs_successful": true,
+                      "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+                    }
+                  },
+                  "well_count": 103
+                },
+                {
+                  "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD.",
+                  "artifacts_verified": true,
+                  "baseline": {
+                    "chdd_m": 11874.341091411583,
+                    "max_liquid_m3d": 56.152222,
+                    "opm_seconds": 897.5974666923285,
+                    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.256334616831005,
+                      "pumpChanges": 40.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 28.06191,
+                      "totalChddM": 11874.341091411583,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 20502.836734599518,
+                      "totalInjectionK": 11671.730859375,
+                      "totalLiquidKt": 9559.847866730552,
+                      "totalOilKt": 3662.101463945813,
+                      "totalOpexM": 3387.1207710121375,
+                      "totalRevenueM": 102538.84099048277,
+                      "years": 19
+                    }
+                  },
+                  "candidate": {
+                    "chdd_m": 12597.898962539626,
+                    "max_liquid_m3d": 62.114914,
+                    "opm_seconds": 819.754710920155,
+                    "receipt_sha256": "696f56eb1467e27cf827adf9f983ace8ff79573fbb51500444f6932c3f41d5d5",
+                    "reported_critic_approved": true,
+                    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-2-20260909",
+                    "summary": {
+                      "conversionCount": 9,
+                      "profitabilityIndex": 1.2560951060124972,
+                      "pumpChanges": 53.0,
+                      "startStopCount": 23,
+                      "totalCapexM": 37.81985,
+                      "totalChddM": 12597.898962539626,
+                      "totalConversionOpexM": 45.0,
+                      "totalFcfM": 21245.45172643437,
+                      "totalInjectionK": 13545.738980469,
+                      "totalLiquidKt": 10896.890835202636,
+                      "totalOilKt": 3807.6144363851868,
+                      "totalOpexM": 3606.265830389741,
+                      "totalRevenueM": 106613.20421878523,
+                      "years": 19
+                    }
+                  },
+                  "delta_chdd_m": 723.5578711280432,
+                  "end_exclusive": "2025-09-01",
+                  "identical_pre_control_history": true,
+                  "months": 224,
+                  "schema": "timesoil.paired-cycle-audit/v1",
+                  "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+                  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+                  "start_inclusive": "2007-01-01",
+                  "uplift_percent": 6.093457022650073,
+                  "verified_evidence": {
+                    "constraints": {
+                      "both_runs_within_limit": true,
+                      "max_actual_liquid_m3d": 500,
+                      "same_well_inventory_and_months": true
+                    },
+                    "economics": {
+                      "calculator_sha256": {
+                        "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+                        "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+                        "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+                      },
+                      "historical_cash_flows_included": false,
+                      "metric": "official totalChddM",
+                      "same_assumptions": true
+                    },
+                    "simulator": {
+                      "both_runs_successful": true,
+                      "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+                    }
+                  },
+                  "well_count": 103
+                }
+              ],
+              "months": 224,
+              "proposal_provenance": {
+                "additional_candidates": "Direct Qwen proposals using initial physical state and completed baseline/policy09 OPM comparisons; no TimesFM forecast used to propose or select these two candidates.",
+                "request_hashes_verified": true,
+                "scope": "Training-model adaptive search; not independent holdout.",
+                "selection": "Maximum official CHDD of completed full-period OPM cycles including baseline.",
+                "source_agent_records": [
+                  "agent-1.json",
+                  "agent-2.json"
+                ]
+              },
+              "schema": "timesoil.full-horizon-selection/v1",
+              "selected": {
+                "chdd_m": 12855.566999571884,
+                "max_liquid_m3d": 65.524933,
+                "opm_seconds": 817.7243334166706,
+                "receipt_sha256": "a9a36d76f30ebb2bab6adce1f37a7696c5c680aca2a58717398ada9b76405d1d",
+                "reported_critic_approved": false,
+                "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/qwen-full-period-extra-1-20260909",
+                "summary": {
+                  "conversionCount": 9,
+                  "profitabilityIndex": 1.2557881228472476,
+                  "pumpChanges": 59.0,
+                  "startStopCount": 23,
+                  "totalCapexM": 42.42779,
+                  "totalChddM": 12855.566999571884,
+                  "totalConversionOpexM": 45.0,
+                  "totalFcfM": 21621.31935982497,
+                  "totalInjectionK": 14435.825570312001,
+                  "totalLiquidKt": 11588.378922436475,
+                  "totalOilKt": 3881.053691282253,
+                  "totalOpexM": 3715.854807004298,
+                  "totalRevenueM": 108669.50335590309,
+                  "years": 19
+                }
+              },
+              "selection_metric": "official_chdd_over_identical_complete_period"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "agent_review_approved": true
+}
