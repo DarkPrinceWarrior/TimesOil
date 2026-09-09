@@ -1,0 +1,28 @@
+{
+  "month": "2014-02-01",
+  "identical_input_state": true,
+  "identical_prior_restart_ref": true,
+  "identical_non_schedule_inputs": true,
+  "distinct_controls": true,
+  "artifacts_verified": true,
+  "planning_end_exclusive": "2015-12-01",
+  "overlap_seconds": 137.800173,
+  "opm_wall_span_seconds": 142.214381,
+  "sum_opm_durations_seconds": 280.0145552009344,
+  "runs": [
+    {
+      "run_id": "opm-full-replay-f8f1f5b6ad9556e56f322c19",
+      "lineage_sha256": "e7efbdd706db5bb5949e7eb66d32fee851f9a966c68fc49f04ac07f6e5953a2b",
+      "started_at": "2026-09-09T13:10:46.333668+00:00",
+      "finished_at": "2026-09-09T13:13:04.148771+00:00",
+      "planned_chdd_m": 1024.4564510101523
+    },
+    {
+      "run_id": "opm-full-replay-3ceeb795fe81d9f2f8095bfd",
+      "lineage_sha256": "d1ee6c3ee0d45d3d4d14618aecc2b66e2954c029a965ded5f3ba3642f424949f",
+      "started_at": "2026-09-09T13:10:46.348598+00:00",
+      "finished_at": "2026-09-09T13:13:08.548049+00:00",
+      "planned_chdd_m": 1030.8831740691676
+    }
+  ]
+}
