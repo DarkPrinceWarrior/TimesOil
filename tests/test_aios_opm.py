@@ -38,6 +38,31 @@ _CONNECTION_VECTORS = {
 
 
 class OpmFlowRunnerTest(unittest.TestCase):
+    @patch("timesoil.aios.opm.subprocess.run")
+    def test_mpi_configuration_is_bounded_and_recorded(self, mocked_run) -> None:
+        mocked_run.return_value = subprocess.CompletedProcess([], 0, "ok", "")
+        with patch.dict("os.environ", {"OPM_MPI_PROCESSES": "8"}):
+            self.assertEqual(OpmFlowRunner().mpi_processes, 8)
+            self.assertEqual(OpmFlowRunner(mpi_processes=1).mpi_processes, 1)
+        for value in (0, -1, 65, True, 1.5):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                OpmFlowRunner(mpi_processes=value)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "MODEL.DATA"
+            source.write_text(_MINIMAL_DECK)
+            for ranks in (1, 8):
+                result = OpmFlowRunner(mpi_processes=ranks, threads_per_process=1).run(
+                    source, root / f"run-{ranks}"
+                )
+                command = list(result.command)
+                self.assertEqual(json.loads(result.manifest_path.read_text())["command"], command)
+                self.assertEqual("mpirun" in command, ranks > 1)
+                if ranks > 1:
+                    self.assertEqual(command[command.index(OPM_IMAGE) + 1:command.index("flow")],
+                                     ["mpirun", "--allow-run-as-root", "--oversubscribe",
+                                      "-np", "8", "--bind-to", "none"])
+
     def test_thread_configuration_is_bounded_and_explicit_overrides_environment(self) -> None:
         with patch.dict("os.environ", {"OPM_THREADS_PER_PROCESS": "8"}):
             self.assertEqual(OpmFlowRunner().threads_per_process, 8)
