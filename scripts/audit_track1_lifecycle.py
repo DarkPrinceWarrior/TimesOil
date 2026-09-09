@@ -39,6 +39,7 @@ def audit(root, expected_months):
     assert len(trajectories) == expected_months
     verified_files = 0
     lineages = []
+    previous_state = _state_payload(config.initial_state)
     for month, trajectory in zip(months, trajectories, strict=True):
         assert trajectory["month"] == month.isoformat()
         assert trajectory["certified"] and trajectory["chdd_complete"] and not trajectory["invariant_violations"]
@@ -46,6 +47,9 @@ def audit(root, expected_months):
         path = Path(ref)
         assert digest(path) == expected
         lineage = json.loads(path.read_text())
+        assert lineage["input_state"] == {k: v for k, v in previous_state.items() if k != "restart_ref"}
+        assert lineage["prior_restart_ref"] == previous_state["restart_ref"]
+        assert lineage["next_state"] == {k: v for k, v in trajectory["next_state"].items() if k != "restart_ref"}
         assert lineage["accepted_actions"] == [a for a in actions if a["month"] <= month.isoformat()]
         assert lineage["step_actions"] == [a for a in actions if a["month"] == month.isoformat()]
         assert not lineage["planning"]["future_states_committed"]
@@ -57,6 +61,7 @@ def audit(root, expected_months):
             assert digest(artifact) == item["sha256"]
             verified_files += 1
         lineages.append(path)
+        previous_state = trajectory["next_state"]
     planning = [r for r in result["agent"]["records"] if r["phase"] == "planning"]
     reviews = [r for r in result["agent"]["records"] if r["phase"] == "terminal_month_review"]
     assert len(planning) == len(reviews) == expected_months
