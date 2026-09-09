@@ -96,17 +96,39 @@ class TimesFMPlanning:
         self.forecaster = TimesFM3Forecaster(ModelConfig(checkpoint_path='google/timesfm-3.0-pytorch',
             revision=MODEL_REVISION, per_core_batch_size=1, device='cuda'))
         self.calibration = self.calibrate()
+        self.planning_forecaster = self.forecaster
+        self.head_sha256 = settings.get('head_sha256')
+        if settings.get('head'):
+            from timesfm_static_head import StaticConditionedHead
+            path = Path(settings['head'])
+            if sha256(path.read_bytes()).hexdigest() != self.head_sha256:
+                raise ValueError('forecast trained head hash mismatch')
+            self.files[str(path)] = self.head_sha256
+            implementation = Path(__file__).with_name('timesfm_static_head.py')
+            self.files[str(implementation)] = sha256(implementation.read_bytes()).hexdigest()
+            selected = torch.load(path, map_location='cuda', weights_only=True)
+            self.planning_forecaster = TimesFM3Forecaster(ModelConfig(checkpoint_path='google/timesfm-3.0-pytorch',
+                revision=MODEL_REVISION, per_core_batch_size=1, device='cuda'))
+            model = self.planning_forecaster.model
+            model.output_head = StaticConditionedHead(model.output_head, self.geology)
+            weights = selected.get('output_head', selected)
+            torch.testing.assert_close(weights['features'], model.output_head.features, rtol=0, atol=0)
+            model.output_head.load_state_dict(weights)
+            if 'last_layer' in selected:
+                model.transformer_stack.layers[-1].load_state_dict(selected['last_layer'])
         self.provenance = {'model_revision': MODEL_REVISION, 'input_hashes': self.files,
             'source_sha256': source_sha256, 'well_count': len(self.wells),
             'target_units': ['oil tonnes/day', 'liquid tonnes/day', 'reservoir WBP9 bar'],
             'controller_units': ['oil surface m3/day', 'liquid surface m3/day', 'well BHP bar'],
             'initial_observation_cutoff': str(state.month), 'future_observations_used': False,
-            'uncertainty_calibrated': False, 'static_head_trained': False,
+            'uncertainty_calibrated': False, 'static_head_trained': self.head_sha256 is not None,
+            'planning_head_sha256': self.head_sha256,
+            'one_month_monitor': 'Official pretrained weights with separate historical calibration',
             'one_month_historical_calibration': self.calibration,
             'forecast_authorizes_control_without_opm': False,
             'script_sha256': sha256(Path(__file__).read_bytes()).hexdigest()}
 
-    def forecast_arrays(self, states, history_actions, future):
+    def forecast_arrays(self, states, history_actions, future, *, planning=False):
         length = min(128, len(history_actions))
         if length < 1 or len(states) != len(history_actions) + 1:
             raise ValueError('forecast history states/actions are misaligned')
@@ -118,7 +140,8 @@ class TimesFMPlanning:
         allocated = self.geology.features(np.zeros((len(actions) * len(self.wells), 3)),
             actions.reshape(-1, 4))[:, 0].reshape(len(actions), len(self.wells)).T
         cov = np.concatenate([own, allocated]).astype(np.float32)
-        prediction = next(self.forecaster.predict_batch([past], horizon=len(future),
+        forecaster = self.planning_forecaster if planning else self.forecaster
+        prediction = next(forecaster.predict_batch([past], horizon=len(future),
             past_future_covariates=[cov], return_quantiles=False, make_positive=True,
             use_symmetric_averaging=False)).forecast.reshape(len(self.wells), 3, len(future)).transpose(2, 0, 1)
         if not np.isfinite(prediction).all():
@@ -198,15 +221,17 @@ class TimesFMPlanning:
         expected = [d.date() for d in self.dates[self.origin:self.origin + len(months)]]
         if months != expected or not months or months[0] != state.month:
             raise ValueError('forecast controls must span consecutive months from the current state')
-        prediction = self.forecast_arrays(self.states, self.actions, future)
-        one_month = prediction[0] if len(months) == 1 else self.forecast_arrays(self.states, self.actions, future[:1])[0]
+        prediction = self.forecast_arrays(self.states, self.actions, future, planning=True)
+        one_month = self.forecast_arrays(self.states, self.actions, future[:1])[0]
         ood = np.any((future < self.control_min - 1e-6) | (future > self.control_max + 1e-6), axis=-1)
         key = sha256(future.tobytes()).hexdigest()
         first_month_key = sha256(future[0].tobytes()).hexdigest()
         self.last_predictions[first_month_key] = one_month.copy()
         self.last_diagnostics[first_month_key] = {
             'model': 'Google TimesFM 3', 'revision': MODEL_REVISION,
-            'training': 'Official pretrained foundation model; task-specific head tuning was not applied to Model Y.',
+            'training': ('Separate Model Y static head for full-period planning; pretrained one-month monitor.'
+                         if self.head_sha256 else 'Official pretrained weights; no Model Y head adaptation.'),
+            'planning_head_sha256': self.head_sha256,
             'historical_validation_and_one_month_uq': self.calibration,
             'full_remaining_horizon_uq_calibrated': False,
             'ood_control_well_months': int(ood.sum()),
@@ -215,6 +240,7 @@ class TimesFMPlanning:
         days = np.array([pd.Timestamp(d).days_in_month for d in months])
         volumes = (prediction[..., :2] * days[:, None, None]).sum(axis=0)
         return {'model_revision': MODEL_REVISION, 'observation_cutoff': str(state.month),
+            'planning_head_sha256': self.head_sha256,
             'months': len(months), 'well_count': len(self.wells), 'controls_sha256': key,
             'future_observations_used': False, 'official_chdd': False, 'uncertainty_calibrated': False,
             'one_month_historical_calibration': self.calibration,
@@ -291,6 +317,16 @@ def self_check():
     from types import SimpleNamespace as Obj
     from datetime import date
     from timesoil.aios.contracts import ControlAction, ControlTarget, WellRole, WellStatus
+    import torch
+    from timesfm_static_head import StaticConditionedHead
+    base = torch.nn.Linear(4, 9)
+    conditioned = StaticConditionedHead(base, Obj(well_ids=('a', 'b'),
+        static=[[10, .1, 1], [20, .2, 3]], provenance={}))
+    values = torch.ones((1, 8, 2, 4))
+    torch.testing.assert_close(conditioned(values), base(values), rtol=0, atol=0)
+    with torch.no_grad():
+        conditioned.conditioner.weight[:, 0] = 1
+    assert not torch.equal(conditioned(values)[:, 0], conditioned(values)[:, 3])
     planner = TimesFMPlanning.__new__(TimesFMPlanning)
     planner.wells = ('p', 'i')
     planner.dates = pd.date_range('2014-01-01', periods=5, freq='MS')
@@ -312,8 +348,11 @@ def self_check():
             captured.append((histories[0].copy(), past_future_covariates[0].copy()))
             assert histories[0].shape == (6, 2)
             assert past_future_covariates[0].shape == (12, 2 + horizon)
-            yield Obj(forecast=np.ones((6, horizon)))
+            yield Obj(forecast=np.full((6, horizon), getattr(self, 'rate', 1.)))
     planner.forecaster = Forecaster()
+    planner.planning_forecaster = Forecaster()
+    planner.planning_forecaster.rate = 2.
+    planner.head_sha256 = None
     state = Obj(month=planner.month, wells=tuple(Obj(well=w, oil_rate=values[0], liquid_rate=values[1], bhp=values[2])
         for w, values in zip(planner.wells, planner.controller_state, strict=True)))
     controls = tuple(ControlAction(date(2014, m, 1), w,
@@ -322,6 +361,7 @@ def self_check():
         100. if w == 'p' else 20.) for m in (3, 4) for w in planner.wells)
     result = planner.predict(state, controls)
     assert result['months'] == 2 and result['well_count'] == 2
+    assert result['rows'][0][1:] == [1., 1., 1., 122., 122., 2.]
     np.testing.assert_array_equal(captured[0][0], np.repeat([[1], [2], [3], [0], [0], [4]], 2, axis=1))
     np.testing.assert_array_equal(captured[0][1][-2], [10, 10, 20, 20])
     observed = Obj(month=date(2014, 4, 1), wells=state.wells)

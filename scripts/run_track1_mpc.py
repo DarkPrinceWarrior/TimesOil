@@ -374,8 +374,10 @@ def load_config(path: Path) -> RunConfig:
     forecast = None
     if 'forecast' in root:
         forecast = dict(_object(root['forecast'], 'forecast',
-            {'history', 'history_sha256', 'geology', 'geology_sha256'}))
-        for name in ('history', 'geology'):
+            {'history', 'history_sha256', 'geology', 'geology_sha256'}, {'head', 'head_sha256'}))
+        if ('head' in forecast) != ('head_sha256' in forecast):
+            raise ValueError('forecast head and SHA-256 must be supplied together')
+        for name in ('history', 'geology', *(('head',) if 'head' in forecast else ())):
             file = (path.absolute().parent / _string(forecast[name], 'forecast.' + name)).absolute()
             _reject_symlink_components(file)
             if not file.is_file() or _digest(file.read_bytes()) != forecast[name + '_sha256']:
