@@ -83,6 +83,8 @@ def main():
         parser.error("rounds must be in [1, 12]")
     request = json.loads(args.request.read_text())
     checked_request = CycleRequest.from_mapping(request)
+    if any(action.bhp_limit is not None for action in checked_request.controls):
+        raise ValueError("TimesFM screening has no BHP covariate; pressure controls require a trained model with that input")
     normative_profile = CHDDEconomicsAdapter.from_env().normative_profile(
         charge_initial_pump=checked_request.charge_initial_pump
     )
