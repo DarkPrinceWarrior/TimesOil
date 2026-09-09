@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "archive": "Model Z",
+  "months": 224,
+  "wells": 103,
+  "reported_points": 23072,
+  "summary_sha256": "2dbe2acb011820fe8bed9559fc33234ddd80b661b1f38d170956141565e7e53f",
+  "actual_per_well_liquid_max_m3d": 500,
+  "zero_oil_quota_rejected": true,
+  "scope": "New gate tested on the existing physical full-period result; no new optimization or OPM execution claimed."
+}

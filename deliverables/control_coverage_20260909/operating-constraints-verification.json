@@ -1,0 +1,69 @@
+{
+  "scope": "Model Y control regression: two committed months, each evaluated over the full provided planning horizon; not an optimization result.",
+  "source_sha256": "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e",
+  "script_sha256": "14f9a14fd4ff427e417b36cb72318732eb4f283a5c49bb9891571dc613ad72b0",
+  "planning_end_exclusive": "2015-12-01",
+  "operating_constraints": [
+    {
+      "start": "2014-01-01",
+      "end": "2014-02-01",
+      "wells": [
+        "1"
+      ],
+      "limits": {
+        "min_injection_m3d": 10,
+        "max_injection_m3d": 80,
+        "max_bhp_bar": 280
+      },
+      "unavailable": false
+    },
+    {
+      "start": "2014-01-01",
+      "end": "2014-02-01",
+      "wells": [
+        "12"
+      ],
+      "limits": {
+        "max_liquid_m3d": 100,
+        "min_bhp_bar": 70,
+        "max_watercut": 1
+      },
+      "unavailable": false
+    },
+    {
+      "start": "2014-01-01",
+      "end": "2014-02-01",
+      "wells": [
+        "14"
+      ],
+      "limits": {},
+      "unavailable": true
+    }
+  ],
+  "well_count": 49,
+  "steps": [
+    {
+      "month": "2014-01-01",
+      "restart_ref": "/root/projects/TimesOil/results/audit-20260909/control-constraints-20260909/opm/opm-full-replay-b4a52fe0d490ef9634610a7c/lineage.json#sha256=c2e886d26b1bde10bfc0022c6cd3fb022642bdf3fc60a8d731717b097b597cab",
+      "conversion_count": 1,
+      "conversion_opex_m": 5,
+      "injection_m3d": 75.342117,
+      "injector_bhp_bar": 280.0,
+      "producer_bhp_bar": 77.195023,
+      "cumulative_chdd_m": 47.974848186838685,
+      "planning_chdd_m": 979.0914579799581
+    },
+    {
+      "month": "2014-02-01",
+      "restart_ref": "/root/projects/TimesOil/results/audit-20260909/control-constraints-20260909/opm/opm-full-replay-b7b890b6e6ee1da061ee1e45/lineage.json#sha256=e9e12409d296137013cb6eda5e583a36fb955766ebe611a51593e3952b5d4d41",
+      "conversion_count": 1,
+      "conversion_opex_m": 5,
+      "injection_m3d": 67.787727,
+      "injector_bhp_bar": 280.0,
+      "producer_bhp_bar": 83.063255,
+      "cumulative_chdd_m": 94.33328135231966,
+      "planning_chdd_m": 979.0914579799581
+    }
+  ],
+  "passed": true
+}

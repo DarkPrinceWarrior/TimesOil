@@ -1,0 +1,52 @@
+{
+  "artifacts": {
+    "result": {
+      "bytes": 4849277,
+      "path": "result.json",
+      "sha256": "f94a8f3997ff95ab621372d6edff4dc0a44adf5c20434bd65b19ed1cb814f16b"
+    },
+    "schedule": {
+      "bytes": 44522,
+      "path": "wells_schedule.inc",
+      "sha256": "9754c691f127571eaf64d0d1ca56e6141865d39f169bf4bfc8e83e599c61dab4"
+    }
+  },
+  "backend_provenance": "OPM Flow 2026.04; image=openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9; restart=authenticated-full-replay/v1",
+  "config_sha256": "557797b4ae73efd1b15891601d2d97ea97dc3e8d1bf61d310227516c3d80a3f4",
+  "input_sha256": "1b645344a38940c57cd88e230cefb5802fe8d9188ac12df2c1d77168fa36809f",
+  "run_id": "track1-1b645344a38940c57cd88e23",
+  "schedule_sha256": "9754c691f127571eaf64d0d1ca56e6141865d39f169bf4bfc8e83e599c61dab4",
+  "schema": "timesoil.aios.track1-mpc-manifest/v1",
+  "script_source_contract": {
+    "run_track1_mpc.py": {
+      "path": "/root/projects/TimesOil-audit-track1-lifecycle-v5-20260909/scripts/run_track1_mpc.py",
+      "sha256": "2e2eda8a644eb336f7e976226a3a7bf9df213a8732049c7b6d94b049c2599c70"
+    }
+  },
+  "source_sha256": "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e",
+  "trajectory_run_ids": [
+    "opm-full-replay-40f2f804257afe12efd408b7",
+    "opm-full-replay-3ceeb795fe81d9f2f8095bfd",
+    "opm-full-replay-902c7af29503dc57dac2cb9e",
+    "opm-full-replay-601a316bd47a09f1b016fc80",
+    "opm-full-replay-b9f2215f1bdf92fc205184a1",
+    "opm-full-replay-37ed7ab6215710f1c08b605a",
+    "opm-full-replay-8aadc3e0d86067eae853a248",
+    "opm-full-replay-6ff868a97a5e0c547c20b584",
+    "opm-full-replay-1c0b3f0065fd9c226a06254c",
+    "opm-full-replay-f9a03f62e5626df5171362e0",
+    "opm-full-replay-0003a43b2e27a1b95e642f5c",
+    "opm-full-replay-4c45d81c0c6682c5f30b3540",
+    "opm-full-replay-aa1311468ad9833a0e4f2c82",
+    "opm-full-replay-d0c92a69314cb8489506f62c",
+    "opm-full-replay-ca1172cd709c8bfd83b569c6",
+    "opm-full-replay-baf6fbf9b927ee6f19cce0f1",
+    "opm-full-replay-c4c6e0bb58178f0588d59b6f",
+    "opm-full-replay-a910187ff9b7207708d1a283",
+    "opm-full-replay-3f4ce4c32957690e51685662",
+    "opm-full-replay-34096a57e0ed34b62efa5233",
+    "opm-full-replay-342087429c3a2d84c37fb487",
+    "opm-full-replay-bcc925a3e7e4952554970b26",
+    "opm-full-replay-54e6be1147831b0ca110c630"
+  ]
+}
