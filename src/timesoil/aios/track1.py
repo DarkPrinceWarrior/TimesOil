@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from datetime import date
 from hashlib import sha256
@@ -89,11 +90,13 @@ class MonthlyMPC:
         compiler: ScheduleCompiler | None = None,
         prescreen: Prescreener | None = None,
         planning_tail: Callable[[State, Candidate], Candidate] | None = None,
+        parallel_candidates: bool = False,
     ) -> None:
         self.backend = backend
         self.compiler = compiler or ScheduleCompiler()
         self.prescreen = prescreen
         self.planning_tail = planning_tail
+        self.parallel_candidates = parallel_candidates
 
     def run_step(
         self,
@@ -173,8 +176,7 @@ class MonthlyMPC:
             candidates, rejected = self._validated_candidates(case, state, prescreened)
             failures.extend(rejected)
 
-        certified: list[GdmResult] = []
-        for candidate in candidates:
+        def evaluate(candidate: Candidate) -> GdmResult | str:
             try:
                 if self.planning_tail is None:
                     result = self.backend.run_from_restart(case, state, candidate)
@@ -186,9 +188,18 @@ class MonthlyMPC:
                     if result.planning_economics is None:
                         raise CertificationError("backend omitted full-horizon planning economics")
                 self._check_result(case, state, candidate, result)
-                certified.append(result)
+                return result
             except Exception as exc:
-                failures.append(f"{type(exc).__name__}: {exc}")
+                return f"{type(exc).__name__}: {exc}"
+
+        certified: list[GdmResult] = []
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = pool.map(evaluate, candidates) if self.parallel_candidates else map(evaluate, candidates)
+            for result in results:
+                if isinstance(result, str):
+                    failures.append(result)
+                else:
+                    certified.append(result)
 
         run_ids = [result.trajectory.run_id for result in certified]
         if len(set(run_ids)) != len(run_ids):

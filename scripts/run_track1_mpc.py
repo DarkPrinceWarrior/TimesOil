@@ -679,6 +679,7 @@ def execute(
     result: Track1Result = MonthlyMPC(
         backend,
         planning_tail=(lambda state, candidate: _continuation_tail(config, state, candidate)) if lifecycle else None,
+        parallel_candidates=lifecycle,
     ).run(
         config.case,
         config.initial_state,
@@ -701,6 +702,7 @@ def execute(
             "economic_end_exclusive": _next_month(config.case.end).isoformat(),
             "commit_months": 1,
             "planning": "full_remaining_period" if lifecycle else "one_month",
+            "candidate_workers": 2 if lifecycle else 1,
             "future_states_committed": False,
             "final_chdd": "last cumulative economics, never sum cumulative monthly values",
         },

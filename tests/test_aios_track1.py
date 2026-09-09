@@ -54,6 +54,25 @@ def _actions(month: date, production: float) -> tuple[ControlAction, ...]:
 
 
 class Track1Test(unittest.TestCase):
+    def test_parallel_candidates_share_state_and_keep_months_sequential(self) -> None:
+        from threading import Barrier
+        barrier = Barrier(2)
+        states = []
+
+        class ParallelBackend(DeterministicGdmBackend):
+            def run_from_restart(self, case, state, actions):
+                states.append(state)
+                barrier.wait(timeout=5)
+                return super().run_from_restart(case, state, actions)
+
+        case = _case()
+        state = State(case.case_id, case.start, "initial", ())
+        result = MonthlyMPC(ParallelBackend(), parallel_candidates=True).run(
+            case, state, lambda s: (_actions(s.month, 80), _actions(s.month, 120)))
+        self.assertEqual(states[:2], [state, state])
+        self.assertEqual(states[2:], [result.evidence.trajectories[0].next_state] * 2)
+        self.assertTrue(all(t.actions[-1].value == 120 for t in result.evidence.trajectories))
+
     def test_full_horizon_selection_rejects_short_term_trap(self) -> None:
         class PlanningBackend(DeterministicGdmBackend):
             def run_from_restart(self, case, state, actions, *, planning_tail=None):
