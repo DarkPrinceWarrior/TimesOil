@@ -1,0 +1,46 @@
+{
+  "aggregation": "mean per-scenario WAPE; pooled RMSE over equal-sized scenario grids",
+  "scenarios": 10,
+  "horizon_months": 224,
+  "results": [
+    {
+      "name": "fixed_origin_direct",
+      "bhp_channel": false,
+      "scenarios": 10,
+      "mean_oil_wape_percent": 94.72109888986594,
+      "mean_liquid_wape_percent": 43.02184205517411,
+      "pooled_pressure_rmse_bar": 70.43784496014928,
+      "mean_inference_seconds": 0.5639921873807907
+    },
+    {
+      "name": "fixed_origin_direct",
+      "bhp_channel": true,
+      "scenarios": 10,
+      "mean_oil_wape_percent": 98.88976584617717,
+      "mean_liquid_wape_percent": 42.53427533011682,
+      "pooled_pressure_rmse_bar": 71.3717308985051,
+      "mean_inference_seconds": 0.625869271159172
+    },
+    {
+      "name": "observed_update_block_6",
+      "bhp_channel": false,
+      "scenarios": 10,
+      "mean_oil_wape_percent": 5.581702701300545,
+      "mean_liquid_wape_percent": 3.598350545858497,
+      "pooled_pressure_rmse_bar": 10.2431835923854,
+      "mean_inference_seconds": 13.080780872702599
+    },
+    {
+      "name": "observed_update_block_6",
+      "bhp_channel": true,
+      "scenarios": 10,
+      "mean_oil_wape_percent": 5.158547994969368,
+      "mean_liquid_wape_percent": 3.055941111924687,
+      "pooled_pressure_rmse_bar": 40.67850024678944,
+      "mean_inference_seconds": 14.745071740821004
+    }
+  ],
+  "locally_trained": false,
+  "independent_uncertainty_calibrated": false,
+  "autonomous_full_period_accuracy_acceptable": false
+}

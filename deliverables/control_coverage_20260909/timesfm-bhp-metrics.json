@@ -1,0 +1,1559 @@
+{
+  "schema": "timesoil.timesfm-controls-benchmark/v1",
+  "timestamp_utc": "2026-09-09T17:22:06.696330+00:00",
+  "batch_manifest_sha256": "4dbab179f94ca1800b052e1346591a685eb9fa2d8dc900d917fc6ad66d149893",
+  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+  "source_scenario_hashes": {
+    "baseline": "5a08096649d7c39d0c150625f7eb0fef49eb8612f88b6bb14779393a32371d49",
+    "perturbation-001": "e3cfeec1ffc3526c469c72016ef5e878f4e697eed97f72d8359093ba8592f8ac",
+    "perturbation-002": "f8fa295807486191f5cb18531d840916c89dccd0d1b54f41b91419dbe7f41baa",
+    "perturbation-003": "8fa8fa7deff8dddebed53d8a9435ce1f06d1b3ccb47ab9bd20fc877a23edea1a",
+    "perturbation-004": "eb36c7245ed8d0405ba9acb8ec758963045d49aac65dc90f5f0ec46234229854",
+    "perturbation-005": "59ed4476ef089df0744ebab64727844b47191a16a43f26e145b4f8a4e85a819e",
+    "perturbation-006": "a9df1094c2911d16e02a7baae91f517a6fc1d4be3d01911edbebb7f155956036",
+    "perturbation-007": "d8fa6f88878e774c5e1528443c9fef794af958b297fa2e1c89fb79964b810567",
+    "perturbation-008": "6c26dd346c43dd243dca90f7083b9771ca710ac082a5c6f95d0827befcfc0214",
+    "perturbation-009": "211b1c47759046ebe544c4d8ee47d74ab8106348f39f2957befcb6f47f60b8a8"
+  },
+  "executed_sources": {
+    "benchmark_timesfm_controls.py": "2556d542089524bc0b1ce175cceff4290b090107900efbbe4b9850d9f490b5f1",
+    "benchmark_horizons.py": "26c1676ddb9f3bc9e04e7ddbf60413782f1dfdfb53b41de0cbfebdf27c3bcba7",
+    "benchmark_timesfm3.py": "95ebf87a9555b256ecc5518ede56d8d9a9b50e6adb374cfcd8185d18a93d2da3"
+  },
+  "model_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "timesfm_version": "3.0.1",
+  "torch_version": "2.9.1+cu128",
+  "device": "NVIDIA A100-SXM4-40GB",
+  "start": "2007-01-01",
+  "end_exclusive": "2025-09-01",
+  "horizon_months": 224,
+  "context_months": 128,
+  "well_count": 103,
+  "locally_trained": false,
+  "is_new_optimization_result": false,
+  "claim": "Pretrained forecast ablation. Observed-update rows use fresh OPM states. Rate and BHP changed together in OPM; no isolated BHP causal claim.",
+  "results": [
+    {
+      "scenario_id": "baseline",
+      "name": "fixed_origin_direct",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": false,
+      "seconds": 0.7403288520872593,
+      "oil_wape": 0.9365550713272853,
+      "liquid_wape": 0.43433942402301773,
+      "pressure_rmse_bar": 71.67545483437618,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.05915070808216569,
+          "liquid_wape": 0.054701355836853996,
+          "pressure_rmse_bar": 31.670250755897793
+        },
+        "23": {
+          "oil_wape": 0.17929060609612255,
+          "liquid_wape": 0.15760402190362308,
+          "pressure_rmse_bar": 38.369139976182964
+        },
+        "60": {
+          "oil_wape": 0.34580376025955584,
+          "liquid_wape": 0.2485047306915752,
+          "pressure_rmse_bar": 44.90349451508166
+        },
+        "120": {
+          "oil_wape": 0.561547593930648,
+          "liquid_wape": 0.3450295021204881,
+          "pressure_rmse_bar": 59.717172013669554
+        },
+        "224": {
+          "oil_wape": 0.9365550713272853,
+          "liquid_wape": 0.43433942402301773,
+          "pressure_rmse_bar": 71.67545483437618
+        }
+      }
+    },
+    {
+      "scenario_id": "baseline",
+      "name": "observed_update_block_6",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": true,
+      "seconds": 12.853572979569435,
+      "oil_wape": 0.024528131567172293,
+      "liquid_wape": 0.013111493711587737,
+      "pressure_rmse_bar": 11.635461949510798,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.05847472685458692,
+          "liquid_wape": 0.05403237079831491,
+          "pressure_rmse_bar": 31.768097264386867
+        },
+        "23": {
+          "oil_wape": 0.05462765888537568,
+          "liquid_wape": 0.049268548173391234,
+          "pressure_rmse_bar": 18.695833995302316
+        },
+        "60": {
+          "oil_wape": 0.035786257182653325,
+          "liquid_wape": 0.028813195468790652,
+          "pressure_rmse_bar": 13.822611462051713
+        },
+        "120": {
+          "oil_wape": 0.030648396329113446,
+          "liquid_wape": 0.0226817232143387,
+          "pressure_rmse_bar": 15.50001976248802
+        },
+        "224": {
+          "oil_wape": 0.024528131567172293,
+          "liquid_wape": 0.013111493711587737,
+          "pressure_rmse_bar": 11.635461949510798
+        }
+      }
+    },
+    {
+      "scenario_id": "baseline",
+      "name": "fixed_origin_direct",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": false,
+      "seconds": 0.6159652359783649,
+      "oil_wape": 0.9543310087906799,
+      "liquid_wape": 0.4335062397193726,
+      "pressure_rmse_bar": 71.83874156101851,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.06190629425384854,
+          "liquid_wape": 0.05733414953748712,
+          "pressure_rmse_bar": 31.665997116532306
+        },
+        "23": {
+          "oil_wape": 0.18217709059679424,
+          "liquid_wape": 0.16029373000638372,
+          "pressure_rmse_bar": 38.36427025487636
+        },
+        "60": {
+          "oil_wape": 0.34750980051165764,
+          "liquid_wape": 0.2491634385578696,
+          "pressure_rmse_bar": 44.881421985408394
+        },
+        "120": {
+          "oil_wape": 0.5684259585069867,
+          "liquid_wape": 0.3434843296389607,
+          "pressure_rmse_bar": 59.68866755691194
+        },
+        "224": {
+          "oil_wape": 0.9543310087906799,
+          "liquid_wape": 0.4335062397193726,
+          "pressure_rmse_bar": 71.83874156101851
+        }
+      }
+    },
+    {
+      "scenario_id": "baseline",
+      "name": "observed_update_block_6",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": true,
+      "seconds": 14.556081891059875,
+      "oil_wape": 0.02472349303294653,
+      "liquid_wape": 0.013142513416786482,
+      "pressure_rmse_bar": 11.34510952426061,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.0617858101398667,
+          "liquid_wape": 0.05723125475408504,
+          "pressure_rmse_bar": 31.75633190540387
+        },
+        "23": {
+          "oil_wape": 0.05568769561469004,
+          "liquid_wape": 0.05025694498120858,
+          "pressure_rmse_bar": 18.699837972808485
+        },
+        "60": {
+          "oil_wape": 0.036323422795410044,
+          "liquid_wape": 0.029218687104752422,
+          "pressure_rmse_bar": 14.127418561671869
+        },
+        "120": {
+          "oil_wape": 0.030792055914965102,
+          "liquid_wape": 0.02267980286342547,
+          "pressure_rmse_bar": 15.092082906717607
+        },
+        "224": {
+          "oil_wape": 0.02472349303294653,
+          "liquid_wape": 0.013142513416786482,
+          "pressure_rmse_bar": 11.34510952426061
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-001",
+      "name": "fixed_origin_direct",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": false,
+      "seconds": 0.5341874472796917,
+      "oil_wape": 0.9525678956678794,
+      "liquid_wape": 0.42973194163125517,
+      "pressure_rmse_bar": 70.35645905110309,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09472289509763818,
+          "liquid_wape": 0.08898085782625477,
+          "pressure_rmse_bar": 30.517626086127045
+        },
+        "23": {
+          "oil_wape": 0.19314976679989915,
+          "liquid_wape": 0.16734314114942547,
+          "pressure_rmse_bar": 37.21841890178151
+        },
+        "60": {
+          "oil_wape": 0.3593420105256327,
+          "liquid_wape": 0.2512421988262075,
+          "pressure_rmse_bar": 43.498569885427756
+        },
+        "120": {
+          "oil_wape": 0.5811815187986589,
+          "liquid_wape": 0.3404856363136157,
+          "pressure_rmse_bar": 58.192003956484676
+        },
+        "224": {
+          "oil_wape": 0.9525678956678794,
+          "liquid_wape": 0.42973194163125517,
+          "pressure_rmse_bar": 70.35645905110309
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-001",
+      "name": "observed_update_block_6",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": true,
+      "seconds": 12.93566294759512,
+      "oil_wape": 0.058945244983189655,
+      "liquid_wape": 0.03838982789181858,
+      "pressure_rmse_bar": 9.970191906342041,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09156952778601177,
+          "liquid_wape": 0.08651020676796453,
+          "pressure_rmse_bar": 30.646639244083207
+        },
+        "23": {
+          "oil_wape": 0.08602693967815567,
+          "liquid_wape": 0.07681007394358025,
+          "pressure_rmse_bar": 18.271192119900867
+        },
+        "60": {
+          "oil_wape": 0.07509823611316034,
+          "liquid_wape": 0.05987212024772013,
+          "pressure_rmse_bar": 12.863399148887924
+        },
+        "120": {
+          "oil_wape": 0.06678851029671305,
+          "liquid_wape": 0.04985743000480449,
+          "pressure_rmse_bar": 13.058820908059177
+        },
+        "224": {
+          "oil_wape": 0.058945244983189655,
+          "liquid_wape": 0.03838982789181858,
+          "pressure_rmse_bar": 9.970191906342041
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-001",
+      "name": "fixed_origin_direct",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": false,
+      "seconds": 0.6164789535105228,
+      "oil_wape": 1.0000389479443517,
+      "liquid_wape": 0.4237721259531327,
+      "pressure_rmse_bar": 71.42472424550083,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09701968381991868,
+          "liquid_wape": 0.09077101149481617,
+          "pressure_rmse_bar": 30.499821919761548
+        },
+        "23": {
+          "oil_wape": 0.1962177087337435,
+          "liquid_wape": 0.1693112720171531,
+          "pressure_rmse_bar": 37.237417356612596
+        },
+        "60": {
+          "oil_wape": 0.36415883919285097,
+          "liquid_wape": 0.25061493232707366,
+          "pressure_rmse_bar": 43.59305050378733
+        },
+        "120": {
+          "oil_wape": 0.5965828542285905,
+          "liquid_wape": 0.3361769018963259,
+          "pressure_rmse_bar": 58.41092417666452
+        },
+        "224": {
+          "oil_wape": 1.0000389479443517,
+          "liquid_wape": 0.4237721259531327,
+          "pressure_rmse_bar": 71.42472424550083
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-001",
+      "name": "observed_update_block_6",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": true,
+      "seconds": 14.623570322990417,
+      "oil_wape": 0.05411642651925454,
+      "liquid_wape": 0.03238361824050108,
+      "pressure_rmse_bar": 45.621848456149884,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09238218524881228,
+          "liquid_wape": 0.08735016087116663,
+          "pressure_rmse_bar": 30.69981033176143
+        },
+        "23": {
+          "oil_wape": 0.08521159636719826,
+          "liquid_wape": 0.07513030467590091,
+          "pressure_rmse_bar": 18.352956610319925
+        },
+        "60": {
+          "oil_wape": 0.07133669957455475,
+          "liquid_wape": 0.055290205077601254,
+          "pressure_rmse_bar": 82.96003905139702
+        },
+        "120": {
+          "oil_wape": 0.06258004938540918,
+          "liquid_wape": 0.04489386497505801,
+          "pressure_rmse_bar": 62.21968045659726
+        },
+        "224": {
+          "oil_wape": 0.05411642651925454,
+          "liquid_wape": 0.03238361824050108,
+          "pressure_rmse_bar": 45.621848456149884
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-002",
+      "name": "fixed_origin_direct",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": false,
+      "seconds": 0.5369410142302513,
+      "oil_wape": 0.9467400064883131,
+      "liquid_wape": 0.4297058822653768,
+      "pressure_rmse_bar": 70.1044378307991,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09701775279316628,
+          "liquid_wape": 0.0933538428844944,
+          "pressure_rmse_bar": 30.72951771754378
+        },
+        "23": {
+          "oil_wape": 0.19298689835334515,
+          "liquid_wape": 0.16756011383624492,
+          "pressure_rmse_bar": 37.150438075933636
+        },
+        "60": {
+          "oil_wape": 0.35842698872804774,
+          "liquid_wape": 0.2525157018739624,
+          "pressure_rmse_bar": 43.47469182328581
+        },
+        "120": {
+          "oil_wape": 0.5766420799414548,
+          "liquid_wape": 0.3420286642532836,
+          "pressure_rmse_bar": 58.093449032527474
+        },
+        "224": {
+          "oil_wape": 0.9467400064883131,
+          "liquid_wape": 0.4297058822653768,
+          "pressure_rmse_bar": 70.1044378307991
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-002",
+      "name": "observed_update_block_6",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": true,
+      "seconds": 13.090840574353933,
+      "oil_wape": 0.05895741020277884,
+      "liquid_wape": 0.0381819434396825,
+      "pressure_rmse_bar": 10.161466989387513,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09413638080844725,
+          "liquid_wape": 0.09119495146564492,
+          "pressure_rmse_bar": 30.871306422193577
+        },
+        "23": {
+          "oil_wape": 0.09031753699798928,
+          "liquid_wape": 0.07969151650698014,
+          "pressure_rmse_bar": 18.309754337776138
+        },
+        "60": {
+          "oil_wape": 0.07515411903107753,
+          "liquid_wape": 0.059136192974630845,
+          "pressure_rmse_bar": 12.874451614514157
+        },
+        "120": {
+          "oil_wape": 0.06703238932557141,
+          "liquid_wape": 0.04943218756499622,
+          "pressure_rmse_bar": 13.339985925075931
+        },
+        "224": {
+          "oil_wape": 0.05895741020277884,
+          "liquid_wape": 0.0381819434396825,
+          "pressure_rmse_bar": 10.161466989387513
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-002",
+      "name": "fixed_origin_direct",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": false,
+      "seconds": 0.6171633712947369,
+      "oil_wape": 0.9919644300068037,
+      "liquid_wape": 0.42374135415758346,
+      "pressure_rmse_bar": 71.24287381531963,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.10003691245483982,
+          "liquid_wape": 0.09593409766101876,
+          "pressure_rmse_bar": 30.714993598769617
+        },
+        "23": {
+          "oil_wape": 0.19644020935902654,
+          "liquid_wape": 0.17058773433113908,
+          "pressure_rmse_bar": 37.17414961489941
+        },
+        "60": {
+          "oil_wape": 0.3631583210000746,
+          "liquid_wape": 0.252580900383567,
+          "pressure_rmse_bar": 43.54828737188826
+        },
+        "120": {
+          "oil_wape": 0.591328597341374,
+          "liquid_wape": 0.33786891562629245,
+          "pressure_rmse_bar": 58.29597673913573
+        },
+        "224": {
+          "oil_wape": 0.9919644300068037,
+          "liquid_wape": 0.42374135415758346,
+          "pressure_rmse_bar": 71.24287381531963
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-002",
+      "name": "observed_update_block_6",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": true,
+      "seconds": 14.713244508951902,
+      "oil_wape": 0.05439417937570669,
+      "liquid_wape": 0.03215778055018908,
+      "pressure_rmse_bar": 50.2422625196236,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09589176272740703,
+          "liquid_wape": 0.09235606605975555,
+          "pressure_rmse_bar": 30.969850906684233
+        },
+        "23": {
+          "oil_wape": 0.08919854037253931,
+          "liquid_wape": 0.07790625342630182,
+          "pressure_rmse_bar": 18.391829870445005
+        },
+        "60": {
+          "oil_wape": 0.07204934215185212,
+          "liquid_wape": 0.055105216377881114,
+          "pressure_rmse_bar": 95.34405296043649
+        },
+        "120": {
+          "oil_wape": 0.06301487855702406,
+          "liquid_wape": 0.04481543131940151,
+          "pressure_rmse_bar": 68.54386059628065
+        },
+        "224": {
+          "oil_wape": 0.05439417937570669,
+          "liquid_wape": 0.03215778055018908,
+          "pressure_rmse_bar": 50.2422625196236
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-003",
+      "name": "fixed_origin_direct",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": false,
+      "seconds": 0.5409229882061481,
+      "oil_wape": 0.9444353216818762,
+      "liquid_wape": 0.4298684944880706,
+      "pressure_rmse_bar": 70.1937596240928,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.08995339160755679,
+          "liquid_wape": 0.08451511763641992,
+          "pressure_rmse_bar": 30.407869787011247
+        },
+        "23": {
+          "oil_wape": 0.18904668726548304,
+          "liquid_wape": 0.16476811944828515,
+          "pressure_rmse_bar": 37.063591548588015
+        },
+        "60": {
+          "oil_wape": 0.35404072637558054,
+          "liquid_wape": 0.252007537025506,
+          "pressure_rmse_bar": 43.459194807699994
+        },
+        "120": {
+          "oil_wape": 0.5733275325337805,
+          "liquid_wape": 0.34090255140312226,
+          "pressure_rmse_bar": 58.10762889261742
+        },
+        "224": {
+          "oil_wape": 0.9444353216818762,
+          "liquid_wape": 0.4298684944880706,
+          "pressure_rmse_bar": 70.1937596240928
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-003",
+      "name": "observed_update_block_6",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": true,
+      "seconds": 13.120455607771873,
+      "oil_wape": 0.05966704012033471,
+      "liquid_wape": 0.038905387672085935,
+      "pressure_rmse_bar": 9.968540168085905,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.08818511273353885,
+          "liquid_wape": 0.08305815852801446,
+          "pressure_rmse_bar": 30.528850435558855
+        },
+        "23": {
+          "oil_wape": 0.08743208585343121,
+          "liquid_wape": 0.07700312249002018,
+          "pressure_rmse_bar": 18.233354499304497
+        },
+        "60": {
+          "oil_wape": 0.07612937491856028,
+          "liquid_wape": 0.0602972282883193,
+          "pressure_rmse_bar": 12.864228536585623
+        },
+        "120": {
+          "oil_wape": 0.06739309850321942,
+          "liquid_wape": 0.04986204626316903,
+          "pressure_rmse_bar": 13.051690511461818
+        },
+        "224": {
+          "oil_wape": 0.05966704012033471,
+          "liquid_wape": 0.038905387672085935,
+          "pressure_rmse_bar": 9.968540168085905
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-003",
+      "name": "fixed_origin_direct",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": false,
+      "seconds": 0.624086283147335,
+      "oil_wape": 0.9902021032618105,
+      "liquid_wape": 0.4250228894862761,
+      "pressure_rmse_bar": 71.21776901600454,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09223375442736845,
+          "liquid_wape": 0.08639794532946336,
+          "pressure_rmse_bar": 30.38919626563635
+        },
+        "23": {
+          "oil_wape": 0.19228847825557585,
+          "liquid_wape": 0.16698223315905175,
+          "pressure_rmse_bar": 37.080304019341874
+        },
+        "60": {
+          "oil_wape": 0.35941919492838387,
+          "liquid_wape": 0.251771509831848,
+          "pressure_rmse_bar": 43.53117990095227
+        },
+        "120": {
+          "oil_wape": 0.5893040750182025,
+          "liquid_wape": 0.33766053603013824,
+          "pressure_rmse_bar": 58.295985114830124
+        },
+        "224": {
+          "oil_wape": 0.9902021032618105,
+          "liquid_wape": 0.4250228894862761,
+          "pressure_rmse_bar": 71.21776901600454
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-003",
+      "name": "observed_update_block_6",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": true,
+      "seconds": 14.823761984705925,
+      "oil_wape": 0.05447076391295769,
+      "liquid_wape": 0.03296433919616323,
+      "pressure_rmse_bar": 36.22299422384757,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.08913252824698392,
+          "liquid_wape": 0.08423523601614667,
+          "pressure_rmse_bar": 30.55272466835428
+        },
+        "23": {
+          "oil_wape": 0.08624132599537543,
+          "liquid_wape": 0.07602106412501726,
+          "pressure_rmse_bar": 18.27833960610399
+        },
+        "60": {
+          "oil_wape": 0.07229492167251551,
+          "liquid_wape": 0.056551151664364606,
+          "pressure_rmse_bar": 68.37481774486791
+        },
+        "120": {
+          "oil_wape": 0.06275122166966168,
+          "liquid_wape": 0.045298410755229154,
+          "pressure_rmse_bar": 49.348120137175954
+        },
+        "224": {
+          "oil_wape": 0.05447076391295769,
+          "liquid_wape": 0.03296433919616323,
+          "pressure_rmse_bar": 36.22299422384757
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-004",
+      "name": "fixed_origin_direct",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": false,
+      "seconds": 0.5552765056490898,
+      "oil_wape": 0.9508831180211008,
+      "liquid_wape": 0.42744812715245634,
+      "pressure_rmse_bar": 70.20721178284172,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09860350387209894,
+          "liquid_wape": 0.0932480677585348,
+          "pressure_rmse_bar": 30.471039848787722
+        },
+        "23": {
+          "oil_wape": 0.19428072093378151,
+          "liquid_wape": 0.16796636758823227,
+          "pressure_rmse_bar": 37.14129322668211
+        },
+        "60": {
+          "oil_wape": 0.3580644500004908,
+          "liquid_wape": 0.24967038244188602,
+          "pressure_rmse_bar": 43.40911967843903
+        },
+        "120": {
+          "oil_wape": 0.5785931719945445,
+          "liquid_wape": 0.3394925786372156,
+          "pressure_rmse_bar": 58.18505358309366
+        },
+        "224": {
+          "oil_wape": 0.9508831180211008,
+          "liquid_wape": 0.42744812715245634,
+          "pressure_rmse_bar": 70.20721178284172
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-004",
+      "name": "observed_update_block_6",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": true,
+      "seconds": 13.175317589193583,
+      "oil_wape": 0.059612447397437734,
+      "liquid_wape": 0.03859259050852778,
+      "pressure_rmse_bar": 9.957456791310156,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09670577385404068,
+          "liquid_wape": 0.09181489047277473,
+          "pressure_rmse_bar": 30.58242490081842
+        },
+        "23": {
+          "oil_wape": 0.09085152806770733,
+          "liquid_wape": 0.08103792847456981,
+          "pressure_rmse_bar": 18.192654849618023
+        },
+        "60": {
+          "oil_wape": 0.07586963429855832,
+          "liquid_wape": 0.059845435299675835,
+          "pressure_rmse_bar": 12.824941056140707
+        },
+        "120": {
+          "oil_wape": 0.06733419909595044,
+          "liquid_wape": 0.0498093892899781,
+          "pressure_rmse_bar": 13.030859114145114
+        },
+        "224": {
+          "oil_wape": 0.059612447397437734,
+          "liquid_wape": 0.03859259050852778,
+          "pressure_rmse_bar": 9.957456791310156
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-004",
+      "name": "fixed_origin_direct",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": false,
+      "seconds": 0.6337333396077156,
+      "oil_wape": 0.9951636891080384,
+      "liquid_wape": 0.42355093892102513,
+      "pressure_rmse_bar": 71.2242417659048,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.10098070946122283,
+          "liquid_wape": 0.09543193313031335,
+          "pressure_rmse_bar": 30.45952096383407
+        },
+        "23": {
+          "oil_wape": 0.1981348051674928,
+          "liquid_wape": 0.17083198321789594,
+          "pressure_rmse_bar": 37.15437964007693
+        },
+        "60": {
+          "oil_wape": 0.36265388833004686,
+          "liquid_wape": 0.24995899508988723,
+          "pressure_rmse_bar": 43.485012044949116
+        },
+        "120": {
+          "oil_wape": 0.5935513195675736,
+          "liquid_wape": 0.33664212946414246,
+          "pressure_rmse_bar": 58.37867925766541
+        },
+        "224": {
+          "oil_wape": 0.9951636891080384,
+          "liquid_wape": 0.42355093892102513,
+          "pressure_rmse_bar": 71.2242417659048
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-004",
+      "name": "observed_update_block_6",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": true,
+      "seconds": 14.762783333659172,
+      "oil_wape": 0.05510156708496144,
+      "liquid_wape": 0.03252199051905259,
+      "pressure_rmse_bar": 55.73823529224082,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09840355049010713,
+          "liquid_wape": 0.09351312408624063,
+          "pressure_rmse_bar": 30.65497929322074
+        },
+        "23": {
+          "oil_wape": 0.0890150381245873,
+          "liquid_wape": 0.07893996155157823,
+          "pressure_rmse_bar": 18.274532641688374
+        },
+        "60": {
+          "oil_wape": 0.07235012681040291,
+          "liquid_wape": 0.055757412059902096,
+          "pressure_rmse_bar": 106.64221450156347
+        },
+        "120": {
+          "oil_wape": 0.06334035085263746,
+          "liquid_wape": 0.04513298502058076,
+          "pressure_rmse_bar": 76.06063295546572
+        },
+        "224": {
+          "oil_wape": 0.05510156708496144,
+          "liquid_wape": 0.03252199051905259,
+          "pressure_rmse_bar": 55.73823529224082
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-005",
+      "name": "fixed_origin_direct",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": false,
+      "seconds": 0.5415287651121616,
+      "oil_wape": 0.9515937945374167,
+      "liquid_wape": 0.4292752888975517,
+      "pressure_rmse_bar": 70.39637199276544,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09675374785012253,
+          "liquid_wape": 0.09145060876419578,
+          "pressure_rmse_bar": 30.447458146949902
+        },
+        "23": {
+          "oil_wape": 0.19316866121574122,
+          "liquid_wape": 0.16747094714642882,
+          "pressure_rmse_bar": 37.14985002097537
+        },
+        "60": {
+          "oil_wape": 0.3586301696258341,
+          "liquid_wape": 0.252377699631029,
+          "pressure_rmse_bar": 43.621548868936856
+        },
+        "120": {
+          "oil_wape": 0.5787254348660603,
+          "liquid_wape": 0.3408335076641707,
+          "pressure_rmse_bar": 58.31803244416907
+        },
+        "224": {
+          "oil_wape": 0.9515937945374167,
+          "liquid_wape": 0.4292752888975517,
+          "pressure_rmse_bar": 70.39637199276544
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-005",
+      "name": "observed_update_block_6",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": true,
+      "seconds": 13.083244882524014,
+      "oil_wape": 0.059894767256214745,
+      "liquid_wape": 0.03880073479267884,
+      "pressure_rmse_bar": 10.106742582767804,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09483989128165041,
+          "liquid_wape": 0.08994133516682547,
+          "pressure_rmse_bar": 30.58582497772716
+        },
+        "23": {
+          "oil_wape": 0.09149523765300098,
+          "liquid_wape": 0.08129862616446618,
+          "pressure_rmse_bar": 18.19676547536283
+        },
+        "60": {
+          "oil_wape": 0.0768675001609233,
+          "liquid_wape": 0.06077477286542582,
+          "pressure_rmse_bar": 12.96204784877469
+        },
+        "120": {
+          "oil_wape": 0.06828826673067656,
+          "liquid_wape": 0.05028306501522616,
+          "pressure_rmse_bar": 13.24307762543958
+        },
+        "224": {
+          "oil_wape": 0.059894767256214745,
+          "liquid_wape": 0.03880073479267884,
+          "pressure_rmse_bar": 10.106742582767804
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-005",
+      "name": "fixed_origin_direct",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": false,
+      "seconds": 0.6238806396722794,
+      "oil_wape": 0.9967946279464187,
+      "liquid_wape": 0.4242187809254647,
+      "pressure_rmse_bar": 71.46947393274911,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09915225154195438,
+          "liquid_wape": 0.09362220146162474,
+          "pressure_rmse_bar": 30.43399038597946
+        },
+        "23": {
+          "oil_wape": 0.19641453560181132,
+          "liquid_wape": 0.17022339590364294,
+          "pressure_rmse_bar": 37.17617548177789
+        },
+        "60": {
+          "oil_wape": 0.36309395288110763,
+          "liquid_wape": 0.25257717733377594,
+          "pressure_rmse_bar": 43.69573737689166
+        },
+        "120": {
+          "oil_wape": 0.5929154315956359,
+          "liquid_wape": 0.3373710623870669,
+          "pressure_rmse_bar": 58.50861975731682
+        },
+        "224": {
+          "oil_wape": 0.9967946279464187,
+          "liquid_wape": 0.4242187809254647,
+          "pressure_rmse_bar": 71.46947393274911
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-005",
+      "name": "observed_update_block_6",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": true,
+      "seconds": 14.848693497478962,
+      "oil_wape": 0.05460435838951852,
+      "liquid_wape": 0.032354435789860365,
+      "pressure_rmse_bar": 52.40847411973433,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09575701787087851,
+          "liquid_wape": 0.09084352442965425,
+          "pressure_rmse_bar": 30.74052257766988
+        },
+        "23": {
+          "oil_wape": 0.08848259568631471,
+          "liquid_wape": 0.0784151923863576,
+          "pressure_rmse_bar": 18.320621667709144
+        },
+        "60": {
+          "oil_wape": 0.07262490506567343,
+          "liquid_wape": 0.056169567526981254,
+          "pressure_rmse_bar": 100.15267209305502
+        },
+        "120": {
+          "oil_wape": 0.06345626934655667,
+          "liquid_wape": 0.04503149566871118,
+          "pressure_rmse_bar": 71.50460139872693
+        },
+        "224": {
+          "oil_wape": 0.05460435838951852,
+          "liquid_wape": 0.032354435789860365,
+          "pressure_rmse_bar": 52.40847411973433
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-006",
+      "name": "fixed_origin_direct",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": false,
+      "seconds": 0.5393228605389595,
+      "oil_wape": 0.9473566719467607,
+      "liquid_wape": 0.4301770870257454,
+      "pressure_rmse_bar": 70.34616763060903,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09559820204007405,
+          "liquid_wape": 0.09157516146635108,
+          "pressure_rmse_bar": 30.705667751195573
+        },
+        "23": {
+          "oil_wape": 0.1932510080826827,
+          "liquid_wape": 0.16713297942346442,
+          "pressure_rmse_bar": 37.307194392779394
+        },
+        "60": {
+          "oil_wape": 0.359494886878477,
+          "liquid_wape": 0.2532723482625982,
+          "pressure_rmse_bar": 43.566460909484945
+        },
+        "120": {
+          "oil_wape": 0.5778501549978088,
+          "liquid_wape": 0.3417986175543941,
+          "pressure_rmse_bar": 58.23822344470526
+        },
+        "224": {
+          "oil_wape": 0.9473566719467607,
+          "liquid_wape": 0.4301770870257454,
+          "pressure_rmse_bar": 70.34616763060903
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-006",
+      "name": "observed_update_block_6",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": true,
+      "seconds": 13.149236503988504,
+      "oil_wape": 0.05894685652649985,
+      "liquid_wape": 0.03851857727615945,
+      "pressure_rmse_bar": 10.159636122509555,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09427980771453078,
+          "liquid_wape": 0.09027636148020231,
+          "pressure_rmse_bar": 30.90244299757344
+        },
+        "23": {
+          "oil_wape": 0.08965786867361109,
+          "liquid_wape": 0.07971451757725452,
+          "pressure_rmse_bar": 18.427716331624545
+        },
+        "60": {
+          "oil_wape": 0.07482884973976614,
+          "liquid_wape": 0.05941481858124444,
+          "pressure_rmse_bar": 13.062892609347019
+        },
+        "120": {
+          "oil_wape": 0.06694752509850625,
+          "liquid_wape": 0.049221340834611646,
+          "pressure_rmse_bar": 13.327298641668312
+        },
+        "224": {
+          "oil_wape": 0.05894685652649985,
+          "liquid_wape": 0.03851857727615945,
+          "pressure_rmse_bar": 10.159636122509555
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-006",
+      "name": "fixed_origin_direct",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": false,
+      "seconds": 0.63489980250597,
+      "oil_wape": 0.989942808386407,
+      "liquid_wape": 0.4249409474125097,
+      "pressure_rmse_bar": 71.1653654094229,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09831717441734358,
+          "liquid_wape": 0.0939024437913198,
+          "pressure_rmse_bar": 30.69531814361687
+        },
+        "23": {
+          "oil_wape": 0.19723945999704687,
+          "liquid_wape": 0.17026416305775519,
+          "pressure_rmse_bar": 37.316511123948004
+        },
+        "60": {
+          "oil_wape": 0.3644121594891043,
+          "liquid_wape": 0.25317047120735237,
+          "pressure_rmse_bar": 43.61000274074533
+        },
+        "120": {
+          "oil_wape": 0.5914124541166658,
+          "liquid_wape": 0.3382345205389688,
+          "pressure_rmse_bar": 58.35823597856611
+        },
+        "224": {
+          "oil_wape": 0.989942808386407,
+          "liquid_wape": 0.4249409474125097,
+          "pressure_rmse_bar": 71.1653654094229
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-006",
+      "name": "observed_update_block_6",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": true,
+      "seconds": 14.741481080651283,
+      "oil_wape": 0.05444472960137992,
+      "liquid_wape": 0.032526914247475905,
+      "pressure_rmse_bar": 33.56539159133304,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09526504985559141,
+          "liquid_wape": 0.09133636575270715,
+          "pressure_rmse_bar": 31.10177499661023
+        },
+        "23": {
+          "oil_wape": 0.08917917907637432,
+          "liquid_wape": 0.0794750239274581,
+          "pressure_rmse_bar": 18.528982026347784
+        },
+        "60": {
+          "oil_wape": 0.07176892995699309,
+          "liquid_wape": 0.05615297539506258,
+          "pressure_rmse_bar": 61.95483489988577
+        },
+        "120": {
+          "oil_wape": 0.06292321914310367,
+          "liquid_wape": 0.04481962143091097,
+          "pressure_rmse_bar": 45.706169937229134
+        },
+        "224": {
+          "oil_wape": 0.05444472960137992,
+          "liquid_wape": 0.032526914247475905,
+          "pressure_rmse_bar": 33.56539159133304
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-007",
+      "name": "fixed_origin_direct",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": false,
+      "seconds": 0.5651205070316792,
+      "oil_wape": 0.937447183583211,
+      "liquid_wape": 0.4325325612033529,
+      "pressure_rmse_bar": 70.23030297757114,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09613998355434414,
+          "liquid_wape": 0.09177938702761322,
+          "pressure_rmse_bar": 31.685446519780736
+        },
+        "23": {
+          "oil_wape": 0.1941861610282921,
+          "liquid_wape": 0.16880876543733384,
+          "pressure_rmse_bar": 37.49683532839958
+        },
+        "60": {
+          "oil_wape": 0.35672848216536057,
+          "liquid_wape": 0.2524476818690103,
+          "pressure_rmse_bar": 43.6885168442035
+        },
+        "120": {
+          "oil_wape": 0.5737002756763275,
+          "liquid_wape": 0.3434712365680202,
+          "pressure_rmse_bar": 58.294864980826404
+        },
+        "224": {
+          "oil_wape": 0.937447183583211,
+          "liquid_wape": 0.4325325612033529,
+          "pressure_rmse_bar": 70.23030297757114
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-007",
+      "name": "observed_update_block_6",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": true,
+      "seconds": 13.039591025561094,
+      "oil_wape": 0.05917685123675397,
+      "liquid_wape": 0.03860399042282412,
+      "pressure_rmse_bar": 10.020179635704478,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09391922078602073,
+          "liquid_wape": 0.09018056998412333,
+          "pressure_rmse_bar": 31.878834723485763
+        },
+        "23": {
+          "oil_wape": 0.08969594669249047,
+          "liquid_wape": 0.07976712844271283,
+          "pressure_rmse_bar": 18.856244891900808
+        },
+        "60": {
+          "oil_wape": 0.0766532368187583,
+          "liquid_wape": 0.06050821440136264,
+          "pressure_rmse_bar": 13.165670338974381
+        },
+        "120": {
+          "oil_wape": 0.06709192592788003,
+          "liquid_wape": 0.049743654400496766,
+          "pressure_rmse_bar": 13.15296028748977
+        },
+        "224": {
+          "oil_wape": 0.05917685123675397,
+          "liquid_wape": 0.03860399042282412,
+          "pressure_rmse_bar": 10.020179635704478
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-007",
+      "name": "fixed_origin_direct",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": false,
+      "seconds": 0.6447268314659595,
+      "oil_wape": 0.9809502763928385,
+      "liquid_wape": 0.4255820841151669,
+      "pressure_rmse_bar": 71.31188941350659,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09895054536117047,
+          "liquid_wape": 0.09409578453707804,
+          "pressure_rmse_bar": 31.67066958674089
+        },
+        "23": {
+          "oil_wape": 0.19705515134339358,
+          "liquid_wape": 0.1712724956129247,
+          "pressure_rmse_bar": 37.51872568682956
+        },
+        "60": {
+          "oil_wape": 0.360502834649306,
+          "liquid_wape": 0.2520113278040293,
+          "pressure_rmse_bar": 43.76706275394617
+        },
+        "120": {
+          "oil_wape": 0.5871630015358261,
+          "liquid_wape": 0.33875120189206165,
+          "pressure_rmse_bar": 58.49149600749646
+        },
+        "224": {
+          "oil_wape": 0.9809502763928385,
+          "liquid_wape": 0.4255820841151669,
+          "pressure_rmse_bar": 71.31188941350659
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-007",
+      "name": "observed_update_block_6",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": true,
+      "seconds": 14.709071353077888,
+      "oil_wape": 0.05500440623454254,
+      "liquid_wape": 0.03281036893438657,
+      "pressure_rmse_bar": 14.552424447391296,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09496981737612127,
+          "liquid_wape": 0.09138038636898807,
+          "pressure_rmse_bar": 32.41774136484734
+        },
+        "23": {
+          "oil_wape": 0.08986768749135102,
+          "liquid_wape": 0.07941195135333003,
+          "pressure_rmse_bar": 19.096270951604545
+        },
+        "60": {
+          "oil_wape": 0.07426591108583037,
+          "liquid_wape": 0.05733222612514725,
+          "pressure_rmse_bar": 22.42937812047837
+        },
+        "120": {
+          "oil_wape": 0.0634952255981712,
+          "liquid_wape": 0.04525530598059387,
+          "pressure_rmse_bar": 19.543812411475617
+        },
+        "224": {
+          "oil_wape": 0.05500440623454254,
+          "liquid_wape": 0.03281036893438657,
+          "pressure_rmse_bar": 14.552424447391296
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-008",
+      "name": "fixed_origin_direct",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": false,
+      "seconds": 0.5416482947766781,
+      "oil_wape": 0.9517814181369414,
+      "liquid_wape": 0.43074834455463357,
+      "pressure_rmse_bar": 70.42549076266205,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09417166609091003,
+          "liquid_wape": 0.0890056161433699,
+          "pressure_rmse_bar": 30.636833449859004
+        },
+        "23": {
+          "oil_wape": 0.19069435341334948,
+          "liquid_wape": 0.1652366479563369,
+          "pressure_rmse_bar": 37.24141148418959
+        },
+        "60": {
+          "oil_wape": 0.3580878441400909,
+          "liquid_wape": 0.250966671838647,
+          "pressure_rmse_bar": 43.661675502285185
+        },
+        "120": {
+          "oil_wape": 0.5796555968236019,
+          "liquid_wape": 0.3415961354493361,
+          "pressure_rmse_bar": 58.23289255489762
+        },
+        "224": {
+          "oil_wape": 0.9517814181369414,
+          "liquid_wape": 0.43074834455463357,
+          "pressure_rmse_bar": 70.42549076266205
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-008",
+      "name": "observed_update_block_6",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": true,
+      "seconds": 13.202478617429733,
+      "oil_wape": 0.05868444609132499,
+      "liquid_wape": 0.03778111341494928,
+      "pressure_rmse_bar": 10.304893493120781,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09251180537047489,
+          "liquid_wape": 0.08786824282571139,
+          "pressure_rmse_bar": 30.788955866986456
+        },
+        "23": {
+          "oil_wape": 0.08713271108003247,
+          "liquid_wape": 0.07735841948208694,
+          "pressure_rmse_bar": 18.36766749864232
+        },
+        "60": {
+          "oil_wape": 0.07431775888962654,
+          "liquid_wape": 0.05910307456501386,
+          "pressure_rmse_bar": 12.891249482403625
+        },
+        "120": {
+          "oil_wape": 0.0659202190645729,
+          "liquid_wape": 0.04871914825215292,
+          "pressure_rmse_bar": 13.55253275058206
+        },
+        "224": {
+          "oil_wape": 0.05868444609132499,
+          "liquid_wape": 0.03778111341494928,
+          "pressure_rmse_bar": 10.304893493120781
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-008",
+      "name": "fixed_origin_direct",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": false,
+      "seconds": 0.6256603896617889,
+      "oil_wape": 0.9952572598242189,
+      "liquid_wape": 0.4253997716655571,
+      "pressure_rmse_bar": 71.40395824163618,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09687728265843505,
+          "liquid_wape": 0.09125640264037485,
+          "pressure_rmse_bar": 30.617996060665458
+        },
+        "23": {
+          "oil_wape": 0.19401464216498004,
+          "liquid_wape": 0.16791005860662087,
+          "pressure_rmse_bar": 37.244071155080015
+        },
+        "60": {
+          "oil_wape": 0.36186889747636447,
+          "liquid_wape": 0.25069043579797307,
+          "pressure_rmse_bar": 43.70616673441954
+        },
+        "120": {
+          "oil_wape": 0.5930194848659408,
+          "liquid_wape": 0.337535782746433,
+          "pressure_rmse_bar": 58.4034378185515
+        },
+        "224": {
+          "oil_wape": 0.9952572598242189,
+          "liquid_wape": 0.4253997716655571,
+          "pressure_rmse_bar": 71.40395824163618
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-008",
+      "name": "observed_update_block_6",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": true,
+      "seconds": 14.845426768064499,
+      "oil_wape": 0.05386477627293921,
+      "liquid_wape": 0.031644363248828605,
+      "pressure_rmse_bar": 26.25702150627831,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09414907063591293,
+          "liquid_wape": 0.08952761457271417,
+          "pressure_rmse_bar": 30.9229020194574
+        },
+        "23": {
+          "oil_wape": 0.08636523666252106,
+          "liquid_wape": 0.07615845655590077,
+          "pressure_rmse_bar": 18.432050789839224
+        },
+        "60": {
+          "oil_wape": 0.07039490364896926,
+          "liquid_wape": 0.05451453917593047,
+          "pressure_rmse_bar": 45.72104743847122
+        },
+        "120": {
+          "oil_wape": 0.06142044644678611,
+          "liquid_wape": 0.04371878989478024,
+          "pressure_rmse_bar": 35.685073008407585
+        },
+        "224": {
+          "oil_wape": 0.05386477627293921,
+          "liquid_wape": 0.031644363248828605,
+          "pressure_rmse_bar": 26.25702150627831
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-009",
+      "name": "fixed_origin_direct",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": false,
+      "seconds": 0.5446446388959885,
+      "oil_wape": 0.9527494075958093,
+      "liquid_wape": 0.42835705427595144,
+      "pressure_rmse_bar": 70.42990483294115,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09711409343058988,
+          "liquid_wape": 0.0922582892684326,
+          "pressure_rmse_bar": 30.502746610530227
+        },
+        "23": {
+          "oil_wape": 0.1927593764882401,
+          "liquid_wape": 0.16677232592088412,
+          "pressure_rmse_bar": 37.12589517176874
+        },
+        "60": {
+          "oil_wape": 0.35704770859254553,
+          "liquid_wape": 0.2508292286955794,
+          "pressure_rmse_bar": 43.51287622143825
+        },
+        "120": {
+          "oil_wape": 0.5772611545105231,
+          "liquid_wape": 0.3402422499267795,
+          "pressure_rmse_bar": 58.20013712433272
+        },
+        "224": {
+          "oil_wape": 0.9527494075958093,
+          "liquid_wape": 0.42835705427595144,
+          "pressure_rmse_bar": 70.42990483294115
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-009",
+      "name": "observed_update_block_6",
+      "bhp_channel": false,
+      "control_channels": 412,
+      "new_observations_between_blocks": true,
+      "seconds": 13.157407999038696,
+      "oil_wape": 0.059757074748347676,
+      "liquid_wape": 0.038949395455535475,
+      "pressure_rmse_bar": 10.035037011535477,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09419762254799985,
+          "liquid_wape": 0.09003392102094482,
+          "pressure_rmse_bar": 30.606915438974294
+        },
+        "23": {
+          "oil_wape": 0.09222136158622413,
+          "liquid_wape": 0.08147438690318913,
+          "pressure_rmse_bar": 18.27883024266888
+        },
+        "60": {
+          "oil_wape": 0.07684416635555892,
+          "liquid_wape": 0.05989739784661273,
+          "pressure_rmse_bar": 12.908934218654018
+        },
+        "120": {
+          "oil_wape": 0.0673662120866349,
+          "liquid_wape": 0.0498096365505679,
+          "pressure_rmse_bar": 13.13792442166555
+        },
+        "224": {
+          "oil_wape": 0.059757074748347676,
+          "liquid_wape": 0.038949395455535475,
+          "pressure_rmse_bar": 10.035037011535477
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-009",
+      "name": "fixed_origin_direct",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": false,
+      "seconds": 0.6220978647470474,
+      "oil_wape": 0.9943314329561496,
+      "liquid_wape": 0.4236924006555935,
+      "pressure_rmse_bar": 71.41587793537894,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09995569255498182,
+          "liquid_wape": 0.094727259557018,
+          "pressure_rmse_bar": 30.484576527737612
+        },
+        "23": {
+          "oil_wape": 0.196179411827275,
+          "liquid_wape": 0.16976614601253084,
+          "pressure_rmse_bar": 37.135163500267005
+        },
+        "60": {
+          "oil_wape": 0.3608892098495265,
+          "liquid_wape": 0.25075127849390605,
+          "pressure_rmse_bar": 43.574858120623645
+        },
+        "120": {
+          "oil_wape": 0.5911574821883459,
+          "liquid_wape": 0.336675477916231,
+          "pressure_rmse_bar": 58.37463442781075
+        },
+        "224": {
+          "oil_wape": 0.9943314329561496,
+          "liquid_wape": 0.4236924006555935,
+          "pressure_rmse_bar": 71.41587793537894
+        }
+      }
+    },
+    {
+      "scenario_id": "perturbation-009",
+      "name": "observed_update_block_6",
+      "bhp_channel": true,
+      "control_channels": 515,
+      "new_observations_between_blocks": true,
+      "seconds": 14.826602667570114,
+      "oil_wape": 0.055130099072729775,
+      "liquid_wape": 0.03308778704922483,
+      "pressure_rmse_bar": 51.183104844915945,
+      "prefix_metrics": {
+        "6": {
+          "oil_wape": 0.09504832283992733,
+          "liquid_wape": 0.09106143502840325,
+          "pressure_rmse_bar": 30.73325903175124
+        },
+        "23": {
+          "oil_wape": 0.09015810038350576,
+          "liquid_wape": 0.08005646815072945,
+          "pressure_rmse_bar": 18.386823295115096
+        },
+        "60": {
+          "oil_wape": 0.07258009179321413,
+          "liquid_wape": 0.05562445924198158,
+          "pressure_rmse_bar": 94.13255506708538
+        },
+        "120": {
+          "oil_wape": 0.06327249097772095,
+          "liquid_wape": 0.04542416334292502,
+          "pressure_rmse_bar": 69.82705347792862
+        },
+        "224": {
+          "oil_wape": 0.055130099072729775,
+          "liquid_wape": 0.03308778704922483,
+          "pressure_rmse_bar": 51.183104844915945
+        }
+      }
+    }
+  ],
+  "seconds_total": 396.7356804087758,
+  "complete": true
+}
