@@ -200,12 +200,19 @@ def main():
         if sha256(args.initial_head.read_bytes()).hexdigest() != args.initial_head_sha256:
             raise ValueError('initial output-head hash mismatch')
         initial = torch.load(args.initial_head, map_location='cuda', weights_only=True)
+        initial_weights = initial.get('output_head', initial)
         if connectivity is not None:
-            torch.testing.assert_close(initial['features'], model.output_head.features, rtol=0, atol=0)
-        model.output_head.load_state_dict(initial)
+            torch.testing.assert_close(initial_weights['features'], model.output_head.features, rtol=0, atol=0)
+        model.output_head.load_state_dict(initial_weights)
     if args.condition_last_layer:
         from timesfm_geology import StaticConditionedLayer
         model.transformer_stack.layers[-1] = StaticConditionedLayer(model.transformer_stack.layers[-1], model.output_head)
+    if args.initial_head and 'last_layer' in initial:
+        if bool(initial.get('static_last_layer', False)) != args.condition_last_layer:
+            raise ValueError('initial last-layer architecture differs from requested conditioning')
+        if args.condition_last_layer:
+            torch.testing.assert_close(initial['last_layer']['features'], model.transformer_stack.layers[-1].features, rtol=0, atol=0)
+        model.transformer_stack.layers[-1].load_state_dict(initial['last_layer'])
     model.requires_grad_(False)
     model.output_head.requires_grad_(True)
     if args.unfreeze_last_layer:
