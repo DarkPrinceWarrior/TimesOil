@@ -41,9 +41,10 @@ class WellConnectivity:
         """Accept one field or flattened complete fields; never mix months."""
         state, action = np.asarray(state, float), np.asarray(action, float)
         count = len(self.well_ids)
-        if state.shape != action.shape or state.ndim != 2 or state.shape[1] != 3 or len(state) % count:
+        if (state.ndim != 2 or state.shape[1] != 3 or action.ndim != 2
+                or action.shape[0] != len(state) or action.shape[1] not in (3, 4) or len(state) % count):
             raise ValueError("interwell inputs require complete ordered fields")
-        fields = action.reshape(-1, count, 3)
+        fields = action[..., :3].reshape(-1, count, 3)
         producers = ((fields[..., 1] != 2) & (fields[..., 2] > 0.5)).astype(float)
         injection = np.where((fields[..., 1] == 2) & (fields[..., 2] > 0.5), fields[..., 0], 0)
         denominator = producers @ self.weights

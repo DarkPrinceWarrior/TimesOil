@@ -9,7 +9,7 @@ import math
 import os
 import re
 import shlex
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta
 from hashlib import sha256
 from itertools import chain
@@ -86,6 +86,7 @@ class ScheduledControl:
     target: str
     value: float
     status: int
+    bhp_limit: float = 0.0
 
 
 def _sha256_bytes(value: bytes) -> str:
@@ -807,7 +808,12 @@ def _scheduled_control(record: Sequence[str], keyword: str) -> tuple[str, Schedu
         control_value = _number(token, f"{keyword} {well} {target}")
         if control_value < 0:
             raise OpmChddError(f"negative {keyword} control value for {well!r}")
-    return well, ScheduledControl(target, control_value, int(normalized_status == "OPEN"))
+    bhp_index = 8 if keyword == "WCONPROD" else 6
+    bhp_token = values[bhp_index] if len(values) > bhp_index else "*"
+    bhp = 0.0 if bhp_token == "*" else _number(bhp_token, f"{keyword} {well} BHP")
+    if bhp < 0:
+        raise OpmChddError(f"negative {keyword} BHP for {well!r}")
+    return well, ScheduledControl(target, control_value, int(normalized_status == "OPEN"), bhp)
 
 
 def _scheduled_controls(
@@ -833,7 +839,7 @@ def _scheduled_controls(
         well: [] for well in wells
     }
     commands = re.finditer(
-        r"(?mi)^\s*(DATES|TSTEP|WCONPROD|WCONINJE)\b", schedule
+        r"(?mi)^\s*(DATES|TSTEP|WCONPROD|WCONINJE|WELTARG)\b", schedule
     )
     for match in commands:
         keyword = match.group(1).upper()
@@ -854,6 +860,23 @@ def _scheduled_controls(
                 current_date += timedelta(days=int(days))
             continue
         for record in _records_after(schedule, match, None):
+            if keyword == "WELTARG":
+                values = _expanded_record(record, keyword)
+                if len(values) != 3 or values[0] not in events or not events[values[0]]:
+                    raise OpmChddError("WELTARG requires an existing explicit well and one target")
+                well, mode, token = values
+                prior = events[well][-1][1]
+                value = _number(token, f"WELTARG {well} {mode}")
+                if value < 0:
+                    raise OpmChddError("WELTARG value must be non-negative")
+                if mode.upper() == "BHP":
+                    control = replace(prior, bhp_limit=value)
+                elif mode.upper() == prior.target:
+                    control = replace(prior, value=value)
+                else:
+                    raise OpmChddError(f"unsupported WELTARG mode {mode!r} for {well!r}")
+                events[well].append((current_date, control))
+                continue
             well, control = _scheduled_control(record, keyword)
             if well in events:
                 events[well].append((current_date, control))
@@ -911,12 +934,15 @@ def export_opm_chdd(
     deck_dir: str | Path | None = None,
     density_map: str | Path | None = None,
     unit_system: str | None = None,
+    include_bhp: bool = False,
     _summary_run: Any = None,
 ) -> dict[str, Any]:
     """Validate, convert and write both canonical CSV contracts plus manifest."""
 
     if not scenario_id.strip() or not source_model.strip():
         raise OpmChddError("scenario_id and source_model are required")
+    if type(include_bhp) is not bool:
+        raise OpmChddError("include_bhp must be boolean")
     run_manifest = Path(opm_run_manifest).resolve()
     if not run_manifest.is_file() or run_manifest.is_symlink():
         raise OpmChddError(f"OPM run manifest is not a regular file: {run_manifest}")
@@ -1170,11 +1196,13 @@ def export_opm_chdd(
                     "control_value": _clean_zero(control.value * volume_factor),
                     "control_target": control.target,
                     "status": control.status,
+                    **({"bhp_limit": _clean_zero(control.bhp_limit * pressure_factor)} if include_bhp else {}),
                 }
             )
 
     chdd_bytes = _csv_bytes(CHDD_FIELDS, chdd_rows)
-    trajectory_bytes = _csv_bytes(TRACK2_FIELDS, trajectory_rows)
+    track2_fields = (*TRACK2_FIELDS, "bhp_limit") if include_bhp else TRACK2_FIELDS
+    trajectory_bytes = _csv_bytes(track2_fields, trajectory_rows)
     manifest: dict[str, Any] = {
         "schema_version": 1,
         "generator": "timesoil.aios.opm_chdd",
@@ -1196,7 +1224,7 @@ def export_opm_chdd(
         },
         "contracts": {
             "chdd_fields": list(CHDD_FIELDS),
-            "track2_fields": list(TRACK2_FIELDS),
+            "track2_fields": list(track2_fields),
         },
         "source": {
             "summary_csv": Path(

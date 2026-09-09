@@ -42,8 +42,13 @@ class ScenarioGeneratorConfig:
     monthly_liquid_rate_cap: float | None = None
     perturb_injection: bool = True
     perturb_production: bool = True
+    bhp_perturbation_fraction: float = 0.0
 
     def __post_init__(self) -> None:
+        if (isinstance(self.bhp_perturbation_fraction, bool)
+                or not isfinite(self.bhp_perturbation_fraction)
+                or not 0 <= self.bhp_perturbation_fraction < 1):
+            raise ScenarioGenerationError("bhp_perturbation_fraction must be in [0, 1)")
         if isinstance(self.scenario_count, bool) or self.scenario_count < 4:
             raise ScenarioGenerationError("scenario_count must be an integer >= 4")
         if isinstance(self.seed, bool) or not isinstance(self.seed, int):
@@ -154,6 +159,10 @@ def generate_control_scenarios(
     settings = config or ScenarioGeneratorConfig()
     actions = _validate_trajectory(baseline)
     _validate_generation_bounds(actions, settings)
+    if settings.bhp_perturbation_fraction and any(
+        a.status is WellStatus.OPEN and a.bhp_limit is None for a in actions
+    ):
+        raise ScenarioGenerationError("BHP perturbations require explicit source bounds on every open well")
 
     artifacts = [_artifact("baseline", actions, settings, 0)]
     content_hashes = {artifacts[0].sha256}
@@ -318,7 +327,14 @@ def _perturb(
             for index in lrat:
                 values[index] *= factor
 
-    return tuple(replace(action, value=values[index]) for index, action in enumerate(baseline))
+    result = []
+    for index, action in enumerate(baseline):
+        bhp = action.bhp_limit
+        if bhp is not None and action.status is WellStatus.OPEN and config.bhp_perturbation_fraction:
+            direction = 1 if action.role is WellRole.PRODUCER else -1
+            bhp *= 1 + direction * float(rng.uniform(0, config.bhp_perturbation_fraction))
+        result.append(replace(action, value=values[index], bhp_limit=bhp))
+    return tuple(result)
 
 
 def _canonical_actions(actions: tuple[ControlAction, ...]) -> bytes:
@@ -359,4 +375,5 @@ def _artifact(
         ("monthly_liquid_rate_cap", config.monthly_liquid_rate_cap),
     ) + (() if config.perturb_injection else (("perturb_injection", False),))
     parameters += () if config.perturb_production else (("perturb_production", False),)
+    parameters += (("bhp_perturbation_fraction", config.bhp_perturbation_fraction),) if config.bhp_perturbation_fraction else ()
     return ScenarioArtifact(scenario_id, actions, _actions_sha256(actions), parameters)

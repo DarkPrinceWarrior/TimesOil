@@ -506,6 +506,7 @@ def _run_batch(args: argparse.Namespace) -> Path:
             summary_extraction_manifest=extraction,
             deck_dir=result.deck_path.parent,
             unit_system=prepared.unit_system,
+            **({"include_bhp": True} if getattr(args, "include_bhp", False) else {}),
         )
         chdd_sha = _sha256_file(chdd)
         if scenario.scenario_id == "baseline" and chdd_sha != baseline_chdd_sha:
@@ -596,6 +597,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--schedule-relative-path", required=True)
     parser.add_argument("--deck", type=Path)
     parser.add_argument("--timeout-seconds", type=float, default=3600.0)
+    parser.add_argument("--include-bhp", action="store_true", help="Export effective BHP bounds for pressure-conditioned training")
     parser.add_argument(
         "--parsing-strictness", choices=("strict", "low"), default="strict"
     )
