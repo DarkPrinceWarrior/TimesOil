@@ -741,6 +741,9 @@ def execute(
         next_wells = result.trajectory.next_state.wells
         context = {
             "track": 1, "phase": "terminal_month_review", "surrogate_used": False,
+            "approval_scope": "validity of this completed physical month and its full OPM planning calculation",
+            "improvement_vs_original_baseline_claimed": False,
+            "autonomous_deployment_requested": False,
             "source_sha256": config.source_sha256,
             "trajectory": asdict(result.trajectory), "economics": asdict(result.economics),
             "planning_economics": None if result.planning_economics is None else asdict(result.planning_economics),
@@ -761,6 +764,9 @@ def execute(
         }
         if forecast:
             context.update(surrogate_used=True, forecast_provenance=forecast.provenance,
+                surrogate_used_only_to_propose_hypotheses=True,
+                candidate_selection_metric='official full remaining OPM CHDD',
+                forecast_diagnostics=forecast.diagnostics(result.trajectory.actions),
                 claim_limits='Google assisted the proposal; the selected full remaining trajectory, constraints and official CHDD were verified by OPM. Uncalibrated forecast uncertainty prevents autonomous surrogate certification, not an audit of completed physical calculations. No global optimality claim.')
         # Dates belong to the typed simulator result, not to model-generated data.
         context = json.loads(json.dumps(context, default=str, allow_nan=False))

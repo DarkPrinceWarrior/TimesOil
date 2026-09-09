@@ -78,6 +78,7 @@ class TimesFMPlanning:
         self.origin = origin
         self.initial_origin = origin
         self.last_predictions = {}
+        self.last_diagnostics = {}
         self.observed_errors = []
         os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
         import torch
@@ -201,7 +202,16 @@ class TimesFMPlanning:
         one_month = prediction[0] if len(months) == 1 else self.forecast_arrays(self.states, self.actions, future[:1])[0]
         ood = np.any((future < self.control_min - 1e-6) | (future > self.control_max + 1e-6), axis=-1)
         key = sha256(future.tobytes()).hexdigest()
-        self.last_predictions[sha256(future[0].tobytes()).hexdigest()] = one_month.copy()
+        first_month_key = sha256(future[0].tobytes()).hexdigest()
+        self.last_predictions[first_month_key] = one_month.copy()
+        self.last_diagnostics[first_month_key] = {
+            'model': 'Google TimesFM 3', 'revision': MODEL_REVISION,
+            'training': 'Official pretrained foundation model; task-specific head tuning was not applied to Model Y.',
+            'historical_validation_and_one_month_uq': self.calibration,
+            'full_remaining_horizon_uq_calibrated': False,
+            'ood_control_well_months': int(ood.sum()),
+            'ood_wells': [w for i, w in enumerate(self.wells) if ood[:, i].any()],
+            'scope': 'Forecast proposed a hypothesis; physical OPM and official full-period CHDD select the control. No autonomous surrogate certification.'}
         days = np.array([pd.Timestamp(d).days_in_month for d in months])
         volumes = (prediction[..., :2] * days[:, None, None]).sum(axis=0)
         return {'model_revision': MODEL_REVISION, 'observation_cutoff': str(state.month),
@@ -220,6 +230,13 @@ class TimesFMPlanning:
                 'scope': 'One-step historical calibration; full-horizon forecast has no calibrated interval.'},
             'observed_month_errors': self.observed_errors[-3:],
             'decision_rule': 'Forecast supports a hypothesis; select only using full remaining OPM and official CHDD.'}
+
+    def diagnostics(self, controls):
+        _, values = self.controls_array(controls)
+        key = sha256(values[0].tobytes()).hexdigest()
+        if key not in self.last_diagnostics:
+            raise ValueError('selected controls have no forecast diagnostic record')
+        return self.last_diagnostics[key]
 
     def committed_model_state(self, state):
         path, _ = self.backend._parse_restart_ref(state.restart_ref)
@@ -260,6 +277,7 @@ class TimesFMPlanning:
         self.origin += 1
         self.month = state.month
         self.last_predictions.clear()
+        self.last_diagnostics.clear()
 
     def verify_files(self):
         for path, digest in self.files.items():
@@ -284,6 +302,7 @@ def self_check():
     planner.actions = np.tile([[100., 1, 1, 70], [10., 2, 1, 70]], (2, 1, 1))
     planner.geology = WellConnectivity(planner.wells, [[0, 1], [1, 0]], [[10, .2, 2], [20, .1, 3]], {})
     planner.last_predictions, planner.observed_errors = {}, []
+    planner.last_diagnostics = {}
     planner.calibration = {'scope': 'synthetic self-check'}
     planner.interval_radius = np.zeros((2, 3))
     planner.control_min, planner.control_max = planner.actions.min(axis=0), planner.actions.max(axis=0)
