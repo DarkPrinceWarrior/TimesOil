@@ -129,7 +129,6 @@ if __name__ == "__main__":
                 ).run({"track": 2, "phase": "completed_paired_numerical_audit",
                     "objective": "Audit the completed full-period OPM and official CHDD comparison. Read the tool. No new simulator run is requested. State actual delta and percentage; distinguish numeric validity from deployment readiness.",
                     "facts": {"paired_opm_and_economics_verified": True,
-                              "surrogate_used_to_propose_candidate": True,
                               "surrogate_uncertainty_independently_calibrated": False,
                               "autonomous_surrogate_deployment_certified": False,
                               "competition_result_claimed": False}})
