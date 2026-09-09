@@ -97,6 +97,7 @@ if __name__ == "__main__":
     parser.add_argument("output", type=Path)
     parser.add_argument("--expected-months", type=int, help="Reject a shorter experimental window, e.g. require all 224 months")
     parser.add_argument("--select-from", type=Path, nargs="*", help="Additional completed candidates; select by full-period CHDD including the baseline")
+    parser.add_argument("--agent-review", action="store_true", help="Ask the external agent workflow to audit the verified completed comparison")
     args = parser.parse_args()
     if args.select_from is not None and args.expected_months is None:
         parser.error("--select-from requires an explicit --expected-months economic horizon")
@@ -110,6 +111,32 @@ if __name__ == "__main__":
                   "selection_metric": "official_chdd_over_identical_complete_period",
                   "comparisons": comparisons,
                   "claim": "Model-based training experiment; selection runs are not an untouched test set."}
+    if args.agent_review:
+        import asyncio
+        from dataclasses import asdict
+        from timesoil.aios.agents import AgentRole, AgentWorkflow, ToolDefinition, ToolRegistry
+        from timesoil.aios.llm import ExternalQwenClient, LLMConfig
+
+        tool = ToolDefinition("read_verified_comparison", "Read the completed paired artifact audit and full-period official CHDD.",
+            {"type": "object", "properties": {}, "required": [], "additionalProperties": False},
+            lambda _arguments, _context: result)
+
+        async def review():
+            async with ExternalQwenClient(LLMConfig.from_env()) as client:
+                return await AgentWorkflow(client, ToolRegistry((tool,)),
+                    role_tools={role: (tool.name,) for role in AgentRole},
+                    required_tools={role: (tool.name,) for role in AgentRole},
+                ).run({"track": 2, "phase": "completed_paired_numerical_audit",
+                    "objective": "Audit the completed full-period OPM and official CHDD comparison. Read the tool. No new simulator run is requested. State actual delta and percentage; distinguish numeric validity from deployment readiness.",
+                    "facts": {"paired_opm_and_economics_verified": True,
+                              "surrogate_used_to_propose_candidate": True,
+                              "surrogate_uncertainty_independently_calibrated": False,
+                              "autonomous_surrogate_deployment_certified": False,
+                              "competition_result_claimed": False}})
+
+        reviewed = asyncio.run(review())
+        result = {**result, "agent_review": asdict(reviewed),
+                  "agent_review_approved": reviewed.critic_approved}
     with args.output.open("x") as stream:
         json.dump(result, stream, indent=2)
     print(json.dumps(result))
