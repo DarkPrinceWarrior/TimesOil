@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 
 from run_track1_mpc import _action_payload, _next_month, _state_payload, build_backend, load_config
+from timesoil.aios.schedule import ScheduleCompiler
 
 
 def digest(path):
@@ -73,7 +74,9 @@ def audit(root, expected_months):
         assert all(d["approved"] for d in review["agent"]["decisions"])
         assert review["agent"]["decisions"][-1]["tool_evidence"]
         expected_state = trajectory["next_state"]
-    baseline_actions = [_action_payload(a) for m in months for a in config.candidates[m][0]]
+    baseline_actions = [_action_payload(a) for a in ScheduleCompiler().validate(
+        config.case, (a for m in months for a in config.candidates[m][0])
+    )]
     baseline = []
     for path in config.opm_runs_dir.glob("*/lineage.json"):
         item = json.loads(path.read_text())
