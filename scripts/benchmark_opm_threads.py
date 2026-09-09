@@ -8,6 +8,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 import subprocess
+import shutil
 import time
 
 import numpy as np
@@ -22,6 +23,7 @@ def main() -> None:
     parser.add_argument("output", type=Path, help="New benchmark directory")
     parser.add_argument("--threads", type=int, nargs="+", default=[1, 2, 4, 8])
     parser.add_argument("--jobs", type=int, default=1)
+    parser.add_argument("--stop-time", type=float, help="Experimental ACTIONX stop, days since START")
     args = parser.parse_args()
     if min([args.jobs, *args.threads]) < 1 or len(set(args.threads)) != len(args.threads):
         parser.error("positive unique thread counts and positive jobs required")
@@ -51,13 +53,28 @@ def main() -> None:
         raise ValueError("well volumes and pressures required for numerical comparison")
     reference = pd.read_csv(root / "summary-report.txt", sep=r"\s+", usecols=vectors)[vectors]
     args.output.mkdir(parents=True, exist_ok=False)
+    input_dir = root / "input"
+    if args.stop_time is not None:
+        if not np.isfinite(args.stop_time) or args.stop_time <= 0:
+            parser.error("stop time must be positive and finite")
+        input_dir = args.output.resolve() / "input"
+        shutil.copytree(root / "input", input_dir)
+        data = input_dir / deck
+        source = data.read_text()
+        action = ("SCHEDULE\nACTIONX\n 'TSSTOP' 1 /\n"
+                  f" TIME >= {args.stop_time:g} /\n/\nEXIT\n 0 /\nENDACTIO\n")
+        if source.splitlines().count("SCHEDULE") != 1:
+            raise ValueError("exactly one standalone SCHEDULE keyword required")
+        data.write_text(source.replace("SCHEDULE\n", action, 1))
+        times = pd.read_csv(root / "summary-report.txt", sep=r"\s+", usecols=["TIME"])
+        reference = reference.loc[times.TIME <= args.stop_time].reset_index(drop=True)
 
     def replay(threads: int) -> dict:
         output = (args.output / str(threads)).resolve()
         output.mkdir()
         name = "timesoil-thread-bench-" + sha256(str(output).encode()).hexdigest()[:16]
         command = ["docker", "run", "--rm", "--name", name, "--network=none",
-                   "--user", "0:0", "--mount", f"type=bind,src={root / 'input'},dst=/case,readonly",
+                   "--user", "0:0", "--mount", f"type=bind,src={input_dir},dst=/case,readonly",
                    "--mount", f"type=bind,src={output},dst=/output", OPM_IMAGE, "flow",
                    "--output-dir=/output", f"--threads-per-process={threads}"]
         if "--parsing-strictness=low" in manifest["command"]:
@@ -89,6 +106,7 @@ def main() -> None:
                   "max_absolute_difference": float(delta.max()),
                   "max_relative_difference": float((delta / np.maximum(np.abs(reference), 1)).max().max()),
                   "within_1ppm": bool(np.allclose(actual, reference, atol=1e-6, rtol=1e-6)),
+                  "stop_time": args.stop_time,
                   "benchmark_only": True, "official_chdd_evaluated": False}
         (output / "profile.json").write_text(json.dumps(record, indent=2) + "\n")
         print(json.dumps({k: v for k, v in record.items() if k != "command"}), flush=True)
