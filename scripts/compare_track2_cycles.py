@@ -127,7 +127,7 @@ if __name__ == "__main__":
                     role_tools={role: (tool.name,) for role in AgentRole},
                     required_tools={role: (tool.name,) for role in AgentRole},
                 ).run({"track": 2, "phase": "completed_paired_numerical_audit",
-                    "objective": "Audit the completed full-period OPM and official CHDD comparison. Read the tool. No new simulator run is requested. State actual delta and percentage; distinguish numeric validity from deployment readiness.",
+                    "objective": "Audit the completed full-period OPM and official CHDD comparison. Read the tool. No new simulator run is requested. State actual delta and percentage; distinguish numeric validity from deployment readiness. Proposal provenance is outside this numerical audit: do not assert that a surrogate proposed or selected a candidate without explicit evidence.",
                     "facts": {"paired_opm_and_economics_verified": True,
                               "surrogate_uncertainty_independently_calibrated": False,
                               "autonomous_surrogate_deployment_certified": False,
