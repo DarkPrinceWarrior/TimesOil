@@ -278,9 +278,9 @@ def self_check():
     planner.dates = pd.date_range('2014-01-01', periods=5, freq='MS')
     planner.month, planner.origin = date(2014, 3, 1), 2
     planner.source_bhp = np.full((5, 2), 70.)
-    planner.states = np.ones((3, 2, 3))
-    planner.controller_state = np.ones((2, 3))
-    planner.committed_model_state = lambda state: state_array(state, planner.wells)
+    planner.states = np.tile([[1., 2, 3], [0., 0, 4]], (3, 1, 1))
+    planner.controller_state = np.array([[10., 20, 30], [0., 0, 40]])
+    planner.committed_model_state = lambda state: np.array([[2., 3, 4], [0., 0, 5]])
     planner.actions = np.tile([[100., 1, 1, 70], [10., 2, 1, 70]], (2, 1, 1))
     planner.geology = WellConnectivity(planner.wells, [[0, 1], [1, 0]], [[10, .2, 2], [20, .1, 3]], {})
     planner.last_predictions, planner.observed_errors = {}, []
@@ -295,20 +295,23 @@ def self_check():
             assert past_future_covariates[0].shape == (12, 2 + horizon)
             yield Obj(forecast=np.ones((6, horizon)))
     planner.forecaster = Forecaster()
-    state = Obj(month=planner.month, wells=tuple(Obj(well=w, oil_rate=1., liquid_rate=1., bhp=1.) for w in planner.wells))
+    state = Obj(month=planner.month, wells=tuple(Obj(well=w, oil_rate=values[0], liquid_rate=values[1], bhp=values[2])
+        for w, values in zip(planner.wells, planner.controller_state, strict=True)))
     controls = tuple(ControlAction(date(2014, m, 1), w,
         WellRole.PRODUCER if w == 'p' else WellRole.INJECTOR, WellStatus.OPEN,
         ControlTarget.LIQUID_RATE if w == 'p' else ControlTarget.WATER_INJECTION_RATE,
         100. if w == 'p' else 20.) for m in (3, 4) for w in planner.wells)
     result = planner.predict(state, controls)
     assert result['months'] == 2 and result['well_count'] == 2
-    np.testing.assert_array_equal(captured[0][0], 1)
+    np.testing.assert_array_equal(captured[0][0], np.repeat([[1], [2], [3], [0], [0], [4]], 2, axis=1))
     np.testing.assert_array_equal(captured[0][1][-2], [10, 10, 20, 20])
     observed = Obj(month=date(2014, 4, 1), wells=state.wells)
     planner.observe(observed, controls[:2])
     assert len(planner.states) == 4 and len(planner.actions) == 3
     assert len(planner.observed_errors) == 1
-    assert planner.observed_errors[0]['oil_wape'] == .5  # Injector forecast is physically projected to zero.
+    assert planner.observed_errors[0]['oil_wape'] == .5
+    np.testing.assert_array_equal(planner.states[-1], [[2, 3, 4], [0, 0, 5]])
+    np.testing.assert_array_equal(planner.controller_state, [[10, 20, 30], [0, 0, 40]])
     try:
         planner.observe(observed, controls[:2])
     except ValueError:
