@@ -514,6 +514,21 @@ def test_direct_cycle_request_rejects_one_month_before_prepare_or_qwen(
         )
 
 
+def test_explicit_full_archive_horizon_requires_every_month_and_well(tmp_path: Path) -> None:
+    raw = _request(tmp_path)
+    first_month = raw["controls"][:103]
+    raw["horizon_months"] = 224
+    raw["controls"] = [
+        {**action, "month": date(2007 + index // 12, index % 12 + 1, 1).isoformat()}
+        for index in range(224) for action in first_month
+    ]
+    result = CycleRequest.from_mapping(raw)
+    assert result.horizon_months == 224 and len(result.controls) == 23072
+    raw["controls"].pop()
+    with pytest.raises(CycleError, match="same wells"):
+        CycleRequest.from_mapping(raw)
+
+
 @pytest.mark.parametrize("scope", ("missing", "unknown"))
 def test_full_cycle_rejects_controls_outside_source_well_scope_before_execution(
     tmp_path: Path, scope: str
