@@ -342,6 +342,13 @@ class AgentWorkflow:
             tools=schemas or None,
             tool_choice=tool_choice,
         ) if schemas else LLMResponse("", None, "stop")
+        if required and not set(required) <= {call.name for call in preliminary.tool_calls}:
+            # No tool has executed yet; one bounded retry handles a truncated thinking response.
+            preliminary = await self._llm.chat(
+                messages + (ChatMessage("user", "Предыдущий ответ не содержал обязательный вызов. "
+                    "Вызови обязательный инструмент с допустимыми аргументами; ничего ещё не исполнено."),),
+                reasoning=False, tools=schemas, tool_choice=tool_choice,
+            )
         if len(preliminary.tool_calls) > _MAX_TOOL_CALLS_PER_ROLE:
             raise WorkflowError("role requested too many tools")
         called = {call.name for call in preliminary.tool_calls}
