@@ -43,7 +43,7 @@ def load(root):
     return receipt, opm, econ, result, rows, sha256(receipt_raw).hexdigest()
 
 
-def compare(baseline, candidate):
+def compare(baseline, candidate, expected_months=None):
     left, right = load(baseline), load(candidate)
     a, b = left[0], right[0]
     for key in ("source_sha256",):
@@ -62,6 +62,8 @@ def compare(baseline, candidate):
     for key in ("start_inclusive", "end_exclusive", "months", "historical_cash_flows_included"):
         assert a["economics"]["management_period"][key] == b["economics"]["management_period"][key], key
     period = a["economics"]["management_period"]
+    if expected_months is not None and (type(expected_months) is not int or expected_months < 1 or len(period["months"]) != expected_months):
+        raise ValueError("paired calculation does not cover the requested economic horizon")
     start, end = period["start_inclusive"], period["end_exclusive"]
     history = [{(r["DATA"], r["well"]): r for r in data[4] if r["DATA"] <= start} for data in (left, right)]
     assert history[0] == history[1], "pre-control physical history changed"
@@ -93,8 +95,19 @@ if __name__ == "__main__":
     parser.add_argument("baseline", type=Path)
     parser.add_argument("candidate", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--expected-months", type=int, help="Reject a shorter experimental window, e.g. require all 224 months")
+    parser.add_argument("--select-from", type=Path, nargs="*", help="Additional completed candidates; select by full-period CHDD including the baseline")
     args = parser.parse_args()
-    result = compare(args.baseline, args.candidate)
+    result = compare(args.baseline, args.candidate, args.expected_months)
+    if args.select_from is not None:
+        comparisons = [result] + [compare(args.baseline, candidate, args.expected_months) for candidate in args.select_from]
+        choices = [result["baseline"]] + [item["candidate"] for item in comparisons]
+        selected = max(choices, key=lambda item: item["chdd_m"])
+        result = {"schema": "timesoil.full-horizon-selection/v1", "months": result["months"],
+                  "baseline": result["baseline"], "selected": selected,
+                  "selection_metric": "official_chdd_over_identical_complete_period",
+                  "comparisons": comparisons,
+                  "claim": "Model-based training experiment; selection runs are not an untouched test set."}
     with args.output.open("x") as stream:
         json.dump(result, stream, indent=2)
     print(json.dumps(result))

@@ -105,22 +105,25 @@ def metrics(truth, prediction):
     }
 
 
-def recursive_forecast(forecaster, histories, covariates, actions):
+def recursive_forecast(forecaster, histories, covariates, actions, block_size=1):
     """Advance on predictions only; no future observations enter this rollout."""
+    if type(block_size) is not int or block_size < 1:
+        raise ValueError("block_size must be a positive integer")
     context = histories[0].shape[-1]
     histories = [h.copy() for h in histories]
     steps = []
-    for step in range(actions.shape[1]):
+    for step in range(0, actions.shape[1], block_size):
+        horizon = min(block_size, actions.shape[1] - step)
         forecasts = list(forecaster.predict_batch(
-            [h[:, -context:] for h in histories], horizon=1,
-            past_future_covariates=[c[:, step:step + context + 1] for c in covariates],
+            [h[:, -context:] for h in histories], horizon=horizon,
+            past_future_covariates=[c[:, step:step + context + horizon] for c in covariates],
             use_symmetric_averaging=False, make_positive=True, return_quantiles=True,
         ))
-        raw = np.stack([f.forecast for f in forecasts]).reshape(len(histories), 1, -1, 3)
-        projected = _project_physics(raw, actions[:, step:step + 1], zero_injectors=True)[0]
+        raw = np.stack([f.forecast for f in forecasts]).reshape(len(histories), -1, 3, horizon).transpose(0, 3, 1, 2)
+        projected = _project_physics(raw, actions[:, step:step + horizon], zero_injectors=True)[0]
         steps.append(projected)
-        histories = [np.concatenate([h, p.reshape(-1, 1)], axis=1)
-                     for h, p in zip(histories, projected[:, 0], strict=True)]
+        histories = [np.concatenate([h, p.transpose(1, 2, 0).reshape(-1, horizon)], axis=1)
+                     for h, p in zip(histories, projected, strict=True)]
     return np.concatenate(steps, axis=1)
 
 
