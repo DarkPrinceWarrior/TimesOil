@@ -33,11 +33,34 @@ def interval_check(calibration_errors, test_errors):
         'limitation': 'Fixed intervention scenarios are not established as exchangeable; only three independent test groups.'}
 
 
+def validate_split(manifest):
+    splits = {
+        'timesoil.frozen-forecast-evaluation-cases/v1': ([0, 1, 2, 4, 7], [3, 5, 6]),
+        'timesoil.bhp-only-forecast-evaluation/v1': ([0, 1, 3, 4, 6], [2, 5, 7]),
+    }
+    if (manifest.get('complete') is not True or manifest.get('schema') not in splits
+            or (manifest.get('calibration_cases'), manifest.get('test_cases')) != splits[manifest['schema']]
+            or manifest.get('model_selection_allowed_on_test') is not False
+            or [r['index'] for r in manifest['scenarios']] != list(range(8))):
+        raise ValueError('frozen five-calibration/three-test scenario split required')
+
+
 def self_check():
     errors = np.ones((5, 2, 2, 3)); errors[4, 0, 0] = [2, 3, 4]
     check = interval_check(errors, np.full((3, 2, 2, 3), [2, 4, 3]))
     assert check['radius_oil_tpd_liquid_tpd_pressure_bar'] == [2, 3, 4]
     assert check['test_whole_trajectory_coverage_by_target'] == [1, 0, 1]
+    manifest = dict(schema='timesoil.bhp-only-forecast-evaluation/v1', complete=True,
+        calibration_cases=[0, 1, 3, 4, 6], test_cases=[2, 5, 7], model_selection_allowed_on_test=False,
+        scenarios=[{'index': i} for i in range(8)])
+    validate_split(manifest)
+    manifest['test_cases'] = [3, 5, 6]
+    try:
+        validate_split(manifest)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('changed scenario split accepted')
     print('Scenario-group interval and independent target coverage checks passed', flush=True)
 
 
@@ -60,10 +83,7 @@ def main():
         raise ValueError('evaluation batch hash mismatch')
     manifest = json.loads((args.batch / 'manifest.json').read_text())
     training = json.loads(args.head_report.read_text())
-    if (manifest.get('complete') is not True or manifest['calibration_cases'] != [0, 1, 2, 4, 7]
-            or manifest['test_cases'] != [3, 5, 6] or manifest['model_selection_allowed_on_test'] is not False
-            or [r['index'] for r in manifest['scenarios']] != list(range(8))):
-        raise ValueError('frozen five-calibration/three-test scenario split required')
+    validate_split(manifest)
     if (training.get('complete') is not True or training['model_revision'] != MODEL_REVISION
             or digest(args.head) != training['checkpoint_sha256']
             or digest(args.connectivity) != training['connectivity_sha256']):
@@ -84,7 +104,7 @@ def main():
     os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
     import torch
     from timesfm3 import ModelConfig, TimesFM3Forecaster
-    from timesfm_geology import StaticConditionedHead
+    from timesfm_geology import StaticConditionedHead, load_selected_layer
     if not torch.cuda.is_available() or 'A100' not in torch.cuda.get_device_name(0):
         raise RuntimeError('requires allocated A100')
     torch.set_num_threads(4)
@@ -99,12 +119,13 @@ def main():
         revision=MODEL_REVISION, per_core_batch_size=1, device='cuda'))
     model = forecaster.model
     original_head = model.output_head
-    original_layer = {k: v.detach().clone() for k, v in model.transformer_stack.layers[-1].state_dict().items()}
+    original_layer = model.transformer_stack.layers[-1]
     selected = torch.load(args.head, map_location='cuda', weights_only=True)
     selected_head = StaticConditionedHead(deepcopy(original_head), connectivity)
     weights = selected.get('output_head', selected)
     torch.testing.assert_close(weights['features'], selected_head.features, rtol=0, atol=0)
     selected_head.load_state_dict(weights)
+    selected_layer = load_selected_layer(deepcopy(original_layer), selected_head, selected)
     errors = {'trained_fixed_origin_224': {}, 'pretrained_observed_update_1': {}}
     for record in manifest['scenarios']:
         index = record['index']
@@ -128,8 +149,7 @@ def main():
         outputs = {'truth': truth}
         for mode in errors:
             model.output_head = selected_head if mode.startswith('trained') else original_head
-            model.transformer_stack.layers[-1].load_state_dict(
-                selected.get('last_layer', original_layer) if mode.startswith('trained') else original_layer)
+            model.transformer_stack.layers[-1] = selected_layer if mode.startswith('trained') else original_layer
             if mode.startswith('trained'):
                 prediction = forecast_layout(forecaster, t, origin, MONTHS, 128, 'joint', connectivity=connectivity)
             else:
