@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 
 from timesoil.aios.interwell import WellConnectivity
+from timesoil.aios.opm import OpmFlowRunner
 from timesoil.aios.opm_chdd import export_opm_chdd
 from timesoil.aios.surrogate import ScenarioTrajectory
 from timesoil.aios.track2 import (
@@ -77,11 +78,13 @@ def digest(path):
 
 
 def prepare(args):
+    if digest(args.source) != MODEL_Z_SOURCE_SHA256:
+        raise ValueError('source must be the official Model Z archive')
     args.output.mkdir(parents=True, exist_ok=False)
-    base = args.reference_batch / 'baseline'
-    run = json.loads((base / 'manifest.json').read_text())
-    if run['source_sha256'] != MODEL_Z_SOURCE_SHA256:
-        raise ValueError('reference baseline must be official Model Z')
+    base = args.output / 'reference-run'
+    runner = OpmFlowRunner(timeout_seconds=7200)
+    result = runner.run(args.source, base, deck='Model_Z/Model_Z.data', parsing_strictness='low')
+    runner.extract_summary_report(result, base / 'summary-report.txt')
     deck_dir = base / 'input' / 'Model_Z'
     exports = args.output / 'reference'
     export_opm_chdd(
@@ -161,7 +164,6 @@ def train(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path)
-    parser.add_argument('--reference-batch', type=Path)
     parser.add_argument('--output', type=Path)
     parser.add_argument('--train-only', action='store_true')
     parser.add_argument('--self-check', action='store_true')
@@ -169,11 +171,10 @@ def main():
     self_check()
     if args.self_check:
         return
-    if not args.source or not args.output or (not args.train_only and not args.reference_batch):
-        parser.error('source, output and reference-batch required')
+    if not args.source or not args.output:
+        parser.error('source and output required')
     args.source, args.output = args.source.absolute(), args.output.absolute()
     if not args.train_only:
-        args.reference_batch = args.reference_batch.absolute()
         prepare(args)
     train(args)
 
