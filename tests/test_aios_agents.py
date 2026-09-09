@@ -490,6 +490,6 @@ def test_required_tool_retry_never_executes_a_partial_response():
     flow = AgentWorkflow(llm, ToolRegistry([tool]),
         role_tools={AgentRole.COORDINATOR: (tool.name,)},
         required_tools={AgentRole.COORDINATOR: (tool.name,)})
-    result = asyncio.run(flow.run({"track": 1}))
+    result = asyncio.run(flow.run({"track": 2}))
     assert result.complete and llm.chat_calls == 2
     assert executed == [{"month": 1}]
