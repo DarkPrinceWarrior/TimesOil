@@ -8,6 +8,8 @@ from enum import StrEnum
 from math import isfinite
 import re
 
+from .operating_constraints import OperatingConstraint
+
 
 _WELL_NAME = re.compile(r"[A-Za-z0-9_.-]+")
 
@@ -54,6 +56,7 @@ class Case:
     injectors: tuple[str, ...]
     max_liquid_rate: float = 500.0
     allow_conversion_to_injection: bool = False
+    operating_constraints: tuple[OperatingConstraint, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.case_id.strip():
@@ -76,6 +79,13 @@ class Case:
             raise ContractError("max_liquid_rate must be finite and positive")
         if type(self.allow_conversion_to_injection) is not bool:
             raise ContractError("allow_conversion_to_injection must be boolean")
+        if not isinstance(self.operating_constraints, tuple) or any(
+            not isinstance(rule, OperatingConstraint)
+            or not set(rule.wells) <= set((*self.producers, *self.injectors))
+            or not self.start <= rule.start <= rule.end <= self.end
+            for rule in self.operating_constraints
+        ):
+            raise ContractError("operating constraints differ from case scope")
 
     def role_of(self, well: str) -> WellRole:
         if well in self.producers:
