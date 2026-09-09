@@ -36,7 +36,7 @@ class CLITest(unittest.TestCase):
         output = io.StringIO()
         with patch.dict(
             "os.environ",
-        {"LLM_API_KEY": secret, "LLM_BASE_URL": "https://api.cerebras.ai/v1"},
+        {"LLM_API_KEY": secret, "LLM_BASE_URL": "https://litellm.tatneft.guru/v1"},
             clear=True,
         ), patch(
             "timesoil.aios.cli.shutil.which", return_value=None
