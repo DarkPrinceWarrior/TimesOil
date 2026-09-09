@@ -135,7 +135,7 @@ def main():
         _, cov = forecast_inputs(trajectory.states, actions, origin, context, horizon)
         begin = time.monotonic()
         forecast = next(forecaster.predict_batch([target], horizon=horizon,
-            past_future_covariates=[cov[:, :4].reshape(-1, context + horizon)],
+            past_future_covariates=[cov[:, :-1].reshape(-1, context + horizon)],
             use_symmetric_averaging=False, make_positive=True, return_quantiles=False))
         prediction = forecast.forecast.reshape(len(well_index), 3, horizon).transpose(2, 0, 1)
         future = actions[origin:origin + horizon]
