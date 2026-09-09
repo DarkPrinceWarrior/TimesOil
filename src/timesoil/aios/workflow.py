@@ -27,6 +27,7 @@ from .agents import (
     WorkflowError,
 )
 from .contracts import ControlAction, ControlTarget, WellRole, WellStatus
+from .operating_constraints import check_controls, check_summary, parse_constraints
 from .economics import (
     CHDD_FIELDS,
     CHDDEconomicsAdapter,
@@ -75,6 +76,7 @@ _EXECUTION_SOURCE_PATHS = (
     "src/timesoil/aios/llm.py",
     "src/timesoil/aios/opm.py",
     "src/timesoil/aios/opm_chdd.py",
+    "src/timesoil/aios/operating_constraints.py",
     "src/timesoil/aios/schedule_overlay.py",
     "src/timesoil/aios/tools.py",
     "src/timesoil/aios/workflow.py",
@@ -412,6 +414,12 @@ class FullCycleWorkflow:
                 raise CycleError("prepared schedule must be UTF-8") from exc
             control_months = sorted({action.month for action in request.controls})
             source_inventory = _source_control_inventory(source_text, control_months)
+            operating_constraints = parse_constraints(
+                request.context.get("operating_constraints", []),
+                wells=next(iter(source_inventory.values())),
+                start=control_months[0], end=control_months[-1],
+            )
+            check_controls(operating_constraints, request.controls)
             _validate_source_well_scope(
                 request.controls, source_inventory,
                 allow_conversion_to_injection=request.context.get("constraints", {}).get(
@@ -502,6 +510,8 @@ class FullCycleWorkflow:
         report, extraction = self._runner.extract_summary_report(
             result, result.run_dir / "summary-report.txt"
         )
+        check_summary(operating_constraints, report, deck_dir=result.deck_path.parent,
+                      months=control_months, unit_system=prepared.unit_system)
         canonical = result.run_dir / "canonical"
         chdd_csv = canonical / "chdd.csv"
         trajectory_csv = canonical / "trajectory.csv"
