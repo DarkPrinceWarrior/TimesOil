@@ -581,7 +581,7 @@ def execute(
     forecast = None
     if config.forecast:
         from timesfm_planning import TimesFMPlanning
-        forecast = TimesFMPlanning(config.forecast, config.initial_state, config.source_sha256)
+        forecast = TimesFMPlanning(config.forecast, config.case, config.initial_state, backend)
 
     def record(item: dict[str, Any]) -> None:
         agent_records.append(item)

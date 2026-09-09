@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from timesoil.aios.interwell import WellConnectivity
+from timesoil.aios.opm import OpmGdmBackend, _source_digest
 from timesoil.aios.track2 import load_trajectory_dataset
 
 MODEL_REVISION = '43046b85ec22d584a13f8098c2ed39c889e129c2'
@@ -27,7 +28,15 @@ def state_array(state, wells):
 
 
 class TimesFMPlanning:
-    def __init__(self, settings, state, source_sha256):
+    def __init__(self, settings, case, state, backend):
+        if not isinstance(backend, OpmGdmBackend):
+            raise ValueError('forecast observations require the physical OPM backend')
+        self.backend, self.case = backend, case
+        source_sha256 = _source_digest(backend.source)
+        self.source_sha256 = source_sha256
+        backend._authenticated_history(case, state)
+        self.last_restart_ref = state.restart_ref
+        self.controller_state = state_array(state, tuple(sorted(w.well for w in state.wells)))
         self.files = {}
         for name in ('history', 'geology'):
             path = Path(settings[name])
@@ -65,7 +74,6 @@ class TimesFMPlanning:
         self.states = trajectory.states[:origin + 1].copy()
         self.actions = np.concatenate([trajectory.actions[:origin, :, :3],
                                        self.source_bhp[:origin, :, None]], axis=-1)
-        np.testing.assert_allclose(self.states[-1], state_array(state, self.wells), rtol=0, atol=1e-5)
         self.month = state.month
         self.origin = origin
         self.initial_origin = origin
@@ -89,6 +97,8 @@ class TimesFMPlanning:
         self.calibration = self.calibrate()
         self.provenance = {'model_revision': MODEL_REVISION, 'input_hashes': self.files,
             'source_sha256': source_sha256, 'well_count': len(self.wells),
+            'target_units': ['oil tonnes/day', 'liquid tonnes/day', 'reservoir WBP9 bar'],
+            'controller_units': ['oil surface m3/day', 'liquid surface m3/day', 'well BHP bar'],
             'initial_observation_cutoff': str(state.month), 'future_observations_used': False,
             'uncertainty_calibrated': False, 'static_head_trained': False,
             'one_month_historical_calibration': self.calibration,
@@ -182,7 +192,7 @@ class TimesFMPlanning:
     def predict(self, state, controls):
         if state.month != self.month:
             raise ValueError('forecast state is not the last committed observation')
-        np.testing.assert_allclose(state_array(state, self.wells), self.states[-1], rtol=0, atol=1e-5)
+        np.testing.assert_allclose(state_array(state, self.wells), self.controller_state, rtol=0, atol=1e-5)
         months, future = self.controls_array(controls)
         expected = [d.date() for d in self.dates[self.origin:self.origin + len(months)]]
         if months != expected or not months or months[0] != state.month:
@@ -200,22 +210,43 @@ class TimesFMPlanning:
             'one_month_historical_calibration': self.calibration,
             'ood_control_well_months': int(ood.sum()),
             'ood_wells': [w for i, w in enumerate(self.wells) if ood[:, i].any()],
-            'columns': ['well', 'next_oil_m3d', 'next_liquid_m3d', 'next_bhp_bar',
-                        'remaining_oil_volume_m3', 'remaining_liquid_volume_m3', 'terminal_bhp_bar'],
+            'columns': ['well', 'next_oil_tpd', 'next_liquid_tpd', 'next_reservoir_pressure_bar',
+                        'estimated_remaining_oil_tonnes', 'estimated_remaining_liquid_tonnes', 'terminal_reservoir_pressure_bar'],
             'rows': [[well, *np.round(one_month[i], 6).tolist(), *np.round(volumes[i], 3).tolist(),
                       round(float(prediction[-1, i, 2]), 6)] for i, well in enumerate(self.wells)],
-            'one_month_intervals': {'columns': ['well', 'lower_oil_liquid_bhp', 'upper_oil_liquid_bhp'],
+            'one_month_intervals': {'columns': ['well', 'lower_oil_tpd_liquid_tpd_reservoir_bar', 'upper_oil_tpd_liquid_tpd_reservoir_bar'],
                 'rows': [[w, np.maximum(one_month[i] - self.interval_radius[i], 0).round(6).tolist(),
                           (one_month[i] + self.interval_radius[i]).round(6).tolist()] for i, w in enumerate(self.wells)],
                 'scope': 'One-step historical calibration; full-horizon forecast has no calibrated interval.'},
             'observed_month_errors': self.observed_errors[-3:],
             'decision_rule': 'Forecast supports a hypothesis; select only using full remaining OPM and official CHDD.'}
 
+    def committed_model_state(self, state):
+        path, _ = self.backend._parse_restart_ref(state.restart_ref)
+        lineage = json.loads(path.read_text())
+        if (lineage.get('source_sha256') != self.source_sha256
+                or lineage.get('prior_restart_ref') != self.last_restart_ref
+                or lineage.get('next_state') != self.backend._state_value(state)):
+            raise ValueError('forecast observation differs from the committed physical lineage')
+        self.backend._verify_lineage_artifacts(path.parent, lineage['artifacts'])
+        def artifact(purpose):
+            matches = [a for a in lineage['artifacts'] if a['purpose'] == purpose]
+            if len(matches) != 1:
+                raise ValueError('missing or duplicate committed forecast artifact')
+            return path.parent / matches[0]['path']
+        data = load_trajectory_dataset(artifact('canonical_trajectory'), manifest=artifact('canonical_export_manifest'))
+        if len(data) != 1 or data[0].well_ids != self.wells:
+            raise ValueError('committed forecast observation grid differs')
+        # A planning run may contain a future tail. Read only the newly committed observation.
+        result = data[0].states[int(data[0].dates.get_loc(pd.Timestamp(state.month)))].copy()
+        self.last_restart_ref = state.restart_ref
+        return result
+
     def observe(self, state, controls):
         months, actions = self.controls_array(controls)
         if months != [self.month] or pd.Timestamp(state.month) != self.dates[self.origin + 1]:
             raise ValueError('observations must commit exactly the next month')
-        observed = state_array(state, self.wells)
+        observed = self.committed_model_state(state)
         prior = self.last_predictions.get(sha256(actions[0].tobytes()).hexdigest())
         if prior is not None:
             error = np.abs(prior - observed)
@@ -225,6 +256,7 @@ class TimesFMPlanning:
                 'pressure_rmse_bar': float(np.sqrt(np.mean(error[:, 2] ** 2)))})
         self.states = np.concatenate([self.states, observed[None]])
         self.actions = np.concatenate([self.actions, actions])
+        self.controller_state = state_array(state, self.wells)
         self.origin += 1
         self.month = state.month
         self.last_predictions.clear()
@@ -247,6 +279,8 @@ def self_check():
     planner.month, planner.origin = date(2014, 3, 1), 2
     planner.source_bhp = np.full((5, 2), 70.)
     planner.states = np.ones((3, 2, 3))
+    planner.controller_state = np.ones((2, 3))
+    planner.committed_model_state = lambda state: state_array(state, planner.wells)
     planner.actions = np.tile([[100., 1, 1, 70], [10., 2, 1, 70]], (2, 1, 1))
     planner.geology = WellConnectivity(planner.wells, [[0, 1], [1, 0]], [[10, .2, 2], [20, .1, 3]], {})
     planner.last_predictions, planner.observed_errors = {}, []
