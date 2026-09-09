@@ -110,7 +110,8 @@ def main():
     if args.connectivity:
         from timesoil.aios.interwell import WellConnectivity
         connectivity = WellConnectivity.from_dict(json.loads(args.connectivity.read_text()))
-        opm_manifest = json.loads((args.run / 'manifest.json').read_text())
+        source_ref = json.loads(manifest.read_text())['provenance']['opm_run_manifest']
+        opm_manifest = json.loads((manifest.parent / source_ref).read_text())
         if connectivity.provenance['source_sha256'] != opm_manifest['source_sha256']:
             raise ValueError('connectivity belongs to a different source reservoir')
     origin = int(trajectory.dates.get_loc(args.start))
