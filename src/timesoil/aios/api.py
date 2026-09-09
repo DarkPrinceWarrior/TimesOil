@@ -27,7 +27,7 @@ class HealthResponse(APIModel):
 
 
 class QwenCapability(APIModel):
-    model: Literal["qwen3.6-35b-a3b", "qwen-3.8-27b"]
+    model: Literal["qwen3.8-27b", "qwen3.6-35b-a3b", "qwen-3.8-27b"]
     configured: bool
     connectivity_verified: bool
 

@@ -39,7 +39,7 @@ class CLITest(unittest.TestCase):
             {
                 "LLM_API_KEY": secret,
                 "LLM_BASE_URL": "https://litellm.tatneft.guru/v1",
-                "LLM_MODEL": "qwen-3.8-27b",
+                "LLM_MODEL": "qwen3.8-27b",
             },
             clear=False,
         ), patch(
@@ -52,7 +52,7 @@ class CLITest(unittest.TestCase):
         self.assertEqual(
             report["qwen"],
             {
-                "model": "qwen-3.8-27b",
+                "model": "qwen3.8-27b",
                 "configured": True,
                 "connectivity_verified": False,
             },
