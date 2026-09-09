@@ -12,7 +12,6 @@ from pathlib import Path
 import time
 
 import numpy as np
-import pandas as pd
 
 from benchmark_bhp_surrogate import START, END, MONTHS, management_window
 from benchmark_horizons import forecast_blocks, self_check
@@ -87,7 +86,7 @@ def main():
         'source_scenario_hashes': {t.scenario_id: t.content_hash for t in trajectories},
         'executed_sources': {name: digest(Path(__file__).with_name(name)) for name in
             ('benchmark_timesfm_controls.py', 'benchmark_horizons.py', 'benchmark_timesfm3.py')},
-        'model_revision': MODEL_REVISION, 'timesfm3_version': version('timesfm3'),
+        'model_revision': MODEL_REVISION, 'timesfm_version': version('timesfm'),
         'torch_version': torch.__version__, 'device': torch.cuda.get_device_name(0),
         'start': str(START.date()), 'end_exclusive': str(END.date()),
         'horizon_months': MONTHS, 'context_months': 128, 'well_count': 103,
