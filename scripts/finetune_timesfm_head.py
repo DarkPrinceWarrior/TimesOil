@@ -74,6 +74,40 @@ def verified_y_batch(batch, expected_hash):
     return trajectories, origin
 
 
+def verified_regime_calibration(batch, expected_hash, baseline, origin):
+    from timesoil.aios.track2 import load_trajectory_dataset
+    if sha256((batch / 'manifest.json').read_bytes()).hexdigest() != expected_hash:
+        raise ValueError('regime calibration manifest hash mismatch')
+    manifest = json.loads((batch / 'manifest.json').read_text())
+    if (manifest.get('complete') is not True or manifest['calibration_cases'] != [0, 1, 2, 4, 7]
+            or manifest['test_cases'] != [3, 5, 6] or manifest['model_selection_allowed_on_test'] is not False):
+        raise ValueError('only the five previously designated calibration cases may augment training')
+    extra = []
+    for record in manifest['scenarios']:
+        if record['index'] not in manifest['calibration_cases']:
+            continue
+        root = Path(record['directory']).resolve()
+        if root != (batch / f"candidate-{record['index']:02d}").resolve():
+            raise ValueError('regime calibration directory mismatch')
+        for name, key in [('trajectory.csv', 'trajectory_sha256'), ('manifest.json', 'export_manifest_sha256')]:
+            if sha256((root / name).read_bytes()).hexdigest() != record[key]:
+                raise ValueError('regime calibration artifact hash mismatch')
+        data = load_trajectory_dataset(root / 'trajectory.csv', manifest=root / 'manifest.json')
+        if len(data) != 1 or not data.model_z_identity:
+            raise ValueError('regime calibration requires authenticated Model Z')
+        item = data[0]
+        if (item.well_ids != baseline.well_ids or not item.dates.equals(baseline.dates)
+                or item.actions.shape != baseline.actions.shape
+                or item.scenario_id != f"physical-sweep-{record['index']:02d}"):
+            raise ValueError('regime calibration grid differs from the training reservoir')
+        np.testing.assert_allclose(item.states[:origin + 1], baseline.states[:origin + 1], rtol=0, atol=1e-6)
+        np.testing.assert_array_equal(item.actions[:origin], baseline.actions[:origin])
+        extra.append(item)
+    if len(extra) != 5:
+        raise ValueError('five distinct calibration scenarios required')
+    return extra
+
+
 def main():
     os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
     parser = argparse.ArgumentParser(description=__doc__)
@@ -88,6 +122,8 @@ def main():
     parser.add_argument('--unfreeze-last-layer', action='store_true')
     parser.add_argument('--model-y', action='store_true')
     parser.add_argument('--condition-last-layer', action='store_true')
+    parser.add_argument('--regime-calibration', type=Path)
+    parser.add_argument('--regime-calibration-sha256')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -101,6 +137,9 @@ def main():
         parser.error('initial-head and its SHA-256 must be supplied together')
     if args.condition_last_layer and not args.connectivity:
         parser.error('static last-layer conditioning requires verified connectivity')
+    if (bool(args.regime_calibration) != bool(args.regime_calibration_sha256)
+            or args.regime_calibration and args.model_y):
+        parser.error('Model Z regime calibration requires a paired manifest hash')
     args.unfreeze_last_layer |= args.condition_last_layer
     args.output.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
@@ -112,6 +151,10 @@ def main():
     context = min(128, origin)
     count = len(trajectories[0].well_ids)
     targets_count = count * 3
+    if args.regime_calibration:
+        baseline = next(t for t in trajectories if t.scenario_id == 'baseline')
+        trajectories = list(trajectories) + verified_regime_calibration(
+            args.regime_calibration, args.regime_calibration_sha256, baseline, origin)
     connectivity = None
     if args.connectivity:
         from timesoil.aios.interwell import WellConnectivity
@@ -129,6 +172,9 @@ def main():
         train_ids = [f'physical-sweep-{i:02d}' for i in (0, 1, 2, 4, 8)]
         validation_ids = ['physical-sweep-05']
         test_ids = [f'physical-sweep-{i:02d}' for i in (3, 6, 7)]
+    if args.regime_calibration:
+        train_ids += [f'physical-sweep-{i:02d}' for i in (0, 1, 2, 7)]
+        validation_ids += ['physical-sweep-04']
     assert set(train_ids + validation_ids + test_ids) == set(by_id)
     assert len(train_ids + validation_ids + test_ids) == len(by_id)
     import torch
@@ -206,7 +252,7 @@ def main():
         parity_scaled_error = float(((wrapped[:, :targets_count] - unwrapped[:, :targets_count]) / scale[..., None]).abs().max())
         torch.testing.assert_close(wrapped[:, :targets_count] / scale[..., None],
                                    unwrapped[:, :targets_count] / scale[..., None], rtol=0, atol=.001)
-        best_loss = float(loss_for(validation_ids[0]))
+        best_loss = float(torch.stack([loss_for(name) for name in validation_ids]).mean())
     del wrapped, unwrapped
     checkpoint = args.output / ('last-layer-and-head.pt' if args.unfreeze_last_layer else 'output-head.pt')
     def selected_weights():
@@ -225,6 +271,9 @@ def main():
         static_last_layer=args.condition_last_layer,
         all_other_backbone_parameters_frozen=True,
         initial_head_sha256=args.initial_head_sha256,
+        regime_calibration_manifest_sha256=args.regime_calibration_sha256,
+        regime_calibration_reused_for_development=args.regime_calibration is not None,
+        development_test_scenarios_previously_inspected=True,
         trainable_parameters=sum(p.numel() for p in trainable), learning_rate=args.learning_rate,
         attention_backend='math', decoder_target_quantile_parity_max_abs=parity_error,
         gradient_policy='stop gradients through iterative CPM-RevIN statistics; unchanged forward calculation',
@@ -273,7 +322,7 @@ def main():
             optimizer.step()
             losses.append(float(loss.detach()))
         with torch.no_grad():
-            validation = float(loss_for(validation_ids[0]))
+            validation = float(torch.stack([loss_for(name) for name in validation_ids]).mean())
         if not np.isfinite(validation):
             raise ValueError('non-finite validation loss')
         if validation < best_loss:
