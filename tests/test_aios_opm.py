@@ -38,6 +38,14 @@ _CONNECTION_VECTORS = {
 
 
 class OpmFlowRunnerTest(unittest.TestCase):
+    def test_thread_configuration_is_bounded_and_explicit_overrides_environment(self) -> None:
+        with patch.dict("os.environ", {"OPM_THREADS_PER_PROCESS": "8"}):
+            self.assertEqual(OpmFlowRunner().threads_per_process, 8)
+            self.assertEqual(OpmFlowRunner(threads_per_process=4).threads_per_process, 4)
+        for value in (0, -1, 257, True, 1.5):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                OpmFlowRunner(threads_per_process=value)
+
     def test_summary_selection_ignores_only_irrelevant_duplicates(self) -> None:
         available = [
             "1",
@@ -139,10 +147,11 @@ class OpmFlowRunnerTest(unittest.TestCase):
             original = _MINIMAL_DECK.encode()
             source.write_bytes(original)
 
-            result = OpmFlowRunner(timeout_seconds=12).run(source, root / "run")
+            result = OpmFlowRunner(timeout_seconds=12, threads_per_process=8).run(source, root / "run")
 
             self.assertEqual(source.read_bytes(), original)
             self.assertIn(OPM_IMAGE, result.command)
+            self.assertIn("--threads-per-process=8", result.command)
             self.assertNotIn("--parsing-strictness=low", result.command)
             self.assertEqual(result.stdout_path.read_text(), "flow-out\n")
             self.assertEqual(result.stderr_path.read_text(), "flow-err\n")
