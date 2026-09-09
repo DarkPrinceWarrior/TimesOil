@@ -69,6 +69,15 @@ class StaticConditionedLayer(nn.Module):
         return self.layer(values + self.conditioner(self.features)[None, :, None], *args, **kwargs)
 
 
+def load_selected_layer(layer, head, selected):
+    if selected.get('static_last_layer', False):
+        layer = StaticConditionedLayer(layer, head)
+        torch.testing.assert_close(selected['last_layer']['features'], layer.features, rtol=0, atol=0)
+    if 'last_layer' in selected:
+        layer.load_state_dict(selected['last_layer'])
+    return layer
+
+
 def self_check():
     from types import SimpleNamespace
     connection = SimpleNamespace(well_ids=('a', 'b'), static=[[10, .1, 1], [20, .2, 3]], provenance={})
@@ -92,6 +101,20 @@ def self_check():
     assert layer.features[:, -9:].argmax(dim=1).tolist() == [0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 7, 3, 4, 5, 6, 7, 8, 8]
     layer(embeddings).square().sum().backward()
     assert torch.count_nonzero(layer.conditioner.weight.grad)
+    from copy import deepcopy
+    with torch.no_grad():
+        layer.conditioner.weight.fill_(.01)
+    bundle = {'static_last_layer': True, 'last_layer': deepcopy(layer.state_dict())}
+    restored = load_selected_layer(nn.Identity(), head, bundle)
+    torch.testing.assert_close(restored(embeddings), layer(embeddings), rtol=0, atol=0)
+    assert isinstance(load_selected_layer(nn.Identity(), head, {'last_layer': {}}), nn.Identity)
+    bundle['last_layer']['features'][0, 0] += 1
+    try:
+        load_selected_layer(nn.Identity(), head, bundle)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError('mismatched checkpoint geology accepted')
     from timesoil.aios.interwell import WellConnectivity
     connection = WellConnectivity(('a', 'b'), [[0, 1], [1, 0]], [[10, .1, 1], [20, .2, 3]], {})
     states = np.ones((12, 2, 3))
