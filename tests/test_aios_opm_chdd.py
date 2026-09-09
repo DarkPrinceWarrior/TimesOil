@@ -50,6 +50,22 @@ CONNECTION_VECTORS = (
 
 
 class OpmChddTest(unittest.TestCase):
+    def test_deck_comment_parsers_preserve_quoted_markers(self) -> None:
+        from timesoil.aios.opm import _strip_comment as prepare_comment
+        from timesoil.aios.opm_chdd import _strip_comment as export_comment
+
+        for parser in (prepare_comment, export_comment):
+            for line, expected in (
+                ("", ""),
+                (" 1.2 -3.4 100*0 /", " 1.2 -3.4 100*0 /"),
+                ("'P-1' OPEN / -- note", "'P-1' OPEN / "),
+                ("'P--1' /", "'P--1' /"),
+                ('"P--1" / -- note', '"P--1" / '),
+                ("-- whole line", ""),
+            ):
+                with self.subTest(parser=parser.__module__, line=line):
+                    self.assertEqual(parser(line), expected)
+
     def test_float32_summary_identity_bound_is_scale_aware(self) -> None:
         tolerance = _float32_identity_tolerance(130799.710938, 175774.128907, 44974.417969)
         self.assertGreaterEqual(tolerance, 0.023438)
