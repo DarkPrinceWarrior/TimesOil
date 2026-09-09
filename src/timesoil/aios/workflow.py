@@ -230,6 +230,8 @@ class _SourceControl:
 
 def _validate_cycle_request(request: CycleRequest) -> None:
     normalized_context = _json_object(request.context, "context")
+    if not isinstance(normalized_context.get("constraints", {}), dict):
+        raise CycleError("context constraints must be an object")
     _reject_sensitive_keys(normalized_context)
     if not isinstance(request.controls, tuple) or any(
         not isinstance(item, ControlAction) for item in request.controls
@@ -450,6 +452,10 @@ class FullCycleWorkflow:
                 },
             )
             planning_context = _agent_context(request, controls_evidence)
+            if isinstance(self._economics, CHDDEconomicsAdapter):
+                planning_context["economics"] = self._economics.normative_profile(
+                    charge_initial_pump=request.charge_initial_pump
+                )
             planning = await agents.run_plan(planning_context, run_id=run_id)
             if not all(decision.approved for decision in planning.decisions):
                 _write_immutable(

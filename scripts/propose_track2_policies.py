@@ -24,6 +24,7 @@ from timesoil.aios.llm import ExternalQwenClient, LLMConfig
 from timesoil.aios.surrogate import _project_physics
 from timesoil.aios.track2 import trajectory_from_frame
 from timesoil.aios.workflow import CycleRequest
+from timesoil.aios.economics import CHDDEconomicsAdapter
 
 
 def policy_controls(controls, policy):
@@ -82,6 +83,10 @@ def main():
         parser.error("rounds must be in [1, 12]")
     request = json.loads(args.request.read_text())
     checked_request = CycleRequest.from_mapping(request)
+    normative_profile = CHDDEconomicsAdapter.from_env().normative_profile(
+        charge_initial_pump=checked_request.charge_initial_pump
+    )
+    econ = normative_profile["assumptions"]
     raw = (args.baseline_run / "canonical/trajectory.csv").read_bytes()
     manifest = json.loads((args.baseline_run / "canonical/manifest.json").read_text())
     if sha256(raw).hexdigest() != manifest["outputs"]["track2_csv"]["sha256"]:
@@ -140,7 +145,8 @@ def main():
         injection = float((np.where(future[..., 1] == 2, future[..., 0] * future[..., 2], 0) * days).sum())
         record = {"id": len(candidates), "policy": policy, "lookahead_months": horizon,
             "estimated_oil_t": oil, "estimated_liquid_t": liquid, "planned_injection_m3": injection,
-            "screening_margin_m": (oil * (28000 - 19600 - 40) - liquid * 100 - injection * 30) / 1e6,
+            "screening_margin_m": (oil * (econ["oilPriceRubT"] - econ["deductionsRubT"] - econ["oilOpexRubT"])
+                                   - liquid * econ["liquidOpexRubT"] - injection * econ["injectionOpexRubM3"]) / 1e6,
             "full_period_months": checked.horizon_months, "full_period_actions": len(controls),
             "controls_sha256": checked.controls_sha256, "inference_seconds": time.monotonic() - begin,
             "is_official_chdd": False}
@@ -170,14 +176,14 @@ def main():
             "objective": f"Propose a new policy for maximum official CHDD over the request's {checked_request.horizon_months} management months. Use per-well multipliers when useful; all wells are controllable. Call propose_policy exactly once. Avoid duplicate policies.",
             "candidates": candidates,
             "verified_well_count": len(well_index),
+            "economics": normative_profile,
             "field_state": [{"well": w, "oil_tpd": float(trajectory.states[origin, i, 0]),
                 "liquid_tpd": float(trajectory.states[origin, i, 1]), "pressure_bar": float(trajectory.states[origin, i, 2]),
                 "initial_control": initial_controls[w]}
                 for i, w in enumerate(trajectory.well_ids)],
             "constraints": {"producer_liquid_max_m3d": 500, "source_bhp_limits_preserved": True,
                 "source_completions_and_planned_shutdowns_preserved": True,
-                "additional_water_quota": "not supplied in the current training archive",
-                "economic_costs_m": {"stop_or_start": 1, "pump_operation": 1.8, "pump_capex": "0.55..8.05 by size", "active_well_per_year": 1}},
+                "additional_water_quota": "not supplied in the current training archive"},
             "claim_limits": "Forecasts use only observed pre-origin history and planned controls. Screening margin is a six-month rate-integration estimate excluding pump CAPEX, state events and tax. It is NOT CHDD and is NOT extrapolated to the management period. Candidate requires full-period OPM plus the official calculator. Request dates describe this experiment, not a confirmed competition horizon. No independently calibrated TimesFM uncertainty or improvement claim."}
         async with ExternalQwenClient(LLMConfig.from_env()) as client:
             plan = await AgentWorkflow(client, ToolRegistry((tool,)),
