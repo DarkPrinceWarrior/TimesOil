@@ -9,7 +9,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 
-from run_track1_mpc import _action_payload, _next_month, _state_payload, load_config
+from run_track1_mpc import _action_payload, _next_month, _state_payload, build_backend, load_config
 
 
 def digest(path):
@@ -18,6 +18,7 @@ def digest(path):
 
 def audit(root, expected_months):
     config = load_config(root / "case.json")
+    backend = build_backend(config)
     months = sorted(config.candidates)
     assert len(months) == expected_months
     run = root / "delivery" / config.run_id
@@ -46,6 +47,7 @@ def audit(root, expected_months):
         ref, expected = trajectory["next_state"]["restart_ref"].split("#sha256=")
         path = Path(ref)
         assert digest(path) == expected
+        backend._verify_opm_manifest(path.parent / "manifest.json", baseline=False)
         lineage = json.loads(path.read_text())
         assert lineage["input_state"] == {k: v for k, v in previous_state.items() if k != "restart_ref"}
         assert lineage["prior_restart_ref"] == previous_state["restart_ref"]
