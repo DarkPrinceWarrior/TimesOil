@@ -22,7 +22,7 @@ from benchmark_timesfm3 import MODEL_REVISION, forecast_inputs
 from timesoil.aios.agents import AgentRole, AgentWorkflow, ToolDefinition, ToolRegistry
 from timesoil.aios.llm import ExternalQwenClient, LLMConfig
 from timesoil.aios.surrogate import _project_physics
-from timesoil.aios.track2 import trajectory_from_frame
+from timesoil.aios.track2 import load_trajectory_dataset
 from timesoil.aios.workflow import CycleError, CycleRequest, _controls
 from timesoil.aios.operating_constraints import check_controls, parse_constraints
 from timesoil.aios.economics import CHDDEconomicsAdapter
@@ -82,6 +82,8 @@ def policy_controls(controls, policy):
     _controls(output)
     roles = {}
     for action in sorted(output, key=lambda a: (a['month'], a['well'])):
+        if action['target'] == 'LRAT' and action['value'] > 500:
+            raise ValueError('liquid target exceeds 500 m3/day')
         if roles.get(action['well']) == 'injector' and action['role'] == 'producer':
             raise ValueError('reverse conversion is not permitted')
         roles[action['well']] = action['role']
@@ -146,7 +148,11 @@ def main():
     manifest = json.loads((args.baseline_run / "canonical/manifest.json").read_text())
     if sha256(raw).hexdigest() != manifest["outputs"]["track2_csv"]["sha256"]:
         raise ValueError("baseline trajectory hash mismatch")
-    trajectory = trajectory_from_frame(pd.read_csv(args.baseline_run / "canonical/trajectory.csv"))
+    dataset = load_trajectory_dataset(args.baseline_run / 'canonical/trajectory.csv',
+        manifest=args.baseline_run / 'canonical/manifest.json')
+    if len(dataset) != 1 or not dataset.model_z_identity:
+        raise ValueError('one authenticated Model Z baseline is required')
+    trajectory = dataset[0]
     has_bhp = trajectory.actions.shape[-1] == 4
     if not has_bhp and any(a.bhp_limit is not None for a in checked_request.controls):
         raise ValueError('BHP screening requires an authenticated baseline with the BHP action channel')
