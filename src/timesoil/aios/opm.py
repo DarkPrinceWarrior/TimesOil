@@ -844,6 +844,8 @@ class OpmFlowRunner:
     def __init__(
         self, *, timeout_seconds: float = 3600.0, docker_executable: str = "docker",
         threads_per_process: int | None = None,
+        mpi_processes: int | None = None,
+        cpu_affinity: str | None = None,
     ):
         if not 0 < timeout_seconds <= 7 * 24 * 3600:
             raise ValueError("OPM timeout must be in (0, 604800] seconds")
@@ -856,6 +858,18 @@ class OpmFlowRunner:
         self.timeout_seconds = timeout_seconds
         self.docker_executable = docker_executable
         self.threads_per_process = threads_per_process
+        if mpi_processes is None:
+            mpi_processes = int(os.environ.get("OPM_MPI_PROCESSES", "1"))
+        if type(mpi_processes) is not int or not 1 <= mpi_processes <= 64:
+            raise ValueError("OPM mpi_processes must be an integer in [1, 64]")
+        self.mpi_processes = mpi_processes
+        if cpu_affinity is None:
+            cpu_affinity = os.environ.get("OPM_CPU_AFFINITY", "")
+        if not isinstance(cpu_affinity, str) or (cpu_affinity and re.fullmatch(
+            r"[0-9]+(?:-[0-9]+)?(?:,[0-9]+(?:-[0-9]+)?)*", cpu_affinity
+        ) is None):
+            raise ValueError("OPM cpu_affinity must contain comma-separated CPU IDs/ranges")
+        self.cpu_affinity = cpu_affinity
 
     def get_provenance(self) -> str:
         return f"OPM Flow 2026.04; image={OPM_IMAGE}"
@@ -968,6 +982,16 @@ class OpmFlowRunner:
             "--output-dir=/output",
             f"--threads-per-process={self.threads_per_process}",
         ]
+        if self.mpi_processes > 1:
+            command.insert(command.index("--network=none") + 1, "--shm-size=1g")
+            command[command.index(OPM_IMAGE) + 1:command.index(OPM_IMAGE) + 1] = [
+                "mpirun", "--allow-run-as-root", "--oversubscribe",
+                "-np", str(self.mpi_processes), "--bind-to", "none",
+            ]
+        if self.cpu_affinity:
+            command[command.index(OPM_IMAGE) + 1:command.index(OPM_IMAGE) + 1] = [
+                "taskset", "-c", self.cpu_affinity,
+            ]
         if parsing_strictness == "low":
             command.append("--parsing-strictness=low")
         command.append(f"/case/{relative_deck}")
