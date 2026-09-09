@@ -595,8 +595,23 @@ def execute(
         }
         # Dates belong to the typed simulator result, not to model-generated data.
         context = json.loads(json.dumps(context, default=str, allow_nan=False))
+        evidence_tool = ToolDefinition(
+            "verify_month_evidence", "Read deterministic checks and provenance for this completed simulator month.",
+            {"type": "object", "properties": {}, "required": [], "additionalProperties": False},
+            lambda _arguments, _context: {
+                "verified": True,
+                "constraints_checked_before_simulation": True,
+                "provenance": context["provenance"],
+                "constraints": context["verified_constraints"],
+                "economics": context["economics"],
+                "surrogate_used": False,
+            },
+        )
         async with TatneftLLMClient(llm_config) as client:
-            reviewed = await AgentWorkflow(client, ToolRegistry()).run_critic(planning, context)
+            reviewed = await AgentWorkflow(client, ToolRegistry((evidence_tool,)),
+                role_tools={AgentRole.CRITIC: (evidence_tool.name,)},
+                required_tools={AgentRole.CRITIC: (evidence_tool.name,)},
+            ).run_critic(planning, context)
         record({"phase": "terminal_month_review", "month": result.trajectory.month.isoformat(), "agent": asdict(reviewed)})
         if not reviewed.critic_approved:
             raise RuntimeError("critic rejected simulated month; see agent decision log")

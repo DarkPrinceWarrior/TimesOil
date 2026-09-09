@@ -35,6 +35,8 @@ class _AgentClient:
         pass
 
     async def chat(self, _: Any, **kwargs: Any) -> LLMResponse:
+        if kwargs.get("tool_choice") == {"type": "function", "function": {"name": "verify_month_evidence"}}:
+            return LLMResponse("verify", None, "tool_calls", (ToolCall("verify-1", "verify_month_evidence", {}),))
         calls = (
             (ToolCall("select-1", "select_candidate", {"index": self.selected_index}),)
             if kwargs.get("tools")
@@ -375,6 +377,8 @@ def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_p
         proposals = 0
 
         async def chat(self, _: Any, **kwargs: Any) -> LLMResponse:
+            if kwargs.get("tool_choice") == {"type": "function", "function": {"name": "verify_month_evidence"}}:
+                return await super().chat(_, **kwargs)
             calls = ((ToolCall("propose-1", "propose_controls", {"updates": updates if self.proposals == 0 else []}),)
                      if kwargs.get("tools") else ())
             if calls:
@@ -395,6 +399,10 @@ def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_p
     assert review["verified_constraints"]["inventory_matches_case"]
     assert review["verified_constraints"]["well_count"] == 2
     assert review["provenance"]["verified_state_receipt"] == result["evidence"]["trajectories"][-1]["next_state"]["restart_ref"]
+    tool_evidence = result["agent"]["records"][-1]["agent"]["decisions"][-1]["tool_evidence"]
+    assert len(tool_evidence) == 1 and tool_evidence[0]["tool"] == "verify_month_evidence"
+    assert tool_evidence[0]["output"]["provenance"] == review["provenance"]
+    assert tool_evidence[0]["output"]["constraints"] == review["verified_constraints"]
     baseline = config.candidates[config.case.start][0]
     _raises(ValueError, "unknown or duplicate", lambda: cli._propose_controls(config.case, baseline, updates * 2))
     _raises(ValueError, "exceeds", lambda: cli._propose_controls(config.case, baseline, [{**updates[0], "status": "OPEN", "value": 501}]))
