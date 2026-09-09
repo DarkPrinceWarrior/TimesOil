@@ -107,7 +107,9 @@ def main():
         unwrapped = decode(model, target, horizon=224, past_future_covariates=cov)
         # Forecaster and loss consume targets only; predicted covariate outputs are discarded.
         parity_error = float((wrapped[:, :309] - unwrapped[:, :309]).abs().max())
-        torch.testing.assert_close(wrapped[:, :309], unwrapped[:, :309], rtol=1e-5, atol=.005)
+        parity_scaled_error = float(((wrapped[:, :309] - unwrapped[:, :309]) / scale[..., None]).abs().max())
+        torch.testing.assert_close(wrapped[:, :309] / scale[..., None],
+                                   unwrapped[:, :309] / scale[..., None], rtol=0, atol=.001)
         best_loss = float(loss_for(validation_ids[0]))
     del wrapped, unwrapped
     checkpoint = args.output / 'output-head.pt'
@@ -118,7 +120,8 @@ def main():
         trained_component='TimesFM3Torch.output_head', backbone_frozen=True,
         trainable_parameters=sum(p.numel() for p in trainable), learning_rate=1e-5,
         attention_backend='math', decoder_target_quantile_parity_max_abs=parity_error,
-        decoder_target_quantile_parity_atol=.005, decoder_target_quantile_parity_rtol=1e-5,
+        decoder_target_quantile_parity_max_scaled=parity_scaled_error,
+        decoder_target_quantile_parity_atol_train_scale=.001,
         epochs_requested=args.epochs, horizon_months=224, context_months=128, control_channels=515,
         training_scale=feature_scale.tolist(), best_epoch=0, validation_loss_before=best_loss,
         script_sha256=sha256(Path(__file__).read_bytes()).hexdigest(),
