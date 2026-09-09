@@ -1,0 +1,18 @@
+{
+  "pid": 2594212,
+  "cwd": "/root/projects/TimesOil-audit-track1-lifecycle-v5-20260909",
+  "command": [
+    "/root/projects/TimesOil/.venv/bin/python",
+    "scripts/run_track1_mpc.py",
+    "/root/projects/TimesOil/results/audit-20260909/track1-lifecycle-23-v5-20260909/case.json",
+    "--runs-dir",
+    "/root/projects/TimesOil/results/audit-20260909/track1-lifecycle-23-v5-20260909/delivery",
+    "--agent",
+    "--full-field",
+    "--lifecycle",
+    "--resume-log",
+    "/root/projects/TimesOil/results/audit-20260909/track1-lifecycle-23-v4-20260909/delivery/track1-1b645344a38940c57cd88e23-agent.jsonl"
+  ],
+  "git_commit": "d4856cb",
+  "resume_approved_months": 20
+}
