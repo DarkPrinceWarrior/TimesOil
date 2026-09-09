@@ -253,6 +253,36 @@ def _args(source: Path, bundle: Path, output: Path) -> argparse.Namespace:
 
 
 class Track2ScenarioRunnerTest(unittest.TestCase):
+    def test_two_workers_overlap_after_baseline_and_preserve_order(self) -> None:
+        from threading import Barrier
+
+        barrier = Barrier(2, timeout=5)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source, bundle, modified = _fixture(root)
+            output = root / "runs"
+            args = _args(source, bundle, output)
+            args.workers = 2
+            _FakeRunner.expected_schedules = modified
+
+            class ParallelRunner(_FakeRunner):
+                def _run_prepared(self, prepared, *, parsing_strictness):
+                    if prepared.run_dir.name != "baseline":
+                        assert (output / "baseline/canonical/chdd.csv").is_file()
+                    if prepared.run_dir.name in ("perturbation-001", "perturbation-002"):
+                        barrier.wait()
+                    return super()._run_prepared(prepared, parsing_strictness=parsing_strictness)
+
+            with (patch.object(MODULE, "OpmFlowRunner", ParallelRunner),
+                  patch.object(MODULE, "export_opm_chdd", _export)):
+                receipt = json.loads(MODULE._run_batch(args).read_text())
+            self.assertFalse(receipt["sequential"])
+            self.assertEqual(receipt["parallel_workers"], 2)
+            self.assertEqual([v["scenario_id"] for v in receipt["scenarios"]], list(modified))
+            args.workers = 3
+            with self.assertRaisesRegex(ValueError, "workers"):
+                MODULE._run_batch(args)
+
     def test_ten_scenario_batch_emits_versioned_conformal_training_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
