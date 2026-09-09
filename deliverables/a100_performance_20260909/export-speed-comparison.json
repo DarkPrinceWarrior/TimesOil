@@ -1,0 +1,39 @@
+{
+  "source": "Model Z perturbation-001, identical frozen OPM output",
+  "before": {
+    "wall_seconds": 31.768952034413815,
+    "exporter_sha256": "c04acff7409a13def143e7e1a2d44987fee59fed1ea30de0be7de8be7b700b48",
+    "outputs": {
+      "chdd_csv": {
+        "name": "chdd.csv",
+        "row_count": 38213,
+        "sha256": "645a174d43bb2547517647070f0b208e0dc7a7e9fdcbb9faf6e7d5d971ea5be3"
+      },
+      "track2_csv": {
+        "name": "track2.csv",
+        "row_count": 38213,
+        "sha256": "c9b17aeee40a0d13253821a30bc2f5f74cffe055360781acde55c09fd6df36a1"
+      }
+    }
+  },
+  "after": {
+    "wall_seconds": 23.17164409905672,
+    "exporter_sha256": "552d60fbe0220d0d638893181793b1a9d42c16357f2121ede738e4d4911ab492",
+    "outputs": {
+      "chdd_csv": {
+        "name": "chdd.csv",
+        "row_count": 38213,
+        "sha256": "645a174d43bb2547517647070f0b208e0dc7a7e9fdcbb9faf6e7d5d971ea5be3"
+      },
+      "track2_csv": {
+        "name": "track2.csv",
+        "row_count": 38213,
+        "sha256": "c9b17aeee40a0d13253821a30bc2f5f74cffe055360781acde55c09fd6df36a1"
+      }
+    }
+  },
+  "csv_bytes_identical": true,
+  "speedup": 1.3710271009948352,
+  "seconds_saved": 8.597307935357094,
+  "timing_scope": "single before/after pair on a shared A100 host; no cProfile"
+}
