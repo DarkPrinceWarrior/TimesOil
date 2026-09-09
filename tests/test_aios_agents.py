@@ -268,6 +268,7 @@ def test_response_model_mismatch_fails_closed() -> None:
 class _WorkflowLLM:
     def __init__(self) -> None:
         self.roles: list[str] = []
+        self.chat_calls = 0
 
     async def chat(
         self,
@@ -280,6 +281,7 @@ class _WorkflowLLM:
         timeout_seconds: float | None = None,
     ) -> LLMResponse:
         del messages, reasoning, tool_choice, max_tokens, timeout_seconds
+        self.chat_calls += 1
         calls = (
             (ToolCall("inspect-1", "inspect_state", {"month": 1}),) if tools else ()
         )
@@ -344,6 +346,7 @@ def test_four_role_workflow_is_fixed_and_tools_are_allow_listed() -> None:
     assert tuple(decision.role for decision in state.decisions) == ROLE_ORDER
     assert tuple(llm.roles) == tuple(role.value for role in ROLE_ORDER)
     assert state.complete and state.critic_approved
+    assert llm.chat_calls == 1
     assert tool_calls == [{"month": 1}]
     assert state.decisions[0].tool_evidence[0].output["track"] == 2
     assert workflow.transitions == tuple(pairwise(ROLE_ORDER))

@@ -331,7 +331,7 @@ class AgentWorkflow:
             reasoning=True,
             tools=schemas or None,
             tool_choice=tool_choice,
-        )
+        ) if schemas else LLMResponse("", None, "stop")
         if len(preliminary.tool_calls) > _MAX_TOOL_CALLS_PER_ROLE:
             raise WorkflowError("role requested too many tools")
         called = {call.name for call in preliminary.tool_calls}
