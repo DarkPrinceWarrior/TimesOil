@@ -21,6 +21,7 @@ from .scenario_generation import ScenarioGeneratorConfig, generate_control_scena
 from .schedule_overlay import _canonical_schedule
 from .surrogate import (
     ACTION_FEATURES,
+    BHP_ACTION_FEATURES,
     STATE_FEATURES,
     PhysicalBaseline,
     ScenarioTrajectory,
@@ -317,7 +318,7 @@ def trajectory_from_frame(frame: pd.DataFrame) -> ScenarioTrajectory:
         data.pivot(index="date", columns="well", values=column)
         .reindex(index=dates, columns=wells)
         .to_numpy(float)
-        for column in ACTION_FEATURES
+        for column in (BHP_ACTION_FEATURES if "bhp_limit" in data else ACTION_FEATURES)
     ], axis=-1)
     return ScenarioTrajectory(
         scenario_id=str(scenario_ids[0]),
@@ -724,7 +725,8 @@ def _trajectory_controls(
     for offset, timestamp in enumerate(trajectory.dates[start_index:stop]):
         month = timestamp.date()
         for well_index, well in enumerate(trajectory.well_ids):
-            value, code, status_code = trajectory.actions[start_index + offset, well_index]
+            record = trajectory.actions[start_index + offset, well_index]
+            value, code, status_code = record[:3]
             target = target_codes[float(code)]
             role = (
                 WellRole.INJECTOR
@@ -733,7 +735,8 @@ def _trajectory_controls(
             )
             status = WellStatus.OPEN if status_code == 1.0 else WellStatus.SHUT
             actions.append(
-                ControlAction(month, well, role, status, target, float(value))
+                ControlAction(month, well, role, status, target, float(value),
+                              float(record[3]) if len(record) == 4 and record[3] else None)
             )
     return tuple(actions)
 
@@ -748,8 +751,11 @@ def _action_cube(
     actions: tuple[ControlAction, ...],
     months: tuple[date, ...],
     wells: tuple[str, ...],
+    action_features: tuple[str, ...] = ACTION_FEATURES,
 ) -> np.ndarray:
-    if any(action.bhp_limit is not None for action in actions):
+    if action_features not in (ACTION_FEATURES, BHP_ACTION_FEATURES):
+        raise ValueError("unknown surrogate action features")
+    if action_features == ACTION_FEATURES and any(action.bhp_limit is not None for action in actions):
         raise ValueError("this surrogate has no BHP action feature; retraining is required")
     target_codes = {
         ControlTarget.OIL_RATE: 0.0,
@@ -759,7 +765,7 @@ def _action_cube(
     indexed = {(item.month, item.well): item for item in actions}
     if len(indexed) != len(months) * len(wells):
         raise ValueError("candidate controls do not cover the complete month × well grid")
-    cube = np.empty((len(months), len(wells), len(ACTION_FEATURES)), dtype=float)
+    cube = np.empty((len(months), len(wells), len(action_features)), dtype=float)
     for month_index, month in enumerate(months):
         for well_index, well in enumerate(wells):
             try:
@@ -772,7 +778,7 @@ def _action_cube(
                 action.value,
                 target_codes[action.target],
                 1.0 if action.status is WellStatus.OPEN else 0.0,
-            )
+            ) + ((action.bhp_limit or 0.0,) if len(action_features) == 4 else ())
     return cube
 
 
@@ -873,13 +879,14 @@ def search_track2_schedule(
         for timestamp in trajectory.dates[start_index : start_index + 6]
     )
     days = np.asarray([pd.Timestamp(month).days_in_month for month in months], float)
-    baseline_cube = _action_cube(generated[0].actions, months, trajectory.well_ids)
+    action_features = getattr(model, "action_features", ACTION_FEATURES)
+    baseline_cube = _action_cube(generated[0].actions, months, trajectory.well_ids, action_features)
     baseline_injectors = baseline_cube[..., 1] == 2.0
     accepted: list[Track2SearchCandidate] = []
     rejected_ood: list[str] = []
 
     for scenario in generated:
-        cube = _action_cube(scenario.actions, months, trajectory.well_ids)
+        cube = _action_cube(scenario.actions, months, trajectory.well_ids, action_features)
         candidate_injectors = cube[..., 1] == 2.0
         same_injectors = np.array_equal(candidate_injectors, baseline_injectors)
         same_injection_controls = np.array_equal(

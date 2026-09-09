@@ -20,9 +20,10 @@ import pandas as pd
 from .interwell import INTERWELL_FEATURES, WellConnectivity
 
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 STATE_FEATURES = ("oil_tpd", "liquid_tpd", "pressure_bar")
 ACTION_FEATURES = ("control_value", "control_target_code", "status")
+BHP_ACTION_FEATURES = (*ACTION_FEATURES, "bhp_limit")
 # ponytail: artifact-count safety cap; raise with the training contract if larger ensembles are needed.
 _MAX_ARTIFACT_ENSEMBLE_SIZE = 64
 RESIDUAL_FEATURES = (
@@ -79,7 +80,7 @@ def _read_regular_bytes(path: Path, label: str) -> bytes:
 def _validated_surrogate_artifact(
     manifest: dict[str, Any], model_bytes: bytes
 ) -> tuple[dict[str, str], dict[str, Any]]:
-    if manifest.get("schema_version") not in (2, SCHEMA_VERSION):
+    if manifest.get("schema_version") not in (2, 3, SCHEMA_VERSION):
         raise ValueError(f"unsupported surrogate manifest schema: {manifest.get('schema_version')}")
     files = manifest.get("files")
     if not isinstance(files, dict) or not files or not all(
@@ -130,7 +131,9 @@ class ScenarioTrajectory:
     """One indivisible simulator trajectory used for grouped splitting.
 
     ``states`` has shape ``[month, well, 3]`` and ``actions`` has shape
-    ``[month, well, 3]``. Target codes are ORAT=0, LRAT=1 and WRAT=2. The
+    ``[month, well, 3 or 4]``. Optional fourth feature is BHP bound in bar;
+    zero means unspecified, never a measured pressure. Target codes are
+    ORAT=0, LRAT=1 and WRAT=2. The
     action at index ``t`` drives ``states[t + 1]``.
     ``source_model`` must explicitly identify simulator provenance.
     """
@@ -159,8 +162,10 @@ class ScenarioTrajectory:
         if not np.all(np.diff(periods) == 1):
             raise ValueError(f"scenario {self.scenario_id!r}: monthly trajectory has gaps")
         expected_states = (len(dates), len(self.well_ids), len(STATE_FEATURES))
-        expected_actions = (len(dates), len(self.well_ids), len(ACTION_FEATURES))
-        if states.shape != expected_states or actions.shape != expected_actions:
+        expected_actions = (len(dates), len(self.well_ids), 3)
+        if states.shape != expected_states or actions.shape not in (
+            expected_actions, (*expected_actions[:2], 4)
+        ):
             raise ValueError(
                 f"scenario {self.scenario_id!r}: expected states {expected_states} and "
                 f"actions {expected_actions}, got {states.shape} and {actions.shape}"
@@ -176,6 +181,7 @@ class ScenarioTrajectory:
             np.any(actions[..., 0] < 0)
             or not np.isin(actions[..., 1], (0.0, 1.0, 2.0)).all()
             or not np.isin(actions[..., 2], (0.0, 1.0)).all()
+            or (actions.shape[-1] == 4 and np.any(actions[..., 3] < 0))
         ):
             raise ValueError(f"scenario {self.scenario_id!r}: invalid control target/value/status")
 
@@ -252,7 +258,7 @@ class PhysicalBaseline:
         previous = np.concatenate([item.states[:-1].reshape(-1, 3) for item in trajectories])
         following = np.concatenate([item.states[1:].reshape(-1, 3) for item in trajectories])
         actions = np.concatenate([
-            item.actions[:-1].reshape(-1, len(ACTION_FEATURES)) for item in trajectories
+            item.actions[:-1].reshape(-1, item.actions.shape[-1]) for item in trajectories
         ])
         active = actions[:, 2] > 0.5
         if active.sum() < 2:
@@ -301,7 +307,7 @@ class PhysicalBaseline:
     def predict(self, state: np.ndarray, action: np.ndarray) -> np.ndarray:
         state = np.asarray(state, float)
         action = np.asarray(action, float)
-        control, target, status = action.T
+        control, target, status = action[:, :3].T
         active = status >= 0.5
         injection = np.where(target == 2.0, control, 0.0)
         if self.connectivity is not None:
@@ -328,7 +334,7 @@ class PhysicalBaseline:
 
 def _residual_features(state: np.ndarray, action: np.ndarray, connectivity: WellConnectivity | None = None) -> np.ndarray:
     oil, liquid, pressure = np.asarray(state, float).T
-    control, target, status = np.asarray(action, float).T
+    control, target, status = np.asarray(action, float)[:, :3].T
     injection = np.where(target == 2.0, control, 0.0)
     fraction = np.divide(oil, liquid, out=np.zeros_like(oil), where=liquid > 1e-9)
     features = np.column_stack([
@@ -344,7 +350,9 @@ def _residual_features(state: np.ndarray, action: np.ndarray, connectivity: Well
         1.0 - fraction,
         injection - liquid,
     ])
-    return features if connectivity is None else np.column_stack([features, connectivity.features(state, action)])
+    if connectivity is not None:
+        features = np.column_stack([features, connectivity.features(state, action)])
+    return np.column_stack([features, action[:, 3]]) if action.shape[1] == 4 else features
 
 
 def _project_physics(raw: np.ndarray, action: np.ndarray, *, zero_injectors: bool = False) -> tuple[np.ndarray, float]:
@@ -388,9 +396,13 @@ class Track2Surrogate:
         conformal_scale: np.ndarray | None = None,
         conformal_floor_fraction: float = 0.01,
         training_metadata: dict[str, Any] | None = None,
+        action_features: tuple[str, ...] = ACTION_FEATURES,
     ) -> None:
         self.baseline = baseline
-        self.residual_features = RESIDUAL_FEATURES + (() if baseline.connectivity is None else INTERWELL_FEATURES)
+        if action_features not in (ACTION_FEATURES, BHP_ACTION_FEATURES):
+            raise ValueError("action feature contract mismatch")
+        self.action_features = action_features
+        self.residual_features = RESIDUAL_FEATURES + (() if baseline.connectivity is None else INTERWELL_FEATURES) + action_features[3:]
         self.boosters = boosters
         self.feature_min = np.asarray(feature_min, float)
         self.feature_max = np.asarray(feature_max, float)
@@ -514,15 +526,18 @@ class Track2Surrogate:
         well_ids = trajectories[0].well_ids
         if any(item.well_ids != well_ids for item in trajectories[1:]):
             raise ValueError("all training scenarios must use the same ordered wells")
+        action_features = BHP_ACTION_FEATURES if trajectories[0].actions.shape[-1] == 4 else ACTION_FEATURES
+        if any(item.actions.shape[-1] != len(action_features) for item in trajectories):
+            raise ValueError("all training scenarios must use the same action features")
 
         if connectivity is not None and connectivity.well_ids != well_ids:
             raise ValueError("connectivity well order differs from training trajectories")
         baseline = PhysicalBaseline.fit(trajectories, connectivity)
-        residual_features = RESIDUAL_FEATURES + (() if connectivity is None else INTERWELL_FEATURES)
+        residual_features = RESIDUAL_FEATURES + (() if connectivity is None else INTERWELL_FEATURES) + action_features[3:]
         transitions: dict[str, tuple[np.ndarray, np.ndarray]] = {}
         for item in trajectories:
             state = item.states[:-1].reshape(-1, len(STATE_FEATURES))
-            action = item.actions[:-1].reshape(-1, len(ACTION_FEATURES))
+            action = item.actions[:-1].reshape(-1, len(action_features))
             following = item.states[1:].reshape(-1, len(STATE_FEATURES))
             transitions[item.scenario_id] = (
                 _residual_features(state, action, connectivity), following - baseline.predict(state, action)
@@ -598,6 +613,7 @@ class Track2Surrogate:
             n_estimators=n_estimators,
             ood_feature_margin=ood_feature_margin,
             ood_disagreement=ood_disagreement,
+            action_features=action_features,
             training_metadata={
                 "scenario_ids": sorted(transitions),
                 "scenario_hashes": {item.scenario_id: item.content_hash for item in trajectories},
@@ -644,7 +660,7 @@ class Track2Surrogate:
         state, action = self._validate_step(state, action)
         raw = np.stack([self._raw_member(member, state, action) for member in range(self.ensemble_size)])
         projected, violation = _project_physics(
-            raw, np.broadcast_to(action, raw.shape[:-1] + (len(ACTION_FEATURES),)),
+            raw, np.broadcast_to(action, raw.shape[:-1] + (len(self.action_features),)),
             zero_injectors=self.baseline.connectivity is not None,
         )
         mean, std = projected.mean(axis=0), projected.std(axis=0, ddof=1)
@@ -656,12 +672,13 @@ class Track2Surrogate:
     def rollout(self, initial_state: np.ndarray, actions: np.ndarray) -> RolloutPrediction:
         initial_state = np.asarray(initial_state, float)
         actions = np.asarray(actions, float)
-        if actions.ndim != 3 or actions.shape[1:] != (len(initial_state), len(ACTION_FEATURES)):
-            raise ValueError("actions must have shape [horizon, wells, 3]")
+        if actions.ndim != 3 or len(actions) == 0 or actions.shape[1:] != (len(initial_state), len(self.action_features)):
+            raise ValueError("actions must match model [horizon, wells, action_features]")
         self._validate_step(initial_state, actions[0])
         member_states = np.repeat(initial_state[None, ...], self.ensemble_size, axis=0)
         means, stds, scores, flags, reasons = [], [], [], [], []
         for action in actions:
+            self._validate_step(initial_state, action)
             member_features = np.concatenate([
                 _residual_features(member_states[member], action, self.baseline.connectivity)
                 for member in range(self.ensemble_size)
@@ -671,7 +688,7 @@ class Track2Surrogate:
                 for member in range(self.ensemble_size)
             ])
             member_states, violation = _project_physics(
-                raw, np.broadcast_to(action, raw.shape[:-1] + (len(ACTION_FEATURES),)),
+                raw, np.broadcast_to(action, raw.shape[:-1] + (len(self.action_features),)),
                 zero_injectors=self.baseline.connectivity is not None,
             )
             mean, std = member_states.mean(axis=0), member_states.std(axis=0, ddof=1)
@@ -709,19 +726,19 @@ class Track2Surrogate:
             accepted=~flags.any(axis=1),
         )
 
-    @staticmethod
-    def _validate_step(state: np.ndarray, action: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def _validate_step(self, state: np.ndarray, action: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         state, action = np.asarray(state, float), np.asarray(action, float)
         if state.ndim != 2 or state.shape[1] != len(STATE_FEATURES):
             raise ValueError("state must have shape [wells, 3]")
-        if action.shape != (len(state), len(ACTION_FEATURES)):
-            raise ValueError("action must have shape [wells, 3]")
+        if action.shape != (len(state), len(self.action_features)):
+            raise ValueError("action must match model [wells, action_features]")
         if not np.isfinite(state).all() or not np.isfinite(action).all():
             raise ValueError("state and action must be finite")
         if (
             np.any(action[:, 0] < 0)
             or not np.isin(action[:, 1], (0.0, 1.0, 2.0)).all()
             or not np.isin(action[:, 2], (0.0, 1.0)).all()
+            or (action.shape[-1] == 4 and np.any(action[:, 3] < 0))
         ):
             raise ValueError("control value/target/status is invalid")
         return state, action
@@ -733,7 +750,7 @@ class Track2Surrogate:
         metadata = {
             "schema_version": SCHEMA_VERSION,
             "state_features": STATE_FEATURES,
-            "action_features": ACTION_FEATURES,
+            "action_features": self.action_features,
             "residual_features": self.residual_features,
             "connectivity": None if self.baseline.connectivity is None else self.baseline.connectivity.as_dict(),
             "ensemble_size": self.ensemble_size,
@@ -817,12 +834,15 @@ class Track2Surrogate:
             raise ValueError("surrogate booster is not valid UTF-8 text") from exc
         if tuple(metadata.get("state_features", ())) != STATE_FEATURES:
             raise ValueError("state feature contract mismatch")
-        if tuple(metadata.get("action_features", ())) != ACTION_FEATURES:
+        action_features = tuple(metadata.get("action_features", ()))
+        if action_features not in (ACTION_FEATURES, BHP_ACTION_FEATURES) or (
+            metadata["schema_version"] < 4 and action_features != ACTION_FEATURES
+        ):
             raise ValueError("action feature contract mismatch")
         connectivity = None if metadata.get("connectivity") is None else WellConnectivity.from_dict(metadata["connectivity"])
         if metadata["schema_version"] == 2 and connectivity is not None:
             raise ValueError("legacy schema cannot contain interwell connectivity")
-        if tuple(metadata.get("residual_features", ())) != RESIDUAL_FEATURES + (() if connectivity is None else INTERWELL_FEATURES):
+        if tuple(metadata.get("residual_features", ())) != RESIDUAL_FEATURES + (() if connectivity is None else INTERWELL_FEATURES) + action_features[3:]:
             raise ValueError("residual feature contract mismatch")
         boosters = [
             [
@@ -851,4 +871,5 @@ class Track2Surrogate:
                 metadata.get("conformal_floor_fraction", 0.01)
             ),
             training_metadata=metadata.get("training", {}),
+            action_features=action_features,
         )

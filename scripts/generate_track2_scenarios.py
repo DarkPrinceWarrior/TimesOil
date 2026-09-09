@@ -55,9 +55,9 @@ def _baseline_controls(path: Path, source: bytes) -> tuple[bytes, tuple[Any, ...
         if header is None or len(header) != len(set(header)):
             raise ValueError("baseline CSV has an empty or duplicate header")
         fields = set(header)
-        if fields == set(_CONTROL_FIELDS):
+        if set(_CONTROL_FIELDS) <= fields <= set(_CONTROL_FIELDS) | {"bhp_limit"}:
             return source, load_control_csv(path), path.name
-        if fields != set(CANONICAL_COLUMNS):
+        if not set(CANONICAL_COLUMNS) <= fields <= set(CANONICAL_COLUMNS) | {"bhp_limit"}:
             raise ValueError(
                 f"CSV header must contain exactly {_CONTROL_FIELDS} or {CANONICAL_COLUMNS}"
             )
@@ -85,11 +85,12 @@ def _baseline_controls(path: Path, source: bytes) -> tuple[bytes, tuple[Any, ...
             {
                 **{field: row[field] for field in _CONTROL_FIELDS[:-1]},
                 "status": "OPEN" if status == 1.0 else "SHUT",
+                **({"bhp_limit": row["bhp_limit"] if float(row["bhp_limit"]) else ""} if "bhp_limit" in fields else {}),
             }
         )
 
     output = StringIO(newline="")
-    writer = csv.DictWriter(output, _CONTROL_FIELDS, lineterminator="\n")
+    writer = csv.DictWriter(output, (*_CONTROL_FIELDS, "bhp_limit") if "bhp_limit" in fields else _CONTROL_FIELDS, lineterminator="\n")
     writer.writeheader()
     for row in projected:
         writer.writerow(
@@ -99,6 +100,7 @@ def _baseline_controls(path: Path, source: bytes) -> tuple[bytes, tuple[Any, ...
                 "control_value": row["control_value"],
                 "control_target": row["control_target"],
                 "status": row["status"],
+                **({"bhp_limit": row["bhp_limit"]} if "bhp_limit" in fields else {}),
             }
         )
     return output.getvalue().encode("utf-8"), load_control_records(projected), _BASELINE_NAME
@@ -309,6 +311,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--perturbation-fraction", type=float, default=0.15)
     parser.add_argument("--liquid-rate-scale", type=float, default=1.0)
     parser.add_argument("--monthly-liquid-rate-cap", type=float)
+    parser.add_argument("--bhp-perturbation-fraction", type=float, default=0.0)
     return parser
 
 
@@ -322,6 +325,7 @@ def main(argv: list[str] | None = None) -> int:
             perturbation_fraction=args.perturbation_fraction,
             liquid_rate_scale=args.liquid_rate_scale,
             monthly_liquid_rate_cap=args.monthly_liquid_rate_cap,
+            bhp_perturbation_fraction=args.bhp_perturbation_fraction,
         )
         outputs, index = _build_outputs(
             args.baseline_csv,
