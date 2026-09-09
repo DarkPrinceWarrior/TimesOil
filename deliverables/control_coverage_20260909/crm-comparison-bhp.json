@@ -1,0 +1,107 @@
+{
+  "dataset_contract": "scenario_trajectory_v1",
+  "dataset_hash": "5d7eafe3d4df2f617b1f00606de175ccc1856046ba74606d5aa821d4aab77e54",
+  "source_models": [
+    "model_z_opm"
+  ],
+  "model_z_ready": true,
+  "pipeline_proof_only": false,
+  "architecture": "CRM/material-balance baseline + LightGBM residual ensemble",
+  "training_objective": "per-output L1 residual with train-only OOB shrinkage",
+  "uncertainty": "ensemble standard deviation; not conformally calibrated",
+  "train_scenarios": [
+    "baseline",
+    "perturbation-001",
+    "perturbation-002",
+    "perturbation-003",
+    "perturbation-005",
+    "perturbation-006",
+    "perturbation-009"
+  ],
+  "test_scenarios": [
+    "perturbation-004",
+    "perturbation-007",
+    "perturbation-008"
+  ],
+  "train_metrics": {
+    "oil_wape": 0.4209957209324717,
+    "liquid_wape": 0.1762031942545432,
+    "pressure_rmse_bar": 26.425148478764914,
+    "mean_rollout_oil_wape": 0.420631133698071,
+    "mean_rollout_liquid_wape": 0.17634811636886846,
+    "raw_ensemble_90_coverage": 0.5413632686084142,
+    "ood_step_rate": 0.9343112244897959,
+    "rollouts": 7,
+    "points": 161504,
+    "horizon_months": 224
+  },
+  "test_metrics": {
+    "oil_wape": 0.4018537035574968,
+    "liquid_wape": 0.18378822501306688,
+    "pressure_rmse_bar": 25.776996906349982,
+    "mean_rollout_oil_wape": 0.4018551910806441,
+    "mean_rollout_liquid_wape": 0.18378932587032468,
+    "raw_ensemble_90_coverage": 0.4978473185390661,
+    "ood_step_rate": 0.9136904761904762,
+    "rollouts": 3,
+    "points": 69216,
+    "horizon_months": 224
+  },
+  "physical_baseline_train_metrics": {
+    "oil_wape": 0.5970367603351472,
+    "liquid_wape": 0.27422071204699977,
+    "pressure_rmse_bar": 41.86857968515921,
+    "mean_rollout_oil_wape": 0.5970353970860441,
+    "mean_rollout_liquid_wape": 0.27426747477384017,
+    "rollouts": 7,
+    "points": 161504,
+    "horizon_months": 224
+  },
+  "physical_baseline_test_metrics": {
+    "oil_wape": 0.5966981801909683,
+    "liquid_wape": 0.27559174952888155,
+    "pressure_rmse_bar": 41.51880851046489,
+    "mean_rollout_oil_wape": 0.5966977601288949,
+    "mean_rollout_liquid_wape": 0.2755912620051436,
+    "rollouts": 3,
+    "points": 69216,
+    "horizon_months": 224
+  },
+  "conformal_calibration": null,
+  "period": {
+    "start": "2007-01-01",
+    "end_exclusive": "2025-09-01",
+    "months": 224,
+    "historical_controls_preserved": true,
+    "workers": 2,
+    "scenario_index_sha256": "2451bef31dfa6bd7840c94883bcf3eb68efd741f9172d88b45f4c512f6248c6b",
+    "reference_manifest_sha256": "01e78ad7d4b5996b9f1950cc099a672cebb0d8141bcef67880a09857dae6d26a",
+    "baseline_chdd_sha256": "6b4b1ee5ddbbbd40221029ba8778f4fd3549fa01dfa84c37cb8f81ef1618a150",
+    "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+    "source": "/tmp/timesoil-kt2/model_z/Model_Z_final_OPM.zip",
+    "script_sha256": "af9eda220c53d3244900c0fdcb80b5545f58beee7d6c1cffc79996f38a267c38"
+  },
+  "artifact_hash": "8f007f639387d2f0d1f1a846ac93d887a62c6ca790135c621ee3109dab082c8c",
+  "batch_manifest_sha256": "4dbab179f94ca1800b052e1346591a685eb9fa2d8dc900d917fc6ad66d149893",
+  "full_source_scenario_hashes": {
+    "baseline": "5a08096649d7c39d0c150625f7eb0fef49eb8612f88b6bb14779393a32371d49",
+    "perturbation-001": "e3cfeec1ffc3526c469c72016ef5e878f4e697eed97f72d8359093ba8592f8ac",
+    "perturbation-002": "f8fa295807486191f5cb18531d840916c89dccd0d1b54f41b91419dbe7f41baa",
+    "perturbation-003": "8fa8fa7deff8dddebed53d8a9435ce1f06d1b3ccb47ab9bd20fc877a23edea1a",
+    "perturbation-004": "eb36c7245ed8d0405ba9acb8ec758963045d49aac65dc90f5f0ec46234229854",
+    "perturbation-005": "59ed4476ef089df0744ebab64727844b47191a16a43f26e145b4f8a4e85a819e",
+    "perturbation-006": "a9df1094c2911d16e02a7baae91f517a6fc1d4be3d01911edbebb7f155956036",
+    "perturbation-007": "d8fa6f88878e774c5e1528443c9fef794af958b297fa2e1c89fb79964b810567",
+    "perturbation-008": "6c26dd346c43dd243dca90f7083b9771ca710ac082a5c6f95d0827befcfc0214",
+    "perturbation-009": "211b1c47759046ebe544c4d8ee47d74ab8106348f39f2957befcb6f47f60b8a8"
+  },
+  "action_features": [
+    "control_value",
+    "control_target_code",
+    "status",
+    "bhp_limit"
+  ],
+  "final_model_refit_on_test": false,
+  "future_observations_used_in_rollout": false,
+  "is_new_optimization_result": false
+}
