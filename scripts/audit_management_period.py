@@ -1,4 +1,4 @@
-"""Recalculate official CHDD over the complete available management period."""
+"""Recalculate official CHDD over an explicit or complete archive period."""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ def main() -> None:
     parser.add_argument("run", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument("--start", required=True, type=date.fromisoformat)
+    parser.add_argument("--end-exclusive", type=date.fromisoformat)
     args = parser.parse_args()
     root = args.run.resolve()
     manifest_bytes = (root / "manifest.json").read_bytes()
@@ -32,7 +33,10 @@ def main() -> None:
             or export["outputs"]["chdd_csv"]["sha256"] != sha256(raw).hexdigest()):
         raise ValueError("canonical export does not match the successful OPM run")
     rows = list(csv.DictReader(raw.decode().splitlines()))
-    end = max(date.fromisoformat(row["DATA"]) for row in rows)
+    archive_end = max(date.fromisoformat(row["DATA"]) for row in rows)
+    end = args.end_exclusive or archive_end
+    if not args.start < end <= archive_end:
+        raise ValueError("management end must follow start and be covered by the archive")
     period = (args.start, end)
     shifted = opm_management_rows(rows, period)
     result = CHDDEconomicsAdapter().calculate(
@@ -56,7 +60,8 @@ def main() -> None:
         "injection_m3": sum(float(row["WWIT_Diff"]) for row in managed),
         "max_liquid_m3d": max(float(row["WLPR"]) for row in managed),
         "recomputed_official_economics": True, "new_opm_run": False,
-        "scope": "Complete available archive period; validation-case constraints not yet supplied.",
+        "scope": "Explicit experiment period; not a confirmed competition horizon." if args.end_exclusive
+                 else "Complete available archive period; validation-case constraints not yet supplied.",
     }
     (args.output / "audit.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps(summary), flush=True)

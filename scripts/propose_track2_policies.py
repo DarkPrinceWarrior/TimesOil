@@ -107,6 +107,8 @@ def main():
     days = np.array([d.days_in_month for d in trajectory.dates[origin:origin + horizon]])[:, None]
 
     def evaluate(policy):
+        policy = {"producer_scale": 1.0, "injector_scale": 1.0,
+                  "shut_wells": [], "well_scales": [], **policy}
         controls = policy_controls(request["controls"], policy)
         proposed = {**request, "controls": controls, "context": {
             **request.get("context", {}),
@@ -153,12 +155,12 @@ def main():
         "well_scales": {"type": "array", "items": {"type": "object", "properties": {
             "well": {"type": "string"}, "scale": {"type": "number"}},
             "required": ["well", "scale"], "additionalProperties": False}}},
-        "required": ["producer_scale", "injector_scale", "shut_wells", "well_scales"], "additionalProperties": False}
+        "required": [], "additionalProperties": False}
     proposed_ids = []
 
     async def propose_round(index):
         before = len(candidates)
-        tool = ToolDefinition("propose_policy", "Propose a full-field rate/status policy and evaluate six-month TimesFM response. Full-period OPM decides final CHDD.", schema,
+        tool = ToolDefinition("propose_policy", "Propose a full-field rate/status policy and evaluate six-month TimesFM response. Omitted scales default to 1; omitted shut_wells and well_scales default to empty arrays. Full-period OPM decides final CHDD.", schema,
             lambda policy, _: evaluate(policy))
         context_value = {"track": 2, "round": index,
             "objective": f"Propose a new policy for maximum official CHDD over the request's {checked_request.horizon_months} management months. Use per-well multipliers when useful; all wells are controllable. Call propose_policy exactly once. Avoid duplicate policies.",
