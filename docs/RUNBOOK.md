@@ -331,3 +331,22 @@ curl --noproxy '*' --fail http://127.0.0.1:18082/v1/capabilities
 `deliverables/track2_model_z/kt3/wells_schedule.inc`; подробная сводка —
 `deliverables/track2_model_z/kt3_completion_summary.json`.
 Значение не переносится на будущую историю или другой период управления.
+
+## Проверенное переключение на Татнефть · 09.09.2026
+
+Оба трека используют `qwen3.8-27b` через `https://litellm.tatneft.guru/v1`
+напрямую с A100, без CONNECT-прокси. Идентификатор отличается от прежнего
+Cerebras `qwen-3.8-27b`; клиент проверяет соответствие модели и endpoint.
+
+Проверены координатор, аналитик пласта, планировщик и критик: по 8 реальных
+запросов на трек, включая вызовы инструментов и структурированные решения.
+[Трек 1](../deliverables/control_coverage_20260909/track1-protocol.json),
+[Трек 2](../deliverables/control_coverage_20260909/track2-protocol.json).
+Проверка протокола не является расчётом месторождения или подтверждением ЧДД.
+
+Оба API-контейнера пересобраны из Git-кода; health, capabilities и реальный
+вызов Qwen из каждого контейнера прошли. Тома результатов сохранены.
+[Проверка работающих контейнеров](../deliverables/control_coverage_20260909/tatneft-qwen38-containers.json).
+Флаг `connectivity_verified` в статическом capabilities остаётся `false`: живое
+соединение подтверждает отдельная датированная проверка, не постоянная гарантия.
+Серверные проверки клиента/API/CLI: Трек 1 — 30 passed; Трек 2 — 36 passed.
