@@ -208,7 +208,7 @@ def _validated_controls(
     return ordered, digest
 
 
-def _action_key(action: ControlAction) -> tuple[date, str, str, str, str, float]:
+def _action_key(action: ControlAction) -> tuple[date, str, str, str, str, float, float]:
     return (
         action.month,
         action.role.value,
@@ -216,6 +216,7 @@ def _action_key(action: ControlAction) -> tuple[date, str, str, str, str, float]
         action.status.value,
         action.target.value,
         action.value,
+        action.bhp_limit or 0.0,
     )
 
 
@@ -417,6 +418,18 @@ def _render_action(action: ControlAction, template: _ControlTemplate | None) -> 
     )
     fields.extend(["1*"] * (primary + 1 - len(fields)))
     fields[primary] = f"{action.value:.6f}"
+    if action.bhp_limit is not None:
+        pressure_index = 5 if action.role is WellRole.PRODUCER else 2
+        fields.extend(["1*"] * (pressure_index + 1 - len(fields)))
+        original = fields[pressure_index]
+        if original != "1*":
+            bound = float(original)
+            if bound > 0 and (
+                action.role is WellRole.PRODUCER and action.bhp_limit < bound
+                or action.role is WellRole.INJECTOR and action.bhp_limit > bound
+            ):
+                raise ScheduleOverlayError("requested BHP relaxes an original pressure bound")
+        fields[pressure_index] = f"{action.bhp_limit:.6f}"
     if action.role is WellRole.PRODUCER:
         head = f"  '{action.well}' '{action.status.value}' '{action.target.value}'"
     else:

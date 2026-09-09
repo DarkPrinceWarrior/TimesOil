@@ -1545,7 +1545,8 @@ class OpmGdmBackend:
 
         next_month = self._next_month(state.month)
         next_wells = self._wells_at(
-            report, case, next_month, deck_dir=prepared.deck_path.parent
+            report, case, next_month, deck_dir=prepared.deck_path.parent,
+            roles={well.well: well.role for well in state.wells} | {action.well: action.role for action in ordered},
         )
         violations = tuple(
             f"{well.well}: actual liquid rate {well.liquid_rate:g} exceeds "
@@ -1904,14 +1905,7 @@ class OpmGdmBackend:
 
     @staticmethod
     def _action_value(action: ControlAction) -> dict[str, Any]:
-        return {
-            "month": action.month.isoformat(),
-            "well": action.well,
-            "role": action.role.value,
-            "status": action.status.value,
-            "target": action.target.value,
-            "value": action.value,
-        }
+        return action.to_dict()
 
     @classmethod
     def _actions_value(cls, raw: Any) -> tuple[ControlAction, ...]:
@@ -1920,7 +1914,7 @@ class OpmGdmBackend:
         actions: list[ControlAction] = []
         expected = {"month", "well", "role", "status", "target", "value"}
         for item in raw:
-            if not isinstance(item, dict) or set(item) != expected:
+            if not isinstance(item, dict) or not expected <= set(item) or set(item) - expected - {"bhp_limit"}:
                 raise OpmCertificationError("lineage action has invalid fields")
             value = item["value"]
             if isinstance(value, bool) or not isinstance(value, (int, float)):
@@ -1933,6 +1927,7 @@ class OpmGdmBackend:
                     WellStatus(str(item["status"])),
                     ControlTarget(str(item["target"])),
                     float(value),
+                    item.get("bhp_limit"),
                 )
             )
         return tuple(actions)
@@ -1958,7 +1953,8 @@ class OpmGdmBackend:
 
     @staticmethod
     def _wells_at(
-        report: Path, case: Case, month: date, *, deck_dir: Path
+        report: Path, case: Case, month: date, *, deck_dir: Path,
+        roles: dict[str, WellRole] | None = None,
     ) -> tuple[WellState, ...]:
         from .opm_chdd import (
             OpmChddError,
@@ -1998,7 +1994,7 @@ class OpmGdmBackend:
             result.append(
                 WellState(
                     name,
-                    case.role_of(name),
+                    case.role_of(name) if roles is None else roles.get(name, case.role_of(name)),
                     raw["WEFF"] > 0,
                     oil,
                     max(oil, liquid),

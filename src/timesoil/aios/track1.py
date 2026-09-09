@@ -65,7 +65,7 @@ def _next_month(month: date) -> date:
     return date(month.year + (month.month == 12), month.month % 12 + 1, 1)
 
 
-def _candidate_key(actions: Candidate) -> tuple[tuple[str, str, str, str, float], ...]:
+def _candidate_key(actions: Candidate) -> tuple[tuple[str, str, str, str, float, float], ...]:
     return tuple(
         sorted(
             (
@@ -74,6 +74,7 @@ def _candidate_key(actions: Candidate) -> tuple[tuple[str, str, str, str, float]
                 action.status.value,
                 action.target.value,
                 action.value,
+                action.bhp_limit or 0.0,
             )
             for action in actions
         )
@@ -135,7 +136,7 @@ class MonthlyMPC:
                 best = completed_steps[len(trajectories)]
                 actions = self.compiler.validate(case, best.trajectory.actions)
                 self._check_result(case, state, actions, best)
-                self._validate_state(case, best.trajectory.next_state)
+                self._validate_state(case, state)
             else:
                 try:
                     proposed = candidates(state)
@@ -260,12 +261,12 @@ class MonthlyMPC:
             raise CertificationError("state month is outside case horizon")
         for well in state.wells:
             try:
-                expected = case.role_of(well.well)
+                allowed = case.allows_role(well.well, well.role)
             except Exception as exc:
                 raise CertificationError(
                     f"state contains unknown well {well.well}"
                 ) from exc
-            if expected is not well.role:
+            if not allowed:
                 raise CertificationError(f"state contains wrong role for {well.well}")
 
     @staticmethod

@@ -459,6 +459,15 @@ def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_p
     _raises(ValueError, "unknown or duplicate", lambda: cli._propose_controls(config.case, baseline, updates * 2))
     _raises(ValueError, "exceeds", lambda: cli._propose_controls(config.case, baseline, [{**updates[0], "status": "OPEN", "value": 501}]))
     _raises(ValueError, "every well", lambda: cli._propose_controls(config.case, baseline[:1], []))
+    conversion = [{"well": "P1", "role": "injector", "status": "OPEN", "target": "WRAT", "value": 30, "bhp_limit": 280}]
+    converted_case = replace(config.case, allow_conversion_to_injection=True)
+    converted = cli._propose_controls(converted_case, baseline, conversion)
+    converted_config = replace(config, case=converted_case)
+    tail = cli._continuation_tail(converted_config, config.initial_state, converted)
+    assert all(a.role.value == "injector" and a.bhp_limit == 280 for a in tail if a.well == "P1")
+    missing_pressure = [{k: v for k, v in conversion[0].items() if k != "bhp_limit"}]
+    _raises(ValueError, "explicit BHP", lambda: cli._propose_controls(converted_case, baseline, missing_pressure))
+    _raises(ValueError, "wrong role", lambda: cli._propose_controls(config.case, baseline, conversion))
 
 
 def test_agent_mode_fails_closed_on_invalid_choice_and_critic_rejection(

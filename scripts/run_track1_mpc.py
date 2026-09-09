@@ -187,7 +187,7 @@ def _case(value: Any) -> Case:
         value,
         "case",
         {"case_id", "start", "end", "economics_start", "producers", "injectors"},
-        {"max_liquid_rate"},
+        {"max_liquid_rate", "allow_conversion_to_injection"},
     )
     max_rate = item.get("max_liquid_rate", 500.0)
     return Case(
@@ -198,6 +198,7 @@ def _case(value: Any) -> Case:
         producers=_strings(item["producers"], "case.producers"),
         injectors=_strings(item["injectors"], "case.injectors"),
         max_liquid_rate=_number(max_rate, "case.max_liquid_rate"),
+        allow_conversion_to_injection=item.get("allow_conversion_to_injection", False),
     )
 
 
@@ -236,7 +237,7 @@ def _state(value: Any) -> State:
 
 
 def _action(value: Any, month: date, label: str) -> ControlAction:
-    item = _object(value, label, {"well", "role", "status", "target", "value"})
+    item = _object(value, label, {"well", "role", "status", "target", "value"}, {"bhp_limit"})
     return ControlAction(
         month=month,
         well=_string(item["well"], f"{label}.well"),
@@ -244,6 +245,7 @@ def _action(value: Any, month: date, label: str) -> ControlAction:
         status=WellStatus(item["status"]),
         target=ControlTarget(item["target"]),
         value=_number(item["value"], f"{label}.value"),
+        bhp_limit=None if item.get("bhp_limit") is None else _number(item["bhp_limit"], f"{label}.bhp_limit"),
     )
 
 
@@ -403,14 +405,7 @@ def build_backend(config: RunConfig) -> OpmGdmBackend:
 
 
 def _action_payload(action: ControlAction) -> dict[str, Any]:
-    return {
-        "month": action.month.isoformat(),
-        "well": action.well,
-        "role": action.role.value,
-        "status": action.status.value,
-        "target": action.target.value,
-        "value": action.value,
-    }
+    return action.to_dict()
 
 
 def _state_payload(state: State) -> dict[str, Any]:
@@ -441,7 +436,7 @@ def _propose_controls(case: Case, baseline: Candidate, updates: Any) -> Candidat
         raise ValueError("updates must be an array")
     seen = set()
     for index, value in enumerate(updates):
-        item = _object(value, f"updates[{index}]", {"well", "status", "target", "value"})
+        item = _object(value, f"updates[{index}]", {"well", "status", "target", "value"}, {"role", "bhp_limit"})
         well = _string(item["well"], "update well")
         if well not in controls or well in seen:
             raise ValueError("unknown or duplicate well update")
@@ -449,7 +444,12 @@ def _propose_controls(case: Case, baseline: Candidate, updates: Any) -> Candidat
         controls[well] = replace(
             controls[well], status=WellStatus(item["status"]),
             target=ControlTarget(item["target"]), value=_number(item["value"], "control value"),
+            role=WellRole(item.get("role", controls[well].role)),
+            bhp_limit=(controls[well].bhp_limit if "bhp_limit" not in item
+                       else _number(item["bhp_limit"], "control bhp_limit")),
         )
+        if controls[well].role is WellRole.INJECTOR and case.role_of(well) is WellRole.PRODUCER and controls[well].bhp_limit is None:
+            raise ValueError("conversion to injection requires an explicit BHP ceiling")
     return ScheduleCompiler().validate(case, controls.values())
 
 
@@ -463,7 +463,8 @@ def _continuation_tail(config: RunConfig, state: State, candidate: Candidate) ->
         source = {a.well: a for a in config.candidates[month][0]}
         current = {
             well: replace(current[well], month=month)
-            if replace(action, month=source_previous[well].month) == source_previous[well]
+            if (replace(action, month=source_previous[well].month) == source_previous[well]
+                or current[well].role is WellRole.INJECTOR and action.role is WellRole.PRODUCER)
             else action for well, action in source.items()
         }
         output.extend(current.values())
@@ -579,7 +580,8 @@ def execute(
             source_previous = {a.well: a for a in config.candidates[date.fromisoformat(feedback[-1]["month"])][0]}
             options = (tuple(
                 replace(previous_controls[a.well], month=state.month)
-                if replace(a, month=source_previous[a.well].month) == source_previous[a.well]
+                if (replace(a, month=source_previous[a.well].month) == source_previous[a.well]
+                    or previous_controls[a.well].role is WellRole.INJECTOR and a.role is WellRole.PRODUCER)
                 else a for a in options[0]
             ),)
         context = {
@@ -602,14 +604,16 @@ def execute(
             context.update({
                 "selection_policy": "Optimize official CHDD by proposing rate and OPEN/SHUT updates for ANY well in the complete baseline. Baseline carries forward approved agent controls, except explicit changes in the source calendar. Empty updates means keep these controls. No preselected well subset or percentage bounds. Exactly one propose_controls call. Every month is validated by full OPM and official CHDD. Use the verified inventory; never infer extra wells from gaps in numeric IDs.",
                 "verified_inventory": {"well_count": len(config.case.producers) + len(config.case.injectors),
-                    "producers": list(config.case.producers), "injectors": list(config.case.injectors)},
+                    "producers": [a.well for a in options[0] if a.role is WellRole.PRODUCER],
+                    "injectors": [a.well for a in options[0] if a.role is WellRole.INJECTOR]},
                 "state_units": {"oil_rate": "surface m3/day, NOT tonnes/day", "liquid_rate": "surface m3/day", "injection_rate": "surface m3/day", "bhp": "bar"},
                 "constraints": {"max_producer_liquid_m3d": config.case.max_liquid_rate,
                     "status_changes": "OPEN/SHUT are permitted control decisions, not immutable source data; SHUT requires value=0",
-                    "pressure": "source schedule BHP bounds remain enforced by OPM",
+                    "pressure": "bhp_limit may tighten original BHP bounds; never relax them. New conversions require an explicit injection BHP ceiling.",
                     "water_quota": "no additional numeric quota supplied in this archive; do not invent one",
                     "availability": "respect source completions; no drilling or unprovided repair assumptions",
-                    "roles": "role fixed by this case contract; conversion is not implemented in this controller"},
+                    "roles": "producer-to-injector conversion allowed; reverse conversion forbidden" if config.case.allow_conversion_to_injection else "roles fixed by this case contract",
+                    "allow_conversion_to_injection": config.case.allow_conversion_to_injection},
                 "economics": {"oil_rub_per_t": 28000, "oil_deductions_rub_per_t": 19600,
                     "oil_opex_rub_per_t": 40, "liquid_opex_rub_per_t": 100,
                     "injection_opex_rub_per_m3": 30, "active_well_m_per_year": 1,
@@ -644,11 +648,13 @@ def execute(
                         "missing_wells": [], "extra_wells": [],
                         "controls": [_action_payload(a) for a in candidate],
                         "schedule_sha256": ScheduleCompiler().compile(config.case, candidate).sha256}
-            tool = ToolDefinition("propose_controls", "Propose updates to any well; retain complete baseline for other wells. SHUT requires value=0; OPEN LRAT must be <=500; injectors use WRAT.",
+            tool = ToolDefinition("propose_controls", "Propose updates to any well; retain other controls. SHUT requires value=0; OPEN LRAT <=500; injectors use WRAT. Optional role changes require case permission; new injection needs bhp_limit (bar). Optional bhp_limit tightens the original pressure bound.",
                 {"type": "object", "properties": {"updates": {"type": "array", "items": {
                     "type": "object", "properties": {"well": {"type": "string"},
                         "status": {"type": "string", "enum": ["OPEN", "SHUT"]},
                         "target": {"type": "string", "enum": ["ORAT", "LRAT", "WRAT"]},
+                        "role": {"type": "string", "enum": ["producer", "injector"]},
+                        "bhp_limit": {"type": "number"},
                         "value": {"type": "number"}},
                     "required": ["well", "status", "target", "value"], "additionalProperties": False}}},
                  "required": ["updates"], "additionalProperties": False}, propose)

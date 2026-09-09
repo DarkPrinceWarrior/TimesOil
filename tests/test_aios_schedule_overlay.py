@@ -70,6 +70,31 @@ END
 """
 
 
+def test_pressure_and_conversion_roundtrip_preserve_original_bounds() -> None:
+    from timesoil.aios.schedule import ScheduleError
+    case = Case("conversion", date(2025, 1, 1), date(2025, 3, 1), date(2025, 1, 1),
+                ("P1",), ("I1",), allow_conversion_to_injection=True)
+    january = replace(_action(case.start), bhp_limit=70)
+    february = replace(_action(date(2025, 2, 1), "P1", WellRole.INJECTOR, 25), bhp_limit=280)
+    compiler = ScheduleCompiler()
+    compiled = compiler.compile(case, (january, february))
+    assert compiler.parse(case, compiled.text) == compiled.actions
+    assert "3* 42.000000 1* 70.000000" in compiled.text
+    assert "'RATE' 25.000000 1* 280.000000" in compiled.text
+    assert february.to_dict()["bhp_limit"] == 280
+    assert "bhp_limit" not in _action(case.start).to_dict()
+    overlay = apply_schedule_overlay(_source(), compiled, known_wells=("P1", "I1"))
+    assert "70.000000" in overlay.text and "280.000000" in overlay.text
+    with pytest.raises(ScheduleError, match="wrong role"):
+        compiler.compile(replace(case, allow_conversion_to_injection=False), (february,))
+    with pytest.raises(ScheduleError, match="reverse conversion"):
+        compiler.compile(case, (february, replace(january, month=case.end)))
+    with pytest.raises(ScheduleOverlayError, match="relaxes"):
+        apply_schedule_overlay(_source(), (replace(january, bhp_limit=40),), known_wells=("P1", "I1"))
+    with pytest.raises(ScheduleOverlayError, match="relaxes"):
+        apply_schedule_overlay(_source(), (replace(february, well="I1", bhp_limit=310),), known_wells=("P1", "I1"))
+
+
 def test_artifact_roundtrip_determinism_and_override_position() -> None:
     source = _source()
     before = source[:]
