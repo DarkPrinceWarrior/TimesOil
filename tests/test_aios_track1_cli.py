@@ -379,7 +379,9 @@ def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_p
         async def chat(self, _: Any, **kwargs: Any) -> LLMResponse:
             if kwargs.get("tool_choice") == {"type": "function", "function": {"name": "verify_month_evidence"}}:
                 return await super().chat(_, **kwargs)
-            calls = ((ToolCall("propose-1", "propose_controls", {"updates": updates if self.proposals == 0 else []}),)
+            proposal = ([{**updates[0], "value": 5.0}] if self.proposals == 0
+                        else updates if self.proposals == 1 else [])
+            calls = ((ToolCall("propose-1", "propose_controls", {"updates": proposal}),)
                      if kwargs.get("tools") else ())
             if calls:
                 type(self).proposals += 1
@@ -390,6 +392,8 @@ def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_p
     outputs, _ = cli.execute(config, DeterministicGdmBackend(), agent=True, full_field=True)
     result = json.loads(outputs[Path("result.json")])
     actions = result["schedule"]["actions"]
+    assert result["agent"]["records"][0]["phase"] == "invalid_proposal"
+    assert not result["agent"]["records"][0]["simulator_executed"]
     assert [a["status"] for a in actions if a["well"] == "P1"] == ["SHUT"] * 3
     assert [a["value"] for a in actions if a["well"] == "I1"] == [90, 90, 120]
     assert all(r["agent"]["context"]["verified_inventory"]["well_count"] == 2
@@ -404,6 +408,9 @@ def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_p
     assert tool_evidence[0]["output"]["provenance"] == review["provenance"]
     assert tool_evidence[0]["output"]["constraints"] == review["verified_constraints"]
     baseline = config.candidates[config.case.start][0]
+    tail = cli._continuation_tail(config, config.initial_state, cli._propose_controls(config.case, baseline, updates))
+    assert [a.status.value for a in tail if a.well == "P1"] == ["SHUT", "SHUT"]
+    assert [a.value for a in tail if a.well == "I1"] == [90, 120]
     _raises(ValueError, "unknown or duplicate", lambda: cli._propose_controls(config.case, baseline, updates * 2))
     _raises(ValueError, "exceeds", lambda: cli._propose_controls(config.case, baseline, [{**updates[0], "status": "OPEN", "value": 501}]))
     _raises(ValueError, "every well", lambda: cli._propose_controls(config.case, baseline[:1], []))
