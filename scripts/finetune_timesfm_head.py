@@ -124,6 +124,7 @@ def main():
     parser.add_argument('--condition-last-layer', action='store_true')
     parser.add_argument('--regime-calibration', type=Path)
     parser.add_argument('--regime-calibration-sha256')
+    parser.add_argument('--monthly-observed-training', action='store_true')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -137,6 +138,8 @@ def main():
         parser.error('initial-head and its SHA-256 must be supplied together')
     if args.condition_last_layer and not args.connectivity:
         parser.error('static last-layer conditioning requires verified connectivity')
+    if args.monthly_observed_training and not args.model_y:
+        parser.error('monthly observed training currently requires Model Y')
     if (bool(args.regime_calibration) != bool(args.regime_calibration_sha256)
             or args.regime_calibration and args.model_y):
         parser.error('Model Z regime calibration requires a paired manifest hash')
@@ -148,6 +151,8 @@ def main():
     else:
         trajectories, origin = verified_batch(args.batch, args.batch_sha256)
     horizon = 23 if args.model_y else 224
+    training_horizon = 1 if args.monthly_observed_training else horizon
+    offsets = list(range(horizon)) if args.monthly_observed_training else [0]
     context = min(128, origin)
     count = len(trajectories[0].well_ids)
     targets_count = count * 3
@@ -226,17 +231,21 @@ def main():
     feature_scale = np.maximum(np.abs(train_truth).mean(axis=(0, 1, 2)), 1.0)
     scale = torch.tensor(np.tile(feature_scale, count)[None, :, None], device='cuda', dtype=torch.float32)
     examples = {}
-    for name in train_ids + validation_ids:
+    train_keys = [(name, offset) for name in train_ids for offset in offsets]
+    validation_keys = [(name, offset) for name in validation_ids for offset in offsets]
+    assert not set(train_keys) & set(validation_keys)
+    for name, offset in train_keys + validation_keys:
         t = by_id[name]
+        position = origin + offset
         if connectivity is None:
-            target, cov = forecast_inputs(t.states, t.actions, origin, context, horizon)
-            target, cov = target.reshape(targets_count, context), cov[:, :-1].reshape(count * 5, context + horizon)
+            target, cov = forecast_inputs(t.states, t.actions, position, context, training_horizon)
+            target, cov = target.reshape(targets_count, context), cov[:, :-1].reshape(count * 5, context + training_horizon)
         else:
-            target, cov = geological_inputs(t, origin, context, horizon, connectivity)
-        examples[name] = (
+            target, cov = geological_inputs(t, position, context, training_horizon, connectivity)
+        examples[name, offset] = (
             torch.tensor(target[None], device='cuda'),
             torch.tensor(cov[None], device='cuda', dtype=torch.float32),
-            torch.tensor(t.states[origin + 1:origin + horizon + 1].transpose(1, 2, 0).reshape(1, targets_count, horizon),
+            torch.tensor(t.states[position + 1:position + training_horizon + 1].transpose(1, 2, 0).reshape(1, targets_count, training_horizon),
                          device='cuda', dtype=torch.float32))
     decode = type(model).decode.__wrapped__  # Same pinned decoder, with autograd enabled.
     refine = torch.no_grad()(cpm_revin_refine.cpm_iterative_revin_refine)
@@ -245,21 +254,21 @@ def main():
         target, cov, truth = examples[name]
         # ponytail: process-local patch for this single-threaded trainer; replace with a native 3.0 trainer when available.
         with patch.object(cpm_revin_refine, 'cpm_iterative_revin_refine', refine):
-            prediction = decode(model, target, horizon=horizon, past_future_covariates=cov)[:, :targets_count]
+            prediction = decode(model, target, horizon=training_horizon, past_future_covariates=cov)[:, :targets_count]
         return pinball_loss(prediction, truth, scale, quantiles)
 
-    target, cov, _ = examples[train_ids[0]]
+    target, cov, _ = examples[train_keys[0]]
     with torch.no_grad():
         torch.manual_seed(20260909)
-        wrapped = model.decode(target, horizon=horizon, past_future_covariates=cov)
+        wrapped = model.decode(target, horizon=training_horizon, past_future_covariates=cov)
         torch.manual_seed(20260909)
-        unwrapped = decode(model, target, horizon=horizon, past_future_covariates=cov)
+        unwrapped = decode(model, target, horizon=training_horizon, past_future_covariates=cov)
         # Forecaster and loss consume targets only; predicted covariate outputs are discarded.
         parity_error = float((wrapped[:, :targets_count] - unwrapped[:, :targets_count]).abs().max())
         parity_scaled_error = float(((wrapped[:, :targets_count] - unwrapped[:, :targets_count]) / scale[..., None]).abs().max())
         torch.testing.assert_close(wrapped[:, :targets_count] / scale[..., None],
                                    unwrapped[:, :targets_count] / scale[..., None], rtol=0, atol=.001)
-        best_loss = float(torch.stack([loss_for(name) for name in validation_ids]).mean())
+        best_loss = float(torch.stack([loss_for(key) for key in validation_keys]).mean())
     del wrapped, unwrapped
     checkpoint = args.output / ('last-layer-and-head.pt' if args.unfreeze_last_layer else 'output-head.pt')
     def selected_weights():
@@ -286,7 +295,10 @@ def main():
         gradient_policy='stop gradients through iterative CPM-RevIN statistics; unchanged forward calculation',
         decoder_target_quantile_parity_max_scaled=parity_scaled_error,
         decoder_target_quantile_parity_atol_train_scale=.001,
-        epochs_requested=args.epochs, horizon_months=horizon, context_months=context, control_channels=examples[train_ids[0]][1].shape[1],
+        epochs_requested=args.epochs, horizon_months=horizon, context_months=context, control_channels=examples[train_keys[0]][1].shape[1],
+        training_horizon_months=training_horizon, training_origin_offsets=offsets,
+        monthly_observed_training=args.monthly_observed_training,
+        train_example_count=len(train_keys), validation_example_count=len(validation_keys),
         connectivity_sha256=sha256(args.connectivity.read_bytes()).hexdigest() if args.connectivity else None,
         static_conditioning=connectivity is not None,
         static_feature_names=connectivity.provenance.get('static_feature_names', ['permeability', 'porosity', 'net_thickness']) if connectivity else [],
@@ -309,16 +321,19 @@ def main():
                                            'joint', connectivity=connectivity))
         return np.concatenate(results)
 
+    evaluation_modes = [('observed_update_block_1', 1, True)] if args.monthly_observed_training else [
+        ('fixed_origin_direct', horizon, False), ('observed_update_block_6', 6, True)]
     for name in test_ids:
         t = by_id[name]
-        pred = forecast(t)
+        initial_mode, block, observe = evaluation_modes[0]
+        pred = forecast(t, block, observe)
         report['test_results'].append(dict(scenario_id=name, stage='initial_head' if args.initial_head else 'pretrained',
-            name='fixed_origin_direct', **metrics(t.states[origin + 1:origin + horizon + 1], pred)))
+            name=initial_mode, **metrics(t.states[origin + 1:origin + horizon + 1], pred)))
     for epoch in range(1, args.epochs + 1):
         losses = []
-        for name in np.random.default_rng(20260909 + epoch).permutation(train_ids):
+        for index in np.random.default_rng(20260909 + epoch).permutation(len(train_keys)):
             optimizer.zero_grad(set_to_none=True)
-            loss = loss_for(name)
+            loss = loss_for(train_keys[index])
             if not torch.isfinite(loss):
                 raise ValueError('non-finite training loss')
             loss.backward()
@@ -329,7 +344,7 @@ def main():
             optimizer.step()
             losses.append(float(loss.detach()))
         with torch.no_grad():
-            validation = float(torch.stack([loss_for(name) for name in validation_ids]).mean())
+            validation = float(torch.stack([loss_for(key) for key in validation_keys]).mean())
         if not np.isfinite(validation):
             raise ValueError('non-finite validation loss')
         if validation < best_loss:
@@ -347,19 +362,24 @@ def main():
         model.transformer_stack.layers[-1].load_state_dict(selected['last_layer'])
     for name in test_ids:
         t = by_id[name]
-        for mode, block, observe in [('fixed_origin_direct', horizon, False), ('observed_update_block_6', 6, True)]:
+        for mode, block, observe in evaluation_modes:
             pred = forecast(t, block, observe)
             row = dict(scenario_id=name, stage='selected_head', name=mode,
                 **metrics(t.states[origin + 1:origin + horizon + 1], pred))
             report['test_results'].append(row)
             print(json.dumps(row), flush=True)
         if connectivity is not None:
-            full = forecast(t)
+            mode, block, observe = evaluation_modes[0]
+            full = forecast(t, block, observe)
             model.output_head.disabled = True
-            ablated = forecast(t)
+            if args.condition_last_layer:
+                model.transformer_stack.layers[-1].disabled = True
+            ablated = forecast(t, block, observe)
             model.output_head.disabled = False
+            if args.condition_last_layer:
+                model.transformer_stack.layers[-1].disabled = False
             report['test_results'].append(dict(scenario_id=name, stage='static_conditioning_disabled',
-                name='fixed_origin_direct', **metrics(t.states[origin + 1:origin + horizon + 1], ablated),
+                name=mode, **metrics(t.states[origin + 1:origin + horizon + 1], ablated),
                 prediction_max_abs_change=float(np.abs(full - ablated).max())))
     report.update(complete=True, validation_loss_best=best_loss,
                   checkpoint_sha256=sha256(checkpoint.read_bytes()).hexdigest(),

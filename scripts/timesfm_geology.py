@@ -66,7 +66,9 @@ class StaticConditionedLayer(nn.Module):
     def forward(self, values, *args, **kwargs):
         if values.ndim != 4 or values.shape[1] != len(self.features):
             raise ValueError('static attention requires joint targets, five own controls and allocated injection')
-        return self.layer(values + self.conditioner(self.features)[None, :, None], *args, **kwargs)
+        if not getattr(self, 'disabled', False):
+            values = values + self.conditioner(self.features)[None, :, None]
+        return self.layer(values, *args, **kwargs)
 
 
 def load_selected_layer(layer, head, selected):
@@ -107,6 +109,8 @@ def self_check():
     bundle = {'static_last_layer': True, 'last_layer': deepcopy(layer.state_dict())}
     restored = load_selected_layer(nn.Identity(), head, bundle)
     torch.testing.assert_close(restored(embeddings), layer(embeddings), rtol=0, atol=0)
+    restored.disabled = True
+    torch.testing.assert_close(restored(embeddings), embeddings, rtol=0, atol=0)
     assert isinstance(load_selected_layer(nn.Identity(), head, {'last_layer': {}}), nn.Identity)
     bundle['last_layer']['features'][0, 0] += 1
     try:
