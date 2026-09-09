@@ -20,7 +20,7 @@ import pandas as pd
 
 from benchmark_timesfm3 import MODEL_REVISION, forecast_inputs
 from timesoil.aios.agents import AgentRole, AgentWorkflow, ToolDefinition, ToolRegistry
-from timesoil.aios.llm import LLMConfig, TatneftLLMClient
+from timesoil.aios.llm import ExternalQwenClient, LLMConfig
 from timesoil.aios.surrogate import _project_physics
 from timesoil.aios.track2 import trajectory_from_frame
 from timesoil.aios.workflow import CycleRequest
@@ -165,7 +165,7 @@ def main():
                 "additional_water_quota": "not supplied in the current training archive",
                 "economic_costs_m": {"stop_or_start": 1, "pump_operation": 1.8, "pump_capex": "0.55..8.05 by size", "active_well_per_year": 1}},
             "claim_limits": "Forecasts use only observed pre-origin history and planned controls. Screening margin is a six-month rate-integration estimate excluding pump CAPEX, state events and tax. It is NOT CHDD and is NOT extrapolated to the management period. Candidate requires full-period OPM plus the official calculator. Request dates describe this experiment, not a confirmed competition horizon. No independently calibrated TimesFM uncertainty or improvement claim."}
-        async with TatneftLLMClient(LLMConfig.from_env()) as client:
+        async with ExternalQwenClient(LLMConfig.from_env()) as client:
             plan = await AgentWorkflow(client, ToolRegistry((tool,)),
                 role_tools={AgentRole.PLANNER: (tool.name,)}, required_tools={AgentRole.PLANNER: (tool.name,)}).run_plan(context_value)
         (args.output / f"agent-{index:02d}.json").write_text(json.dumps(asdict(plan), ensure_ascii=False, indent=2))
