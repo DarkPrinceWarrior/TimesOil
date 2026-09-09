@@ -300,7 +300,7 @@ class ExternalQwenClient:
             raise ValueError("request timeout must fit configured timeout")
         try:
             async with asyncio.timeout(timeout):
-                for attempt in range(3):
+                for attempt in range(5):
                     delay = float(2 ** attempt)
                     try:
                         response = await self._client.post(
@@ -309,10 +309,10 @@ class ExternalQwenClient:
                                      "Authorization": f"Bearer {self.config.api_key}"},
                         )
                     except httpx.TransportError:
-                        if attempt == 2:
+                        if attempt == 4:
                             raise
                     else:
-                        if response.status_code not in (408, 429, 500, 502, 503, 504) or attempt == 2:
+                        if response.status_code not in (408, 429, 500, 502, 503, 504) or attempt == 4:
                             break
                         if response.status_code == 429:
                             delay = float(15 * 2 ** attempt)
