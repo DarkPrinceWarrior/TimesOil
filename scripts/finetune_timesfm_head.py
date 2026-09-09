@@ -43,6 +43,9 @@ def main():
     parser.add_argument('--epochs', type=int, default=30)
     parser.add_argument('--learning-rate', type=float, default=1e-5)
     parser.add_argument('--connectivity', type=Path)
+    parser.add_argument('--initial-head', type=Path)
+    parser.add_argument('--initial-head-sha256')
+    parser.add_argument('--unfreeze-last-layer', action='store_true')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -52,6 +55,8 @@ def main():
         parser.error('batch, batch-sha256, output and 1..100 epochs required')
     if not np.isfinite(args.learning_rate) or not 1e-7 <= args.learning_rate <= 1e-3:
         parser.error('learning-rate must be in [1e-7, 1e-3]')
+    if bool(args.initial_head) != bool(args.initial_head_sha256):
+        parser.error('initial-head and its SHA-256 must be supplied together')
     args.output.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
     trajectories, origin = verified_batch(args.batch, args.batch_sha256)
@@ -89,11 +94,17 @@ def main():
     model = forecaster.model
     if connectivity is not None:
         model.output_head = StaticConditionedHead(model.output_head, connectivity)
+    if args.initial_head:
+        if sha256(args.initial_head.read_bytes()).hexdigest() != args.initial_head_sha256:
+            raise ValueError('initial output-head hash mismatch')
+        model.output_head.load_state_dict(torch.load(args.initial_head, map_location='cuda', weights_only=True))
     model.requires_grad_(False)
     model.output_head.requires_grad_(True)
+    if args.unfreeze_last_layer:
+        model.transformer_stack.layers[-1].requires_grad_(True)
     model.eval()  # Keep the frozen backbone's inference behavior during head adaptation.
     frozen_versions = {n: p._version for n, p in model.named_parameters() if not p.requires_grad}
-    trainable = list(model.output_head.parameters())
+    trainable = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.AdamW(trainable, lr=args.learning_rate, weight_decay=0)
     quantiles = torch.tensor(model.quantiles, device='cuda')
     train_truth = np.stack([by_id[i].states[origin + 1:origin + 225] for i in train_ids])
@@ -135,12 +146,21 @@ def main():
                                    unwrapped[:, :309] / scale[..., None], rtol=0, atol=.001)
         best_loss = float(loss_for(validation_ids[0]))
     del wrapped, unwrapped
-    checkpoint = args.output / 'output-head.pt'
-    torch.save(model.output_head.state_dict(), checkpoint)
+    checkpoint = args.output / ('last-layer-and-head.pt' if args.unfreeze_last_layer else 'output-head.pt')
+    def selected_weights():
+        if args.unfreeze_last_layer:
+            return {'output_head': model.output_head.state_dict(),
+                    'last_layer': model.transformer_stack.layers[-1].state_dict()}
+        return model.output_head.state_dict()
+    torch.save(selected_weights(), checkpoint)
     report = dict(schema='timesoil.timesfm-head-adaptation/v1', model_revision=MODEL_REVISION,
         batch_manifest_sha256=args.batch_sha256, source_scenario_hashes={t.scenario_id: t.content_hash for t in trajectories},
         train_scenarios=train_ids, validation_scenarios=validation_ids, test_scenarios=test_ids,
-        trained_component='TimesFM3Torch.output_head', backbone_frozen=True,
+        trained_component='TimesFM3Torch.output_head' + (' + transformer_stack.layers[-1]' if args.unfreeze_last_layer else ''),
+        backbone_frozen=not args.unfreeze_last_layer,
+        last_layer_trainable=args.unfreeze_last_layer,
+        all_other_backbone_parameters_frozen=True,
+        initial_head_sha256=args.initial_head_sha256,
         trainable_parameters=sum(p.numel() for p in trainable), learning_rate=args.learning_rate,
         attention_backend='math', decoder_target_quantile_parity_max_abs=parity_error,
         gradient_policy='stop gradients through iterative CPM-RevIN statistics; unchanged forward calculation',
@@ -172,7 +192,7 @@ def main():
     for name in test_ids:
         t = by_id[name]
         pred = forecast(t)
-        report['test_results'].append(dict(scenario_id=name, stage='pretrained',
+        report['test_results'].append(dict(scenario_id=name, stage='initial_head' if args.initial_head else 'pretrained',
             name='fixed_origin_direct', **metrics(t.states[origin + 1:origin + 225], pred)))
     for epoch in range(1, args.epochs + 1):
         losses = []
@@ -182,6 +202,9 @@ def main():
             if not torch.isfinite(loss):
                 raise ValueError('non-finite training loss')
             loss.backward()
+            if args.unfreeze_last_layer and epoch == 1:
+                if not any(p.grad is not None and torch.count_nonzero(p.grad) for p in model.transformer_stack.layers[-1].parameters()):
+                    raise ValueError('last native transformer layer received no gradient')
             torch.nn.utils.clip_grad_norm_(trainable, 1.0, error_if_nonfinite=True)
             optimizer.step()
             losses.append(float(loss.detach()))
@@ -192,13 +215,16 @@ def main():
         if validation < best_loss:
             best_loss = validation
             report['best_epoch'] = epoch
-            torch.save(model.output_head.state_dict(), checkpoint)
+            torch.save(selected_weights(), checkpoint)
         row = dict(epoch=epoch, train_loss=float(np.mean(losses)), validation_loss=validation)
         report['epochs'].append(row)
         (args.output / 'report.partial.json').write_text(json.dumps(report, indent=2) + '\n')
         print(json.dumps(row), flush=True)
     assert frozen_versions == {n: p._version for n, p in model.named_parameters() if not p.requires_grad}
-    model.output_head.load_state_dict(torch.load(checkpoint, map_location='cuda', weights_only=True))
+    selected = torch.load(checkpoint, map_location='cuda', weights_only=True)
+    model.output_head.load_state_dict(selected['output_head'] if args.unfreeze_last_layer else selected)
+    if args.unfreeze_last_layer:
+        model.transformer_stack.layers[-1].load_state_dict(selected['last_layer'])
     for name in test_ids:
         t = by_id[name]
         for mode, block, observe in [('fixed_origin_direct', 224, False), ('observed_update_block_6', 6, True)]:
