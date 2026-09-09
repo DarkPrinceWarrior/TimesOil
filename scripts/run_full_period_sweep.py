@@ -75,7 +75,7 @@ def main():
             code = subprocess.run(command, env=env, stdout=log, stderr=subprocess.STDOUT).returncode
         result = {'index': index, 'factors': factors[index], 'returncode': code,
                   'seconds': time.monotonic() - started}
-        if code == 0:
+        if code in (0, 2) and (args.output / 'cycles' / run_id / 'full-cycle-receipt.json').is_file():
             try:
                 result['comparison'] = compare(args.baseline_run, args.output / 'cycles' / run_id,
                                                original['horizon_months'])
