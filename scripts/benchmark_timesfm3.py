@@ -87,6 +87,11 @@ def self_check():
     rolled = recursive_forecast(StepForecaster(), [np.array([[1, 2], [10, 11], [100, 101]])],
                                 [np.zeros((4, 5))], step_actions)
     np.testing.assert_array_equal(rolled[0, :, 0, 0], [3, 4, 5])
+    step_actions[0, 1, 0, 1] = 2
+    converted = recursive_forecast(StepForecaster(), [np.array([[1, 2], [10, 11], [100, 101]])],
+                                  [np.zeros((4, 5))], step_actions)
+    np.testing.assert_array_equal(converted[0, :, 0, 0], [3, 0, 1])
+    assert converted[0, 1, 0, 1] == 0 and converted[0, 1, 0, 2] > 0
     print("forecast alignment / leakage / field injection checks passed", flush=True)
 
 
@@ -112,7 +117,7 @@ def recursive_forecast(forecaster, histories, covariates, actions):
             use_symmetric_averaging=False, make_positive=True, return_quantiles=True,
         ))
         raw = np.stack([f.forecast for f in forecasts]).reshape(len(histories), 1, -1, 3)
-        projected = _project_physics(raw, actions[:, step:step + 1])[0]
+        projected = _project_physics(raw, actions[:, step:step + 1], zero_injectors=True)[0]
         steps.append(projected)
         histories = [np.concatenate([h, p.reshape(-1, 1)], axis=1)
                      for h, p in zip(histories, projected[:, 0], strict=True)]
@@ -260,7 +265,7 @@ def main():
             use_symmetric_averaging=False, make_positive=True, return_quantiles=True,
         ))
         raw = np.stack([f.forecast for f in forecast]).reshape(len(cases), -1, 3, args.horizon)
-        predictions[name] = _project_physics(raw.transpose(0, 3, 1, 2), actions)[0]
+        predictions[name] = _project_physics(raw.transpose(0, 3, 1, 2), actions, zero_injectors=True)[0]
         timings[name] = round(time.monotonic() - begin, 3)
         print(json.dumps({"model": name, **metrics(truth, predictions[name]), "seconds": timings[name]}), flush=True)
     if args.recursive:

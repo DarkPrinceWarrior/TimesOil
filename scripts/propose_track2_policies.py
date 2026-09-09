@@ -132,7 +132,7 @@ def main():
             use_symmetric_averaging=False, make_positive=True, return_quantiles=False))
         prediction = forecast.forecast.reshape(len(well_index), 3, horizon).transpose(2, 0, 1)
         future = actions[origin:origin + horizon]
-        prediction = _project_physics(prediction, future)[0]
+        prediction = _project_physics(prediction, future, zero_injectors=True)[0]
         if not np.isfinite(prediction).all():
             raise ValueError("non-finite TimesFM forecast")
         oil = float((prediction[..., 0] * days).sum())
