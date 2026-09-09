@@ -1,0 +1,118 @@
+{
+  "schema": "timesoil.full-horizon-selection/v1",
+  "months": 224,
+  "baseline": {
+    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+    "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+    "chdd_m": 11874.341091411583,
+    "summary": {
+      "totalOilKt": 3662.101463945813,
+      "totalLiquidKt": 9559.847866730552,
+      "totalInjectionK": 11671.730859375,
+      "totalRevenueM": 102538.84099048277,
+      "totalOpexM": 3387.1207710121375,
+      "totalCapexM": 28.06191,
+      "totalFcfM": 20502.836734599518,
+      "totalChddM": 11874.341091411583,
+      "profitabilityIndex": 1.256334616831005,
+      "pumpChanges": 40.0,
+      "startStopCount": 23,
+      "conversionCount": 9,
+      "totalConversionOpexM": 45.0,
+      "years": 19
+    },
+    "max_liquid_m3d": 56.152222,
+    "opm_seconds": 897.5974666923285,
+    "reported_critic_approved": true
+  },
+  "selected": {
+    "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/policy09-full-horizon-20260909",
+    "receipt_sha256": "91fc00f4698009bc4a3cef80c6c2c814ab6dc5131766ac1780be7f7d49718d99",
+    "chdd_m": 12018.756586411637,
+    "summary": {
+      "totalOilKt": 3684.4102939712093,
+      "totalLiquidKt": 9778.077017442332,
+      "totalInjectionK": 11746.755054688,
+      "totalRevenueM": 103163.48823119386,
+      "totalOpexM": 3412.0867651437215,
+      "totalCapexM": 28.00794,
+      "totalFcfM": 20624.711838160827,
+      "totalChddM": 12018.756586411637,
+      "profitabilityIndex": 1.256429876688801,
+      "pumpChanges": 40.0,
+      "startStopCount": 23,
+      "conversionCount": 9,
+      "totalConversionOpexM": 45.0,
+      "years": 19
+    },
+    "max_liquid_m3d": 52.928944,
+    "opm_seconds": 795.1401329822838,
+    "reported_critic_approved": false
+  },
+  "selection_metric": "official_chdd_over_identical_complete_period",
+  "comparisons": [
+    {
+      "schema": "timesoil.paired-cycle-audit/v1",
+      "baseline": {
+        "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/baseline-full-horizon-20260909",
+        "receipt_sha256": "af30d7488a268f543dcb84a17c0155fdd7e09f0849d16956678e49c5afaa30e9",
+        "chdd_m": 11874.341091411583,
+        "summary": {
+          "totalOilKt": 3662.101463945813,
+          "totalLiquidKt": 9559.847866730552,
+          "totalInjectionK": 11671.730859375,
+          "totalRevenueM": 102538.84099048277,
+          "totalOpexM": 3387.1207710121375,
+          "totalCapexM": 28.06191,
+          "totalFcfM": 20502.836734599518,
+          "totalChddM": 11874.341091411583,
+          "profitabilityIndex": 1.256334616831005,
+          "pumpChanges": 40.0,
+          "startStopCount": 23,
+          "conversionCount": 9,
+          "totalConversionOpexM": 45.0,
+          "years": 19
+        },
+        "max_liquid_m3d": 56.152222,
+        "opm_seconds": 897.5974666923285,
+        "reported_critic_approved": true
+      },
+      "candidate": {
+        "run": "/root/projects/TimesOil/results/audit-20260909/track2-cycles/policy09-full-horizon-20260909",
+        "receipt_sha256": "91fc00f4698009bc4a3cef80c6c2c814ab6dc5131766ac1780be7f7d49718d99",
+        "chdd_m": 12018.756586411637,
+        "summary": {
+          "totalOilKt": 3684.4102939712093,
+          "totalLiquidKt": 9778.077017442332,
+          "totalInjectionK": 11746.755054688,
+          "totalRevenueM": 103163.48823119386,
+          "totalOpexM": 3412.0867651437215,
+          "totalCapexM": 28.00794,
+          "totalFcfM": 20624.711838160827,
+          "totalChddM": 12018.756586411637,
+          "profitabilityIndex": 1.256429876688801,
+          "pumpChanges": 40.0,
+          "startStopCount": 23,
+          "conversionCount": 9,
+          "totalConversionOpexM": 45.0,
+          "years": 19
+        },
+        "max_liquid_m3d": 52.928944,
+        "opm_seconds": 795.1401329822838,
+        "reported_critic_approved": false
+      },
+      "start_inclusive": "2007-01-01",
+      "end_exclusive": "2025-09-01",
+      "well_count": 103,
+      "months": 224,
+      "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+      "artifacts_verified": true,
+      "identical_pre_control_history": true,
+      "delta_chdd_m": 144.41549500005385,
+      "uplift_percent": 1.216197967435062,
+      "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+      "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD."
+    }
+  ],
+  "claim": "Model-based training experiment; selection runs are not an untouched test set."
+}
