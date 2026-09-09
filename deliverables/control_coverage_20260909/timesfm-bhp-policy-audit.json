@@ -1,0 +1,143 @@
+{
+  "paired_audit": {
+    "schema": "timesoil.paired-cycle-audit/v1",
+    "baseline": {
+      "run": "/root/projects/TimesOil/results/audit-20260909/timesfm-bhp-policy-20260909/cycles/baseline",
+      "receipt_sha256": "f24815af7c7941d026898e032803966c4f76db34acf2913de7720007cbe94d79",
+      "chdd_m": 11873.620636581927,
+      "summary": {
+        "totalOilKt": 3662.183640917809,
+        "totalLiquidKt": 9556.846141930715,
+        "totalInjectionK": 11670.593869139999,
+        "totalRevenueM": 102541.14194569865,
+        "totalOpexM": 3384.989775903984,
+        "totalCapexM": 27.31191,
+        "totalFcfM": 20505.70269585421,
+        "totalChddM": 11873.620636581927,
+        "profitabilityIndex": 1.2563461371279743,
+        "pumpChanges": 39.0,
+        "startStopCount": 23,
+        "conversionCount": 9,
+        "totalConversionOpexM": 45.0,
+        "years": 19
+      },
+      "max_liquid_m3d": 56.135983,
+      "opm_seconds": 228.470802847296,
+      "reported_critic_approved": true
+    },
+    "candidate": {
+      "run": "/root/projects/TimesOil/results/audit-20260909/timesfm-bhp-policy-20260909/cycles/candidate",
+      "receipt_sha256": "30383b15df323b84dd2a12902d8dd7759a545ca98a36d325366433cda0afa83a",
+      "chdd_m": 12021.427749454946,
+      "summary": {
+        "totalOilKt": 3684.8542948132654,
+        "totalLiquidKt": 9775.300880796514,
+        "totalInjectionK": 11747.367349609001,
+        "totalRevenueM": 103175.92025477144,
+        "totalOpexM": 3408.245280360452,
+        "totalCapexM": 26.45397,
+        "totalFcfM": 20631.944127053233,
+        "totalChddM": 12021.427749454946,
+        "profitabilityIndex": 1.2564697235981186,
+        "pumpChanges": 38.0,
+        "startStopCount": 23,
+        "conversionCount": 9,
+        "totalConversionOpexM": 45.0,
+        "years": 19
+      },
+      "max_liquid_m3d": 52.935741,
+      "opm_seconds": 194.96681106835604,
+      "reported_critic_approved": false
+    },
+    "start_inclusive": "2007-01-01",
+    "end_exclusive": "2025-09-01",
+    "well_count": 103,
+    "months": 224,
+    "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+    "artifacts_verified": true,
+    "verified_evidence": {
+      "simulator": {
+        "image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+        "both_runs_successful": true
+      },
+      "constraints": {
+        "max_actual_liquid_m3d": 500,
+        "both_runs_within_limit": true,
+        "same_well_inventory_and_months": true
+      },
+      "economics": {
+        "calculator_sha256": {
+          "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+          "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+          "РАСЧЕТ_ЧДД.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90"
+        },
+        "same_assumptions": true,
+        "metric": "official totalChddM",
+        "historical_cash_flows_included": false
+      }
+    },
+    "identical_pre_control_history": true,
+    "delta_chdd_m": 147.80711287301892,
+    "uplift_percent": 1.2448360731488473,
+    "scope": "Training-archive experiment; competition end date and future constraints unconfirmed.",
+    "approval": "Numerical audit only; does not validate LLM reasoning or certify surrogate UQ/OOD."
+  },
+  "selected_policy": {
+    "id": 8,
+    "policy": {
+      "producer_scale": 3,
+      "injector_scale": 1,
+      "shut_wells": [],
+      "well_scales": [],
+      "well_updates": []
+    },
+    "lookahead_months": 6,
+    "estimated_oil_t": 143180.7953236103,
+    "estimated_liquid_t": 160417.30226421356,
+    "planned_injection_m3": 277865.0,
+    "screening_margin_m": 1172.6137686789607,
+    "full_period_months": 224,
+    "full_period_actions": 23072,
+    "bhp_channel": true,
+    "controls_sha256": "1ff3dcca3d2824aee7251bcfd2fc21f44c282479c0eed7f142c9c6343b3120c0",
+    "inference_seconds": 0.6283203028142452,
+    "is_official_chdd": false
+  },
+  "proposal_provenance": {
+    "source_trajectory_sha256": "1c5730d99b40403551c591845cf0e3d291ac7ee42fa9e3cb1de9e0ee1574f2ca",
+    "request_sha256": "86899b1aacc536a99b5c9ff6c68180a7a7ece83c3a0ff43194a05bff616b43b9",
+    "timesfm_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+    "agent_proposal_ids": [
+      8,
+      9
+    ],
+    "script_sha256": "e4d486e0dce21290eac3638b96dfb1cde066134500393d073b2ee4608c18d53c",
+    "requires_full_period_opm": true,
+    "final_chdd_computed": false
+  },
+  "critic": {
+    "approved": false,
+    "evidence": [
+      "surrogate_used_for_candidate_selection: true",
+      "independent_surrogate_uq_calibrated: false",
+      "Отсутствуют данные о проверке OOD (Out-of-Distribution) для суррогатной модели",
+      "surrogate_chdd_is_final: false",
+      "official_chdd_complete: true (ЧДД рассчитан, но допуск суррогата не подтвержден)"
+    ],
+    "recommendation": "Отклонить план. Требуется предоставить доказательства калибровки оценки неопределенности (UQ) для суррогатной модели TimesFM и результаты проверки выхода за пределы обучающей выборки (OOD) для выбранной политики. Без этих данных использование суррогата для отбора кандидата не является валидным.",
+    "role": "critic",
+    "summary": "План отклонен. Хотя симулятор OPM и официальный расчет ЧДД выполнены успешно (ЧДД = 12 021,43 млн ₽, PI = 1.256), выбор кандидата опирался на суррогатную модель (surrogate_used_for_candidate_selection: true). В соответствии с правилами, при использовании суррогата для отбора кандидата обязательны наличие калиброванной оценки неопределенности (UQ) и проверка выхода за пределы обучающей выборки (OOD). В предоставленных данных указано, что независимая калибровка UQ суррогата отсутствует (independent_surrogate_uq_calibrated: false), а данные об OOD не представлены. Следовательно, допуск суррогата не подтвержден, и план не может быть одобрен до устранения этих пробелов."
+  },
+  "source_commits": {
+    "baseline": "2bd936cf8ef9249553267f79d7baed591d18b329",
+    "candidate": "2bd936cf8ef9249553267f79d7baed591d18b329"
+  },
+  "action_count": 23072,
+  "all_management_months": 224,
+  "bhp_used_as_input": true,
+  "new_bhp_limits_selected": false,
+  "new_conversion_selected": false,
+  "independent_surrogate_uncertainty_calibrated": false,
+  "replaces_previous_best_result": false,
+  "distinct_agent_policy_count": 1
+}
