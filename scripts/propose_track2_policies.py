@@ -23,7 +23,7 @@ from timesoil.aios.agents import AgentRole, AgentWorkflow, ToolDefinition, ToolR
 from timesoil.aios.llm import ExternalQwenClient, LLMConfig
 from timesoil.aios.surrogate import _project_physics
 from timesoil.aios.track2 import trajectory_from_frame
-from timesoil.aios.workflow import CycleRequest, _controls
+from timesoil.aios.workflow import CycleError, CycleRequest, _controls
 from timesoil.aios.operating_constraints import check_controls, parse_constraints
 from timesoil.aios.economics import CHDDEconomicsAdapter
 
@@ -119,7 +119,7 @@ def self_check():
                     [{**update, 'value': True}], [{**update, 'bhp_limit': -1}]):
         try:
             policy_controls(two_months, {**policy, 'well_updates': updates})
-        except ValueError:
+        except (ValueError, CycleError):
             pass
         else:
             raise AssertionError('invalid timed control update accepted')
