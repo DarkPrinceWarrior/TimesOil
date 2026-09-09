@@ -1,0 +1,6 @@
+{
+  "all_12_pages_selectable": true,
+  "overview_block_a_opens_page": 2,
+  "zoom_200_percent_svg_width_px": 3564,
+  "renderer": "Chromium / Playwright; standalone HTML with embedded SVG"
+}

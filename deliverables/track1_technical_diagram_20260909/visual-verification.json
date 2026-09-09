@@ -1,0 +1,86 @@
+[
+  {
+    "page": 1,
+    "name": "01 · Полный контур",
+    "clippedText": [],
+    "vertexCount": 23,
+    "edgeCount": 14
+  },
+  {
+    "page": 2,
+    "name": "02 · Входы и контракты",
+    "clippedText": [],
+    "vertexCount": 23,
+    "edgeCount": 10
+  },
+  {
+    "page": 3,
+    "name": "03 · Qwen и инструменты",
+    "clippedText": [],
+    "vertexCount": 23,
+    "edgeCount": 13
+  },
+  {
+    "page": 4,
+    "name": "04 · Управление и ограничения",
+    "clippedText": [],
+    "vertexCount": 23,
+    "edgeCount": 11
+  },
+  {
+    "page": 5,
+    "name": "05 · Месячный MPC и горизонт",
+    "clippedText": [],
+    "vertexCount": 23,
+    "edgeCount": 14
+  },
+  {
+    "page": 6,
+    "name": "06 · OPM и полный replay",
+    "clippedText": [],
+    "vertexCount": 23,
+    "edgeCount": 15
+  },
+  {
+    "page": 7,
+    "name": "07 · SUMMARY, единицы, CSV",
+    "clippedText": [],
+    "vertexCount": 23,
+    "edgeCount": 14
+  },
+  {
+    "page": 8,
+    "name": "08 · Официальный ЧДД",
+    "clippedText": [],
+    "vertexCount": 23,
+    "edgeCount": 13
+  },
+  {
+    "page": 9,
+    "name": "09 · Все нормативы и ЭЦН",
+    "clippedText": [],
+    "vertexCount": 27,
+    "edgeCount": 6
+  },
+  {
+    "page": 10,
+    "name": "10 · Lineage и восстановление",
+    "clippedText": [],
+    "vertexCount": 23,
+    "edgeCount": 12
+  },
+  {
+    "page": 11,
+    "name": "11 · Файлы, запуск, выдача",
+    "clippedText": [],
+    "vertexCount": 23,
+    "edgeCount": 13
+  },
+  {
+    "page": 12,
+    "name": "12 · Проверено и открыто",
+    "clippedText": [],
+    "vertexCount": 23,
+    "edgeCount": 11
+  }
+]
