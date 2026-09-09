@@ -37,13 +37,13 @@ def past_inputs(observations, origin, context_length):
     return observations[origin + 1 - context_length:origin + 1].transpose(1, 2, 0).astype(np.float32)
 
 
-def forecast_inputs(states, actions, origin, context_length):
+def forecast_inputs(states, actions, origin, context_length, horizon=HORIZON):
     """Align action[t] with state[t+1]; never expose future target states."""
-    if context_length < 1 or origin < 1 or origin + HORIZON >= len(states):
+    if context_length < 1 or horizon < 1 or origin < 1 or origin + horizon >= len(states):
         raise ValueError("invalid forecast window")
     start = max(1, origin + 1 - context_length)
     targets = states[start : origin + 1].transpose(1, 2, 0).astype(np.float32)
-    controls = actions[start - 1 : origin + HORIZON]
+    controls = actions[start - 1 : origin + horizon]
     rates = np.stack(
         [np.where(controls[..., 1] == code, controls[..., 0], 0.0)
          * controls[..., 2] for code in range(3)], axis=-1
@@ -95,6 +95,7 @@ def main():
     parser.add_argument("--bundle", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--windows", type=int, default=6)
+    parser.add_argument("--horizon", type=int, default=HORIZON)
     parser.add_argument("--context", type=int, default=128)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--full-field", action="store_true", help="Use Forecaster directly; retain every target and control channel")
@@ -107,7 +108,7 @@ def main():
     self_check()
     if args.self_check:
         return
-    if not args.bundle or not args.output or min(args.windows, args.context, args.batch_size) < 1:
+    if not args.bundle or not args.output or min(args.windows, args.context, args.batch_size, args.horizon) < 1:
         parser.error("positive window/context/batch sizes and bundle/output required")
     args.output.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
@@ -165,27 +166,27 @@ def main():
     for scenario in test_ids:
         t = trajectories[scenario]
         if args.start_date is None:
-            origins = [o for o in range(0, len(t.dates) - HORIZON, HORIZON) if o >= args.context]
+            origins = [o for o in range(0, len(t.dates) - args.horizon, args.horizon) if o >= args.context]
         else:
             first = max(args.context, int(t.dates.searchsorted(args.start_date)))
-            origins = list(range(first, len(t.dates) - HORIZON, HORIZON))
-            if args.all_windows and origins and origins[-1] != len(t.dates) - HORIZON - 1:
-                origins.append(len(t.dates) - HORIZON - 1)
+            origins = list(range(first, len(t.dates) - args.horizon, args.horizon))
+            if args.all_windows and origins and origins[-1] != len(t.dates) - args.horizon - 1:
+                origins.append(len(t.dates) - args.horizon - 1)
         if len(origins) < args.windows:
             raise ValueError("not enough complete windows with the requested history")
         for origin in origins if args.all_windows else origins[-args.windows:]:
-            action = t.actions[origin : origin + HORIZON]
-            target, cov = forecast_inputs(t.states, t.actions, origin, args.context)
+            action = t.actions[origin : origin + args.horizon]
+            target, cov = forecast_inputs(t.states, t.actions, origin, args.context, args.horizon)
             contexts.extend(target)
             covariates.extend(cov)
             if args.past_covariates:
                 past_covariates.append(past_inputs(observed[scenario], origin, args.context).reshape(-1, args.context))
-            truth = t.states[origin + 1 : origin + HORIZON + 1]
+            truth = t.states[origin + 1 : origin + args.horizon + 1]
             truths.append(truth)
             controls.append(action)
             predicted = surrogate.rollout(t.states[origin], action).mean
             crm.append(predicted)
-            persistence.append(np.repeat(t.states[origin][None], HORIZON, axis=0))
+            persistence.append(np.repeat(t.states[origin][None], args.horizon, axis=0))
             changed = action.copy()
             injection = action[..., 1] == 2
             changed[..., 0][injection] *= 1.2
@@ -194,7 +195,7 @@ def main():
             sensitivity.append(float(np.max(np.abs(perturbed[..., 0][producers] - predicted[..., 0][producers]))))
             cases.append({"scenario_id": scenario, "origin": origin,
                           "state_date": str(t.dates[origin].date()),
-                          "target_dates": [str(d.date()) for d in t.dates[origin + 1 : origin + HORIZON + 1]],
+                          "target_dates": [str(d.date()) for d in t.dates[origin + 1 : origin + args.horizon + 1]],
                           "well_ids": list(t.well_ids)})
     truth, actions = np.stack(truths), np.stack(controls)
     predictions = {"persistence": np.stack(persistence), "crm_lightgbm": np.stack(crm)}
@@ -210,7 +211,7 @@ def main():
         per_core_batch_size=args.batch_size, device="cuda",
     ))
     joint_contexts = list(np.stack(contexts).reshape(len(cases), -1, args.context))
-    joint_covariates = list(np.stack(covariates)[:, :4].reshape(len(cases), -1, args.context + HORIZON))
+    joint_covariates = list(np.stack(covariates)[:, :4].reshape(len(cases), -1, args.context + args.horizon))
     timings = {}
     variants = [
         ("timesfm3_per_well_history", contexts, None, None, args.batch_size),
@@ -224,11 +225,11 @@ def main():
         print(f"Forecasting {name}: {len(inputs)} windows, {inputs[0].shape[0]} targets", flush=True)
         begin = time.monotonic()
         forecast = list(forecaster.predict_batch(
-            inputs, horizon=HORIZON, past_future_covariates=cov,
+            inputs, horizon=args.horizon, past_future_covariates=cov,
             past_only_covariates=past_cov,
             use_symmetric_averaging=False, make_positive=True, return_quantiles=True,
         ))
-        raw = np.stack([f.forecast for f in forecast]).reshape(len(cases), -1, 3, HORIZON)
+        raw = np.stack([f.forecast for f in forecast]).reshape(len(cases), -1, 3, args.horizon)
         predictions[name] = _project_physics(raw.transpose(0, 3, 1, 2), actions)[0]
         timings[name] = round(time.monotonic() - begin, 3)
         print(json.dumps({"model": name, **metrics(truth, predictions[name]), "seconds": timings[name]}), flush=True)
@@ -245,7 +246,7 @@ def main():
         "crm_interwell_geology": connectivity is not None,
         "packages": {n: version(n) for n in ("timesfm", "torch", "numpy", "pandas", "lightgbm")},
         "input_sources": sources, "train_scenarios": train_ids, "test_scenarios": test_ids,
-        "cases": cases, "horizon": HORIZON, "context": args.context,
+        "cases": cases, "horizon": args.horizon, "context": args.context,
         "metrics": {name: metrics(truth, p) for name, p in predictions.items()},
         "per_scenario": {s: {name: metrics(truth[[c["scenario_id"] == s for c in cases]],
                                                     p[[c["scenario_id"] == s for c in cases]])
@@ -256,8 +257,8 @@ def main():
         "official_chdd_evaluated": False, "new_opm_replay": False,
         "limitations": [
             "Offline hash-verified snapshot; not a new OPM extraction receipt.",
-            ("All complete six-month windows from requested start; final window may overlap to cover the last report."
-             if args.all_windows else f"Last {args.windows} complete six-month windows per held-out scenario, not the full KT2 test set."),
+            (f"All complete {args.horizon}-month windows from requested start; final window may overlap to cover the last report."
+             if args.all_windows else f"Last {args.windows} complete {args.horizon}-month windows per held-out scenario, not the full KT2 test set."),
             "TimesFM receives observed history; CRM uses the current state and eight training scenarios.",
             ("Joint controls retain all 309 well targets and 412 planned rate/status channels."
              if args.full_field else
