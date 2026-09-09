@@ -478,3 +478,25 @@ def test_chdd_adapter_records_initial_pump_profile(tmp_path: Path) -> None:
         core = archive.read("docProps/core.xml")
     assert b"<dcterms:modified" in core
     assert b">2000-01-01T00:00:00Z</dcterms:modified>" in core
+
+
+def test_required_tool_retry_never_executes_a_partial_response():
+    class Truncated(_WorkflowLLM):
+        async def chat(self, messages, **kwargs):
+            if self.chat_calls == 0:
+                self.chat_calls += 1
+                return LLMResponse("", None, "length")
+            assert kwargs["reasoning"] is False
+            return await super().chat(messages, **kwargs)
+    executed = []
+    tool = ToolDefinition("inspect_state", "Read evidence", {
+        "type": "object", "properties": {"month": {"type": "integer"}},
+        "required": ["month"], "additionalProperties": False},
+        lambda args, _: executed.append(args) or {"verified": True})
+    llm = Truncated()
+    flow = AgentWorkflow(llm, ToolRegistry([tool]),
+        role_tools={AgentRole.COORDINATOR: (tool.name,)},
+        required_tools={AgentRole.COORDINATOR: (tool.name,)})
+    result = asyncio.run(flow.run({"track": 1}))
+    assert result.complete and llm.chat_calls == 2
+    assert executed == [{"month": 1}]
