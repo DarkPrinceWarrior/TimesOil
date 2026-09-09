@@ -22,7 +22,7 @@ def test_transient_retries_preserve_payload_and_stop_on_fatal_errors(statuses, e
         })
 
     async def run():
-        config = LLMConfig(api_key="test-only", base_url="https://api.cerebras.ai/v1", timeout_seconds=1)
+        config = LLMConfig(api_key="test-only", base_url="https://litellm.tatneft.guru/v1", timeout_seconds=1)
         async with httpx.AsyncClient(base_url=config.base_url, transport=httpx.MockTransport(handler)) as transport:
             client = ExternalQwenClient(config, http_client=transport)
             return await client.chat([ChatMessage("user", "same request")])
@@ -46,7 +46,7 @@ def test_retry_after_cannot_extend_total_request_deadline():
         return httpx.Response(429, headers={"Retry-After": "60"}, json={})
 
     async def run():
-        config = LLMConfig(api_key="test-only", base_url="https://api.cerebras.ai/v1", timeout_seconds=.01)
+        config = LLMConfig(api_key="test-only", base_url="https://litellm.tatneft.guru/v1", timeout_seconds=.01)
         async with httpx.AsyncClient(base_url=config.base_url, transport=httpx.MockTransport(handler)) as transport:
             with pytest.raises(LLMError, match="TimeoutError"):
                 await ExternalQwenClient(config, http_client=transport).chat([ChatMessage("user", "bounded")])

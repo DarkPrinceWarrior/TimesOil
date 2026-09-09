@@ -148,8 +148,8 @@ OPM хранит конец отчётного интервала: продук�
 Обязательное окружение и один запуск без перезаписи:
 
 ```bash
-export LLM_BASE_URL=https://api.cerebras.ai/v1
-export LLM_MODEL=qwen-3.8-27b
+export LLM_BASE_URL=https://litellm.tatneft.guru/v1
+export LLM_MODEL=qwen3.8-27b
 export LLM_TIMEOUT_SECONDS=120
 export LLM_MAX_OUTPUT_TOKENS=4096
 # При запущенном обратном SSH-туннеле на A100:
@@ -284,7 +284,7 @@ ssh -N -o ControlPath=none -o ExitOnForwardFailure=yes \
 ```
 
 На хосте A100 добавить `LLM_PROXY_URL=http://127.0.0.1:18889` в окружение
-CLI. `LLM_BASE_URL` остаётся `https://api.cerebras.ai/v1`; TLS проверяется
+CLI. `LLM_BASE_URL` остаётся `https://litellm.tatneft.guru/v1`; TLS проверяется
 клиентом, ключ не передаётся прокси открытым текстом. Системные `HTTP_PROXY`
 и `HTTPS_PROXY` клиент не читает. Остановка SSH-сессии закрывает маршрут.
 Эта команда предназначена для CLI на хосте: `127.0.0.1` внутри API-контейнера

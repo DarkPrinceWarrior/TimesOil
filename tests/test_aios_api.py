@@ -28,7 +28,7 @@ def _chdd_row() -> dict[str, Any]:
 def test_health_and_capabilities_do_not_expose_secret(monkeypatch) -> None:
     secret = "do-not-return-this-key"
     monkeypatch.setenv("LLM_API_KEY", secret)
-    monkeypatch.setenv("LLM_BASE_URL", "https://api.cerebras.ai/v1")
+    monkeypatch.setenv("LLM_BASE_URL", "https://litellm.tatneft.guru/v1")
 
     with TestClient(app) as client:
         health = client.get("/health")
