@@ -134,8 +134,19 @@ def main():
         raise ValueError('connectivity currently requires METRIC units')
     np.testing.assert_array_equal(array(deck_text, 'DIMENS')[:3], dimensions)
     wells = tuple(sorted(connections))
-    cells, static = [], []
+    cells, static, extended_static = [], [], []
     permx, permy, poro, dz, ntg = [global_array(k) for k in ('PERMX', 'PERMY', 'PORO', 'DZ', 'NTG')]
+    properties = {name: global_array(name) for name in
+                  ('PERMX', 'PERMY', 'PERMZ', 'PORO', 'NTG', 'DEPTH', 'DX', 'DY', 'DZ', 'PORV')}
+    regions = {name: global_array(name) for name in
+               ('FIPNUM', 'FIP_ZONE', 'FIP_C1', 'EQLNUM', 'PVTNUM', 'SATNUM')
+               if _keyword_offsets(init, name)}
+    region_columns = [(name, value) for name, values in regions.items()
+                      for value in sorted(set(values[active]))]
+    feature_names = [f'{name}_net_weighted_mean' for name in properties] + [
+        'completed_net_thickness_m', 'completed_pore_volume_m3', 'completion_cell_count',
+        'completion_i_mean', 'completion_j_mean', 'completion_k_mean'] + [
+        f'{name}_fraction_{value:g}' for name, value in region_columns]
     for well in wells:
         coordinates = np.array([list(map(int, key.split(','))) for key in connections[well]]) - 1
         if coordinates.ndim != 2 or coordinates.shape[1] != 3 or (coordinates < 0).any() or (coordinates >= dimensions).any():
@@ -148,6 +159,11 @@ def main():
         cells.append(indices)
         static.append([np.average(np.sqrt(permx[indices] * permy[indices]), weights=net),
                        np.average(poro[indices], weights=net), net.sum()])
+        ijk = np.array(np.unravel_index(indices, (nz, ny, nx)))[::-1].T + 1
+        extended_static.append([np.average(values[indices], weights=net) for values in properties.values()]
+            + [net.sum(), properties['PORV'][indices].sum(), len(indices)]
+            + np.average(ijk, weights=net, axis=0).tolist()
+            + [np.average(regions[name][indices] == value, weights=net) for name, value in region_columns])
     if not graph.nnz:
         raise ValueError('grid contains no conducting connections')
     # ponytail: coincident completions are resolved only to one grid edge; use exported well connection factors for wellbore-scale resistance.
@@ -167,6 +183,7 @@ def main():
     np.testing.assert_allclose(weights, weights.T, rtol=1e-10, atol=1e-12)
     value = {'well_ids': wells, 'weights': weights.tolist(), 'static': static,
              'provenance': {'source_sha256': manifest['source_sha256'], 'expanded_deck_sha256': deck_hash,
+                'static_feature_names': feature_names, 'static_features': extended_static,
                 'run_manifest_sha256': sha256((root / 'manifest.json').read_bytes()).hexdigest(),
                 'image': OPM_IMAGE, 'raw_artifacts': sources,
                 'converted_artifacts': {name: sha256((args.output / f'{name}.inc').read_bytes()).hexdigest() for name in exported},

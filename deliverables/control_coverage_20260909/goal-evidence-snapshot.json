@@ -1,0 +1,57 @@
+[
+  {
+    "path": "physical-y-completion.json",
+    "remote": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-y-20260909/completion.json",
+    "sha256": "242c6e9211be9a82a3f13112bd601120187dd9ae3e85d8753a61149d1d7a3654"
+  },
+  {
+    "path": "physical-z-paired-03.json",
+    "remote": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-z-20260909/comparison-03-existing-mpi16.json",
+    "sha256": "12db0a4efc46bed09e7315d2ec599bb43da33f2f63cbdd5adba4b6d1e2800649"
+  },
+  {
+    "path": "physical-z-completion.json",
+    "remote": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-z-20260909/completion.json",
+    "sha256": "276f8f68a70e0a6c880f7286614f0c08dbafc85dd68914145a9421bce7ae51d3"
+  },
+  {
+    "path": "geology-model-y.json",
+    "remote": "/root/projects/TimesOil/results/audit-20260909/opm-connectivity-20260909/model-y-native/connectivity.json",
+    "sha256": "b0271a7cf71bc878f422ed30ff70b25d2028f47ea7e3abcfeb07c693b9131d58"
+  },
+  {
+    "path": "timesfm-model-y-oil_fraction-plain.json",
+    "remote": "/root/projects/TimesOil/results/audit-20260909/timesfm-geology-targets-20260909/model-y-oil_fraction-plain/report.json",
+    "sha256": "5f098ad4b3af3d2321ce4b6e10bea3b4c47c172991229614c7a34dce19b65e8d"
+  },
+  {
+    "path": "timesfm-model-y-rates-geology.json",
+    "remote": "/root/projects/TimesOil/results/audit-20260909/timesfm-geology-targets-20260909/model-y-rates-geology/report.json",
+    "sha256": "c430e4a34e74edbbb6b3e9744fedd738fe7e7d1c264b0d2647223f026a0fcb79"
+  },
+  {
+    "path": "timesfm-model-y-oil_fraction-geology.json",
+    "remote": "/root/projects/TimesOil/results/audit-20260909/timesfm-geology-targets-20260909/model-y-oil_fraction-geology/report.json",
+    "sha256": "a205eaf38042f7bbc93b4f59bf9c4a88d419b38ff254640125f37d649343b4e0"
+  },
+  {
+    "path": "geology-model-z.json",
+    "remote": "/root/projects/TimesOil/results/audit-20260909/opm-connectivity-20260909/model-z-v2/connectivity.json",
+    "sha256": "7e05215bae1308310af1be8f0a11455cf0106ec9fb7703dc335d9d37a83cb632"
+  },
+  {
+    "path": "timesfm-model-z-oil_fraction-plain.json",
+    "remote": "/root/projects/TimesOil/results/audit-20260909/timesfm-geology-targets-20260909/model-z-oil_fraction-plain/report.json",
+    "sha256": "38f9e50f86cf5bf96eba3f4a45d01217bffb44850f2c4fa0fb5365de52fb63ad"
+  },
+  {
+    "path": "timesfm-model-z-rates-geology.json",
+    "remote": "/root/projects/TimesOil/results/audit-20260909/timesfm-geology-targets-20260909/model-z-rates-geology/report.json",
+    "sha256": "d4ac9e59f61ae734d4574e026ba8bcd252a17270dbd65a1503488789208e8588"
+  },
+  {
+    "path": "timesfm-model-z-oil_fraction-geology.json",
+    "remote": "/root/projects/TimesOil/results/audit-20260909/timesfm-geology-targets-20260909/model-z-oil_fraction-geology/report.json",
+    "sha256": "c3a9ba81ee675bd6448bcf6b667124fa20434b6717ce0f8580fdcbfc27103830"
+  }
+]

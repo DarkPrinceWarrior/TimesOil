@@ -1,0 +1,41 @@
+{
+  "schema": "timesoil.timesfm-layout-benchmark/v1",
+  "model_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "source_trajectory_sha256": "1c5730d99b40403551c591845cf0e3d291ac7ee42fa9e3cb1de9e0ee1574f2ca",
+  "source_manifest_sha256": "b9ee48df3c4023e526597b5a54b47bdaf13dcf20de0c08dbd187a0f4fdc1d52a",
+  "script_sha256": "08a9edd3457f7623d3e960f062e25bc7a41e0d625e0da9374371117209c543ba",
+  "well_count": 103,
+  "context_months": 128,
+  "horizon_months": 224,
+  "target_mode": "rates",
+  "connectivity_sha256": "7e05215bae1308310af1be8f0a11455cf0106ec9fb7703dc335d9d37a83cb632",
+  "observation_cutoff": "2007-01-01T00:00:00",
+  "attention_backend": "math",
+  "future_observations_used": false,
+  "calibrated": false,
+  "official_chdd": false,
+  "results": [
+    {
+      "layout": "joint",
+      "seconds": 1.1626168638467789,
+      "oil_wape": 0.8260831234421107,
+      "liquid_wape": 0.46333965286072765,
+      "pressure_rmse_bar": 71.15319149962033
+    },
+    {
+      "layout": "well",
+      "seconds": 9.390625569969416,
+      "oil_wape": 0.8429149766862194,
+      "liquid_wape": 0.48763711822921313,
+      "pressure_rmse_bar": 76.60590466542597
+    },
+    {
+      "layout": "well_with_field_injection",
+      "seconds": 10.007899846881628,
+      "oil_wape": 0.7871287495517015,
+      "liquid_wape": 0.5019273605900451,
+      "pressure_rmse_bar": 73.54103571757669
+    }
+  ],
+  "complete": true
+}

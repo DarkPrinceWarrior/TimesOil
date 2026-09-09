@@ -42,6 +42,7 @@ def main():
     parser.add_argument('--output', type=Path)
     parser.add_argument('--epochs', type=int, default=30)
     parser.add_argument('--learning-rate', type=float, default=1e-5)
+    parser.add_argument('--connectivity', type=Path)
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -54,6 +55,14 @@ def main():
     args.output.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
     trajectories, origin = verified_batch(args.batch, args.batch_sha256)
+    connectivity = None
+    if args.connectivity:
+        from timesoil.aios.interwell import WellConnectivity
+        from timesfm_geology import StaticConditionedHead, geological_inputs, self_check as geology_check
+        geology_check()
+        connectivity = WellConnectivity.from_dict(json.loads(args.connectivity.read_text()))
+        if connectivity.provenance['source_sha256'] != json.loads((args.batch / 'manifest.json').read_text())['official_source_sha256']:
+            raise ValueError('connectivity belongs to another source reservoir')
     by_id = {t.scenario_id: t for t in trajectories}
     train_ids = ['baseline', 'perturbation-001', 'perturbation-002', 'perturbation-003',
                  'perturbation-005', 'perturbation-006']
@@ -78,6 +87,8 @@ def main():
     forecaster = TimesFM3Forecaster(ModelConfig(checkpoint_path='google/timesfm-3.0-pytorch',
         revision=MODEL_REVISION, per_core_batch_size=1, device='cuda'))
     model = forecaster.model
+    if connectivity is not None:
+        model.output_head = StaticConditionedHead(model.output_head, connectivity)
     model.requires_grad_(False)
     model.output_head.requires_grad_(True)
     model.eval()  # Keep the frozen backbone's inference behavior during head adaptation.
@@ -91,10 +102,14 @@ def main():
     examples = {}
     for name in train_ids + validation_ids:
         t = by_id[name]
-        target, cov = forecast_inputs(t.states, t.actions, origin, 128, 224)
+        if connectivity is None:
+            target, cov = forecast_inputs(t.states, t.actions, origin, 128, 224)
+            target, cov = target.reshape(309, 128), cov[:, :-1].reshape(515, 352)
+        else:
+            target, cov = geological_inputs(t, origin, 128, 224, connectivity)
         examples[name] = (
-            torch.tensor(target.reshape(1, 309, 128), device='cuda'),
-            torch.tensor(cov[:, :-1].reshape(1, 515, 352), device='cuda'),
+            torch.tensor(target[None], device='cuda'),
+            torch.tensor(cov[None], device='cuda', dtype=torch.float32),
             torch.tensor(t.states[origin + 1:origin + 225].transpose(1, 2, 0).reshape(1, 309, 224),
                          device='cuda', dtype=torch.float32))
     decode = type(model).decode.__wrapped__  # Same pinned decoder, with autograd enabled.
@@ -131,15 +146,32 @@ def main():
         gradient_policy='stop gradients through iterative CPM-RevIN statistics; unchanged forward calculation',
         decoder_target_quantile_parity_max_scaled=parity_scaled_error,
         decoder_target_quantile_parity_atol_train_scale=.001,
-        epochs_requested=args.epochs, horizon_months=224, context_months=128, control_channels=515,
+        epochs_requested=args.epochs, horizon_months=224, context_months=128, control_channels=examples[train_ids[0]][1].shape[1],
+        connectivity_sha256=sha256(args.connectivity.read_bytes()).hexdigest() if args.connectivity else None,
+        static_conditioning=connectivity is not None,
+        static_feature_names=connectivity.provenance.get('static_feature_names', ['permeability', 'porosity', 'net_thickness']) if connectivity else [],
         training_scale=feature_scale.tolist(), best_epoch=0, validation_loss_before=best_loss,
         script_sha256=sha256(Path(__file__).read_bytes()).hexdigest(),
         decoder_source_sha256=sha256(Path(inspect.getsourcefile(type(model))).read_bytes()).hexdigest(),
         independent_uncertainty_calibrated=False, is_new_optimization_result=False,
         epochs=[], test_results=[])
+
+    def forecast(t, block=224, observe=False):
+        if connectivity is None:
+            return forecast_blocks(forecaster, t, origin, 224, 128, block, observe=observe)
+        from benchmark_timesfm_layouts import forecast_layout
+        results = []
+        for offset in range(0, 224, block):
+            size = min(block, 224 - offset)
+            if offset and not observe:
+                raise ValueError('geological block forecast requires actual observed updates')
+            results.append(forecast_layout(forecaster, t, origin + offset, size, 128,
+                                           'joint', connectivity=connectivity))
+        return np.concatenate(results)
+
     for name in test_ids:
         t = by_id[name]
-        pred = forecast_blocks(forecaster, t, origin, 224, 128, 224)
+        pred = forecast(t)
         report['test_results'].append(dict(scenario_id=name, stage='pretrained',
             name='fixed_origin_direct', **metrics(t.states[origin + 1:origin + 225], pred)))
     for epoch in range(1, args.epochs + 1):
@@ -170,11 +202,19 @@ def main():
     for name in test_ids:
         t = by_id[name]
         for mode, block, observe in [('fixed_origin_direct', 224, False), ('observed_update_block_6', 6, True)]:
-            pred = forecast_blocks(forecaster, t, origin, 224, 128, block, observe=observe)
+            pred = forecast(t, block, observe)
             row = dict(scenario_id=name, stage='selected_head', name=mode,
                 **metrics(t.states[origin + 1:origin + 225], pred))
             report['test_results'].append(row)
             print(json.dumps(row), flush=True)
+        if connectivity is not None:
+            full = forecast(t)
+            model.output_head.disabled = True
+            ablated = forecast(t)
+            model.output_head.disabled = False
+            report['test_results'].append(dict(scenario_id=name, stage='static_conditioning_disabled',
+                name='fixed_origin_direct', **metrics(t.states[origin + 1:origin + 225], ablated),
+                prediction_max_abs_change=float(np.abs(full - ablated).max())))
     report.update(complete=True, validation_loss_best=best_loss,
                   checkpoint_sha256=sha256(checkpoint.read_bytes()).hexdigest(),
                   seconds_total=time.monotonic() - started)
