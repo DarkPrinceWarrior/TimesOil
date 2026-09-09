@@ -1,0 +1,243 @@
+{
+  "version": "7.0.2-negative-row-filter",
+  "norms_rows": [
+    [
+      "oilPriceRubT",
+      "Приведенная цена реализации нефти",
+      28000
+    ],
+    [
+      "deductionsRubT",
+      "Отчисления на тонну нефти",
+      19600
+    ],
+    [
+      "oilOpexRubT",
+      "OPEX на добычу нефти",
+      40
+    ],
+    [
+      "liquidOpexRubT",
+      "OPEX на добычу жидкости",
+      100
+    ],
+    [
+      "injectionOpexRubM3",
+      "OPEX на закачку воды",
+      30
+    ],
+    [
+      "fundAnnualRubWell",
+      "Содержание действующего фонда",
+      1000000
+    ],
+    [
+      "pumpOperationCostM",
+      "Операция по смене ЭЦН",
+      1.8
+    ],
+    [
+      "stopStartCostM",
+      "Остановка или запуск скважины",
+      1
+    ],
+    [
+      "conversionBaseCostM",
+      "Перевод добывающей скважины под закачку",
+      5
+    ],
+    [
+      "profitTaxRate",
+      "Ставка налога на прибыль",
+      25
+    ],
+    [
+      "propertyTaxRate",
+      "Ставка налога на имущество",
+      2.2
+    ],
+    [
+      "waccRate",
+      "Ставка дисконтирования WACC",
+      10
+    ],
+    [
+      "annualDepreciationM",
+      "Годовая амортизация",
+      0
+    ],
+    [
+      "residualStartM",
+      "Остаточная стоимость на начало года",
+      0
+    ],
+    [
+      "residualEndM",
+      "Остаточная стоимость на конец года",
+      0
+    ],
+    [
+      "otherIncludedEbitdaM",
+      "Прочие ДиР, включаемые в EBITDA",
+      0
+    ],
+    [
+      "otherExcludedEbitdaM",
+      "Прочие ДиР, не включаемые в EBITDA",
+      0
+    ],
+    [
+      "chargeInitialPump",
+      "Начислять начальный ЭЦН",
+      "НЕТ"
+    ],
+    [
+      "downsizeThreshold",
+      "Порог уменьшения типоразмера ЭЦН",
+      100
+    ]
+  ],
+  "provided_assumptions": {
+    "oilPriceRubT": 28000.0,
+    "deductionsRubT": 19600.0,
+    "oilOpexRubT": 40.0,
+    "liquidOpexRubT": 100.0,
+    "injectionOpexRubM3": 30.0,
+    "fundAnnualRubWell": 1000000.0,
+    "pumpOperationCostM": 1.8,
+    "profitTaxRate": 25.0,
+    "propertyTaxRate": 2.2,
+    "waccRate": 10.0,
+    "annualDepreciationM": 0.0,
+    "existingAssetResidualM": 0.0,
+    "residualStartM": 0.0,
+    "residualEndM": 0.0,
+    "otherIncludedEbitdaM": 0.0,
+    "otherExcludedEbitdaM": 0.0,
+    "stopStartCostM": 1.0,
+    "conversionBaseCostM": 5.0,
+    "regimeThreshold": 10.0,
+    "downsizeThreshold": 100.0,
+    "chargeInitialPump": false,
+    "clampNegativeDiffs": false,
+    "allowTaxShield": false,
+    "capitalizePumpAssets": false,
+    "ignoreTechnicalReset": false
+  },
+  "assumptions": {
+    "oilPriceRubT": 28000.0,
+    "deductionsRubT": 19600.0,
+    "oilOpexRubT": 40.0,
+    "liquidOpexRubT": 100.0,
+    "injectionOpexRubM3": 30.0,
+    "fundAnnualRubWell": 1000000.0,
+    "pumpOperationCostM": 1.8,
+    "profitTaxRate": 25.0,
+    "propertyTaxRate": 2.2,
+    "waccRate": 10.0,
+    "annualDepreciationM": 0.0,
+    "existingAssetResidualM": 0.0,
+    "residualStartM": 0.0,
+    "residualEndM": 0.0,
+    "otherIncludedEbitdaM": 0.0,
+    "otherExcludedEbitdaM": 0.0,
+    "stopStartCostM": 1.0,
+    "conversionBaseCostM": 5.0,
+    "regimeThreshold": 10.0,
+    "downsizeThreshold": 100.0,
+    "chargeInitialPump": false,
+    "clampNegativeDiffs": false,
+    "allowTaxShield": false,
+    "capitalizePumpAssets": false,
+    "ignoreTechnicalReset": false
+  },
+  "methodology_locks": {
+    "allowTaxShield": false,
+    "capitalizePumpAssets": false,
+    "clampNegativeDiffs": false,
+    "ignoreTechnicalReset": false,
+    "downsizeThreshold": 100.0,
+    "stopStartCostM": 1.0,
+    "conversionBaseCostM": 5.0
+  },
+  "pumps": [
+    {
+      "nominal": 15.0,
+      "min": 0.0,
+      "max": 20.0,
+      "costM": 0.55
+    },
+    {
+      "nominal": 20.0,
+      "min": 15.0,
+      "max": 30.0,
+      "costM": 0.65
+    },
+    {
+      "nominal": 30.0,
+      "min": 20.0,
+      "max": 50.0,
+      "costM": 0.75
+    },
+    {
+      "nominal": 50.0,
+      "min": 30.0,
+      "max": 80.0,
+      "costM": 0.90397
+    },
+    {
+      "nominal": 80.0,
+      "min": 50.0,
+      "max": 100.0,
+      "costM": 1.85
+    },
+    {
+      "nominal": 100.0,
+      "min": 80.0,
+      "max": 125.0,
+      "costM": 2.3
+    },
+    {
+      "nominal": 125.0,
+      "min": 100.0,
+      "max": 160.0,
+      "costM": 2.75
+    },
+    {
+      "nominal": 160.0,
+      "min": 125.0,
+      "max": 210.0,
+      "costM": 3.35
+    },
+    {
+      "nominal": 210.0,
+      "min": 160.0,
+      "max": 250.0,
+      "costM": 4.1
+    },
+    {
+      "nominal": 250.0,
+      "min": 210.0,
+      "max": 320.0,
+      "costM": 4.75
+    },
+    {
+      "nominal": 320.0,
+      "min": 250.0,
+      "max": 400.0,
+      "costM": 6.0
+    },
+    {
+      "nominal": 400.0,
+      "min": 320.0,
+      "max": 500.0,
+      "costM": 8.05
+    }
+  ],
+  "source_sha256": {
+    "РАСЧЕТ_ЧДД.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90",
+    "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+    "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+    "Нормативы_ЧДД.xlsx": "4f96a304db486f158994173be6e86b45d63858b8d851470cab8168c86b366358"
+  }
+}
