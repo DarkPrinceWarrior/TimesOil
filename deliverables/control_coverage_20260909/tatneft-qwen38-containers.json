@@ -1,0 +1,78 @@
+[
+  {
+    "container": "timesoil-track1-kt3-api-1",
+    "image_id": "sha256:3f2d35da67fc1a2fde4185281df8bca489169c5506009b9aac828cf8b665440e",
+    "healthy": "healthy",
+    "capabilities": {
+      "qwen": {
+        "model": "qwen3.8-27b",
+        "configured": true,
+        "connectivity_verified": false
+      },
+      "track1": {
+        "component_available": true,
+        "certified": false
+      },
+      "track2": {
+        "component_available": true,
+        "certified": false,
+        "model_z_trained": false
+      },
+      "chdd": {
+        "component_available": true,
+        "ready": true
+      }
+    },
+    "live_llm": {
+      "model": "qwen3.8-27b",
+      "endpoint": "https://litellm.tatneft.guru/v1",
+      "proxy": null,
+      "content": "OK",
+      "verified": true
+    },
+    "result_volumes_preserved": true,
+    "volumes": [
+      {
+        "name": "timesoil-track1-kt3_runs",
+        "source": "/var/lib/docker/volumes/timesoil-track1-kt3_runs/_data",
+        "destination": "/app/runs"
+      }
+    ]
+  },
+  {
+    "container": "scorp-timesoil-kt3-api-1",
+    "image_id": "sha256:98ddb19a1d8684b48be5f9e14fd7b7e2dbbe95247ea3858310d6b5bdb89aa269",
+    "healthy": "healthy",
+    "capabilities": {
+      "qwen": {
+        "model": "qwen3.8-27b",
+        "configured": true,
+        "connectivity_verified": false
+      },
+      "track2": {
+        "component_available": true,
+        "certified": false,
+        "model_z_trained": true
+      },
+      "chdd": {
+        "component_available": true,
+        "ready": true
+      }
+    },
+    "live_llm": {
+      "model": "qwen3.8-27b",
+      "endpoint": "https://litellm.tatneft.guru/v1",
+      "proxy": null,
+      "content": "OK",
+      "verified": true
+    },
+    "result_volumes_preserved": true,
+    "volumes": [
+      {
+        "name": "scorp-timesoil-kt3_runs",
+        "source": "/var/lib/docker/volumes/scorp-timesoil-kt3_runs/_data",
+        "destination": "/app/runs"
+      }
+    ]
+  }
+]
