@@ -1,0 +1,2262 @@
+{
+  "run_id": "c8fbe4427d8f4397",
+  "context": {
+    "claim_limits": "No surrogate used; UQ/OOD not applicable. No NPV improvement or global optimality claim. Deterministic MPC gates already passed.",
+    "economics": {
+      "complete": true,
+      "npv_million_rub": 259.7502816960926,
+      "run_id": "opm-full-replay-ee89288a765bb79197f55e76",
+      "start_date": "2014-01-01"
+    },
+    "phase": "terminal_month_review",
+    "planning_economics": {
+      "complete": true,
+      "npv_million_rub": 1030.8831740691676,
+      "run_id": "opm-full-replay-ee89288a765bb79197f55e76",
+      "start_date": "2014-01-01"
+    },
+    "planning_end_exclusive": "2015-12-01",
+    "provenance": {
+      "backend": "OPM Flow 2026.04; image=openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9; restart=authenticated-full-replay/v1",
+      "controls_sha256": "6ff412a0820c34a60b2d595ad78661efea0b8d8cfb9552bad5941347f0cfee0c",
+      "planning_run_id": "c8fbe4427d8f4397",
+      "source_sha256": "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e",
+      "verified_state_receipt": "/root/projects/TimesOil/results/audit-20260909/track1-lifecycle-23-20260909/opm/opm-full-replay-ee89288a765bb79197f55e76/lineage.json#sha256=1c8a5aa9f412ab903fc29319c7fdc7b49353bd689ef97787d1eb6144203c0447"
+    },
+    "selection_policy": "best full-horizon OPM CHDD among incumbent and agent proposal; only this month committed",
+    "source_sha256": "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e",
+    "surrogate_used": false,
+    "track": 1,
+    "trajectory": {
+      "actions": [
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 200.0,
+          "well": "13"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 150.0,
+          "well": "15"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 200.0,
+          "well": "19"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 150.0,
+          "well": "2"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 100.0,
+          "well": "21"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 150.0,
+          "well": "24"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 150.0,
+          "well": "26"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 210.0,
+          "well": "28"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 300.0,
+          "well": "32"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 200.0,
+          "well": "34"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 100.0,
+          "well": "36"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 300.0,
+          "well": "37"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 200.0,
+          "well": "4"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 300.0,
+          "well": "41"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 250.0,
+          "well": "42"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "injector",
+          "status": "OPEN",
+          "target": "WRAT",
+          "value": 150.0,
+          "well": "7"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "1"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "12"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "14"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "16"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "17"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "20"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "22"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "23"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "25"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "27"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "29"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "3"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "30"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "31"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "33"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "35"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "38"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "40"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "43"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "44"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "45"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "47"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "48"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "49"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "50"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "51"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "52"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "53"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "54"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "55"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "56"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "6"
+        },
+        {
+          "month": "2014-05-01",
+          "role": "producer",
+          "status": "OPEN",
+          "target": "LRAT",
+          "value": 100.0,
+          "well": "9"
+        }
+      ],
+      "case_id": "model-y-track1-proof",
+      "certified": true,
+      "chdd_complete": true,
+      "invariant_violations": [],
+      "month": "2014-05-01",
+      "next_state": {
+        "case_id": "model-y-track1-proof",
+        "month": "2014-06-01",
+        "restart_ref": "/root/projects/TimesOil/results/audit-20260909/track1-lifecycle-23-20260909/opm/opm-full-replay-ee89288a765bb79197f55e76/lineage.json#sha256=1c8a5aa9f412ab903fc29319c7fdc7b49353bd689ef97787d1eb6144203c0447",
+        "wells": [
+          {
+            "active": true,
+            "bhp": 50.0,
+            "injection_rate": 0.0,
+            "liquid_rate": 35.448803,
+            "oil_rate": 0.011882,
+            "role": "producer",
+            "well": "1"
+          },
+          {
+            "active": true,
+            "bhp": 71.491112,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 4.742189,
+            "role": "producer",
+            "well": "12"
+          },
+          {
+            "active": true,
+            "bhp": 237.995636,
+            "injection_rate": 200.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "13"
+          },
+          {
+            "active": true,
+            "bhp": 108.232933,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 12.924541,
+            "role": "producer",
+            "well": "14"
+          },
+          {
+            "active": true,
+            "bhp": 194.960907,
+            "injection_rate": 150.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "15"
+          },
+          {
+            "active": true,
+            "bhp": 125.51194,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 2.114662,
+            "role": "producer",
+            "well": "16"
+          },
+          {
+            "active": true,
+            "bhp": 50.0,
+            "injection_rate": 0.0,
+            "liquid_rate": 99.799866,
+            "oil_rate": 18.208635,
+            "role": "producer",
+            "well": "17"
+          },
+          {
+            "active": true,
+            "bhp": 297.818207,
+            "injection_rate": 200.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "19"
+          },
+          {
+            "active": true,
+            "bhp": 244.610321,
+            "injection_rate": 150.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "2"
+          },
+          {
+            "active": true,
+            "bhp": 60.255768,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 5.009123,
+            "role": "producer",
+            "well": "20"
+          },
+          {
+            "active": true,
+            "bhp": 140.200928,
+            "injection_rate": 100.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "21"
+          },
+          {
+            "active": true,
+            "bhp": 50.0,
+            "injection_rate": 0.0,
+            "liquid_rate": 80.334557,
+            "oil_rate": 21.440731,
+            "role": "producer",
+            "well": "22"
+          },
+          {
+            "active": true,
+            "bhp": 52.617271,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 15.161947,
+            "role": "producer",
+            "well": "23"
+          },
+          {
+            "active": true,
+            "bhp": 187.293915,
+            "injection_rate": 150.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "24"
+          },
+          {
+            "active": true,
+            "bhp": 168.756393,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 15.008437,
+            "role": "producer",
+            "well": "25"
+          },
+          {
+            "active": true,
+            "bhp": 199.910706,
+            "injection_rate": 150.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "26"
+          },
+          {
+            "active": true,
+            "bhp": 131.084717,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 18.141367,
+            "role": "producer",
+            "well": "27"
+          },
+          {
+            "active": true,
+            "bhp": 278.462799,
+            "injection_rate": 210.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "28"
+          },
+          {
+            "active": true,
+            "bhp": 50.0,
+            "injection_rate": 0.0,
+            "liquid_rate": 76.844749,
+            "oil_rate": 10.808228,
+            "role": "producer",
+            "well": "29"
+          },
+          {
+            "active": true,
+            "bhp": 108.107262,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 8.472231,
+            "role": "producer",
+            "well": "3"
+          },
+          {
+            "active": true,
+            "bhp": 155.101028,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 18.890385,
+            "role": "producer",
+            "well": "30"
+          },
+          {
+            "active": true,
+            "bhp": 136.578491,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 11.006334,
+            "role": "producer",
+            "well": "31"
+          },
+          {
+            "active": true,
+            "bhp": 212.58287,
+            "injection_rate": 300.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "32"
+          },
+          {
+            "active": true,
+            "bhp": 134.103363,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 15.615827,
+            "role": "producer",
+            "well": "33"
+          },
+          {
+            "active": true,
+            "bhp": 212.464462,
+            "injection_rate": 200.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "34"
+          },
+          {
+            "active": true,
+            "bhp": 50.0,
+            "injection_rate": 0.0,
+            "liquid_rate": 60.981277,
+            "oil_rate": 4.771449,
+            "role": "producer",
+            "well": "35"
+          },
+          {
+            "active": true,
+            "bhp": 185.4879,
+            "injection_rate": 100.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "36"
+          },
+          {
+            "active": true,
+            "bhp": 251.280289,
+            "injection_rate": 300.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "37"
+          },
+          {
+            "active": true,
+            "bhp": 50.0,
+            "injection_rate": 0.0,
+            "liquid_rate": 49.37109,
+            "oil_rate": 4.093337,
+            "role": "producer",
+            "well": "38"
+          },
+          {
+            "active": true,
+            "bhp": 190.708923,
+            "injection_rate": 200.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "4"
+          },
+          {
+            "active": true,
+            "bhp": 138.199463,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 17.589563,
+            "role": "producer",
+            "well": "40"
+          },
+          {
+            "active": true,
+            "bhp": 296.442352,
+            "injection_rate": 300.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "41"
+          },
+          {
+            "active": true,
+            "bhp": 186.219513,
+            "injection_rate": 250.0,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "42"
+          },
+          {
+            "active": true,
+            "bhp": 170.594788,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 4.849021,
+            "role": "producer",
+            "well": "43"
+          },
+          {
+            "active": true,
+            "bhp": 108.315697,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 14.44883,
+            "role": "producer",
+            "well": "44"
+          },
+          {
+            "active": true,
+            "bhp": 131.920914,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 19.417046,
+            "role": "producer",
+            "well": "45"
+          },
+          {
+            "active": true,
+            "bhp": 151.079391,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 14.125217,
+            "role": "producer",
+            "well": "47"
+          },
+          {
+            "active": true,
+            "bhp": 99.821533,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 17.002537,
+            "role": "producer",
+            "well": "48"
+          },
+          {
+            "active": true,
+            "bhp": 50.0,
+            "injection_rate": 0.0,
+            "liquid_rate": 61.910713,
+            "oil_rate": 6.584934,
+            "role": "producer",
+            "well": "49"
+          },
+          {
+            "active": true,
+            "bhp": 50.0,
+            "injection_rate": 0.0,
+            "liquid_rate": 37.084549,
+            "oil_rate": 10.595522,
+            "role": "producer",
+            "well": "50"
+          },
+          {
+            "active": true,
+            "bhp": 80.597298,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 7.146807,
+            "role": "producer",
+            "well": "51"
+          },
+          {
+            "active": true,
+            "bhp": 77.092453,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 5.866646,
+            "role": "producer",
+            "well": "52"
+          },
+          {
+            "active": true,
+            "bhp": 131.289307,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 7.040338,
+            "role": "producer",
+            "well": "53"
+          },
+          {
+            "active": true,
+            "bhp": 57.369781,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 39.633881,
+            "role": "producer",
+            "well": "54"
+          },
+          {
+            "active": true,
+            "bhp": 137.26741,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 7.966805,
+            "role": "producer",
+            "well": "55"
+          },
+          {
+            "active": true,
+            "bhp": 50.0,
+            "injection_rate": 0.0,
+            "liquid_rate": 20.441906,
+            "oil_rate": 8.670738,
+            "role": "producer",
+            "well": "56"
+          },
+          {
+            "active": true,
+            "bhp": 139.158722,
+            "injection_rate": 0.0,
+            "liquid_rate": 100.0,
+            "oil_rate": 9.268136,
+            "role": "producer",
+            "well": "6"
+          },
+          {
+            "active": true,
+            "bhp": 300.0,
+            "injection_rate": 114.978729,
+            "liquid_rate": 0.0,
+            "oil_rate": 0.0,
+            "role": "injector",
+            "well": "7"
+          },
+          {
+            "active": true,
+            "bhp": 50.0,
+            "injection_rate": 0.0,
+            "liquid_rate": 74.555931,
+            "oil_rate": 23.164146,
+            "role": "producer",
+            "well": "9"
+          }
+        ]
+      },
+      "run_id": "opm-full-replay-ee89288a765bb79197f55e76",
+      "simulator": "OPM Flow 2026.04; image=openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9; restart=authenticated-full-replay/v1"
+    },
+    "verified_constraints": {
+      "actual_max_liquid_m3d": 100.0,
+      "allowed_max_liquid_m3d": 500.0,
+      "controls_validated_by": "ScheduleCompiler",
+      "invariant_violations": [],
+      "inventory_matches_case": true,
+      "result_checked_by": "MonthlyMPC._check_result",
+      "well_count": 49
+    }
+  },
+  "decisions": [
+    {
+      "role": "coordinator",
+      "summary": "Состояние системы на 2014-05-01 верифицировано: 49 скважин (16 нагнетательных, 33 добывающих), все активны. Ограничения по давлению и роли соблюдены. Суррогатная модель не используется. Готовность к планированию следующего шага подтверждена.",
+      "recommendation": "Утвердить переход к этапу генерации управляющих сигналов (propose_controls) для месяца 2014-05-01. Необходимо сформировать предложения по скорректированным дебитам и статусам скважин для последующей валидации в OPM.",
+      "evidence": [
+        "verified_inventory подтверждает наличие 49 скважин с корректным распределением ролей",
+        "state.month равен 2014-05-01, что соответствует началу нового расчетного периода",
+        "surrogate_used=false, что позволяет использовать исходную модель OPM для валидации",
+        "constraints указывают на отсутствие дополнительных ограничений по квотам воды, требующих вмешательства",
+        "prior_months содержат данные за 2014-02, 2014-03, 2014-04, обеспечивающие непрерывность истории"
+      ],
+      "approved": true,
+      "tool_evidence": []
+    },
+    {
+      "role": "reservoir_analyst",
+      "summary": "Анализ состояния пласта на 2014-05-01 подтверждает стабильность системы. Все 49 скважин (16 нагнетательных, 33 добывающих) активны. Дебиты жидкости по добывающим скважинам находятся в пределах допустимого максимума (500 м3/сут), большинство работают на 100 м3/сут или ниже. Нагнетательные скважины поддерживают давление в диапазоне 140-300 бар. Тенденции за предыдущие 3 месяца (февраль-апрель 2014) показывают незначительное снижение дебитов нефти и стабильность давления, что указывает на отсутствие критических аномалий. Суррогатная модель не используется, что позволяет проводить расчеты на исходной модели OPM.",
+      "recommendation": "Утвердить переход к этапу генерации управляющих сигналов (propose_controls) для месяца 2014-05-01. Рекомендуется сохранить текущие режимы работы скважин, так как они находятся в пределах допустимых ограничений и демонстрируют стабильную работу. Любые изменения должны быть обоснованы экономическими показателями и валидированы в OPM.",
+      "evidence": [
+        "verified_inventory подтверждает наличие 49 скважин с корректным распределением ролей (16 нагнетательных, 33 добывающих)",
+        "state.month равен 2014-05-01, что соответствует началу нового расчетного периода",
+        "surrogate_used=false, что позволяет использовать исходную модель OPM для валидации",
+        "constraints указывают на отсутствие дополнительных ограничений по квотам воды, требующих вмешательства",
+        "prior_months содержат данные за 2014-02, 2014-03, 2014-04, обеспечивающие непрерывность истории и стабильность параметров"
+      ],
+      "approved": true,
+      "tool_evidence": []
+    },
+    {
+      "role": "planner",
+      "summary": "Предложенный набор управляющих сигналов для месяца 2014-05-01 верифицирован по инвентарю (49 скважин) и ограничениям. Единственное изменение по сравнению с базовым состоянием — перевод добывающей скважины 1 в статус SHUT. Остальные скважины сохраняют текущие режимы. Ограничения по давлению, роли и квотам соблюдены. Суррогатная модель не используется.",
+      "recommendation": "Утвердить предложенный набор управляющих сигналов для запуска полного симулятора OPM и расчета официального ЧДД для месяца 2014-05-01. Перевод скважины 1 в SHUT обоснован крайне низким дебитом нефти (0.012 м3/сут) и высоким содержанием воды, что делает дальнейшую эксплуатацию экономически нецелесообразной.",
+      "evidence": [
+        "verified_inventory подтверждает наличие 49 скважин с корректным распределением ролей (16 нагнетательных, 33 добывающих)",
+        "state.month равен 2014-05-01, что соответствует началу нового расчетного периода",
+        "surrogate_used=false, что позволяет использовать исходную модель OPM для валидации",
+        "constraints указывают на отсутствие дополнительных ограничений по квотам воды, требующих вмешательства",
+        "prior_months содержат данные за 2014-02, 2014-03, 2014-04, обеспечивающие непрерывность истории",
+        "Скважина 1 имеет крайне низкий дебит нефти (0.012 м3/сут) и высокий дебит жидкости (35.6 м3/сут), что делает ее эксплуатацию экономически нецелесообразной",
+        "Все остальные скважины сохраняют текущие режимы работы, которые находятся в пределах допустимых ограничений"
+      ],
+      "approved": true,
+      "tool_evidence": [
+        {
+          "call_id": "e990c941c",
+          "tool": "propose_controls",
+          "output": {
+            "controls": [
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 200.0,
+                "well": "13"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 150.0,
+                "well": "15"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 200.0,
+                "well": "19"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 150.0,
+                "well": "2"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 100.0,
+                "well": "21"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 150.0,
+                "well": "24"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 150.0,
+                "well": "26"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 210.0,
+                "well": "28"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 300.0,
+                "well": "32"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 200.0,
+                "well": "34"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 100.0,
+                "well": "36"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 300.0,
+                "well": "37"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 200.0,
+                "well": "4"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 300.0,
+                "well": "41"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 250.0,
+                "well": "42"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 150.0,
+                "well": "7"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "SHUT",
+                "target": "LRAT",
+                "value": 0.0,
+                "well": "1"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "12"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "14"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "16"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "17"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "20"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "22"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "23"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "25"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "27"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "29"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "3"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "30"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "31"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "33"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "35"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "38"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "40"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "43"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "44"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "45"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "47"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "48"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "49"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "50"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "51"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "52"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "53"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "54"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "55"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "56"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "6"
+              },
+              {
+                "month": "2014-05-01",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 100.0,
+                "well": "9"
+              }
+            ],
+            "extra_wells": [],
+            "inventory_matches_case": true,
+            "missing_wells": [],
+            "schedule_sha256": "c7dcd262869a24f4f0265e23f6cd89e1b29e2b935181ae0a7e152d96924deb2d",
+            "well_count": 49
+          }
+        }
+      ]
+    },
+    {
+      "role": "critic",
+      "summary": "План для месяца 2014-05-01 подтвержден. Использован полный расчет OPM без суррогатной модели, что делает пункты UQ/OOD и обучение суррогата неприменимыми. Ограничения, симулятор и происхождение данных верифицированы. Экономические показатели (NPV) рассчитаны, но утверждение об улучшении ЧДД без явного сравнения с базовым сценарием в предоставленных данных отсутствует, поэтому оно не подтверждается. Все инварианты соблюдены, нарушений нет.",
+      "recommendation": "Одобрить план как рекомендацию для графа. Убедиться, что защитный контур (protective loop) активен, так как одобрение не заменяет его. Не утверждать улучшение ЧДД без предоставления данных для сравнения.",
+      "evidence": [
+        "surrogate_used=false: суррогатная модель не использовалась, расчет выполнен на OPM Flow 2026.04",
+        "UQ/OOD и обучение суррогата неприменимы ввиду полного OPM-расчета без суррогата",
+        "verified_constraints: actual_max_liquid_m3d=100.0 <= allowed_max_liquid_m3d=500.0, invariant_violations=[]",
+        "provenance: backend, controls_sha256, source_sha256 и verified_state_receipt предоставлены и верифицированы",
+        "claim_limits: 'No NPV improvement or global optimality claim' — улучшение ЧДД не подтверждается без сравнения",
+        "chdd_complete=true, certified=true, constraints_checked_before_simulation=true"
+      ],
+      "approved": true,
+      "tool_evidence": [
+        {
+          "call_id": "d85cdc4cf",
+          "tool": "verify_month_evidence",
+          "output": {
+            "claim_limits": "No surrogate used; UQ/OOD not applicable. No NPV improvement or global optimality claim. Deterministic MPC gates already passed.",
+            "constraints": {
+              "actual_max_liquid_m3d": 100.0,
+              "allowed_max_liquid_m3d": 500.0,
+              "controls_validated_by": "ScheduleCompiler",
+              "invariant_violations": [],
+              "inventory_matches_case": true,
+              "result_checked_by": "MonthlyMPC._check_result",
+              "well_count": 49
+            },
+            "constraints_checked_before_simulation": true,
+            "economics": {
+              "complete": true,
+              "npv_million_rub": 259.7502816960926,
+              "run_id": "opm-full-replay-ee89288a765bb79197f55e76",
+              "start_date": "2014-01-01"
+            },
+            "phase": "terminal_month_review",
+            "planning_economics": {
+              "complete": true,
+              "npv_million_rub": 1030.8831740691676,
+              "run_id": "opm-full-replay-ee89288a765bb79197f55e76",
+              "start_date": "2014-01-01"
+            },
+            "planning_end_exclusive": "2015-12-01",
+            "provenance": {
+              "backend": "OPM Flow 2026.04; image=openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9; restart=authenticated-full-replay/v1",
+              "controls_sha256": "6ff412a0820c34a60b2d595ad78661efea0b8d8cfb9552bad5941347f0cfee0c",
+              "planning_run_id": "c8fbe4427d8f4397",
+              "source_sha256": "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e",
+              "verified_state_receipt": "/root/projects/TimesOil/results/audit-20260909/track1-lifecycle-23-20260909/opm/opm-full-replay-ee89288a765bb79197f55e76/lineage.json#sha256=1c8a5aa9f412ab903fc29319c7fdc7b49353bd689ef97787d1eb6144203c0447"
+            },
+            "selection_policy": "best full-horizon OPM CHDD among incumbent and agent proposal; only this month committed",
+            "source_sha256": "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e",
+            "surrogate_used": false,
+            "track": 1,
+            "trajectory": {
+              "actions": [
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 200.0,
+                  "well": "13"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 150.0,
+                  "well": "15"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 200.0,
+                  "well": "19"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 150.0,
+                  "well": "2"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 100.0,
+                  "well": "21"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 150.0,
+                  "well": "24"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 150.0,
+                  "well": "26"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 210.0,
+                  "well": "28"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 300.0,
+                  "well": "32"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 200.0,
+                  "well": "34"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 100.0,
+                  "well": "36"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 300.0,
+                  "well": "37"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 200.0,
+                  "well": "4"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 300.0,
+                  "well": "41"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 250.0,
+                  "well": "42"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "injector",
+                  "status": "OPEN",
+                  "target": "WRAT",
+                  "value": 150.0,
+                  "well": "7"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "1"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "12"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "14"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "16"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "17"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "20"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "22"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "23"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "25"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "27"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "29"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "3"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "30"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "31"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "33"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "35"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "38"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "40"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "43"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "44"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "45"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "47"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "48"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "49"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "50"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "51"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "52"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "53"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "54"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "55"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "56"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "6"
+                },
+                {
+                  "month": "2014-05-01",
+                  "role": "producer",
+                  "status": "OPEN",
+                  "target": "LRAT",
+                  "value": 100.0,
+                  "well": "9"
+                }
+              ],
+              "case_id": "model-y-track1-proof",
+              "certified": true,
+              "chdd_complete": true,
+              "invariant_violations": [],
+              "month": "2014-05-01",
+              "next_state": {
+                "case_id": "model-y-track1-proof",
+                "month": "2014-06-01",
+                "restart_ref": "/root/projects/TimesOil/results/audit-20260909/track1-lifecycle-23-20260909/opm/opm-full-replay-ee89288a765bb79197f55e76/lineage.json#sha256=1c8a5aa9f412ab903fc29319c7fdc7b49353bd689ef97787d1eb6144203c0447",
+                "wells": [
+                  {
+                    "active": true,
+                    "bhp": 50.0,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 35.448803,
+                    "oil_rate": 0.011882,
+                    "role": "producer",
+                    "well": "1"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 71.491112,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 4.742189,
+                    "role": "producer",
+                    "well": "12"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 237.995636,
+                    "injection_rate": 200.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "13"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 108.232933,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 12.924541,
+                    "role": "producer",
+                    "well": "14"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 194.960907,
+                    "injection_rate": 150.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "15"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 125.51194,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 2.114662,
+                    "role": "producer",
+                    "well": "16"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 50.0,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 99.799866,
+                    "oil_rate": 18.208635,
+                    "role": "producer",
+                    "well": "17"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 297.818207,
+                    "injection_rate": 200.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "19"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 244.610321,
+                    "injection_rate": 150.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "2"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 60.255768,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 5.009123,
+                    "role": "producer",
+                    "well": "20"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 140.200928,
+                    "injection_rate": 100.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "21"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 50.0,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 80.334557,
+                    "oil_rate": 21.440731,
+                    "role": "producer",
+                    "well": "22"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 52.617271,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 15.161947,
+                    "role": "producer",
+                    "well": "23"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 187.293915,
+                    "injection_rate": 150.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "24"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 168.756393,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 15.008437,
+                    "role": "producer",
+                    "well": "25"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 199.910706,
+                    "injection_rate": 150.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "26"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 131.084717,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 18.141367,
+                    "role": "producer",
+                    "well": "27"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 278.462799,
+                    "injection_rate": 210.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "28"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 50.0,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 76.844749,
+                    "oil_rate": 10.808228,
+                    "role": "producer",
+                    "well": "29"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 108.107262,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 8.472231,
+                    "role": "producer",
+                    "well": "3"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 155.101028,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 18.890385,
+                    "role": "producer",
+                    "well": "30"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 136.578491,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 11.006334,
+                    "role": "producer",
+                    "well": "31"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 212.58287,
+                    "injection_rate": 300.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "32"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 134.103363,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 15.615827,
+                    "role": "producer",
+                    "well": "33"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 212.464462,
+                    "injection_rate": 200.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "34"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 50.0,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 60.981277,
+                    "oil_rate": 4.771449,
+                    "role": "producer",
+                    "well": "35"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 185.4879,
+                    "injection_rate": 100.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "36"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 251.280289,
+                    "injection_rate": 300.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "37"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 50.0,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 49.37109,
+                    "oil_rate": 4.093337,
+                    "role": "producer",
+                    "well": "38"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 190.708923,
+                    "injection_rate": 200.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "4"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 138.199463,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 17.589563,
+                    "role": "producer",
+                    "well": "40"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 296.442352,
+                    "injection_rate": 300.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "41"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 186.219513,
+                    "injection_rate": 250.0,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "42"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 170.594788,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 4.849021,
+                    "role": "producer",
+                    "well": "43"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 108.315697,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 14.44883,
+                    "role": "producer",
+                    "well": "44"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 131.920914,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 19.417046,
+                    "role": "producer",
+                    "well": "45"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 151.079391,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 14.125217,
+                    "role": "producer",
+                    "well": "47"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 99.821533,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 17.002537,
+                    "role": "producer",
+                    "well": "48"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 50.0,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 61.910713,
+                    "oil_rate": 6.584934,
+                    "role": "producer",
+                    "well": "49"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 50.0,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 37.084549,
+                    "oil_rate": 10.595522,
+                    "role": "producer",
+                    "well": "50"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 80.597298,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 7.146807,
+                    "role": "producer",
+                    "well": "51"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 77.092453,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 5.866646,
+                    "role": "producer",
+                    "well": "52"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 131.289307,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 7.040338,
+                    "role": "producer",
+                    "well": "53"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 57.369781,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 39.633881,
+                    "role": "producer",
+                    "well": "54"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 137.26741,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 7.966805,
+                    "role": "producer",
+                    "well": "55"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 50.0,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 20.441906,
+                    "oil_rate": 8.670738,
+                    "role": "producer",
+                    "well": "56"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 139.158722,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 100.0,
+                    "oil_rate": 9.268136,
+                    "role": "producer",
+                    "well": "6"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 300.0,
+                    "injection_rate": 114.978729,
+                    "liquid_rate": 0.0,
+                    "oil_rate": 0.0,
+                    "role": "injector",
+                    "well": "7"
+                  },
+                  {
+                    "active": true,
+                    "bhp": 50.0,
+                    "injection_rate": 0.0,
+                    "liquid_rate": 74.555931,
+                    "oil_rate": 23.164146,
+                    "role": "producer",
+                    "well": "9"
+                  }
+                ]
+              },
+              "run_id": "opm-full-replay-ee89288a765bb79197f55e76",
+              "simulator": "OPM Flow 2026.04; image=openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9; restart=authenticated-full-replay/v1"
+            },
+            "verified": true,
+            "verified_constraints": {
+              "actual_max_liquid_m3d": 100.0,
+              "allowed_max_liquid_m3d": 500.0,
+              "controls_validated_by": "ScheduleCompiler",
+              "invariant_violations": [],
+              "inventory_matches_case": true,
+              "result_checked_by": "MonthlyMPC._check_result",
+              "well_count": 49
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
