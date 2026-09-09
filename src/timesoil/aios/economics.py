@@ -95,6 +95,51 @@ class CHDDEconomicsAdapter:
             raise ValueError("CHDD_TIMEOUT_SECONDS must be numeric") from None
         return cls(source.get("CHDD_PYTHON_DIR") or None, timeout_seconds=timeout)
 
+    def normative_profile(self, *, charge_initial_pump: bool | None = None) -> dict[str, Any]:
+        """Expose the exact official assumptions, locks and pump table used for decisions."""
+        if charge_initial_pump is not None and type(charge_initial_pump) is not bool:
+            raise TypeError("charge_initial_pump must be bool or None")
+        paths = [self.chdd_dir / name for name in _CALCULATOR_FILES] + [self.norms_path]
+        hashes = {path.name: _sha256(path) for path in paths}
+        script = """
+import json, sys
+from excel_io import load_norms
+from chdd_model import DEFAULT_ASSUMPTIONS, METHODOLOGY_LOCKS, VERSION, to_bool
+from openpyxl import load_workbook
+assumptions, pumps = load_norms(sys.argv[1])
+book = load_workbook(sys.argv[1], read_only=True, data_only=True)
+rows = [list(row[:3]) for row in book["Нормативы"].iter_rows(min_row=2, values_only=True) if any(v is not None for v in row[:3])]
+book.close()
+effective = dict(assumptions)
+effective.update(METHODOLOGY_LOCKS)
+effective["chargeInitialPump"] = to_bool(effective.get("chargeInitialPump", False))
+print(json.dumps({"version": VERSION, "norms_rows": rows, "provided_assumptions": assumptions,
+                  "assumptions": effective, "methodology_locks": METHODOLOGY_LOCKS,
+                  "pumps": sorted(pumps, key=lambda p: p["nominal"]),
+                  "supported_codes": sorted(DEFAULT_ASSUMPTIONS)}, allow_nan=False))
+"""
+        try:
+            completed = subprocess.run(
+                [str(self.python_executable), "-c", script, str(self.norms_path)],
+                cwd=self.chdd_dir, env=_subprocess_env(), stdin=subprocess.DEVNULL,
+                capture_output=True, text=True, encoding="utf-8", errors="replace",
+                timeout=self.timeout_seconds, check=True,
+            )
+            profile = json.loads(completed.stdout)
+        except (subprocess.SubprocessError, OSError, ValueError) as exc:
+            raise EconomicsError("cannot read the official normative profile") from exc
+        codes = [row[0] for row in profile["norms_rows"]]
+        supported = profile.pop("supported_codes")
+        unknown = [code for code in codes if code not in supported]
+        if unknown or len(codes) != len(set(codes)):
+            raise EconomicsError(f"unknown or duplicate normative codes: {unknown or codes}")
+        if any(_sha256(path) != hashes[path.name] for path in paths):
+            raise EconomicsError("official normative sources changed while reading")
+        if charge_initial_pump is not None:
+            profile["assumptions"]["chargeInitialPump"] = charge_initial_pump
+        profile["source_sha256"] = hashes
+        return profile
+
     def calculate(
         self,
         records: Iterable[Mapping[str, Any]],
@@ -108,6 +153,7 @@ class CHDDEconomicsAdapter:
             raise ValueError("start_year must be an explicit four-digit year")
         if charge_initial_pump is not None and not isinstance(charge_initial_pump, bool):
             raise TypeError("charge_initial_pump must be bool or None")
+        self.normative_profile(charge_initial_pump=charge_initial_pump)
         destination = Path(output_dir).resolve()
         if destination.exists():
             raise FileExistsError(f"CHDD run directory already exists: {destination}")

@@ -18,6 +18,7 @@ from typing import Any
 
 from timesoil.aios.agents import AgentRole, AgentWorkflow, ToolDefinition, ToolRegistry
 from timesoil.aios.llm import LLMConfig, TatneftLLMClient
+from timesoil.aios.economics import CHDDEconomicsAdapter
 
 from timesoil.aios.contracts import (
     Case,
@@ -549,6 +550,10 @@ def execute(
     agent_records: list[dict[str, Any]] = []
     planning = None
     llm_config = LLMConfig.from_env() if agent else None
+    normative_profile = (
+        (backend.economics or CHDDEconomicsAdapter.from_env()).normative_profile()
+        if agent and isinstance(backend, OpmGdmBackend) else None
+    )
     feedback: list[dict[str, Any]] = []
     previous_controls: dict[str, ControlAction] = {}
     completed_steps, resume_receipt = (), None
@@ -614,11 +619,7 @@ def execute(
                     "availability": "respect source completions; no drilling or unprovided repair assumptions",
                     "roles": "producer-to-injector conversion allowed; reverse conversion forbidden" if config.case.allow_conversion_to_injection else "roles fixed by this case contract",
                     "allow_conversion_to_injection": config.case.allow_conversion_to_injection},
-                "economics": {"oil_rub_per_t": 28000, "oil_deductions_rub_per_t": 19600,
-                    "oil_opex_rub_per_t": 40, "liquid_opex_rub_per_t": 100,
-                    "injection_opex_rub_per_m3": 30, "active_well_m_per_year": 1,
-                    "stop_or_start_m": 1, "pump_change_operation_m": 1.8,
-                    "pump_capex_m": "0.55 to 8.05 by type; switching across size bands incurs CAPEX",
+                "economics": {"official_normative_profile": normative_profile,
                     "horizon_end": config.case.end.isoformat(),
                     "objective": "Preserve profitable oil, avoid uneconomic water production and needless pump/status changes; evaluate tradeoffs over the full remaining horizon."},
                 "prior_rate_columns": ["well", "active", "oil_rate", "liquid_rate", "injection_rate", "bhp"],
