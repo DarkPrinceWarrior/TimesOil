@@ -1,0 +1,12 @@
+[
+  {
+    "deterministic": true,
+    "attention_backend": "math",
+    "target_quantile_max_abs": 0.001953125,
+    "target_quantile_max_scaled_error": 0.0006236787885427475,
+    "repeat_max_abs": 18.125,
+    "wrapper_max_abs": 13.8125,
+    "target_median_repeat_max_abs": 0.0013885498046875,
+    "target_median_wrapper_max_abs": 0.00115966796875
+  }
+]

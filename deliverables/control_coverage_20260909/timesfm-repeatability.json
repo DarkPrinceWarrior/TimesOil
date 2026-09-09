@@ -1,0 +1,16 @@
+[
+  {
+    "deterministic": false,
+    "repeat_max_abs": 1218.875,
+    "wrapper_max_abs": 1042.375,
+    "target_median_repeat_max_abs": 1.06591796875,
+    "target_median_wrapper_max_abs": 0.6346998810768127
+  },
+  {
+    "deterministic": true,
+    "repeat_max_abs": 3267.25,
+    "wrapper_max_abs": 1792.375,
+    "target_median_repeat_max_abs": 0.6171646118164062,
+    "target_median_wrapper_max_abs": 0.6401538848876953
+  }
+]
