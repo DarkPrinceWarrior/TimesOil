@@ -97,7 +97,10 @@ def main():
     if args.initial_head:
         if sha256(args.initial_head.read_bytes()).hexdigest() != args.initial_head_sha256:
             raise ValueError('initial output-head hash mismatch')
-        model.output_head.load_state_dict(torch.load(args.initial_head, map_location='cuda', weights_only=True))
+        initial = torch.load(args.initial_head, map_location='cuda', weights_only=True)
+        if connectivity is not None:
+            torch.testing.assert_close(initial['features'], model.output_head.features, rtol=0, atol=0)
+        model.output_head.load_state_dict(initial)
     model.requires_grad_(False)
     model.output_head.requires_grad_(True)
     if args.unfreeze_last_layer:
