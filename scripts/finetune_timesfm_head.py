@@ -41,6 +41,7 @@ def main():
     parser.add_argument('--batch-sha256')
     parser.add_argument('--output', type=Path)
     parser.add_argument('--epochs', type=int, default=30)
+    parser.add_argument('--learning-rate', type=float, default=1e-5)
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -48,6 +49,8 @@ def main():
         return
     if not args.batch or not args.batch_sha256 or not args.output or not 1 <= args.epochs <= 100:
         parser.error('batch, batch-sha256, output and 1..100 epochs required')
+    if not np.isfinite(args.learning_rate) or not 1e-7 <= args.learning_rate <= 1e-3:
+        parser.error('learning-rate must be in [1e-7, 1e-3]')
     args.output.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
     trajectories, origin = verified_batch(args.batch, args.batch_sha256)
@@ -80,7 +83,7 @@ def main():
     model.eval()  # Keep the frozen backbone's inference behavior during head adaptation.
     frozen_versions = {n: p._version for n, p in model.named_parameters() if not p.requires_grad}
     trainable = list(model.output_head.parameters())
-    optimizer = torch.optim.AdamW(trainable, lr=1e-5, weight_decay=0)
+    optimizer = torch.optim.AdamW(trainable, lr=args.learning_rate, weight_decay=0)
     quantiles = torch.tensor(model.quantiles, device='cuda')
     train_truth = np.stack([by_id[i].states[origin + 1:origin + 225] for i in train_ids])
     feature_scale = np.maximum(np.abs(train_truth).mean(axis=(0, 1, 2)), 1.0)
@@ -123,7 +126,7 @@ def main():
         batch_manifest_sha256=args.batch_sha256, source_scenario_hashes={t.scenario_id: t.content_hash for t in trajectories},
         train_scenarios=train_ids, validation_scenarios=validation_ids, test_scenarios=test_ids,
         trained_component='TimesFM3Torch.output_head', backbone_frozen=True,
-        trainable_parameters=sum(p.numel() for p in trainable), learning_rate=1e-5,
+        trainable_parameters=sum(p.numel() for p in trainable), learning_rate=args.learning_rate,
         attention_backend='math', decoder_target_quantile_parity_max_abs=parity_error,
         gradient_policy='stop gradients through iterative CPM-RevIN statistics; unchanged forward calculation',
         decoder_target_quantile_parity_max_scaled=parity_scaled_error,
