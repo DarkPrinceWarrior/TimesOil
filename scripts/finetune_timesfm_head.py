@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import time
+from unittest.mock import patch
 
 import numpy as np
 
@@ -59,6 +60,7 @@ def main():
     assert len(train_ids + validation_ids + test_ids) == len(by_id)
     import torch
     from timesfm3 import ModelConfig, TimesFM3Forecaster
+    from timesfm3.torch import cpm_revin_refine
 
     if not torch.cuda.is_available() or 'A100' not in torch.cuda.get_device_name(0):
         raise RuntimeError('requires the allocated A100 GPU')
@@ -93,10 +95,13 @@ def main():
             torch.tensor(t.states[origin + 1:origin + 225].transpose(1, 2, 0).reshape(1, 309, 224),
                          device='cuda', dtype=torch.float32))
     decode = type(model).decode.__wrapped__  # Same pinned decoder, with autograd enabled.
+    refine = torch.no_grad()(cpm_revin_refine.cpm_iterative_revin_refine)
 
     def loss_for(name):
         target, cov, truth = examples[name]
-        prediction = decode(model, target, horizon=224, past_future_covariates=cov)[:, :309]
+        # ponytail: process-local patch for this single-threaded trainer; replace with a native 3.0 trainer when available.
+        with patch.object(cpm_revin_refine, 'cpm_iterative_revin_refine', refine):
+            prediction = decode(model, target, horizon=224, past_future_covariates=cov)[:, :309]
         return pinball_loss(prediction, truth, scale, quantiles)
 
     target, cov, _ = examples[train_ids[0]]
@@ -120,6 +125,7 @@ def main():
         trained_component='TimesFM3Torch.output_head', backbone_frozen=True,
         trainable_parameters=sum(p.numel() for p in trainable), learning_rate=1e-5,
         attention_backend='math', decoder_target_quantile_parity_max_abs=parity_error,
+        gradient_policy='stop gradients through iterative CPM-RevIN statistics; unchanged forward calculation',
         decoder_target_quantile_parity_max_scaled=parity_scaled_error,
         decoder_target_quantile_parity_atol_train_scale=.001,
         epochs_requested=args.epochs, horizon_months=224, context_months=128, control_channels=515,
