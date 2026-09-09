@@ -1,0 +1,179 @@
+{
+  "schema": "timesoil.horizon-benchmark/v1",
+  "as_of": "2026-09-09",
+  "timestamp_utc": "2026-09-09T12:29:54.936965+00:00",
+  "source_trajectory_sha256": "e8c9578bc23265d25caa60273dac067111542ee3b04b843359e43477bb9bf44c",
+  "script_sha256": "2f1cd17032e2c5a9fb9c55fba74fef05272e8e0c180b17a42d463530c14c6d36",
+  "forecast_helper_sha256": "b68cc61936f79cb706c510f127fcc5cea2ede6fe3258ef81dd38ee1b6284e5a2",
+  "model_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "context_months": 79,
+  "observation_cutoff": "2014-01-01",
+  "well_count": 49,
+  "future_controls": "source schedule assumed known; retrospective training-archive experiment",
+  "learned_on_future_local_states": false,
+  "official_chdd": false,
+  "claim": "Forecast accuracy only; observed-update rows are not autonomous policy rollouts or causal evidence.",
+  "results": [
+    {
+      "name": "fixed_origin_direct",
+      "horizon_months": 23,
+      "block_months": 23,
+      "new_observations_between_blocks": false,
+      "seconds": 0.4237847737967968,
+      "oil_wape": 0.10079627183620053,
+      "liquid_wape": 0.03866804004623075,
+      "pressure_rmse_bar": 21.3074667556663,
+      "end_exclusive": "2015-12-01",
+      "prefix_metrics": {
+        "1": {
+          "oil_wape": 0.011548949932737569,
+          "liquid_wape": 0.0036092118102864605,
+          "pressure_rmse_bar": 2.5697132170212202
+        },
+        "3": {
+          "oil_wape": 0.016473124174498373,
+          "liquid_wape": 0.005736170861692109,
+          "pressure_rmse_bar": 3.4850715637035177
+        },
+        "6": {
+          "oil_wape": 0.023194094389102544,
+          "liquid_wape": 0.009205757051697877,
+          "pressure_rmse_bar": 4.977948311623029
+        },
+        "12": {
+          "oil_wape": 0.04685147285324586,
+          "liquid_wape": 0.018341189215066528,
+          "pressure_rmse_bar": 9.896634617695838
+        },
+        "23": {
+          "oil_wape": 0.10079627183620053,
+          "liquid_wape": 0.03866804004623075,
+          "pressure_rmse_bar": 21.3074667556663
+        }
+      }
+    },
+    {
+      "name": "fixed_origin_block_1",
+      "horizon_months": 23,
+      "block_months": 1,
+      "new_observations_between_blocks": false,
+      "seconds": 4.413768421858549,
+      "oil_wape": 1.3707109568352502,
+      "liquid_wape": 125.1568212768973,
+      "pressure_rmse_bar": 88.0219514359602,
+      "end_exclusive": "2015-12-01",
+      "prefix_metrics": {
+        "1": {
+          "oil_wape": 0.011264898164102696,
+          "liquid_wape": 0.003929571435739937,
+          "pressure_rmse_bar": 2.6609889428380757
+        },
+        "3": {
+          "oil_wape": 0.021208684238045596,
+          "liquid_wape": 0.007999759324981157,
+          "pressure_rmse_bar": 3.6781165320280294
+        },
+        "6": {
+          "oil_wape": 0.04503915879261254,
+          "liquid_wape": 0.01607859323639967,
+          "pressure_rmse_bar": 5.9304327824975065
+        },
+        "12": {
+          "oil_wape": 0.2413677787009372,
+          "liquid_wape": 0.09362581312589217,
+          "pressure_rmse_bar": 14.45714854011911
+        },
+        "23": {
+          "oil_wape": 1.3707109568352502,
+          "liquid_wape": 125.1568212768973,
+          "pressure_rmse_bar": 88.0219514359602
+        }
+      }
+    },
+    {
+      "name": "fixed_origin_block_6",
+      "horizon_months": 23,
+      "block_months": 6,
+      "new_observations_between_blocks": false,
+      "seconds": 0.7395433038473129,
+      "oil_wape": 0.12093247563580616,
+      "liquid_wape": 0.03848619102468472,
+      "pressure_rmse_bar": 19.590726424951118,
+      "end_exclusive": "2015-12-01",
+      "prefix_metrics": {
+        "1": {
+          "oil_wape": 0.011268972193529108,
+          "liquid_wape": 0.003846081957638777,
+          "pressure_rmse_bar": 2.4542047115040697
+        },
+        "3": {
+          "oil_wape": 0.015350737382728958,
+          "liquid_wape": 0.006327144307672286,
+          "pressure_rmse_bar": 3.2463745874240977
+        },
+        "6": {
+          "oil_wape": 0.022066649247662426,
+          "liquid_wape": 0.010015924407663782,
+          "pressure_rmse_bar": 4.478881864973249
+        },
+        "12": {
+          "oil_wape": 0.04967075100154326,
+          "liquid_wape": 0.019951006110745174,
+          "pressure_rmse_bar": 8.623555135336414
+        },
+        "23": {
+          "oil_wape": 0.12093247563580616,
+          "liquid_wape": 0.03848619102468472,
+          "pressure_rmse_bar": 19.590726424951118
+        }
+      }
+    },
+    {
+      "name": "observed_update_block_6",
+      "horizon_months": 23,
+      "block_months": 6,
+      "new_observations_between_blocks": true,
+      "seconds": 0.7559150420129299,
+      "oil_wape": 0.035994651868630795,
+      "liquid_wape": 0.009657514151849662,
+      "pressure_rmse_bar": 5.861753403271173,
+      "end_exclusive": "2015-12-01",
+      "prefix_metrics": {
+        "1": {
+          "oil_wape": 0.011267842510202786,
+          "liquid_wape": 0.0038458587957313052,
+          "pressure_rmse_bar": 2.4543069546998493
+        },
+        "3": {
+          "oil_wape": 0.015350600594698498,
+          "liquid_wape": 0.006326950275520247,
+          "pressure_rmse_bar": 3.246462717811593
+        },
+        "6": {
+          "oil_wape": 0.022066683750313936,
+          "liquid_wape": 0.010015943680001041,
+          "pressure_rmse_bar": 4.479003818821229
+        },
+        "12": {
+          "oil_wape": 0.03573841407809448,
+          "liquid_wape": 0.01279969427626936,
+          "pressure_rmse_bar": 4.640709747063533
+        },
+        "23": {
+          "oil_wape": 0.035994651868630795,
+          "liquid_wape": 0.009657514151849662,
+          "pressure_rmse_bar": 5.861753403271173
+        }
+      }
+    },
+    {
+      "name": "persistence",
+      "horizon_months": 23,
+      "new_observations_between_blocks": false,
+      "oil_wape": 0.1394637186710539,
+      "liquid_wape": 0.023095428671410727,
+      "pressure_rmse_bar": 16.057745393620998
+    }
+  ],
+  "complete": true
+}
