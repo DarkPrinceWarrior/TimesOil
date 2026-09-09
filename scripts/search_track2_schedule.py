@@ -858,8 +858,11 @@ def _search(args: argparse.Namespace) -> Path:
         injection_only=getattr(args, "injection_only", False),
     )
     selected = result.selected
+    end_index = start.year * 12 + start.month - 1 + result.horizon_months
+    end_exclusive = date(end_index // 12, end_index % 12 + 1, 1)
     overlay = apply_schedule_overlay(
-        schedule_text, selected.actions, known_wells=trajectory.well_ids
+        schedule_text, selected.actions, known_wells=trajectory.well_ids,
+        end_exclusive=end_exclusive,
     )
     if overlay.controls_sha256 != selected.wells_schedule_sha256:
         raise RuntimeError("selected schedule and full overlay controls disagree")
@@ -940,6 +943,7 @@ def _search(args: argparse.Namespace) -> Path:
             "source_schedule_sha256": overlay.source_sha256,
             "controls_sha256": overlay.controls_sha256,
             "output_schedule_sha256": overlay.sha256,
+            "truncated_after": end_exclusive.isoformat(),
         },
         "execution_sources": execution_sources,
         "final_replay_argv": replay_argv,
@@ -1124,16 +1128,23 @@ def _replay(args: argparse.Namespace) -> Path:
         source_text = source_schedule.decode("utf-8")
     except UnicodeError as exc:
         raise ValueError("source schedule must be UTF-8") from exc
+    # Old search artifacts retain their original full-history replay contract.
+    truncation = search.get("schedule_transformation", {}).get("truncated_after")
+    if truncation is not None and truncation != end_exclusive.isoformat():
+        raise ValueError("replay truncation differs from the management horizon")
     replay_overlay = apply_schedule_overlay(
         source_text,
         actions,
         known_wells={item.well for item in actions},
+        end_exclusive=end_exclusive if truncation is not None else None,
     )
     transformation = {
         "source_schedule_sha256": replay_overlay.source_sha256,
         "controls_sha256": replay_overlay.controls_sha256,
         "output_schedule_sha256": replay_overlay.sha256,
     }
+    if truncation is not None:
+        transformation["truncated_after"] = truncation
     if (
         replay_overlay.controls_sha256 != wells_schedule_sha256
         or search.get("schedule_transformation") != transformation
