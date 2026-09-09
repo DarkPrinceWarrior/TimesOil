@@ -23,7 +23,7 @@ _PROD_LINE = re.compile(
     r"\s*'([^']+)'\s+'(OPEN|SHUT)'\s+'(ORAT|LRAT)'\s+(.+?)\s*/\s*"
 )
 _INJ_LINE = re.compile(
-    r"\s*'([^']+)'\s+'WATER'\s+'(OPEN|SHUT)'\s+'RATE'\s+([0-9.eE+-]+)\s*/\s*"
+    r"\s*'([^']+)'\s+'WATER'\s+'(OPEN|SHUT)'\s+'RATE'\s+([0-9.eE+-]+)(?:\s+1\*\s+([0-9.eE+-]+))?\s*/\s*"
 )
 
 
@@ -38,7 +38,7 @@ class ScheduleArtifact:
     actions: tuple[ControlAction, ...]
 
 
-def _action_key(action: ControlAction) -> tuple[date, str, str, str, str, float]:
+def _action_key(action: ControlAction) -> tuple[date, str, str, str, str, float, float]:
     return (
         action.month,
         action.role.value,
@@ -46,6 +46,7 @@ def _action_key(action: ControlAction) -> tuple[date, str, str, str, str, float]
         action.status.value,
         action.target.value,
         action.value,
+        action.bhp_limit or 0.0,
     )
 
 
@@ -59,11 +60,15 @@ class ScheduleCompiler:
     def validate(self, case: Case, actions: Iterable[ControlAction]) -> tuple[ControlAction, ...]:
         ordered = _normalized(actions)
         seen: set[tuple[date, str]] = set()
+        roles: dict[str, WellRole] = {}
         for action in ordered:
             if not case.start <= action.month <= case.end:
                 raise ScheduleError(f"action {action.well} is outside case horizon")
-            if case.role_of(action.well) is not action.role:
+            if not case.allows_role(action.well, action.role):
                 raise ScheduleError(f"wrong role for well {action.well}")
+            if roles.get(action.well) is WellRole.INJECTOR and action.role is WellRole.PRODUCER:
+                raise ScheduleError(f"reverse conversion is not permitted for well {action.well}")
+            roles[action.well] = action.role
             key = (action.month, action.well)
             if key in seen:
                 raise ScheduleError(f"duplicate monthly control for well {action.well}")
@@ -151,13 +156,16 @@ class ScheduleCompiler:
         target = action.target.value
         value = f"{action.value:.6f}"
         controls = value if action.target is ControlTarget.OIL_RATE else f"3* {value}"
+        if action.bhp_limit is not None:
+            controls += f" {'4*' if action.target is ControlTarget.OIL_RATE else '1*'} {action.bhp_limit:.6f}"
         return f"  '{action.well}' '{action.status.value}' '{target}' {controls} /"
 
     @staticmethod
     def _injector_line(action: ControlAction) -> str:
+        pressure = "" if action.bhp_limit is None else f" 1* {action.bhp_limit:.6f}"
         return (
             f"  '{action.well}' 'WATER' '{action.status.value}' "
-            f"'RATE' {action.value:.6f} /"
+            f"'RATE' {action.value:.6f}{pressure} /"
         )
 
     @staticmethod
@@ -167,6 +175,11 @@ class ScheduleCompiler:
             raise ScheduleError(f"invalid WCONPROD entry on line {line_number}")
         well, status, target, controls = match.groups()
         parts = controls.split()
+        bhp = None
+        if target == ControlTarget.OIL_RATE.value and len(parts) == 3 and parts[1] == "4*":
+            bhp, parts = float(parts[2]), parts[:1]
+        elif target == ControlTarget.LIQUID_RATE.value and len(parts) == 4 and parts[2] == "1*":
+            bhp, parts = float(parts[3]), parts[:2]
         if target == ControlTarget.OIL_RATE.value and len(parts) == 1:
             value = parts[0]
         elif target == ControlTarget.LIQUID_RATE.value and len(parts) == 2 and parts[0] == "3*":
@@ -175,7 +188,7 @@ class ScheduleCompiler:
             raise ScheduleError(f"unsupported producer controls on line {line_number}")
         try:
             return ControlAction(
-                month, well, WellRole.PRODUCER, WellStatus(status), ControlTarget(target), float(value)
+                month, well, WellRole.PRODUCER, WellStatus(status), ControlTarget(target), float(value), bhp
             )
         except ValueError as exc:
             raise ScheduleError(f"invalid WCONPROD value on line {line_number}") from exc
@@ -185,7 +198,7 @@ class ScheduleCompiler:
         match = _INJ_LINE.fullmatch(line)
         if not match:
             raise ScheduleError(f"invalid WCONINJE entry on line {line_number}")
-        well, status, value = match.groups()
+        well, status, value, bhp = match.groups()
         try:
             return ControlAction(
                 month,
@@ -194,6 +207,7 @@ class ScheduleCompiler:
                 WellStatus(status),
                 ControlTarget.WATER_INJECTION_RATE,
                 float(value),
+                None if bhp is None else float(bhp),
             )
         except ValueError as exc:
             raise ScheduleError(f"invalid WCONINJE value on line {line_number}") from exc

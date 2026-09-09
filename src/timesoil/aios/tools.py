@@ -182,7 +182,7 @@ def _validate_candidate_controls(
 
 def _case_from_context(raw: Any) -> Case:
     required = {"case_id", "start", "end", "economics_start", "producers", "injectors"}
-    allowed = required | {"max_liquid_rate"}
+    allowed = required | {"max_liquid_rate", "allow_conversion_to_injection"}
     value = _strict_object(raw, required=required, allowed=allowed, code="case_invalid")
     producers = _well_names(value["producers"])
     injectors = _well_names(value["injectors"])
@@ -197,6 +197,7 @@ def _case_from_context(raw: Any) -> Case:
         producers=producers,
         injectors=injectors,
         max_liquid_rate=float(max_liquid_rate),
+        allow_conversion_to_injection=value.get("allow_conversion_to_injection", False),
     )
 
 
@@ -207,7 +208,7 @@ def _actions_from_context(raw: Any) -> tuple[ControlAction, ...]:
     actions: list[ControlAction] = []
     for item in raw:
         value = _strict_object(
-            item, required=fields, allowed=fields, code="candidate_controls_invalid"
+            item, required=fields, allowed=fields | {"bhp_limit"}, code="candidate_controls_invalid"
         )
         target = value["value"]
         if isinstance(target, bool) or not isinstance(target, (int, float)):
@@ -221,6 +222,7 @@ def _actions_from_context(raw: Any) -> tuple[ControlAction, ...]:
                     status=WellStatus(value["status"]),
                     target=ControlTarget(value["target"]),
                     value=float(target),
+                    bhp_limit=value.get("bhp_limit"),
                 )
             )
         except (TypeError, ValueError) as exc:

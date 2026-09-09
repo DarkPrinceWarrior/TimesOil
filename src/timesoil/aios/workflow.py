@@ -410,7 +410,12 @@ class FullCycleWorkflow:
                 raise CycleError("prepared schedule must be UTF-8") from exc
             control_months = sorted({action.month for action in request.controls})
             source_inventory = _source_control_inventory(source_text, control_months)
-            _validate_source_well_scope(request.controls, source_inventory)
+            _validate_source_well_scope(
+                request.controls, source_inventory,
+                allow_conversion_to_injection=request.context.get("constraints", {}).get(
+                    "allow_conversion_to_injection", False
+                ),
+            )
             controls_evidence = _controls_evidence(request, source_inventory)
             source_wells = next(iter(source_inventory.values())).keys()
             terminal_evidence: dict[str, Any] = {"available": False}
@@ -605,7 +610,7 @@ def _controls(value: Any) -> tuple[ControlAction, ...]:
     fields = {"month", "well", "role", "status", "target", "value"}
     actions: list[ControlAction] = []
     for raw in value:
-        if not isinstance(raw, Mapping) or set(raw) != fields:
+        if not isinstance(raw, Mapping) or not fields <= set(raw) <= fields | {"bhp_limit"}:
             raise CycleError("control fields are invalid")
         target = raw["value"]
         if isinstance(target, bool) or not isinstance(target, (int, float)):
@@ -619,6 +624,7 @@ def _controls(value: Any) -> tuple[ControlAction, ...]:
                     status=WellStatus(raw["status"]),
                     target=ControlTarget(raw["target"]),
                     value=float(target),
+                    bhp_limit=raw.get("bhp_limit"),
                 )
             )
         except (TypeError, ValueError) as exc:
@@ -719,7 +725,11 @@ def _source_control_inventory(
 def _validate_source_well_scope(
     actions: Sequence[ControlAction],
     source_inventory: Mapping[date, Mapping[str, _SourceControl]],
+    *,
+    allow_conversion_to_injection: bool = False,
 ) -> None:
+    if type(allow_conversion_to_injection) is not bool:
+        raise CycleError("allow_conversion_to_injection must be boolean")
     months = {action.month for action in actions}
     inventories = list(source_inventory.values())
     source_wells = set(inventories[0]) if inventories else set()
@@ -728,29 +738,25 @@ def _validate_source_well_scope(
         or not source_wells
         or any(set(inventory) != source_wells for inventory in inventories)
         or len(actions) != len(months) * len(source_wells)
-        or any(
-            {
-                (action.well, action.role)
-                for action in actions
-                if action.month == month
-            }
-            != {
-                (well, control.role)
-                for well, control in source_inventory[month].items()
-            }
-            for month in months
-        )
+        or any({action.well for action in actions if action.month == month} != source_wells
+               for month in months)
     ):
-        raise CycleError(
-            "controls must cover every prepared source schedule well and role in every month"
-        )
-    if any(
-        control.pre_control
-        and (action.status is not WellStatus.SHUT or action.value != 0.0)
-        for action in actions
-        for control in (source_inventory[action.month][action.well],)
-    ):
-        raise CycleError("controls before a well's first source WCON must be SHUT at zero")
+        raise CycleError("controls must cover every prepared source schedule well and role in every month")
+    roles: dict[str, WellRole] = {}
+    for action in sorted(actions, key=lambda item: (item.month, item.well)):
+        control = source_inventory[action.month][action.well]
+        if control.pre_control and (action.status is not WellStatus.SHUT or action.value != 0.0):
+            raise CycleError("controls before a well's first source WCON must be SHUT at zero")
+        if action.role is not control.role:
+            if not (
+                allow_conversion_to_injection and not control.pre_control
+                and control.role is WellRole.PRODUCER and action.role is WellRole.INJECTOR
+                and action.bhp_limit is not None
+            ):
+                raise CycleError("controls must cover every prepared source schedule well and role in every month")
+        if roles.get(action.well) is WellRole.INJECTOR and action.role is WellRole.PRODUCER:
+            raise CycleError("reverse conversion is not permitted")
+        roles[action.well] = action.role
 
 
 def _controls_evidence(
@@ -1039,14 +1045,7 @@ def _artifact(path: Path, root: Path) -> dict[str, Any]:
 
 
 def _action(value: ControlAction) -> dict[str, Any]:
-    return {
-        "month": value.month.isoformat(),
-        "well": value.well,
-        "role": value.role.value,
-        "status": value.status.value,
-        "target": value.target.value,
-        "value": value.value,
-    }
+    return value.to_dict()
 
 
 def _csv_rows(path: Path) -> list[dict[str, str]]:

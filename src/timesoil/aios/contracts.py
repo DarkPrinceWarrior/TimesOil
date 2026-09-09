@@ -53,6 +53,7 @@ class Case:
     producers: tuple[str, ...]
     injectors: tuple[str, ...]
     max_liquid_rate: float = 500.0
+    allow_conversion_to_injection: bool = False
 
     def __post_init__(self) -> None:
         if not self.case_id.strip():
@@ -73,6 +74,8 @@ class Case:
             raise ContractError(f"wells have two roles: {sorted(overlap)}")
         if not isfinite(self.max_liquid_rate) or self.max_liquid_rate <= 0:
             raise ContractError("max_liquid_rate must be finite and positive")
+        if type(self.allow_conversion_to_injection) is not bool:
+            raise ContractError("allow_conversion_to_injection must be boolean")
 
     def role_of(self, well: str) -> WellRole:
         if well in self.producers:
@@ -80,6 +83,13 @@ class Case:
         if well in self.injectors:
             return WellRole.INJECTOR
         raise ContractError(f"well {well!r} is absent from case {self.case_id!r}")
+
+    def allows_role(self, well: str, role: WellRole) -> bool:
+        original = self.role_of(well)
+        return original is role or (
+            self.allow_conversion_to_injection
+            and original is WellRole.PRODUCER and role is WellRole.INJECTOR
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -131,12 +141,17 @@ class ControlAction:
     status: WellStatus
     target: ControlTarget
     value: float
+    bhp_limit: float | None = None
 
     def __post_init__(self) -> None:
         _validate_month(self.month, "action month")
         _validate_well_name(self.well)
         if not isfinite(self.value) or self.value < 0:
             raise ContractError("control value must be finite and non-negative")
+        if self.bhp_limit is not None and (
+            isinstance(self.bhp_limit, bool) or not isfinite(self.bhp_limit) or self.bhp_limit <= 0
+        ):
+            raise ContractError("bhp_limit must be finite and positive")
         if self.status is WellStatus.SHUT and self.value != 0:
             raise ContractError("a shut well must have a zero target")
         producer_targets = {ControlTarget.OIL_RATE, ControlTarget.LIQUID_RATE}
@@ -147,6 +162,11 @@ class ControlAction:
             and self.target is not ControlTarget.WATER_INJECTION_RATE
         ):
             raise ContractError("injector control must target water injection rate")
+
+    def to_dict(self) -> dict[str, object]:
+        return {"month": self.month.isoformat(), "well": self.well, "role": self.role.value,
+                "status": self.status.value, "target": self.target.value, "value": self.value,
+                **({"bhp_limit": self.bhp_limit} if self.bhp_limit is not None else {})}
 
 
 @dataclass(frozen=True, slots=True)
