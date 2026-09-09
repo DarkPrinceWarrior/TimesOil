@@ -1,7 +1,7 @@
 """Qwen field policies with short TimesFM lookahead and full-period OPM requests.
 
 Forecast margins are screening estimates, never submitted CHDD. Every emitted
-request retains the original completion/status/role calendar and is evaluated
+request retains source completions and is evaluated
 by the production full-cycle command over the complete management period.
 """
 
@@ -23,7 +23,8 @@ from timesoil.aios.agents import AgentRole, AgentWorkflow, ToolDefinition, ToolR
 from timesoil.aios.llm import ExternalQwenClient, LLMConfig
 from timesoil.aios.surrogate import _project_physics
 from timesoil.aios.track2 import trajectory_from_frame
-from timesoil.aios.workflow import CycleRequest
+from timesoil.aios.workflow import CycleRequest, _controls
+from timesoil.aios.operating_constraints import check_controls, parse_constraints
 from timesoil.aios.economics import CHDDEconomicsAdapter
 
 
@@ -51,6 +52,39 @@ def policy_controls(controls, policy):
             if item["target"] == "LRAT":
                 item["value"] = min(item["value"], 500.0)
         output.append(item)
+    by_key = {(a['month'], a['well']): a for a in output}
+    months = sorted({a['month'] for a in output})
+    edited = set()
+    for update in policy.get('well_updates', []):
+        required = {'well', 'start', 'end'}
+        fields = {'role', 'status', 'target', 'value', 'bhp_limit'}
+        if (not isinstance(update, dict) or not required <= update.keys()
+                or update.keys() - required - fields or not fields.intersection(update)):
+            raise ValueError('well update fields are invalid')
+        well, start, end = update['well'], update['start'], update['end']
+        if well not in wells or start not in months or end not in months or start > end:
+            raise ValueError('well update is outside the known well/month grid')
+        changes = {key: value for key, value in update.items() if key in fields}
+        for month in months:
+            if not start <= month <= end:
+                continue
+            key = month, well
+            if key in edited:
+                raise ValueError('overlapping well updates')
+            edited.add(key)
+            action = by_key[key]
+            if changes.get('role', action['role']) != action['role']:
+                if not {'target', 'value', 'bhp_limit'} <= changes.keys():
+                    raise ValueError('conversion requires explicit target, rate and BHP limit')
+            action.update(changes)
+            if action['status'] == 'SHUT':
+                action['value'] = 0.0
+    _controls(output)
+    roles = {}
+    for action in sorted(output, key=lambda a: (a['month'], a['well'])):
+        if roles.get(action['well']) == 'injector' and action['role'] == 'producer':
+            raise ValueError('reverse conversion is not permitted')
+        roles[action['well']] = action['role']
     return output
 
 
@@ -69,6 +103,27 @@ def self_check():
         pass
     else:
         raise AssertionError("unknown well accepted")
+    two_months = controls + [{**a, 'month': '2007-02-01'} for a in controls]
+    update = dict(well='P', start='2007-01-01', end='2007-02-01',
+                  role='injector', target='WRAT', value=80, bhp_limit=280)
+    converted = policy_controls(two_months, {**policy, 'well_updates': [update]})
+    assert all(a['role'] == 'injector' and a['value'] == 80 and a['bhp_limit'] == 280
+               for a in converted if a['well'] == 'P')
+    stopped = policy_controls(two_months, {**policy, 'well_updates': [
+        dict(well='P', start='2007-02-01', end='2007-02-01', status='SHUT')]})
+    assert stopped[0]['status'] == 'OPEN' and stopped[3]['value'] == 0
+    assert two_months[3]['status'] == 'OPEN'
+    for updates in ([update, update], [{**update, 'end': '2007-01-01'}],
+                    [{**update, 'start': '2006-12-01'}],
+                    [{k: v for k, v in update.items() if k != 'bhp_limit'}],
+                    [{**update, 'value': True}], [{**update, 'bhp_limit': -1}]):
+        try:
+            policy_controls(two_months, {**policy, 'well_updates': updates})
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('invalid timed control update accepted')
+    print('policy rates, dated status/BHP, conversion persistence and rejection checks passed', flush=True)
 
 
 def main():
@@ -83,8 +138,6 @@ def main():
         parser.error("rounds must be in [1, 12]")
     request = json.loads(args.request.read_text())
     checked_request = CycleRequest.from_mapping(request)
-    if any(action.bhp_limit is not None for action in checked_request.controls):
-        raise ValueError("TimesFM screening has no BHP covariate; pressure controls require a trained model with that input")
     normative_profile = CHDDEconomicsAdapter.from_env().normative_profile(
         charge_initial_pump=checked_request.charge_initial_pump
     )
@@ -94,6 +147,9 @@ def main():
     if sha256(raw).hexdigest() != manifest["outputs"]["track2_csv"]["sha256"]:
         raise ValueError("baseline trajectory hash mismatch")
     trajectory = trajectory_from_frame(pd.read_csv(args.baseline_run / "canonical/trajectory.csv"))
+    has_bhp = trajectory.actions.shape[-1] == 4
+    if not has_bhp and any(a.bhp_limit is not None for a in checked_request.controls):
+        raise ValueError('BHP screening requires an authenticated baseline with the BHP action channel')
     start = pd.Timestamp(min(a["month"] for a in request["controls"]))
     origin = int(trajectory.dates.get_loc(start))
     horizon, context = 6, 128
@@ -102,6 +158,10 @@ def main():
     well_index = {w: i for i, w in enumerate(trajectory.well_ids)}
     initial_controls = {a["well"]: a for a in request["controls"] if a["month"] == start.date().isoformat()}
     date_index = {d.date().isoformat(): i for i, d in enumerate(trajectory.dates)}
+    operating_rules = parse_constraints(
+        checked_request.context.get('operating_constraints', []), wells=trajectory.well_ids,
+        start=min(a.month for a in checked_request.controls),
+        end=max(a.month for a in checked_request.controls))
     args.output.mkdir(parents=True, exist_ok=False)
     import torch
     from timesfm3 import ModelConfig, TimesFM3Forecaster
@@ -128,10 +188,20 @@ def main():
             "policy": policy,
         }}
         checked = CycleRequest.from_mapping(proposed)
+        original_roles = {(a['month'], a['well']): a['role'] for a in request['controls']}
+        if (not checked.context.get('constraints', {}).get('allow_conversion_to_injection', False)
+                and any(a['role'] != original_roles[a['month'], a['well']] for a in controls)):
+            raise ValueError('new role changes are not permitted by this case')
+        check_controls(operating_rules, checked.controls)
         actions = trajectory.actions.copy()
         for a in controls:
-            actions[date_index[a["month"]], well_index[a["well"]]] = (
-                a["value"], {"ORAT": 0, "LRAT": 1, "WRAT": 2}[a["target"]], a["status"] == "OPEN")
+            position = date_index[a['month']], well_index[a['well']]
+            value = [a['value'], {'ORAT': 0, 'LRAT': 1, 'WRAT': 2}[a['target']], a['status'] == 'OPEN']
+            if has_bhp:
+                value.append(a.get('bhp_limit', actions[position][3]))
+            elif 'bhp_limit' in a:
+                raise ValueError('BHP policy requires the BHP action channel')
+            actions[position] = value
         _, cov = forecast_inputs(trajectory.states, actions, origin, context, horizon)
         begin = time.monotonic()
         forecast = next(forecaster.predict_batch([target], horizon=horizon,
@@ -150,6 +220,7 @@ def main():
             "screening_margin_m": (oil * (econ["oilPriceRubT"] - econ["deductionsRubT"] - econ["oilOpexRubT"])
                                    - liquid * econ["liquidOpexRubT"] - injection * econ["injectionOpexRubM3"]) / 1e6,
             "full_period_months": checked.horizon_months, "full_period_actions": len(controls),
+            "bhp_channel": has_bhp,
             "controls_sha256": checked.controls_sha256, "inference_seconds": time.monotonic() - begin,
             "is_official_chdd": False}
         candidates.append(record)
@@ -168,11 +239,20 @@ def main():
             "well": {"type": "string"}, "scale": {"type": "number"}},
             "required": ["well", "scale"], "additionalProperties": False}}},
         "required": [], "additionalProperties": False}
+    schema['properties']['well_updates'] = {'type': 'array', 'items': {
+        'type': 'object', 'properties': {
+            'well': {'type': 'string'}, 'start': {'type': 'string'}, 'end': {'type': 'string'},
+            'role': {'type': 'string', 'enum': ['producer', 'injector']},
+            'status': {'type': 'string', 'enum': ['OPEN', 'SHUT']},
+            'target': {'type': 'string', 'enum': ['ORAT', 'LRAT', 'WRAT']},
+            'value': {'type': 'number', 'minimum': 0},
+            **({'bhp_limit': {'type': 'number', 'exclusiveMinimum': 0}} if has_bhp else {})},
+        'required': ['well', 'start', 'end'], 'additionalProperties': False}}
     proposed_ids = []
 
     async def propose_round(index):
         before = len(candidates)
-        tool = ToolDefinition("propose_policy", "Propose a full-field rate/status policy and evaluate six-month TimesFM response. Omitted scales default to 1; omitted shut_wells and well_scales default to empty arrays. Full-period OPM decides final CHDD.", schema,
+        tool = ToolDefinition("propose_policy", "Propose a full-field policy. well_updates changes a well over inclusive monthly start/end dates after rate scaling: rate, status, target, role, BHP limit. Conversion requires explicit WRAT, value and BHP, must be permitted by the case, and cannot be reversed; extend its role to the end. Omitted scales default to 1, arrays to empty. Six-month TimesFM screening; full-period OPM decides CHDD.", schema,
             lambda policy, _: evaluate(policy))
         context_value = {"track": 2, "round": index,
             "objective": f"Propose a new policy for maximum official CHDD over the request's {checked_request.horizon_months} management months. Use per-well multipliers when useful; all wells are controllable. Call propose_policy exactly once. Avoid duplicate policies.",
@@ -183,8 +263,12 @@ def main():
                 "liquid_tpd": float(trajectory.states[origin, i, 1]), "pressure_bar": float(trajectory.states[origin, i, 2]),
                 "initial_control": initial_controls[w]}
                 for i, w in enumerate(trajectory.well_ids)],
-            "constraints": {"producer_liquid_max_m3d": 500, "source_bhp_limits_preserved": True,
-                "source_completions_and_planned_shutdowns_preserved": True,
+            "management_period": {'first_control_month': start.date().isoformat(),
+                'last_control_month': max(a['month'] for a in request['controls'])},
+            "constraints": {"producer_liquid_max_m3d": 500, "source_bhp_limits_cannot_be_relaxed": True,
+                "source_completions_preserved": True, 'bhp_channel': has_bhp,
+                'case_constraints': checked_request.context.get('constraints', {}),
+                'operating_constraints': checked_request.context.get('operating_constraints', []),
                 "additional_water_quota": "not supplied in the current training archive"},
             "claim_limits": "Forecasts use only observed pre-origin history and planned controls. Screening margin is a six-month rate-integration estimate excluding pump CAPEX, state events and tax. It is NOT CHDD and is NOT extrapolated to the management period. Candidate requires full-period OPM plus the official calculator. Request dates describe this experiment, not a confirmed competition horizon. No independently calibrated TimesFM uncertainty or improvement claim."}
         async with ExternalQwenClient(LLMConfig.from_env()) as client:
