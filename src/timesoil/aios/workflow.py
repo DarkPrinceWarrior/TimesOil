@@ -63,7 +63,7 @@ _SENSITIVE_KEY = re.compile(
     r"(?:^|_)(?:api[_-]?key|authorization|cookie|credential|password|secret|token)(?:$|_)",
     re.IGNORECASE,
 )
-_MAX_ACTIONS = 10_000
+_MAX_ACTIONS = 100_000
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 _EXECUTION_SOURCE_PATHS = (
     "pyproject.toml",
@@ -106,6 +106,7 @@ class CycleRequest:
     parsing_strictness: str = "strict"
     density_map: Path | None = None
     charge_initial_pump: bool | None = None
+    horizon_months: int = 6
 
     def __post_init__(self) -> None:
         _validate_cycle_request(self)
@@ -128,6 +129,7 @@ class CycleRequest:
             "parsing_strictness",
             "density_map",
             "charge_initial_pump",
+            "horizon_months",
         }
         missing = required - set(value)
         unknown = set(value) - allowed
@@ -139,7 +141,8 @@ class CycleRequest:
         normalized_context = _json_object(context, "context")
         _reject_sensitive_keys(normalized_context)
         controls = _controls(value["controls"])
-        _validate_full_horizon(controls)
+        horizon_months = value.get("horizon_months", 6)
+        _validate_full_horizon(controls, horizon_months)
         root = Path(base_dir).resolve()
         source = _path(value["source"], root, "source")
         density_raw = value.get("density_map")
@@ -175,6 +178,7 @@ class CycleRequest:
             parsing_strictness=parsing,
             density_map=density_map,
             charge_initial_pump=charge,
+            horizon_months=horizon_months,
         )
 
     @property
@@ -202,6 +206,7 @@ class CycleRequest:
                     "parsing_strictness": self.parsing_strictness,
                     "density_map": str(self.density_map) if self.density_map else None,
                     "charge_initial_pump": self.charge_initial_pump,
+                    **({"horizon_months": self.horizon_months} if self.horizon_months != 6 else {}),
                 }
             )
         ).hexdigest()
@@ -231,7 +236,7 @@ def _validate_cycle_request(request: CycleRequest) -> None:
     ):
         raise CycleError("controls must be a tuple")
     controls = _controls([_action(item) for item in request.controls])
-    _validate_full_horizon(controls)
+    _validate_full_horizon(controls, request.horizon_months)
     if not isinstance(request.source, Path) or (
         request.density_map is not None and not isinstance(request.density_map, Path)
     ):
@@ -621,14 +626,17 @@ def _controls(value: Any) -> tuple[ControlAction, ...]:
     return tuple(sorted(actions, key=lambda item: (item.month, item.well, item.role.value)))
 
 
-def _validate_full_horizon(actions: Sequence[ControlAction]) -> None:
+def _validate_full_horizon(actions: Sequence[ControlAction], horizon_months: int = 6) -> None:
+    if type(horizon_months) is not int or not 1 <= horizon_months <= 1200:
+        raise CycleError("horizon_months must be an integer in [1, 1200]")
     months = sorted({action.month for action in actions})
-    if len(months) != 6:
-        raise CycleError("full-cycle controls must cover exactly six months")
+    label = "six" if horizon_months == 6 else str(horizon_months)
+    if len(months) != horizon_months:
+        raise CycleError(f"full-cycle controls must cover exactly {label} months")
     expected = [date((months[0].year * 12 + months[0].month - 1 + i) // 12,
-                     (months[0].month - 1 + i) % 12 + 1, 1) for i in range(6)]
+                     (months[0].month - 1 + i) % 12 + 1, 1) for i in range(horizon_months)]
     if months != expected:
-        raise CycleError("full-cycle controls must cover six consecutive months")
+        raise CycleError(f"full-cycle controls must cover {label} consecutive months")
     wells = {action.well for action in actions if action.month == months[0]}
     if not wells or any(
         {action.well for action in actions if action.month == month} != wells
@@ -772,7 +780,9 @@ def _controls_evidence(
     source_well_count = len(next(iter(source_inventory.values())))
     return {
         "verified": True,
-        "complete_six_month_horizon": True,
+        "complete_six_month_horizon": request.horizon_months == 6,
+        "complete_management_horizon": True,
+        "horizon_months": request.horizon_months,
         "action_count": len(request.controls),
         "well_count": len({action.well for action in request.controls}),
         "source_well_count": source_well_count,
@@ -806,8 +816,9 @@ def _agent_context(
     value["facts"] = {**facts, "full_controls": dict(controls_evidence)}
     value["constraints"] = {
         **constraints,
-        "candidate_controls_are_full_six_month_schedule": True,
-        "candidate_controls_scope": "exact_full_six_month_operator_input",
+        "candidate_controls_are_full_six_month_schedule": request.horizon_months == 6,
+        "candidate_controls_are_full_management_schedule": True,
+        "candidate_controls_scope": "exact_full_management_period_operator_input",
         "full_controls_validated_by_agent_tool": True,
         "full_controls_hash_tool": VERIFY_FULL_CONTROLS,
         "qwen_recommendation_only": True,
