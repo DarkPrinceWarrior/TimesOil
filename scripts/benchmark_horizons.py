@@ -25,7 +25,7 @@ def forecast_blocks(forecaster, trajectory, origin, horizon, context, block, *, 
     if not observe:
         return recursive_forecast(
             forecaster, [targets.reshape(-1, length)],
-            [cov[:, :4].reshape(-1, length + horizon)], actions[None], block_size=block,
+            [cov[:, :-1].reshape(-1, length + horizon)], actions[None], block_size=block,
         )[0]
     output = []
     for step in range(0, horizon, block):
@@ -35,7 +35,7 @@ def forecast_blocks(forecaster, trajectory, origin, horizon, context, block, *, 
         )
         predicted = recursive_forecast(
             forecaster, [history.reshape(-1, length)],
-            [future_controls[:, :4].reshape(-1, length + count)],
+            [future_controls[:, :-1].reshape(-1, length + count)],
             actions[None, step:step + count], block_size=count,
         )
         output.append(predicted[0])
@@ -46,7 +46,10 @@ def self_check():
     from types import SimpleNamespace
 
     class Forecaster:
+        expected_channels = 8
+
         def predict_batch(self, histories, *, horizon, **kwargs):
+            assert kwargs["past_future_covariates"][0].shape[0] == self.expected_channels
             for history in histories:
                 yield SimpleNamespace(forecast=history[:, -1:] + np.arange(1, horizon + 1))
 
@@ -64,6 +67,11 @@ def self_check():
     np.testing.assert_array_equal(forecast, forecast_blocks(Forecaster(), other, 3, 5, 3, 2))
     observed = forecast_blocks(Forecaster(), other, 3, 5, 3, 2, observe=True)
     assert observed[2, 0, 0] == 41 and observed[0, 0, 0] == 2
+    Forecaster.expected_channels = 10
+    with_bhp = SimpleNamespace(states=states, actions=np.concatenate(
+        [actions, np.full((*actions.shape[:2], 1), 70.0)], axis=-1))
+    np.testing.assert_array_equal(forecast_blocks(Forecaster(), with_bhp, 3, 5, 3, 2), forecast)
+    forecast_blocks(Forecaster(), with_bhp, 3, 5, 3, 2, observe=True)
     print("fixed-origin leakage, state carry, role and incomplete-final-block checks passed", flush=True)
 
 

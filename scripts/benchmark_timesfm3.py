@@ -38,19 +38,29 @@ def past_inputs(observations, origin, context_length):
 
 
 def forecast_inputs(states, actions, origin, context_length, horizon=HORIZON):
-    """Align action[t] with state[t+1]; never expose future target states."""
+    """Align action[t] with state[t+1]; retain BHP when present and exclude future targets."""
+    states, actions = np.asarray(states), np.asarray(actions)
+    if (states.ndim != 3 or states.shape[-1] != 3 or actions.ndim != 3
+            or actions.shape[:2] != states.shape[:2] or actions.shape[-1] not in (3, 4)):
+        raise ValueError("forecast requires aligned states and three/four-feature actions")
     if context_length < 1 or horizon < 1 or origin < 1 or origin + horizon >= len(states):
         raise ValueError("invalid forecast window")
     start = max(1, origin + 1 - context_length)
     targets = states[start : origin + 1].transpose(1, 2, 0).astype(np.float32)
     controls = actions[start - 1 : origin + horizon]
+    if (not np.isfinite(targets).all() or not np.isfinite(controls).all()
+            or (controls[..., 0] < 0).any()
+            or not np.isin(controls[..., 1], (0, 1, 2)).all()
+            or not np.isin(controls[..., 2], (0, 1)).all()
+            or (controls[..., 3:] < 0).any()):
+        raise ValueError("invalid observed states or planned forecast controls")
     rates = np.stack(
         [np.where(controls[..., 1] == code, controls[..., 0], 0.0)
          * controls[..., 2] for code in range(3)], axis=-1
     )
     field_injection = np.broadcast_to(rates[..., 2].sum(axis=1)[:, None], rates.shape[:2])
     covariates = np.concatenate(
-        [rates, controls[..., 2:3], field_injection[..., None]], axis=-1
+        [rates, controls[..., 2:], field_injection[..., None]], axis=-1
     ).transpose(1, 2, 0).astype(np.float32)
     return targets, covariates
 
@@ -75,6 +85,23 @@ def self_check():
     _, other_cov = forecast_inputs(states, other, 20, 12)
     np.testing.assert_array_equal(other_cov[0, :4], cov[0, :4])
     np.testing.assert_array_equal(other_cov[0, 4, 12:], 2 * cov[0, 4, 12:])
+    bhp_actions = np.concatenate([actions, np.full((*actions.shape[:2], 1), 70.0)], axis=-1)
+    bhp_actions[20:26, 0, 3] = 90.0
+    bhp_target, bhp_cov = forecast_inputs(states, bhp_actions, 20, 12)
+    assert bhp_cov.shape == (2, 6, 18)
+    np.testing.assert_array_equal(bhp_target, target)
+    np.testing.assert_array_equal(bhp_cov[:, :4], cov[:, :-1])
+    np.testing.assert_array_equal(bhp_cov[:, -1], cov[:, -1])
+    np.testing.assert_array_equal(bhp_cov[0, 4, :12], 70.0)
+    np.testing.assert_array_equal(bhp_cov[0, 4, 12:], 90.0)
+    invalid_bhp = bhp_actions.copy()
+    invalid_bhp[20, 0, 3] = np.nan
+    try:
+        forecast_inputs(states, invalid_bhp, 20, 12)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("non-finite BHP accepted")
     observed = past_inputs(states, 20, 12)
     np.testing.assert_array_equal(past_inputs(changed, 20, 12), observed)
     from types import SimpleNamespace
@@ -92,7 +119,7 @@ def self_check():
                                   [np.zeros((4, 5))], step_actions)
     np.testing.assert_array_equal(converted[0, :, 0, 0], [3, 0, 1])
     assert converted[0, 1, 0, 1] == 0 and converted[0, 1, 0, 2] > 0
-    print("forecast alignment / leakage / field injection checks passed", flush=True)
+    print("forecast alignment / leakage / field injection / BHP channel checks passed", flush=True)
 
 
 def metrics(truth, prediction):
@@ -249,7 +276,7 @@ def main():
         per_core_batch_size=args.batch_size, device="cuda",
     ))
     joint_contexts = list(np.stack(contexts).reshape(len(cases), -1, args.context))
-    joint_covariates = list(np.stack(covariates)[:, :4].reshape(len(cases), -1, args.context + args.horizon))
+    joint_covariates = list(np.stack(covariates)[:, :-1].reshape(len(cases), -1, args.context + args.horizon))
     timings = {}
     variants = [
         ("timesfm3_per_well_history", contexts, None, None, args.batch_size),
