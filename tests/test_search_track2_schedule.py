@@ -742,7 +742,7 @@ def test_search_cli_writes_uncertified_lineage_and_replay_command(
         "output_schedule_sha256": sha256(
             (output / "Model_Z_sch.inc").read_bytes()
         ).hexdigest(),
-        "truncated_after": "2020-07-01",
+        "stopped_after": "2020-07-01",
     }
     assert lineage["selected_actions"]
     assert all(
