@@ -108,7 +108,12 @@ def main():
 
     def evaluate(policy):
         controls = policy_controls(request["controls"], policy)
-        proposed = {**request, "controls": controls}
+        proposed = {**request, "controls": controls, "context": {
+            **request.get("context", {}),
+            "objective": "Verify this experimental TimesFM-screened field policy with full OPM and official CHDD. Improvement is unknown until paired comparison on the same period.",
+            "facts": {"schedule_kind": "timesfm_policy_candidate", "optimization_improvement_claimed": False},
+            "policy": policy,
+        }}
         checked = CycleRequest.from_mapping(proposed)
         actions = trajectory.actions.copy()
         for a in controls:
@@ -134,6 +139,7 @@ def main():
             "controls_sha256": checked.controls_sha256, "inference_seconds": time.monotonic() - begin,
             "is_official_chdd": False}
         candidates.append(record)
+        proposed["context"]["screening"] = record
         (args.output / f"request-{record['id']:02d}.json").write_text(json.dumps(proposed, ensure_ascii=False, indent=2))
         (args.output / "candidates.json").write_text(json.dumps(candidates, ensure_ascii=False, indent=2))
         return record
