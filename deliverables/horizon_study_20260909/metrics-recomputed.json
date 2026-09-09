@@ -1,0 +1,7 @@
+{
+  "verified_rows": 15,
+  "source": "saved prediction NPZ arrays",
+  "relative_tolerance": 1e-12,
+  "absolute_tolerance": 1e-12,
+  "passed": true
+}
