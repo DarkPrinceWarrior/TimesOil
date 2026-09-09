@@ -81,10 +81,13 @@ def prepare(args):
     if digest(args.source) != MODEL_Z_SOURCE_SHA256:
         raise ValueError('source must be the official Model Z archive')
     args.output.mkdir(parents=True, exist_ok=False)
-    base = args.output / 'reference-run'
-    runner = OpmFlowRunner(timeout_seconds=7200)
-    result = runner.run(args.source, base, deck='Model_Z/Model_Z.data', parsing_strictness='low')
-    runner.extract_summary_report(result, base / 'summary-report.txt')
+    base = args.reference_run.absolute() if args.reference_run else args.output / 'reference-run'
+    if not args.reference_run:
+        runner = OpmFlowRunner(timeout_seconds=7200)
+        result = runner.run(args.source, base, deck='Model_Z/Model_Z.data', parsing_strictness='low')
+        runner.extract_summary_report(result, base / 'summary-report.txt')
+    if json.loads((base / 'manifest.json').read_text())['source_sha256'] != MODEL_Z_SOURCE_SHA256:
+        raise ValueError('reference run must use official Model Z')
     deck_dir = base / 'input' / 'Model_Z'
     exports = args.output / 'reference'
     export_opm_chdd(
@@ -106,7 +109,7 @@ def prepare(args):
                     '--scenario-count', '10', '--seed', '20260909',
                     '--perturbation-fraction', '0.15', '--bhp-perturbation-fraction', '0.15'], check=True)
     plan = dict(start=str(START.date()), end_exclusive=str(END.date()), months=MONTHS,
-                historical_controls_preserved=True, scenario_index_sha256=digest(bundle / 'index.json'),
+                historical_controls_preserved=True, workers=args.workers, scenario_index_sha256=digest(bundle / 'index.json'),
                 reference_manifest_sha256=digest(base / 'manifest.json'),
                 baseline_chdd_sha256=digest(exports / 'chdd.csv'),
                 source_sha256=MODEL_Z_SOURCE_SHA256, source=str(args.source),
@@ -119,10 +122,12 @@ def prepare(args):
                     '--baseline-chdd-sha256', plan['baseline_chdd_sha256'],
                     '--schedule-relative-path', 'Model_Z/Model_Z_sch.inc',
                     '--deck', 'Model_Z/Model_Z.data', '--parsing-strictness', 'low',
-                    '--timeout-seconds', '7200', '--include-bhp'], check=True)
+                    '--timeout-seconds', '7200', '--include-bhp', '--workers', str(args.workers)], check=True)
 
 
 def train(args):
+    if digest(args.source) != MODEL_Z_SOURCE_SHA256:
+        raise ValueError('training geometry must use official Model Z')
     batch = args.output / 'scenario-runs'
     plan = json.loads((args.output / 'plan.json').read_text())
     manifest = json.loads((batch / 'manifest.json').read_text())
@@ -165,6 +170,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--reference-run', type=Path)
+    parser.add_argument('--workers', type=int, choices=(1, 2), default=2)
     parser.add_argument('--train-only', action='store_true')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()

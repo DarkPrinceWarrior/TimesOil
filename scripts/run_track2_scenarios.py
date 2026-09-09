@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from hashlib import sha256
 import json
@@ -402,6 +403,9 @@ def _write_new_json(path: Path, value: Any) -> None:
 
 
 def _run_batch(args: argparse.Namespace) -> Path:
+    workers = getattr(args, "workers", 1)
+    if type(workers) is not int or workers not in (1, 2):
+        raise ValueError("scenario workers must be 1 or 2")
     executed_sources = _snapshot_executed_sources()
     source = args.source.absolute()
     bundle = args.scenario_bundle.absolute()
@@ -447,8 +451,7 @@ def _run_batch(args: argparse.Namespace) -> Path:
     output.mkdir()
 
     runner = OpmFlowRunner(timeout_seconds=args.timeout_seconds)
-    records: list[dict[str, Any]] = []
-    for scenario in scenarios:
+    def run_one(scenario: ScenarioInput) -> dict[str, Any]:
         run_dir = output / scenario.scenario_id
         prepared = runner.prepare(source, run_dir, deck=args.deck)
         if prepared.source_sha256 != official_sha:
@@ -511,8 +514,7 @@ def _run_batch(args: argparse.Namespace) -> Path:
         chdd_sha = _sha256_file(chdd)
         if scenario.scenario_id == "baseline" and chdd_sha != baseline_chdd_sha:
             raise RuntimeError("identity baseline CHDD disagrees with authenticated reference")
-        records.append(
-            {
+        return {
                 "scenario_id": scenario.scenario_id,
                 "actions_sha256": scenario.actions_sha256,
                 "run_manifest": str(result.manifest_path.relative_to(output)),
@@ -525,8 +527,17 @@ def _run_batch(args: argparse.Namespace) -> Path:
                 "dataset_sha256": _sha256_file(track2),
                 "export_manifest": str(export_manifest.relative_to(output)),
                 "export_manifest_sha256": _sha256_file(export_manifest),
-            }
-        )
+        }
+
+    # Authenticate identity baseline before spending work on variants.
+    records = [run_one(scenarios[0])]
+    if workers == 1:
+        records.extend(map(run_one, scenarios[1:]))
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            for offset in range(1, len(scenarios), workers):
+                futures = [pool.submit(run_one, item) for item in scenarios[offset:offset + workers]]
+                records.extend(future.result() for future in futures)
 
     batch_manifest = output / "manifest.json"
     _verify_executed_sources(executed_sources)
@@ -542,7 +553,8 @@ def _run_batch(args: argparse.Namespace) -> Path:
             "official_source_sha256": official_sha,
             "scenario_index_sha256": index_sha,
             "scenario_count": len(records),
-            "sequential": True,
+            "sequential": workers == 1,
+            **({"parallel_workers": workers} if workers > 1 else {}),
             "scenarios": records,
             "training": {
                 "dataset": "dataset",
@@ -586,7 +598,7 @@ def _run_batch(args: argparse.Namespace) -> Path:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Run a verified generated Model Z scenario bundle sequentially in OPM."
+        description="Run a verified generated Model Z scenario bundle in OPM."
     )
     parser.add_argument("source", type=Path)
     parser.add_argument("scenario_bundle", type=Path)
@@ -597,6 +609,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--schedule-relative-path", required=True)
     parser.add_argument("--deck", type=Path)
     parser.add_argument("--timeout-seconds", type=float, default=3600.0)
+    parser.add_argument("--workers", type=int, choices=(1, 2), default=1)
     parser.add_argument("--include-bhp", action="store_true", help="Export effective BHP bounds for pressure-conditioned training")
     parser.add_argument(
         "--parsing-strictness", choices=("strict", "low"), default="strict"
