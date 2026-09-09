@@ -93,6 +93,7 @@ def main():
     targets, _ = forecast_inputs(trajectory.states, trajectory.actions, origin, context, horizon)
     target = targets.reshape(-1, context)
     well_index = {w: i for i, w in enumerate(trajectory.well_ids)}
+    initial_controls = {a["well"]: a for a in request["controls"] if a["month"] == start.date().isoformat()}
     date_index = {d.date().isoformat(): i for i, d in enumerate(trajectory.dates)}
     args.output.mkdir(parents=True, exist_ok=False)
     import torch
@@ -147,7 +148,7 @@ def main():
         return record
 
     base_policy = dict(producer_scale=1.0, injector_scale=1.0, shut_wells=[], well_scales=[])
-    for production, injection in [(1, 1), (1.25, 1), (1, .8), (1, 1.2), (.8, 1)]:
+    for production, injection in [(1, 1), (1.25, 1), (1, .8), (1, 1.2), (.8, 1), (1.5, 1), (2, 1), (3, 1)]:
         print(json.dumps(evaluate({**base_policy, "producer_scale": production, "injector_scale": injection})), flush=True)
     schema = {"type": "object", "properties": {
         "producer_scale": {"type": "number"}, "injector_scale": {"type": "number"},
@@ -165,8 +166,10 @@ def main():
         context_value = {"track": 2, "round": index,
             "objective": f"Propose a new policy for maximum official CHDD over the request's {checked_request.horizon_months} management months. Use per-well multipliers when useful; all wells are controllable. Call propose_policy exactly once. Avoid duplicate policies.",
             "candidates": candidates,
+            "verified_well_count": len(well_index),
             "field_state": [{"well": w, "oil_tpd": float(trajectory.states[origin, i, 0]),
-                "liquid_tpd": float(trajectory.states[origin, i, 1]), "pressure_bar": float(trajectory.states[origin, i, 2])}
+                "liquid_tpd": float(trajectory.states[origin, i, 1]), "pressure_bar": float(trajectory.states[origin, i, 2]),
+                "initial_control": initial_controls[w]}
                 for i, w in enumerate(trajectory.well_ids)],
             "constraints": {"producer_liquid_max_m3d": 500, "source_bhp_limits_preserved": True,
                 "source_completions_and_planned_shutdowns_preserved": True,
