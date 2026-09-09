@@ -406,6 +406,10 @@ def _run_batch(args: argparse.Namespace) -> Path:
     workers = getattr(args, "workers", 1)
     if type(workers) is not int or workers not in (1, 2):
         raise ValueError("scenario workers must be 1 or 2")
+    affinity_config = os.environ.get("OPM_WORKER_CPU_AFFINITIES", "")
+    affinities = affinity_config.split(";") if affinity_config else []
+    if affinities and (len(affinities) != workers or not all(affinities)):
+        raise ValueError("OPM_WORKER_CPU_AFFINITIES requires one nonempty CPU set per worker")
     executed_sources = _snapshot_executed_sources()
     source = args.source.absolute()
     bundle = args.scenario_bundle.absolute()
@@ -450,8 +454,10 @@ def _run_batch(args: argparse.Namespace) -> Path:
     _reject_symlink_components(parent)
     output.mkdir()
 
-    runner = OpmFlowRunner(timeout_seconds=args.timeout_seconds)
+    runners = [OpmFlowRunner(timeout_seconds=args.timeout_seconds, cpu_affinity=cpu_set)
+               for cpu_set in affinities] if affinities else [OpmFlowRunner(timeout_seconds=args.timeout_seconds)]
     def run_one(scenario: ScenarioInput) -> dict[str, Any]:
+        runner = runners[scenario_ids.index(scenario.scenario_id) % len(runners)]
         run_dir = output / scenario.scenario_id
         prepared = runner.prepare(source, run_dir, deck=args.deck)
         if prepared.source_sha256 != official_sha:

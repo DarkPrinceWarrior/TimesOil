@@ -266,7 +266,13 @@ class Track2ScenarioRunnerTest(unittest.TestCase):
             _FakeRunner.expected_schedules = modified
 
             class ParallelRunner(_FakeRunner):
+                def __init__(self, *, timeout_seconds, cpu_affinity):
+                    super().__init__(timeout_seconds=timeout_seconds)
+                    self.cpu_affinity = cpu_affinity
+
                 def _run_prepared(self, prepared, *, parsing_strictness):
+                    ordinal = list(modified).index(prepared.run_dir.name)
+                    assert self.cpu_affinity == ("14-29", "32-47")[ordinal % 2]
                     if prepared.run_dir.name != "baseline":
                         assert (output / "baseline/canonical/chdd.csv").is_file()
                     if prepared.run_dir.name in ("perturbation-001", "perturbation-002"):
@@ -274,6 +280,7 @@ class Track2ScenarioRunnerTest(unittest.TestCase):
                     return super()._run_prepared(prepared, parsing_strictness=parsing_strictness)
 
             with (patch.object(MODULE, "OpmFlowRunner", ParallelRunner),
+                  patch.dict("os.environ", {"OPM_WORKER_CPU_AFFINITIES": "14-29;32-47"}),
                   patch.object(MODULE, "export_opm_chdd", _export)):
                 receipt = json.loads(MODULE._run_batch(args).read_text())
             self.assertFalse(receipt["sequential"])
@@ -282,6 +289,10 @@ class Track2ScenarioRunnerTest(unittest.TestCase):
             args.workers = 3
             with self.assertRaisesRegex(ValueError, "workers"):
                 MODULE._run_batch(args)
+            args.workers = 2
+            with patch.dict("os.environ", {"OPM_WORKER_CPU_AFFINITIES": "14-29"}):
+                with self.assertRaisesRegex(ValueError, "per worker"):
+                    MODULE._run_batch(args)
 
     def test_ten_scenario_batch_emits_versioned_conformal_training_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
