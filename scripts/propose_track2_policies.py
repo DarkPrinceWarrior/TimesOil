@@ -111,10 +111,13 @@ def main():
         policy = {"producer_scale": 1.0, "injector_scale": 1.0,
                   "shut_wells": [], "well_scales": [], **policy}
         controls = policy_controls(request["controls"], policy)
-        proposed = {**request, "controls": controls, "context": {
+        proposed = {**request, "scenario_id": f"timesfm-policy-{len(candidates):02d}", "controls": controls, "context": {
             **request.get("context", {}),
             "objective": "Verify this experimental TimesFM-screened field policy with full OPM and official CHDD. Improvement is unknown until paired comparison on the same period.",
-            "facts": {"schedule_kind": "timesfm_policy_candidate", "optimization_improvement_claimed": False},
+            "facts": {"schedule_kind": "timesfm_policy_candidate", "is_baseline": False,
+                      "surrogate_used_for_candidate_selection": True,
+                      "independent_surrogate_uq_calibrated": False,
+                      "optimization_improvement_claimed": False},
             "policy": policy,
         }}
         checked = CycleRequest.from_mapping(proposed)
