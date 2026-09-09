@@ -1,0 +1,22 @@
+{
+  "server": {
+    "name": "drawio-mcp",
+    "version": "1.5.0"
+  },
+  "before": {
+    "content": [
+      {
+        "type": "text",
+        "text": "[\n  {\n    \"index\": 0,\n    \"id\": \"pg01\",\n    \"name\": \"01 · Полный контур\",\n    \"approxSizeBytes\": 87\n  },\n  {\n    \"index\": 1,\n    \"id\": \"pg02\",\n    \"name\": \"02 · Входы и контракты\",\n    \"approxSizeBytes\": 87\n  },\n  {\n    \"index\": 2,\n    \"id\": \"pg03\",\n    \"name\": \"03 · Qwen и инструменты\",\n    \"approxSizeBytes\": 87\n  },\n  {\n    \"index\": 3,\n    \"id\": \"pg04\",\n    \"name\": \"04 · Управление и ограничения\",\n    \"approxSizeBytes\": 87\n  },\n  {\n    \"index\": 4,\n    \"id\": \"pg05\",\n    \"name\": \"05 · Месячный MPC и горизонт\",\n    \"approxSizeBytes\": 87\n  },\n  {\n    \"index\": 5,\n    \"id\": \"pg06\",\n    \"name\": \"06 · OPM и полный replay\",\n    \"approxSizeBytes\": 87\n  },\n  {\n    \"index\": 6,\n    \"id\": \"pg07\",\n    \"name\": \"07 · SUMMARY, единицы, CSV\",\n    \"approxSizeBytes\": 87\n  },\n  {\n    \"index\": 7,\n    \"id\": \"pg08\",\n    \"name\": \"08 · Официальный ЧДД\",\n    \"approxSizeBytes\": 87\n  },\n  {\n    \"index\": 8,\n    \"id\": \"pg09\",\n    \"name\": \"09 · Все нормативы и ЭЦН\",\n    \"approxSizeBytes\": 87\n  },\n  {\n    \"index\": 9,\n    \"id\": \"pg10\",\n    \"name\": \"10 · Lineage и восстановление\",\n    \"approxSizeBytes\": 87\n  },\n  {\n    \"index\": 10,\n    \"id\": \"pg11\",\n    \"name\": \"11 · Файлы, запуск, выдача\",\n    \"approxSizeBytes\": 87\n  },\n  {\n    \"index\": 11,\n    \"id\": \"pg12\",\n    \"name\": \"12 · Проверено и открыто\",\n    \"approxSizeBytes\": 87\n  }\n]"
+      }
+    ]
+  },
+  "after": {
+    "content": [
+      {
+        "type": "text",
+        "text": "[\n  {\n    \"index\": 0,\n    \"id\": \"pg01\",\n    \"name\": \"01 · Полный контур\",\n    \"approxSizeBytes\": 22465\n  },\n  {\n    \"index\": 1,\n    \"id\": \"pg02\",\n    \"name\": \"02 · Входы и контракты\",\n    \"approxSizeBytes\": 21635\n  },\n  {\n    \"index\": 2,\n    \"id\": \"pg03\",\n    \"name\": \"03 · Qwen и инструменты\",\n    \"approxSizeBytes\": 23603\n  },\n  {\n    \"index\": 3,\n    \"id\": \"pg04\",\n    \"name\": \"04 · Управление и ограничения\",\n    \"approxSizeBytes\": 23262\n  },\n  {\n    \"index\": 4,\n    \"id\": \"pg05\",\n    \"name\": \"05 · Месячный MPC и горизонт\",\n    \"approxSizeBytes\": 24485\n  },\n  {\n    \"index\": 5,\n    \"id\": \"pg06\",\n    \"name\": \"06 · OPM и полный replay\",\n    \"approxSizeBytes\": 24335\n  },\n  {\n    \"index\": 6,\n    \"id\": \"pg07\",\n    \"name\": \"07 · SUMMARY, единицы, CSV\",\n    \"approxSizeBytes\": 24124\n  },\n  {\n    \"index\": 7,\n    \"id\": \"pg08\",\n    \"name\": \"08 · Официальный ЧДД\",\n    \"approxSizeBytes\": 24438\n  },\n  {\n    \"index\": 8,\n    \"id\": \"pg09\",\n    \"name\": \"09 · Все нормативы и ЭЦН\",\n    \"approxSizeBytes\": 23293\n  },\n  {\n    \"index\": 9,\n    \"id\": \"pg10\",\n    \"name\": \"10 · Lineage и восстановление\",\n    \"approxSizeBytes\": 23415\n  },\n  {\n    \"index\": 10,\n    \"id\": \"pg11\",\n    \"name\": \"11 · Файлы, запуск, выдача\",\n    \"approxSizeBytes\": 23257\n  },\n  {\n    \"index\": 11,\n    \"id\": \"pg12\",\n    \"name\": \"12 · Проверено и открыто\",\n    \"approxSizeBytes\": 23840\n  }\n]"
+      }
+    ]
+  }
+}

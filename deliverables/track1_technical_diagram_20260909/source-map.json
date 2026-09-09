@@ -1,0 +1,23 @@
+{
+  "track1_commit": "c088d2d05bd57f274a96007d3100a892beacec6a",
+  "source_files": {
+    "scripts/run_track1_mpc.py": "53991b131b1329fee036d1503d6122f5e6b99413e97d04cf06fff283572fb6e7",
+    "scripts/audit_track1_lifecycle.py": "5e4a8ccf83971a8d935cbfa72bce8efcad078ebccc12c2eb44ed6b70a3687d66",
+    "src/timesoil/aios/track1.py": "07b2af4e1b1094063d8550def8f4c4e49970f9dd831268b9d40758e4ffb7f2b8",
+    "src/timesoil/aios/opm.py": "727ab4921f4386ca5e747c3629daa1cc63406e75d694f76fe8616f9c8375769f",
+    "src/timesoil/aios/opm_chdd.py": "9b6c3c47b5c345f908f322043b91b08b2f0e6ef39ee95861e5ab3c00b4ae5572",
+    "src/timesoil/aios/economics.py": "d4e67bad56dac5167b6e0062dc0f8e7c91cfa09421b130dbc7a25b34f2373a58",
+    "src/timesoil/aios/contracts.py": "f82115f81b7063abc21d924ff30f5804ce044bbef22a582bb06d8a901de70d88",
+    "src/timesoil/aios/agents.py": "d718069b27c75fb113b79bd3dd89786f64f997c1817bc7bcd92de4028dbf7a43",
+    "src/timesoil/aios/llm.py": "813eea9bb5c3d1e80460a19db1813209d6ecd1ae23e694d90783320b2744fdcc",
+    "src/timesoil/aios/schedule.py": "4fdb17caf1c75a92b4b65e5a25102f00b6132e74437e52a62c655a4318247823",
+    "src/timesoil/aios/schedule_overlay.py": "4a3aba5e1aee37689654748318b44d3a7e6f69f7754001e149f0a70cf2991144",
+    "src/timesoil/aios/operating_constraints.py": "b5223df892da1aebab9433578214ada165e9705ff432d666788bed22493680dd",
+    "docs/hackathon/chdd/CHDD_PYTHON/chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e"
+  },
+  "diagram_sha256": "944214f49d08d9307ff4e3a26d26e8ec703d09b8659a11780a12d2ea20a4baff",
+  "pages": 12,
+  "nodes": 196,
+  "edges": 146,
+  "claims": "Current implementation and separate scientific evidence; no new full-horizon improvement claimed."
+}
