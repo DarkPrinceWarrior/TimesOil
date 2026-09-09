@@ -7,12 +7,21 @@ import json
 from pathlib import Path
 
 from run_track1_mpc import _continuation_tail, _next_month, _propose_controls, build_backend, load_config
+from timesoil.aios.operating_constraints import OperatingConstraint
 
 
 def check(config_path, output):
     config = load_config(config_path)
     output.mkdir(parents=True, exist_ok=False)
-    config = replace(config, case=replace(config.case, allow_conversion_to_injection=True),
+    first = config.initial_state.month
+    second = _next_month(first)
+    blocked = next(w for w in config.case.producers if w not in ("1", "12"))
+    rules = (
+        OperatingConstraint(first, second, ("1",), (("min_injection_m3d", 10), ("max_injection_m3d", 80), ("max_bhp_bar", 280))),
+        OperatingConstraint(first, second, ("12",), (("max_liquid_m3d", 100), ("min_bhp_bar", 70), ("max_watercut", 1))),
+        OperatingConstraint(first, second, (blocked,), unavailable=True),
+    )
+    config = replace(config, case=replace(config.case, allow_conversion_to_injection=True, operating_constraints=rules),
                      opm_runs_dir=output / "opm")
     backend = build_backend(config)
     state = config.initial_state
@@ -24,6 +33,7 @@ def check(config_path, output):
         actions = _propose_controls(config.case, baseline, [
             {"well": "1", "role": "injector", "status": "OPEN", "target": "WRAT", "value": 80, "bhp_limit": 280},
             {"well": "12", "role": "producer", "status": "OPEN", "target": "LRAT", "value": 100, "bhp_limit": 70},
+            {"well": blocked, "status": "SHUT", "target": "LRAT", "value": 0},
         ])
         step = backend.run_from_restart(config.case, state, actions,
             planning_tail=_continuation_tail(config, state, actions))
@@ -31,6 +41,7 @@ def check(config_path, output):
         assert by_well["1"].role.value == "injector" and by_well["1"].injection_rate > 0
         assert by_well["1"].bhp <= 280 + 1e-5
         assert by_well["12"].bhp >= 70 - 1e-5
+        assert by_well[blocked].liquid_rate == 0 and by_well[blocked].injection_rate == 0
         path, _ = backend._parse_restart_ref(step.trajectory.next_state.restart_ref)
         backend._verify_opm_manifest(path.parent / "manifest.json", baseline=False)
         history = backend._authenticated_history(config.case, step.trajectory.next_state)
@@ -51,6 +62,7 @@ def check(config_path, output):
               "source_sha256": config.source_sha256,
               "script_sha256": sha256(Path(__file__).read_bytes()).hexdigest(),
               "planning_end_exclusive": _next_month(config.case.end).isoformat(),
+              "operating_constraints": [rule.to_dict() for rule in rules],
               "well_count": len(previous), "steps": steps, "passed": True}
     (output / "verification.json").write_text(json.dumps(result, indent=2))
     return result

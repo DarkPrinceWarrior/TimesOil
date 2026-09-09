@@ -1442,6 +1442,7 @@ class OpmGdmBackend:
         from .opm_chdd import export_opm_chdd
         from .schedule import ScheduleCompiler
         from .track1 import GdmResult
+        from .operating_constraints import check_controls, check_summary
 
         self.validate_case(case)
         if state.case_id != case.case_id:
@@ -1477,6 +1478,7 @@ class OpmGdmBackend:
             simulated = compiler.validate(case, (*accepted, *tail))
             simulation_end = case.end
 
+        check_controls(case.operating_constraints, simulated)
         source_sha = _source_digest(self.source)
         payload = {
             "case_id": case.case_id,
@@ -1487,6 +1489,8 @@ class OpmGdmBackend:
         if planning_tail is not None:
             payload["planning_tail"] = [self._action_value(action) for action in tail]
             payload["planning_end"] = self._next_month(simulation_end).isoformat()
+        if case.operating_constraints:
+            payload["operating_constraints"] = [rule.to_dict() for rule in case.operating_constraints]
         run_id = "opm-full-replay-" + sha256(
             json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()[:24]
@@ -1544,6 +1548,8 @@ class OpmGdmBackend:
         )
 
         next_month = self._next_month(state.month)
+        check_summary(case.operating_constraints, report, deck_dir=prepared.deck_path.parent,
+                      months={a.month for a in simulated}, unit_system=prepared.unit_system)
         next_wells = self._wells_at(
             report, case, next_month, deck_dir=prepared.deck_path.parent,
             roles={well.well: well.role for well in state.wells} | {action.well: action.role for action in ordered},

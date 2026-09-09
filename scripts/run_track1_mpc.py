@@ -19,6 +19,7 @@ from typing import Any
 from timesoil.aios.agents import AgentRole, AgentWorkflow, ToolDefinition, ToolRegistry
 from timesoil.aios.llm import LLMConfig, TatneftLLMClient
 from timesoil.aios.economics import CHDDEconomicsAdapter
+from timesoil.aios.operating_constraints import check_controls, parse_constraints
 
 from timesoil.aios.contracts import (
     Case,
@@ -188,7 +189,7 @@ def _case(value: Any) -> Case:
         value,
         "case",
         {"case_id", "start", "end", "economics_start", "producers", "injectors"},
-        {"max_liquid_rate", "allow_conversion_to_injection"},
+        {"max_liquid_rate", "allow_conversion_to_injection", "operating_constraints"},
     )
     max_rate = item.get("max_liquid_rate", 500.0)
     return Case(
@@ -200,6 +201,10 @@ def _case(value: Any) -> Case:
         injectors=_strings(item["injectors"], "case.injectors"),
         max_liquid_rate=_number(max_rate, "case.max_liquid_rate"),
         allow_conversion_to_injection=item.get("allow_conversion_to_injection", False),
+        operating_constraints=parse_constraints(
+            item.get("operating_constraints", []), wells=(*item["producers"], *item["injectors"]),
+            start=_month(item["start"], "case.start"), end=_month(item["end"], "case.end"),
+        ),
     )
 
 
@@ -451,7 +456,9 @@ def _propose_controls(case: Case, baseline: Candidate, updates: Any) -> Candidat
         )
         if controls[well].role is WellRole.INJECTOR and case.role_of(well) is WellRole.PRODUCER and controls[well].bhp_limit is None:
             raise ValueError("conversion to injection requires an explicit BHP ceiling")
-    return ScheduleCompiler().validate(case, controls.values())
+    candidate = ScheduleCompiler().validate(case, controls.values())
+    check_controls(case.operating_constraints, candidate)
+    return candidate
 
 
 def _continuation_tail(config: RunConfig, state: State, candidate: Candidate) -> Candidate:
@@ -593,6 +600,7 @@ def execute(
             "track": 1, "phase": "planning", "surrogate_used": False,
             "source_sha256": config.source_sha256,
             "state": _state_payload(state),
+            "operating_constraints": [rule.to_dict() for rule in config.case.operating_constraints],
             "candidates": [[_action_payload(a) for a in option] for option in options],
             "selection_policy": "Choose one candidate for full OPM and official CHDD; numerical results are not known yet. Candidate index is zero-based. No global optimality claim.",
         }
