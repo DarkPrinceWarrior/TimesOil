@@ -359,6 +359,33 @@ def test_agent_mode_selects_one_candidate_and_records_each_month(
     assert secret not in json.dumps(summary)
 
 
+def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_path: Path, monkeypatch: Any) -> None:
+    from dataclasses import replace
+    config = _config(tmp_path)
+    config = replace(config, candidates={month: options[:1] for month, options in config.candidates.items()})
+    updates = [{"well": "P1", "status": "OPEN", "target": "LRAT", "value": 110.0},
+               {"well": "I1", "status": "OPEN", "target": "WRAT", "value": 90.0}]
+
+    class FullFieldClient(_AgentClient):
+        rejected_role = None
+
+        async def chat(self, _: Any, **kwargs: Any) -> LLMResponse:
+            calls = ((ToolCall("propose-1", "propose_controls", {"updates": updates}),)
+                     if kwargs.get("tools") else ())
+            return LLMResponse("preliminary", None, "tool_calls" if calls else "stop", calls)
+
+    monkeypatch.setenv("LLM_API_KEY", "test-secret")
+    monkeypatch.setattr(cli, "TatneftLLMClient", FullFieldClient)
+    outputs, _ = cli.execute(config, DeterministicGdmBackend(), agent=True, full_field=True)
+    result = json.loads(outputs[Path("result.json")])
+    assert {a["well"]: a["value"] for a in result["schedule"]["actions"]} == {"P1": 110, "I1": 90}
+    assert result["agent"]["records"][-1]["phase"] == "terminal_month_review"
+    baseline = config.candidates[config.case.start][0]
+    _raises(ValueError, "unknown or duplicate", lambda: cli._propose_controls(config.case, baseline, updates * 2))
+    _raises(ValueError, "exceeds", lambda: cli._propose_controls(config.case, baseline, [{**updates[0], "value": 501}]))
+    _raises(ValueError, "every well", lambda: cli._propose_controls(config.case, baseline[:1], []))
+
+
 def test_agent_mode_fails_closed_on_invalid_choice_and_critic_rejection(
     tmp_path: Path, monkeypatch: Any
 ) -> None:

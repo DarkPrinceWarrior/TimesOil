@@ -841,13 +841,21 @@ def _sanitize_model_y(deck_path: Path) -> DeckTransformation:
 class OpmFlowRunner:
     """Run an immutable case snapshot with digest-pinned OPM Flow."""
 
-    def __init__(self, *, timeout_seconds: float = 3600.0, docker_executable: str = "docker"):
+    def __init__(
+        self, *, timeout_seconds: float = 3600.0, docker_executable: str = "docker",
+        threads_per_process: int | None = None,
+    ):
         if not 0 < timeout_seconds <= 7 * 24 * 3600:
             raise ValueError("OPM timeout must be in (0, 604800] seconds")
         if not docker_executable or "\x00" in docker_executable:
             raise ValueError("docker_executable must be non-empty and contain no NUL")
+        if threads_per_process is None:
+            threads_per_process = int(os.environ.get("OPM_THREADS_PER_PROCESS", "2"))
+        if type(threads_per_process) is not int or not 1 <= threads_per_process <= 256:
+            raise ValueError("OPM threads_per_process must be an integer in [1, 256]")
         self.timeout_seconds = timeout_seconds
         self.docker_executable = docker_executable
+        self.threads_per_process = threads_per_process
 
     def get_provenance(self) -> str:
         return f"OPM Flow 2026.04; image={OPM_IMAGE}"
@@ -958,6 +966,7 @@ class OpmFlowRunner:
             OPM_IMAGE,
             "flow",
             "--output-dir=/output",
+            f"--threads-per-process={self.threads_per_process}",
         ]
         if parsing_strictness == "low":
             command.append("--parsing-strictness=low")

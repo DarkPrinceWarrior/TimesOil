@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import date
 from hashlib import sha256
 import json
@@ -431,6 +431,26 @@ def _state_payload(state: State) -> dict[str, Any]:
     }
 
 
+def _propose_controls(case: Case, baseline: Candidate, updates: Any) -> Candidate:
+    controls = {action.well: action for action in baseline}
+    if len(controls) != len(baseline) or set(controls) != set(case.producers + case.injectors):
+        raise ValueError("full-field baseline must contain every well exactly once")
+    if not isinstance(updates, list):
+        raise ValueError("updates must be an array")
+    seen = set()
+    for index, value in enumerate(updates):
+        item = _object(value, f"updates[{index}]", {"well", "status", "target", "value"})
+        well = _string(item["well"], "update well")
+        if well not in controls or well in seen:
+            raise ValueError("unknown or duplicate well update")
+        seen.add(well)
+        controls[well] = replace(
+            controls[well], status=WellStatus(item["status"]),
+            target=ControlTarget(item["target"]), value=_number(item["value"], "control value"),
+        )
+    return ScheduleCompiler().validate(case, controls.values())
+
+
 def execute(
     config: RunConfig,
     backend: GdmBackend,
@@ -438,14 +458,18 @@ def execute(
     script_source_contract: dict[str, dict[str, str]] | None = None,
     agent: bool = False,
     agent_log: Path | None = None,
+    full_field: bool = False,
 ) -> tuple[dict[Path, bytes], dict[str, Any]]:
     started = monotonic()
+    if full_field and (not agent or any(len(options) != 1 for options in config.candidates.values())):
+        raise ValueError("full-field mode requires --agent and exactly one baseline per month")
     if agent and config.case.economics_start != config.case.start:
         raise ValueError("agent economics_start must equal the AIOS management start")
     source_contract = script_source_contract or _script_source_contract()
     agent_records: list[dict[str, Any]] = []
     planning = None
     llm_config = LLMConfig.from_env() if agent else None
+    feedback: list[dict[str, Any]] = []
 
     def record(item: dict[str, Any]) -> None:
         agent_records.append(item)
@@ -464,6 +488,24 @@ def execute(
             "candidates": [[_action_payload(a) for a in option] for option in options],
             "selection_policy": "Choose one candidate for full OPM and official CHDD; numerical results are not known yet. Candidate index is zero-based. No global optimality claim.",
         }
+        if full_field:
+            context.update({
+                "selection_policy": "Optimize official CHDD by proposing rate and OPEN/SHUT updates for ANY well in the complete baseline. No preselected well subset or percentage bounds. All other controls retain baseline values. Exactly one propose_controls call. Every month is validated by full OPM and official CHDD.",
+                "state_units": {"oil_rate": "surface m3/day, NOT tonnes/day", "liquid_rate": "surface m3/day", "injection_rate": "surface m3/day", "bhp": "bar"},
+                "constraints": {"max_producer_liquid_m3d": config.case.max_liquid_rate,
+                    "pressure": "source schedule BHP bounds remain enforced by OPM",
+                    "water_quota": "no additional numeric quota supplied in this archive; do not invent one",
+                    "availability": "respect source completions; no drilling or unprovided repair assumptions",
+                    "roles": "role fixed by this case contract; conversion is not implemented in this controller"},
+                "economics": {"oil_rub_per_t": 28000, "oil_deductions_rub_per_t": 19600,
+                    "oil_opex_rub_per_t": 40, "liquid_opex_rub_per_t": 100,
+                    "injection_opex_rub_per_m3": 30, "active_well_m_per_year": 1,
+                    "stop_or_start_m": 1, "pump_change_operation_m": 1.8,
+                    "pump_capex_m": "0.55 to 8.05 by type; switching across size bands incurs CAPEX",
+                    "horizon_end": config.case.end.isoformat(),
+                    "objective": "Preserve profitable oil, avoid uneconomic water production and needless pump/status changes; evaluate tradeoffs over the full remaining horizon."},
+                "prior_months": feedback[-3:],
+            })
 
         def select(arguments: Any, _: Any) -> dict[str, Any]:
             index = arguments["index"]
@@ -471,22 +513,42 @@ def execute(
                 raise ValueError("candidate index outside configured options")
             return {"selected_index": index, "constraint_check": "configured candidate; deterministic validation precedes OPM"}
 
-        registry = ToolRegistry((ToolDefinition(
+        tool = ToolDefinition(
             "select_candidate", "Select one configured candidate index for the current month.",
             {"type": "object", "properties": {"index": {"type": "integer"}},
              "required": ["index"], "additionalProperties": False}, select,
-        ),))
+        )
+        proposed: list[Candidate] = []
+        if full_field:
+            def propose(arguments: Any, _: Any) -> dict[str, Any]:
+                candidate = _propose_controls(config.case, options[0], arguments["updates"])
+                proposed.append(candidate)
+                return {"well_count": len(candidate), "controls": [_action_payload(a) for a in candidate],
+                        "schedule_sha256": ScheduleCompiler().compile(config.case, candidate).sha256}
+            tool = ToolDefinition("propose_controls", "Propose updates to any well; retain complete baseline for other wells.",
+                {"type": "object", "properties": {"updates": {"type": "array", "items": {
+                    "type": "object", "properties": {"well": {"type": "string"},
+                        "status": {"type": "string", "enum": ["OPEN", "SHUT"]},
+                        "target": {"type": "string", "enum": ["ORAT", "LRAT", "WRAT"]},
+                        "value": {"type": "number"}},
+                    "required": ["well", "status", "target", "value"], "additionalProperties": False}}},
+                 "required": ["updates"], "additionalProperties": False}, propose)
+        registry = ToolRegistry((tool,))
         async with TatneftLLMClient(llm_config) as client:
             workflow = AgentWorkflow(client, registry,
-                role_tools={AgentRole.PLANNER: ("select_candidate",)},
-                required_tools={AgentRole.PLANNER: ("select_candidate",)})
+                role_tools={AgentRole.PLANNER: (tool.name,)},
+                required_tools={AgentRole.PLANNER: (tool.name,)})
             plan = await workflow.run_plan(context)
         selections = plan.decisions[-1].tool_evidence
         record({"phase": "planning", "month": state.month.isoformat(), "agent": asdict(plan)})
         if not all(decision.approved for decision in plan.decisions):
             raise RuntimeError("agent rejected planning; see agent decision log")
-        if len(selections) != 1 or selections[0].tool != "select_candidate":
-            raise RuntimeError("planner must select exactly one configured candidate")
+        if len(selections) != 1 or selections[0].tool != tool.name:
+            raise RuntimeError("planner must make exactly one control proposal")
+        if full_field:
+            if len(proposed) != 1:
+                raise RuntimeError("planner must propose one complete field schedule")
+            return plan, (proposed[0],)
         return plan, (options[selections[0].output["selected_index"]],)
 
     def candidates(state: State) -> Any:
@@ -510,6 +572,10 @@ def execute(
         record({"phase": "terminal_month_review", "month": result.trajectory.month.isoformat(), "agent": asdict(reviewed)})
         if not reviewed.critic_approved:
             raise RuntimeError("critic rejected simulated month; see agent decision log")
+        feedback.append({"month": result.trajectory.month.isoformat(),
+                         "cumulative_chdd_m": result.economics.npv_million_rub,
+                         "controls": [_action_payload(a) for a in result.trajectory.actions],
+                         "state": _state_payload(result.trajectory.next_state)})
 
     result: Track1Result = MonthlyMPC(backend).run(
         config.case,
@@ -562,7 +628,7 @@ def execute(
     if agent:
         payload["agent"] = {"model": llm_config.model, "base_url": llm_config.base_url,
                             "elapsed_seconds": monotonic() - started,
-                            "selection_policy": "one configured candidate per month, full OPM then critic",
+                            "selection_policy": "all-well agent proposals, full OPM then critic" if full_field else "one configured candidate per month, full OPM then critic",
                             "records": agent_records}
     result_bytes = _json(payload)
     schedule_bytes = result.schedule.text.encode("utf-8")
@@ -645,6 +711,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--runs-dir", type=Path, required=True)
     parser.add_argument("--proof-script", type=Path)
     parser.add_argument("--agent", action="store_true", help="Use external Qwen to select one candidate per month, then review each full OPM/CHDD result")
+    parser.add_argument("--full-field", action="store_true", help="Allow Qwen to propose validated controls for every well")
     return parser
 
 
@@ -667,6 +734,7 @@ def main(argv: list[str] | None = None) -> int:
             script_source_contract=source_contract,
             agent=args.agent,
             agent_log=agent_log,
+            full_field=args.full_field,
         )
         run_dir = publish(args.runs_dir, config.run_id, outputs)
     except (KeyError, OSError, RuntimeError, TypeError, ValueError) as exc:
