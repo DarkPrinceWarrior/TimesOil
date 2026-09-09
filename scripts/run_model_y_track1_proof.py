@@ -975,6 +975,7 @@ def _action_json(action: ControlAction) -> dict[str, object]:
         "status": action.status.value,
         "target": action.target.value,
         "value": action.value,
+        **({"bhp_limit": action.bhp_limit} if action.bhp_limit is not None else {}),
     }
 
 

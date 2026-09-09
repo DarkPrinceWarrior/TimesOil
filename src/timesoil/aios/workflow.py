@@ -412,7 +412,7 @@ def _controls(value: Any) -> tuple[ControlAction, ...]:
     fields = {"month", "well", "role", "status", "target", "value"}
     actions: list[ControlAction] = []
     for raw in value:
-        if not isinstance(raw, Mapping) or set(raw) != fields:
+        if not isinstance(raw, Mapping) or not fields <= set(raw) <= fields | {"bhp_limit"}:
             raise CycleError("control fields are invalid")
         target = raw["value"]
         if isinstance(target, bool) or not isinstance(target, (int, float)):
@@ -426,6 +426,7 @@ def _controls(value: Any) -> tuple[ControlAction, ...]:
                     status=WellStatus(raw["status"]),
                     target=ControlTarget(raw["target"]),
                     value=float(target),
+                    bhp_limit=raw.get("bhp_limit"),
                 )
             )
         except (TypeError, ValueError) as exc:
@@ -665,14 +666,7 @@ def _artifact(path: Path, root: Path) -> dict[str, Any]:
 
 
 def _action(value: ControlAction) -> dict[str, Any]:
-    return {
-        "month": value.month.isoformat(),
-        "well": value.well,
-        "role": value.role.value,
-        "status": value.status.value,
-        "target": value.target.value,
-        "value": value.value,
-    }
+    return value.to_dict()
 
 
 def _csv_rows(path: Path) -> list[dict[str, str]]:

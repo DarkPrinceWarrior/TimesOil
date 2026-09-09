@@ -95,7 +95,7 @@ def load_control_records(
 
     actions: list[ControlAction] = []
     for number, row in enumerate(rows, start=1):
-        if not isinstance(row, Mapping) or set(row) != _FIELDS:
+        if not isinstance(row, Mapping) or not _FIELDS <= set(row) <= _FIELDS | {"bhp_limit"}:
             raise ScenarioGenerationError(
                 f"row {number} must contain exactly {sorted(_FIELDS)}"
             )
@@ -112,7 +112,9 @@ def load_control_records(
                 if target is ControlTarget.WATER_INJECTION_RATE
                 else WellRole.PRODUCER
             )
-            actions.append(ControlAction(month, well, role, status, target, value))
+            bhp = row.get("bhp_limit")
+            actions.append(ControlAction(month, well, role, status, target, value,
+                                         None if bhp in (None, "") else _value(bhp)))
         except (TypeError, ValueError) as exc:
             raise ScenarioGenerationError(f"invalid control row {number}: {exc}") from exc
     return _validate_trajectory(actions)
@@ -126,7 +128,7 @@ def load_control_csv(path: str | Path) -> tuple[ControlAction, ...]:
         with source.open(encoding="utf-8", newline="") as stream:
             reader = csv.DictReader(stream)
             header = reader.fieldnames
-            if header is None or len(header) != len(set(header)) or set(header) != _FIELDS:
+            if header is None or len(header) != len(set(header)) or not _FIELDS <= set(header) <= _FIELDS | {"bhp_limit"}:
                 raise ScenarioGenerationError(
                     f"CSV header must contain exactly {sorted(_FIELDS)}"
                 )
@@ -318,6 +320,7 @@ def _canonical_actions(actions: tuple[ControlAction, ...]) -> bytes:
             "status": action.status.value,
             "control_target": action.target.value,
             "control_value": action.value,
+            **({"bhp_limit": action.bhp_limit} if action.bhp_limit is not None else {}),
         }
         for action in actions
     ]
