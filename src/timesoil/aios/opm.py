@@ -637,6 +637,8 @@ def _summary_mapping(unit_system: str) -> dict[str, dict[str, str]]:
 
 
 def _strip_comment(line: str) -> str:
+    if "--" not in line:
+        return line
     quote: str | None = None
     for index, character in enumerate(line):
         if character in "'\"":

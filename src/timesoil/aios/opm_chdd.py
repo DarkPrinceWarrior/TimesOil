@@ -121,6 +121,8 @@ def _csv_bytes(fields: Sequence[str], rows: Iterable[Mapping[str, Any]]) -> byte
 
 
 def _strip_comment(line: str) -> str:
+    if "--" not in line:
+        return line
     quote: str | None = None
     index = 0
     while index < len(line):
