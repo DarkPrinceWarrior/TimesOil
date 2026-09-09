@@ -1,0 +1,131 @@
+{
+  "schema": "timesoil.provider-protocol-check/v1",
+  "track": 1,
+  "endpoint": "https://litellm.tatneft.guru/v1",
+  "model": "qwen3.8-27b",
+  "git_commit": "34759b6f8f5696053b19ba3c7af73edf63a62e0c",
+  "script_sha256": "a16efeaa39bdd9d0447f8aa34481d369945f13991f7cfdaea1dfc2ac022e778f",
+  "complete": true,
+  "seconds": 54.66484113782644,
+  "calls": [
+    {
+      "model": "qwen3.8-27b",
+      "seconds": 15.678797394037247,
+      "structured": false,
+      "tools": 1,
+      "usage": {
+        "prompt_tokens": 558,
+        "completion_tokens": 4096,
+        "total_tokens": 4654
+      }
+    },
+    {
+      "model": "qwen3.8-27b",
+      "seconds": 1.3975840844213963,
+      "structured": true,
+      "tools": 0,
+      "usage": {
+        "prompt_tokens": 363,
+        "completion_tokens": 112,
+        "total_tokens": 475
+      }
+    },
+    {
+      "model": "qwen3.8-27b",
+      "seconds": 15.105421464890242,
+      "structured": false,
+      "tools": 1,
+      "usage": {
+        "prompt_tokens": 691,
+        "completion_tokens": 4096,
+        "total_tokens": 4787
+      }
+    },
+    {
+      "model": "qwen3.8-27b",
+      "seconds": 0.7187275104224682,
+      "structured": true,
+      "tools": 0,
+      "usage": {
+        "prompt_tokens": 500,
+        "completion_tokens": 114,
+        "total_tokens": 614
+      }
+    },
+    {
+      "model": "qwen3.8-27b",
+      "seconds": 5.767177153378725,
+      "structured": false,
+      "tools": 1,
+      "usage": {
+        "prompt_tokens": 825,
+        "completion_tokens": 1483,
+        "total_tokens": 2308
+      }
+    },
+    {
+      "model": "qwen3.8-27b",
+      "seconds": 0.6154572553932667,
+      "structured": true,
+      "tools": 0,
+      "usage": {
+        "prompt_tokens": 634,
+        "completion_tokens": 111,
+        "total_tokens": 745
+      }
+    },
+    {
+      "model": "qwen3.8-27b",
+      "seconds": 14.252845700830221,
+      "structured": false,
+      "tools": 1,
+      "usage": {
+        "prompt_tokens": 900,
+        "completion_tokens": 3671,
+        "total_tokens": 4571
+      }
+    },
+    {
+      "model": "qwen3.8-27b",
+      "seconds": 1.087043434381485,
+      "structured": true,
+      "tools": 0,
+      "usage": {
+        "prompt_tokens": 707,
+        "completion_tokens": 215,
+        "total_tokens": 922
+      }
+    }
+  ],
+  "roles": [
+    {
+      "role": "coordinator",
+      "tools": [
+        "read_protocol_probe"
+      ],
+      "approved": true
+    },
+    {
+      "role": "reservoir_analyst",
+      "tools": [
+        "read_protocol_probe"
+      ],
+      "approved": true
+    },
+    {
+      "role": "planner",
+      "tools": [
+        "read_protocol_probe"
+      ],
+      "approved": true
+    },
+    {
+      "role": "critic",
+      "tools": [
+        "read_protocol_probe"
+      ],
+      "approved": false
+    }
+  ],
+  "is_reservoir_acceptance": false
+}
