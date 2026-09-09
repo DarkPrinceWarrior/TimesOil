@@ -81,7 +81,7 @@ def main():
     if not 1 <= args.rounds <= 12:
         parser.error("rounds must be in [1, 12]")
     request = json.loads(args.request.read_text())
-    CycleRequest.from_mapping(request)
+    checked_request = CycleRequest.from_mapping(request)
     raw = (args.baseline_run / "canonical/trajectory.csv").read_bytes()
     manifest = json.loads((args.baseline_run / "canonical/manifest.json").read_text())
     if sha256(raw).hexdigest() != manifest["outputs"]["track2_csv"]["sha256"]:
@@ -155,7 +155,7 @@ def main():
         tool = ToolDefinition("propose_policy", "Propose a full-field rate/status policy and evaluate six-month TimesFM response. Full-period OPM decides final CHDD.", schema,
             lambda policy, _: evaluate(policy))
         context_value = {"track": 2, "round": index,
-            "objective": "Propose a new policy for maximum official CHDD over 224 months. Use per-well multipliers when useful; all wells are controllable. Call propose_policy exactly once. Avoid duplicate policies.",
+            "objective": f"Propose a new policy for maximum official CHDD over the request's {checked_request.horizon_months} management months. Use per-well multipliers when useful; all wells are controllable. Call propose_policy exactly once. Avoid duplicate policies.",
             "candidates": candidates,
             "field_state": [{"well": w, "oil_tpd": float(trajectory.states[origin, i, 0]),
                 "liquid_tpd": float(trajectory.states[origin, i, 1]), "pressure_bar": float(trajectory.states[origin, i, 2])}
@@ -164,7 +164,7 @@ def main():
                 "source_completions_and_planned_shutdowns_preserved": True,
                 "additional_water_quota": "not supplied in the current training archive",
                 "economic_costs_m": {"stop_or_start": 1, "pump_operation": 1.8, "pump_capex": "0.55..8.05 by size", "active_well_per_year": 1}},
-            "claim_limits": "Forecasts use only observed pre-origin history and planned controls. Screening margin is a six-month rate-integration estimate excluding pump CAPEX, state events and tax. It is NOT CHDD and is NOT extrapolated to 224 months. Candidate requires full-period OPM plus the official calculator. No independently calibrated TimesFM uncertainty or improvement claim."}
+            "claim_limits": "Forecasts use only observed pre-origin history and planned controls. Screening margin is a six-month rate-integration estimate excluding pump CAPEX, state events and tax. It is NOT CHDD and is NOT extrapolated to the management period. Candidate requires full-period OPM plus the official calculator. Request dates describe this experiment, not a confirmed competition horizon. No independently calibrated TimesFM uncertainty or improvement claim."}
         async with TatneftLLMClient(LLMConfig.from_env()) as client:
             plan = await AgentWorkflow(client, ToolRegistry((tool,)),
                 role_tools={AgentRole.PLANNER: (tool.name,)}, required_tools={AgentRole.PLANNER: (tool.name,)}).run_plan(context_value)
