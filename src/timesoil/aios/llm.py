@@ -17,9 +17,10 @@ from urllib.parse import urlsplit
 
 import httpx
 
-APPROVED_BASE_URL = "https://api.cerebras.ai/v1"
-APPROVED_MODEL = "qwen-3.8-27b"
-APPROVED_MODELS = frozenset({APPROVED_MODEL, "qwen3.6-35b-a3b"})
+APPROVED_BASE_URL = "https://litellm.tatneft.guru/v1"
+APPROVED_MODEL = "qwen3.8-27b"
+CEREBRAS_MODEL = "qwen-3.8-27b"
+APPROVED_MODELS = frozenset({APPROVED_MODEL, CEREBRAS_MODEL, "qwen3.6-35b-a3b"})
 _MAX_REASONING_CHARS = 32_768
 _MAX_CONTENT_CHARS = 65_536
 _NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]{0,63}$")
@@ -102,8 +103,10 @@ class LLMConfig:
                 raise ValueError("LLM_BASE_URL must use a global address")
         if self.model not in APPROVED_MODELS:
             raise ValueError("LLM_MODEL must be an approved external Qwen model")
-        if self.model == APPROVED_MODEL and self.base_url.rstrip("/") != APPROVED_BASE_URL:
-            raise ValueError(f"Cerebras Qwen requires {APPROVED_BASE_URL}")
+        if self.model == CEREBRAS_MODEL and self.base_url.rstrip("/") != "https://api.cerebras.ai/v1":
+            raise ValueError("Cerebras Qwen requires https://api.cerebras.ai/v1")
+        if self.model == APPROVED_MODEL and self.base_url.rstrip("/") != "https://litellm.tatneft.guru/v1":
+            raise ValueError("Tatneft Qwen requires https://litellm.tatneft.guru/v1")
         if (
             not self.api_key
             or self.api_key != self.api_key.strip()
@@ -234,7 +237,7 @@ class ExternalQwenClient:
         timeout_seconds: float | None = None,
     ) -> LLMResponse:
         payload = self._base_payload(messages, max_tokens=max_tokens)
-        if self.config.model == APPROVED_MODEL:
+        if self.config.model == CEREBRAS_MODEL:
             payload["reasoning_effort"] = "medium" if reasoning else "none"
         else:
             payload["chat_template_kwargs"] = {"enable_thinking": reasoning}
@@ -258,7 +261,7 @@ class ExternalQwenClient:
         if not _NAME_RE.fullmatch(schema_name):
             raise ValueError("invalid JSON schema name")
         payload = self._base_payload(messages, max_tokens=max_tokens)
-        if self.config.model == APPROVED_MODEL:
+        if self.config.model == CEREBRAS_MODEL:
             payload["reasoning_effort"] = "none"
             schema = _cerebras_json_schema(schema)
         else:

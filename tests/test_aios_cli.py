@@ -38,7 +38,7 @@ class CLITest(unittest.TestCase):
             "os.environ",
             {
                 "LLM_API_KEY": secret,
-                "LLM_BASE_URL": "https://api.cerebras.ai/v1",
+                "LLM_BASE_URL": "https://litellm.tatneft.guru/v1",
                 "LLM_MODEL": "qwen-3.8-27b",
             },
             clear=False,

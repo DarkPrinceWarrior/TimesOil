@@ -49,13 +49,19 @@ def _config() -> LLMConfig:
 def test_llm_config_accepts_approved_qwen_and_hides_secret() -> None:
     config = _config()
     assert config.model == APPROVED_MODEL
+    assert config.model == "qwen3.8-27b"
+    assert config.base_url == "https://litellm.tatneft.guru/v1"
+    with pytest.raises(ValueError, match="Tatneft Qwen requires"):
+        LLMConfig(api_key="x", base_url="https://api.cerebras.ai/v1", model="qwen3.8-27b")
+    with pytest.raises(ValueError, match="Cerebras Qwen requires"):
+        LLMConfig(api_key="x", base_url="https://litellm.tatneft.guru/v1", model="qwen-3.8-27b")
     assert "test-only-key" not in repr(config)
     assert TatneftLLMClient is ExternalQwenClient
     with pytest.raises(ValueError, match="external HTTPS"):
         LLMConfig(api_key="x", base_url="http://qwen.example/v1")
     with pytest.raises(ValueError, match="approved external Qwen"):
         LLMConfig(api_key="x", model="unsupported-qwen")
-    with pytest.raises(ValueError, match="Cerebras Qwen requires"):
+    with pytest.raises(ValueError, match="Tatneft Qwen requires"):
         LLMConfig(api_key="x", base_url="https://wrong-provider.example/v1")
     with pytest.raises(ValueError, match="LLM_API_KEY"):
         LLMConfig.from_env({})
@@ -143,8 +149,8 @@ def test_reasoning_content_and_tool_calls_are_normalized_with_mock_transport() -
     assert response.usage.total_tokens == 14
     assert captured["payload"]["model"] == APPROVED_MODEL
     assert captured["payload"]["temperature"] == 0.0
-    assert captured["payload"]["reasoning_effort"] == "medium"
-    assert "chat_template_kwargs" not in captured["payload"]
+    assert captured["payload"]["chat_template_kwargs"] == {"enable_thinking": True}
+    assert "reasoning_effort" not in captured["payload"]
     assert captured["authorization"] == "Bearer test-only-key"
 
 
@@ -181,8 +187,8 @@ def test_structured_output_disables_thinking_and_uses_json_schema() -> None:
             await transport.aclose()
 
     assert asyncio.run(scenario()) == {"value": 7}
-    assert captured["reasoning_effort"] == "none"
-    assert "chat_template_kwargs" not in captured
+    assert captured["chat_template_kwargs"] == {"enable_thinking": False}
+    assert "reasoning_effort" not in captured
     assert captured["response_format"]["json_schema"] == {
         "name": "Output",
         "strict": True,
