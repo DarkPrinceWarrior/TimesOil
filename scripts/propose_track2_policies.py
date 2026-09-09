@@ -1,4 +1,4 @@
-"""Qwen field policies with short TimesFM lookahead and full-period OPM requests.
+"""Qwen field policies with full-period TimesFM forecasts and OPM requests.
 
 Forecast margins are screening estimates, never submitted CHDD. Every emitted
 request retains source completions and is evaluated
@@ -12,6 +12,7 @@ import asyncio
 from dataclasses import asdict
 from hashlib import sha256
 import json
+import os
 from pathlib import Path
 import time
 
@@ -134,10 +135,17 @@ def main():
     parser.add_argument("request", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument("--rounds", type=int, default=3)
+    parser.add_argument('--connectivity', type=Path)
+    parser.add_argument('--head', type=Path)
+    parser.add_argument('--head-sha256')
+    parser.add_argument('--skip-grid', action='store_true')
     args = parser.parse_args()
+    os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
     self_check()
     if not 1 <= args.rounds <= 12:
         parser.error("rounds must be in [1, 12]")
+    if bool(args.head) != bool(args.head_sha256) or (args.head and not args.connectivity):
+        parser.error('trained head requires its SHA-256 and connectivity')
     request = json.loads(args.request.read_text())
     checked_request = CycleRequest.from_mapping(request)
     normative_profile = CHDDEconomicsAdapter.from_env().normative_profile(
@@ -158,7 +166,16 @@ def main():
         raise ValueError('BHP screening requires an authenticated baseline with the BHP action channel')
     start = pd.Timestamp(min(a["month"] for a in request["controls"]))
     origin = int(trajectory.dates.get_loc(start))
-    horizon, context = 6, 128
+    horizon, context = checked_request.horizon_months, 128
+    if origin < context or origin + horizon >= len(trajectory.dates):
+        raise ValueError('verified history and complete forecast horizon required')
+    connectivity = None
+    if args.connectivity:
+        from timesoil.aios.interwell import WellConnectivity
+        connectivity = WellConnectivity.from_dict(json.loads(args.connectivity.read_text()))
+        if (connectivity.well_ids != trajectory.well_ids or connectivity.provenance['source_sha256']
+                != manifest['provenance']['opm_source_sha256']):
+            raise ValueError('geology does not match the verified reservoir and well order')
     targets, _ = forecast_inputs(trajectory.states, trajectory.actions, origin, context, horizon)
     target = targets.reshape(-1, context)
     well_index = {w: i for i, w in enumerate(trajectory.well_ids)}
@@ -175,8 +192,25 @@ def main():
         raise RuntimeError("A100 required")
     torch.set_num_threads(4)
     torch.cuda.set_per_process_memory_fraction(.35)
+    torch.use_deterministic_algorithms(True)
+    torch.backends.cuda.enable_flash_sdp(False)
+    torch.backends.cuda.enable_mem_efficient_sdp(False)
+    torch.backends.cuda.enable_cudnn_sdp(False)
+    torch.backends.cuda.enable_math_sdp(True)
+    torch.manual_seed(20260909)
     forecaster = TimesFM3Forecaster(ModelConfig(checkpoint_path="google/timesfm-3.0-pytorch",
         revision=MODEL_REVISION, per_core_batch_size=1, device="cuda"))
+    if args.head:
+        from timesfm_geology import StaticConditionedHead
+        if sha256(args.head.read_bytes()).hexdigest() != args.head_sha256:
+            raise ValueError('trained head hash mismatch')
+        selected = torch.load(args.head, map_location='cuda', weights_only=True)
+        head = selected.get('output_head', selected)
+        forecaster.model.output_head = StaticConditionedHead(forecaster.model.output_head, connectivity)
+        torch.testing.assert_close(head['features'], forecaster.model.output_head.features, rtol=0, atol=0)
+        forecaster.model.output_head.load_state_dict(head)
+        if 'last_layer' in selected:
+            forecaster.model.transformer_stack.layers[-1].load_state_dict(selected['last_layer'])
     candidates = []
     days = np.array([d.days_in_month for d in trajectory.dates[origin:origin + horizon]])[:, None]
 
@@ -188,7 +222,8 @@ def main():
             **request.get("context", {}),
             "objective": "Verify this experimental TimesFM-screened field policy with full OPM and official CHDD. Improvement is unknown until paired comparison on the same period.",
             "facts": {"schedule_kind": "timesfm_policy_candidate", "is_baseline": False,
-                      "surrogate_used_for_candidate_selection": True,
+                      "surrogate_used_for_candidate_selection": False,
+                      "surrogate_used_only_to_propose_hypotheses": True,
                       "independent_surrogate_uq_calibrated": False,
                       "optimization_improvement_claimed": False},
             "policy": policy,
@@ -209,9 +244,15 @@ def main():
                 raise ValueError('BHP policy requires the BHP action channel')
             actions[position] = value
         _, cov = forecast_inputs(trajectory.states, actions, origin, context, horizon)
+        cov = cov[:, :-1].reshape(-1, context + horizon)
+        if connectivity is not None:
+            planned = actions[origin - context:origin + horizon]
+            allocated = connectivity.features(np.zeros((len(planned) * len(well_index), 3)),
+                planned.reshape(-1, planned.shape[-1]))[:, 0].reshape(len(planned), len(well_index)).T
+            cov = np.concatenate([cov, allocated])
         begin = time.monotonic()
         forecast = next(forecaster.predict_batch([target], horizon=horizon,
-            past_future_covariates=[cov[:, :-1].reshape(-1, context + horizon)],
+            past_future_covariates=[cov],
             use_symmetric_averaging=False, make_positive=True, return_quantiles=False))
         prediction = forecast.forecast.reshape(len(well_index), 3, horizon).transpose(2, 0, 1)
         future = actions[origin:origin + horizon]
@@ -227,6 +268,12 @@ def main():
                                    - liquid * econ["liquidOpexRubT"] - injection * econ["injectionOpexRubM3"]) / 1e6,
             "full_period_months": checked.horizon_months, "full_period_actions": len(controls),
             "bhp_channel": has_bhp,
+            "trained_head_sha256": args.head_sha256,
+            "forecast_by_well": [{"well": w,
+                "oil_tonnes": float((prediction[:, i, 0] * days[:, 0]).sum()),
+                "liquid_tonnes": float((prediction[:, i, 1] * days[:, 0]).sum()),
+                "terminal_reservoir_pressure_bar": float(prediction[-1, i, 2])}
+                for i, w in enumerate(trajectory.well_ids)],
             "controls_sha256": checked.controls_sha256, "inference_seconds": time.monotonic() - begin,
             "is_official_chdd": False}
         candidates.append(record)
@@ -236,7 +283,8 @@ def main():
         return record
 
     base_policy = dict(producer_scale=1.0, injector_scale=1.0, shut_wells=[], well_scales=[])
-    for production, injection in [(1, 1), (1.25, 1), (1, .8), (1, 1.2), (.8, 1), (1.5, 1), (2, 1), (3, 1)]:
+    grid = [(1, 1)] if args.skip_grid else [(1, 1), (1.25, 1), (1, .8), (1, 1.2), (.8, 1), (1.5, 1), (2, 1), (3, 1)]
+    for production, injection in grid:
         print(json.dumps(evaluate({**base_policy, "producer_scale": production, "injector_scale": injection})), flush=True)
     schema = {"type": "object", "properties": {
         "producer_scale": {"type": "number"}, "injector_scale": {"type": "number"},
@@ -258,12 +306,20 @@ def main():
 
     async def propose_round(index):
         before = len(candidates)
-        tool = ToolDefinition("propose_policy", "Propose a full-field policy. well_updates changes a well over inclusive monthly start/end dates after rate scaling: rate, status, target, role, BHP limit. Conversion requires explicit WRAT, value and BHP, must be permitted by the case, and cannot be reversed; extend its role to the end. Omitted scales default to 1, arrays to empty. Six-month TimesFM screening; full-period OPM decides CHDD.", schema,
+        tool = ToolDefinition("propose_policy", "Propose a full-field policy. well_updates changes a well over inclusive monthly start/end dates after rate scaling: rate, status, target, role, BHP limit. Conversion requires explicit WRAT, value and BHP, must be permitted by the case, and cannot be reversed; extend its role to the end. Omitted scales default to 1, arrays to empty. Full-period TimesFM hypothesis forecast; every retained candidate requires full-period OPM, and official CHDD selects the winner.", schema,
             lambda policy, _: evaluate(policy))
         context_value = {"track": 2, "round": index,
             "objective": f"Propose a new policy for maximum official CHDD over the request's {checked_request.horizon_months} management months. Use per-well multipliers when useful; all wells are controllable. Call propose_policy exactly once. Avoid duplicate policies.",
             "candidates": candidates,
             "verified_well_count": len(well_index),
+            "geology": None if connectivity is None else {
+                "static_feature_names": connectivity.provenance.get('static_feature_names', []),
+                "static_by_well": [[well, values] for well, values in zip(connectivity.well_ids,
+                    connectivity.provenance.get('static_features', connectivity.static.tolist()), strict=True)],
+                "five_strongest_neighbors": [[well, [[connectivity.well_ids[j], float(connectivity.weights[i, j])]
+                    for j in np.argsort(-connectivity.weights[i])[:5] if connectivity.weights[i, j] > 0]]
+                    for i, well in enumerate(connectivity.well_ids)],
+                "all_links_used_in_forecast": True, "limitations": connectivity.provenance['limitations']},
             "economics": normative_profile,
             "field_state": [{"well": w, "oil_tpd": float(trajectory.states[origin, i, 0]),
                 "liquid_tpd": float(trajectory.states[origin, i, 1]), "pressure_bar": float(trajectory.states[origin, i, 2]),
@@ -276,7 +332,7 @@ def main():
                 'case_constraints': checked_request.context.get('constraints', {}),
                 'operating_constraints': checked_request.context.get('operating_constraints', []),
                 "additional_water_quota": "not supplied in the current training archive"},
-            "claim_limits": "Forecasts use only observed pre-origin history and planned controls. Screening margin is a six-month rate-integration estimate excluding pump CAPEX, state events and tax. It is NOT CHDD and is NOT extrapolated to the management period. Candidate requires full-period OPM plus the official calculator. Request dates describe this experiment, not a confirmed competition horizon. No independently calibrated TimesFM uncertainty or improvement claim."}
+            "claim_limits": "Forecasts use only observed pre-origin history and planned controls. Screening margin is a full-period undiscounted rate-integration estimate excluding pump CAPEX, state events and tax. It is NOT CHDD and cannot select a winning control policy. Every retained hypothesis must undergo full OPM plus official CHDD before selection. Candidate requires full-period OPM plus the official calculator. Request dates describe this experiment, not a confirmed competition horizon. No independently calibrated TimesFM uncertainty or improvement claim."}
         async with ExternalQwenClient(LLMConfig.from_env()) as client:
             plan = await AgentWorkflow(client, ToolRegistry((tool,)),
                 role_tools={AgentRole.PLANNER: (tool.name,)}, required_tools={AgentRole.PLANNER: (tool.name,)}).run_plan(context_value)
@@ -291,6 +347,8 @@ def main():
     (args.output / "proposal-receipt.json").write_text(json.dumps({
         "source_trajectory_sha256": sha256(raw).hexdigest(), "request_sha256": sha256(args.request.read_bytes()).hexdigest(),
         "timesfm_revision": MODEL_REVISION, "agent_proposal_ids": proposed_ids,
+        "horizon_months": horizon, "head_sha256": args.head_sha256,
+        "connectivity_sha256": sha256(args.connectivity.read_bytes()).hexdigest() if args.connectivity else None,
         "script_sha256": sha256(Path(__file__).read_bytes()).hexdigest(), "requires_full_period_opm": True,
         "final_chdd_computed": False}, indent=2))
 
