@@ -47,21 +47,27 @@ class OpmFlowRunnerTest(unittest.TestCase):
         for value in (0, -1, 65, True, 1.5):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 OpmFlowRunner(mpi_processes=value)
+        for invalid in ("1;2", "all", "1,,2", True):
+            with self.subTest(cpu_affinity=invalid), self.assertRaises(ValueError):
+                OpmFlowRunner(cpu_affinity=invalid)
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             source = root / "MODEL.DATA"
             source.write_text(_MINIMAL_DECK)
             for ranks in (1, 8):
-                result = OpmFlowRunner(mpi_processes=ranks, threads_per_process=1).run(
+                result = OpmFlowRunner(mpi_processes=ranks, threads_per_process=1,
+                                       cpu_affinity="14-29").run(
                     source, root / f"run-{ranks}"
                 )
                 command = list(result.command)
                 self.assertEqual(json.loads(result.manifest_path.read_text())["command"], command)
                 self.assertEqual("mpirun" in command, ranks > 1)
                 if ranks > 1:
-                    self.assertEqual(command[command.index(OPM_IMAGE) + 1:command.index("flow")],
+                    self.assertEqual(command[command.index("mpirun"):command.index("flow")],
                                      ["mpirun", "--allow-run-as-root", "--oversubscribe",
                                       "-np", "8", "--bind-to", "none"])
+                self.assertEqual(command[command.index(OPM_IMAGE) + 1:command.index(OPM_IMAGE) + 4],
+                                 ["taskset", "-c", "14-29"])
 
     def test_thread_configuration_is_bounded_and_explicit_overrides_environment(self) -> None:
         with patch.dict("os.environ", {"OPM_THREADS_PER_PROCESS": "8"}):
