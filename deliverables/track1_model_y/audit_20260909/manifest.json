@@ -1,0 +1,35 @@
+{
+  "artifacts": {
+    "result": {
+      "bytes": 985224,
+      "path": "result.json",
+      "sha256": "72daba053f2fe18683bffeb69713a88c17c52fbcfac313403570e79c542ab83b"
+    },
+    "schedule": {
+      "bytes": 11640,
+      "path": "wells_schedule.inc",
+      "sha256": "9e47cd084bf30fc365073fc8ee74325a0bf18e736e453ee53a2be87e8590f8d3"
+    }
+  },
+  "backend_provenance": "OPM Flow 2026.04; image=openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9; restart=authenticated-full-replay/v1",
+  "config_sha256": "5402b3d32b1266b9b174cb91a21c98013a3ed50217d4fd8974ae5cb03d52f8f0",
+  "input_sha256": "04c6f1693baa4ad8aaadfa04cda50a40f5b6e797d4a6338d54b8f6fa2701ac52",
+  "run_id": "track1-04c6f1693baa4ad8aaadfa04",
+  "schedule_sha256": "9e47cd084bf30fc365073fc8ee74325a0bf18e736e453ee53a2be87e8590f8d3",
+  "schema": "timesoil.aios.track1-mpc-manifest/v1",
+  "script_source_contract": {
+    "run_track1_mpc.py": {
+      "path": "/root/projects/TimesOil-audit-track1-20260909/scripts/run_track1_mpc.py",
+      "sha256": "9d77b7ee19334a5fcd6edc2443a725a8e97b4b1ac41792019f17a0c649718c80"
+    }
+  },
+  "source_sha256": "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e",
+  "trajectory_run_ids": [
+    "opm-full-replay-41bda657ce77290fbd1de404",
+    "opm-full-replay-09639a2c6a706ce7472c9f65",
+    "opm-full-replay-b9799ab18d0639df1c4f6755",
+    "opm-full-replay-b3e3b32e9247a33ec07a5787",
+    "opm-full-replay-e7e18708c9bc6db978f4b90f",
+    "opm-full-replay-96fb2efe3cdd239a2e23df2d"
+  ]
+}

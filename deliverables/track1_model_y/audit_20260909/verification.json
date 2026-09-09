@@ -1,0 +1,20 @@
+{
+  "schema": "timesoil.track1-final-audit/v1",
+  "source_commit": "de8d3b914abc3aff98e1b412283f3dc31b394151",
+  "run_dir": "/root/projects/TimesOil/results/audit-20260909/track1-full-field-v6-six-months/delivery/track1-04c6f1693baa4ad8aaadfa04",
+  "months": 6,
+  "wells": 49,
+  "actions": 294,
+  "approved_monthly_reviews": 6,
+  "lineage_files_verified": 72,
+  "schedule_sha256": "9e47cd084bf30fc365073fc8ee74325a0bf18e736e453ee53a2be87e8590f8d3",
+  "manifest_sha256": "dde0bc62dee546f1f2c5a6c15d2c5771177a70707e393b9f50cc451ccdbf514e",
+  "result_sha256": "72daba053f2fe18683bffeb69713a88c17c52fbcfac313403570e79c542ab83b",
+  "chdd_m": 309.43247809760913,
+  "reference_baseline_chdd_m": 310.40301575623704,
+  "delta_chdd_m": -0.9705376586279044,
+  "uplift_percent": -0.3126701769515239,
+  "agent_seconds": 1051.0225979574025,
+  "scope": "January-June 2014 rehearsal; not the full 23-month training archive; reference baseline from authenticated original archive.",
+  "change": "Well 1 closed in May and kept closed in June; no optimizer role conversions."
+}
