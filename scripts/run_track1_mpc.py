@@ -470,6 +470,7 @@ def execute(
     planning = None
     llm_config = LLMConfig.from_env() if agent else None
     feedback: list[dict[str, Any]] = []
+    previous_controls: dict[str, ControlAction] = {}
 
     def record(item: dict[str, Any]) -> None:
         agent_records.append(item)
@@ -481,6 +482,13 @@ def execute(
 
     async def choose(state: State) -> Any:
         options = tuple(ScheduleCompiler().validate(config.case, option) for option in config.candidates[state.month])
+        if full_field and feedback:
+            source_previous = {a.well: a for a in config.candidates[date.fromisoformat(feedback[-1]["month"])][0]}
+            options = (tuple(
+                replace(previous_controls[a.well], month=state.month)
+                if replace(a, month=source_previous[a.well].month) == source_previous[a.well]
+                else a for a in options[0]
+            ),)
         context = {
             "track": 1, "phase": "planning", "surrogate_used": False,
             "source_sha256": config.source_sha256,
@@ -490,7 +498,9 @@ def execute(
         }
         if full_field:
             context.update({
-                "selection_policy": "Optimize official CHDD by proposing rate and OPEN/SHUT updates for ANY well in the complete baseline. No preselected well subset or percentage bounds. All other controls retain baseline values. Exactly one propose_controls call. Every month is validated by full OPM and official CHDD.",
+                "selection_policy": "Optimize official CHDD by proposing rate and OPEN/SHUT updates for ANY well in the complete baseline. Baseline carries forward approved agent controls, except explicit changes in the source calendar. Empty updates means keep these controls. No preselected well subset or percentage bounds. Exactly one propose_controls call. Every month is validated by full OPM and official CHDD. Use the verified inventory; never infer extra wells from gaps in numeric IDs.",
+                "verified_inventory": {"well_count": len(config.case.producers) + len(config.case.injectors),
+                    "producers": list(config.case.producers), "injectors": list(config.case.injectors)},
                 "state_units": {"oil_rate": "surface m3/day, NOT tonnes/day", "liquid_rate": "surface m3/day", "injection_rate": "surface m3/day", "bhp": "bar"},
                 "constraints": {"max_producer_liquid_m3d": config.case.max_liquid_rate,
                     "pressure": "source schedule BHP bounds remain enforced by OPM",
@@ -523,7 +533,9 @@ def execute(
             def propose(arguments: Any, _: Any) -> dict[str, Any]:
                 candidate = _propose_controls(config.case, options[0], arguments["updates"])
                 proposed.append(candidate)
-                return {"well_count": len(candidate), "controls": [_action_payload(a) for a in candidate],
+                return {"well_count": len(candidate), "inventory_matches_case": True,
+                        "missing_wells": [], "extra_wells": [],
+                        "controls": [_action_payload(a) for a in candidate],
                         "schedule_sha256": ScheduleCompiler().compile(config.case, candidate).sha256}
             tool = ToolDefinition("propose_controls", "Propose updates to any well; retain complete baseline for other wells.",
                 {"type": "object", "properties": {"updates": {"type": "array", "items": {
@@ -572,6 +584,7 @@ def execute(
         record({"phase": "terminal_month_review", "month": result.trajectory.month.isoformat(), "agent": asdict(reviewed)})
         if not reviewed.critic_approved:
             raise RuntimeError("critic rejected simulated month; see agent decision log")
+        previous_controls.update({a.well: a for a in result.trajectory.actions})
         feedback.append({"month": result.trajectory.month.isoformat(),
                          "cumulative_chdd_m": result.economics.npv_million_rub,
                          "controls": [_action_payload(a) for a in result.trajectory.actions],

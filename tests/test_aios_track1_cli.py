@@ -362,27 +362,38 @@ def test_agent_mode_selects_one_candidate_and_records_each_month(
 def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_path: Path, monkeypatch: Any) -> None:
     from dataclasses import replace
     config = _config(tmp_path)
-    config = replace(config, candidates={month: options[:1] for month, options in config.candidates.items()})
-    updates = [{"well": "P1", "status": "OPEN", "target": "LRAT", "value": 110.0},
+    january = config.candidates[config.case.start][0]
+    months = [config.case.start.replace(month=m) for m in (1, 2, 3)]
+    config = replace(config, case=replace(config.case, end=months[-1]), candidates={
+        month: (tuple(replace(a, month=month, value=120 if month.month == 3 and a.well == "I1" else a.value)
+                      for a in january),) for month in months})
+    updates = [{"well": "P1", "status": "SHUT", "target": "LRAT", "value": 0.0},
                {"well": "I1", "status": "OPEN", "target": "WRAT", "value": 90.0}]
 
     class FullFieldClient(_AgentClient):
         rejected_role = None
+        proposals = 0
 
         async def chat(self, _: Any, **kwargs: Any) -> LLMResponse:
-            calls = ((ToolCall("propose-1", "propose_controls", {"updates": updates}),)
+            calls = ((ToolCall("propose-1", "propose_controls", {"updates": updates if self.proposals == 0 else []}),)
                      if kwargs.get("tools") else ())
+            if calls:
+                type(self).proposals += 1
             return LLMResponse("preliminary", None, "tool_calls" if calls else "stop", calls)
 
     monkeypatch.setenv("LLM_API_KEY", "test-secret")
     monkeypatch.setattr(cli, "TatneftLLMClient", FullFieldClient)
     outputs, _ = cli.execute(config, DeterministicGdmBackend(), agent=True, full_field=True)
     result = json.loads(outputs[Path("result.json")])
-    assert {a["well"]: a["value"] for a in result["schedule"]["actions"]} == {"P1": 110, "I1": 90}
+    actions = result["schedule"]["actions"]
+    assert [a["status"] for a in actions if a["well"] == "P1"] == ["SHUT"] * 3
+    assert [a["value"] for a in actions if a["well"] == "I1"] == [90, 90, 120]
+    assert all(r["agent"]["context"]["verified_inventory"]["well_count"] == 2
+               for r in result["agent"]["records"] if r["phase"] == "planning")
     assert result["agent"]["records"][-1]["phase"] == "terminal_month_review"
     baseline = config.candidates[config.case.start][0]
     _raises(ValueError, "unknown or duplicate", lambda: cli._propose_controls(config.case, baseline, updates * 2))
-    _raises(ValueError, "exceeds", lambda: cli._propose_controls(config.case, baseline, [{**updates[0], "value": 501}]))
+    _raises(ValueError, "exceeds", lambda: cli._propose_controls(config.case, baseline, [{**updates[0], "status": "OPEN", "value": 501}]))
     _raises(ValueError, "every well", lambda: cli._propose_controls(config.case, baseline[:1], []))
 
 
