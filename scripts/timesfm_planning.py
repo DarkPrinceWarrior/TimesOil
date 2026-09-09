@@ -86,12 +86,64 @@ class TimesFMPlanning:
         torch.manual_seed(20260909)
         self.forecaster = TimesFM3Forecaster(ModelConfig(checkpoint_path='google/timesfm-3.0-pytorch',
             revision=MODEL_REVISION, per_core_batch_size=1, device='cuda'))
+        self.calibration = self.calibrate()
         self.provenance = {'model_revision': MODEL_REVISION, 'input_hashes': self.files,
             'source_sha256': source_sha256, 'well_count': len(self.wells),
             'initial_observation_cutoff': str(state.month), 'future_observations_used': False,
             'uncertainty_calibrated': False, 'static_head_trained': False,
+            'one_month_historical_calibration': self.calibration,
             'forecast_authorizes_control_without_opm': False,
             'script_sha256': sha256(Path(__file__).read_bytes()).hexdigest()}
+
+    def forecast_arrays(self, states, history_actions, future):
+        length = min(128, len(history_actions))
+        if length < 1 or len(states) != len(history_actions) + 1:
+            raise ValueError('forecast history states/actions are misaligned')
+        past = states[-length:].transpose(1, 2, 0).reshape(-1, length).astype(np.float32)
+        actions = np.concatenate([history_actions[-length:], future])
+        rates = np.stack([np.where(actions[..., 1] == code, actions[..., 0], 0) * actions[..., 2]
+                          for code in range(3)], axis=-1)
+        own = np.concatenate([rates, actions[..., 2:]], axis=-1).transpose(1, 2, 0).reshape(-1, len(actions))
+        allocated = self.geology.features(np.zeros((len(actions) * len(self.wells), 3)),
+            actions.reshape(-1, 4))[:, 0].reshape(len(actions), len(self.wells)).T
+        cov = np.concatenate([own, allocated]).astype(np.float32)
+        prediction = next(self.forecaster.predict_batch([past], horizon=len(future),
+            past_future_covariates=[cov], return_quantiles=False, make_positive=True,
+            use_symmetric_averaging=False)).forecast.reshape(len(self.wells), 3, len(future)).transpose(2, 0, 1)
+        if not np.isfinite(prediction).all():
+            raise ValueError('non-finite Google forecast')
+        prediction = np.maximum(prediction, 0)
+        prediction[..., 0] = np.minimum(prediction[..., 0], prediction[..., 1])
+        prediction[(future[..., 2] == 0) | (future[..., 1] == 2), :2] = 0
+        return prediction
+
+    def calibrate(self):
+        if self.origin < 48:
+            raise ValueError('historical calibration requires at least 48 observed monthly transitions')
+        residuals, naive, truth, dates = [], [], [], []
+        for origin in range(self.origin - 36, self.origin):
+            prediction = self.forecast_arrays(self.states[:origin + 1], self.actions[:origin],
+                                               self.actions[origin:origin + 1])[0]
+            residuals.append(np.abs(prediction - self.states[origin + 1]))
+            naive.append(np.abs(self.states[origin] - self.states[origin + 1]))
+            truth.append(self.states[origin + 1])
+            dates.append(str(self.dates[origin + 1].date()))
+        residuals, naive, truth = map(np.asarray, (residuals, naive, truth))
+        # ponytail: 24 monthly residuals per well; longer histories and blocked calibration are needed for reliable coverage under regime shifts.
+        rank = min(23, int(np.ceil(25 * .9)) - 1)
+        self.interval_radius = np.sort(residuals[:24], axis=0)[rank]
+        test, target = residuals[24:], truth[24:]
+        self.control_min = self.actions.min(axis=0)
+        self.control_max = self.actions.max(axis=0)
+        return {'horizon_months': 1, 'nominal_coverage': .9,
+            'calibration_dates': dates[:24], 'test_dates': dates[24:],
+            'test_wape_oil_liquid': (test[..., :2].sum(axis=(0, 1)) /
+                np.maximum(np.abs(target[..., :2]).sum(axis=(0, 1)), 1e-9)).tolist(),
+            'naive_test_wape_oil_liquid': (naive[24:, ..., :2].sum(axis=(0, 1)) /
+                np.maximum(np.abs(target[..., :2]).sum(axis=(0, 1)), 1e-9)).tolist(),
+            'test_coverage_oil_liquid_pressure': np.mean(test <= self.interval_radius, axis=(0, 1)).tolist(),
+            'test_pressure_rmse_bar': float(np.sqrt(np.mean(test[..., 2] ** 2))),
+            'scope': 'Chronological historical check, including zero production for injectors; not a coverage guarantee under new control regimes or over the full remaining horizon.'}
 
     def controls_array(self, controls):
         rows = {(a.month, a.well): a for a in controls}
@@ -135,34 +187,27 @@ class TimesFMPlanning:
         expected = [d.date() for d in self.dates[self.origin:self.origin + len(months)]]
         if months != expected or not months or months[0] != state.month:
             raise ValueError('forecast controls must span consecutive months from the current state')
-        length = min(128, len(self.actions))
-        past = self.states[-length:].transpose(1, 2, 0).reshape(-1, length).astype(np.float32)
-        actions = np.concatenate([self.actions[-length:], future])
-        rates = np.stack([np.where(actions[..., 1] == code, actions[..., 0], 0) * actions[..., 2]
-                          for code in range(3)], axis=-1)
-        own = np.concatenate([rates, actions[..., 2:]], axis=-1).transpose(1, 2, 0).reshape(-1, len(actions))
-        allocated = self.geology.features(np.zeros((len(actions) * len(self.wells), 3)),
-            actions.reshape(-1, 4))[:, 0].reshape(len(actions), len(self.wells)).T
-        cov = np.concatenate([own, allocated]).astype(np.float32)
-        prediction = next(self.forecaster.predict_batch([past], horizon=len(months),
-            past_future_covariates=[cov], return_quantiles=False, make_positive=True,
-            use_symmetric_averaging=False)).forecast.reshape(len(self.wells), 3, len(months)).transpose(2, 0, 1)
-        if not np.isfinite(prediction).all():
-            raise ValueError('non-finite Google forecast')
-        prediction = np.maximum(prediction, 0)
-        prediction[..., 0] = np.minimum(prediction[..., 0], prediction[..., 1])
-        prediction[(future[..., 2] == 0) | (future[..., 1] == 2), :2] = 0
+        prediction = self.forecast_arrays(self.states, self.actions, future)
+        one_month = prediction[0] if len(months) == 1 else self.forecast_arrays(self.states, self.actions, future[:1])[0]
+        ood = np.any((future < self.control_min - 1e-6) | (future > self.control_max + 1e-6), axis=-1)
         key = sha256(future.tobytes()).hexdigest()
-        self.last_predictions[sha256(future[0].tobytes()).hexdigest()] = prediction[0].copy()
+        self.last_predictions[sha256(future[0].tobytes()).hexdigest()] = one_month.copy()
         days = np.array([pd.Timestamp(d).days_in_month for d in months])
         volumes = (prediction[..., :2] * days[:, None, None]).sum(axis=0)
         return {'model_revision': MODEL_REVISION, 'observation_cutoff': str(state.month),
             'months': len(months), 'well_count': len(self.wells), 'controls_sha256': key,
             'future_observations_used': False, 'official_chdd': False, 'uncertainty_calibrated': False,
+            'one_month_historical_calibration': self.calibration,
+            'ood_control_well_months': int(ood.sum()),
+            'ood_wells': [w for i, w in enumerate(self.wells) if ood[:, i].any()],
             'columns': ['well', 'next_oil_m3d', 'next_liquid_m3d', 'next_bhp_bar',
                         'remaining_oil_volume_m3', 'remaining_liquid_volume_m3', 'terminal_bhp_bar'],
-            'rows': [[well, *np.round(prediction[0, i], 6).tolist(), *np.round(volumes[i], 3).tolist(),
+            'rows': [[well, *np.round(one_month[i], 6).tolist(), *np.round(volumes[i], 3).tolist(),
                       round(float(prediction[-1, i, 2]), 6)] for i, well in enumerate(self.wells)],
+            'one_month_intervals': {'columns': ['well', 'lower_oil_liquid_bhp', 'upper_oil_liquid_bhp'],
+                'rows': [[w, np.maximum(one_month[i] - self.interval_radius[i], 0).round(6).tolist(),
+                          (one_month[i] + self.interval_radius[i]).round(6).tolist()] for i, w in enumerate(self.wells)],
+                'scope': 'One-step historical calibration; full-horizon forecast has no calibrated interval.'},
             'observed_month_errors': self.observed_errors[-3:],
             'decision_rule': 'Forecast supports a hypothesis; select only using full remaining OPM and official CHDD.'}
 
@@ -205,6 +250,9 @@ def self_check():
     planner.actions = np.tile([[100., 1, 1, 70], [10., 2, 1, 70]], (2, 1, 1))
     planner.geology = WellConnectivity(planner.wells, [[0, 1], [1, 0]], [[10, .2, 2], [20, .1, 3]], {})
     planner.last_predictions, planner.observed_errors = {}, []
+    planner.calibration = {'scope': 'synthetic self-check'}
+    planner.interval_radius = np.zeros((2, 3))
+    planner.control_min, planner.control_max = planner.actions.min(axis=0), planner.actions.max(axis=0)
     captured = []
     class Forecaster:
         def predict_batch(self, histories, *, horizon, past_future_covariates, **kwargs):
