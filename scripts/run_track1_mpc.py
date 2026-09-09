@@ -514,7 +514,10 @@ def execute(
                     "pump_capex_m": "0.55 to 8.05 by type; switching across size bands incurs CAPEX",
                     "horizon_end": config.case.end.isoformat(),
                     "objective": "Preserve profitable oil, avoid uneconomic water production and needless pump/status changes; evaluate tradeoffs over the full remaining horizon."},
-                "prior_months": feedback[-3:],
+                "prior_rate_columns": ["well", "active", "oil_rate", "liquid_rate", "injection_rate", "bhp"],
+                "prior_months": [{"month": f["month"], "cumulative_chdd_m": f["cumulative_chdd_m"],
+                    "well_rates": [[w[k] for k in ("well", "active", "oil_rate", "liquid_rate", "injection_rate", "bhp")]
+                                   for w in f["state"]["wells"]]} for f in feedback[-3:]],
             })
 
         def select(arguments: Any, _: Any) -> dict[str, Any]:
