@@ -1,0 +1,308 @@
+{
+  "as_of": "2026-09-09",
+  "search_result_entries": 57,
+  "returned_entries": 57,
+  "unique_sources": 50,
+  "sources": [
+    {
+      "url": "https://doi.org/10.2118/141314-pa",
+      "title": "Robust Constrained Optimization of Short- and Long-Term Net Present Value for Closed-Loop Reservoir Management",
+      "published": "2012-06-07T00:00:00.000Z",
+      "search_workstream": 0
+    },
+    {
+      "url": "https://doi.org/10.2118/223916-ms",
+      "title": "Nonlinearly Constrained Life-Cycle Water Flooding Robust Optimization Using INSIM-2P",
+      "published": "2025-03-18T00:00:00.000Z",
+      "search_workstream": 0
+    },
+    {
+      "url": "https://doi.org/10.2118/149736-ms",
+      "title": "A Two-Level Strategy to Realize Life-Cycle Production Optimization in an Operational Setting",
+      "published": "2012-03-27T00:00:00.000Z",
+      "search_workstream": 0
+    },
+    {
+      "url": "https://doi.org/10.2118/185954-pa",
+      "title": "Handling Geological and Economic Uncertainties in Balancing Short-Term and Long-Term Objectives in Waterflooding Optimization",
+      "published": "2017-05-17T00:00:00.000Z",
+      "search_workstream": 0
+    },
+    {
+      "url": "https://doi.org/10.1007/s10596-015-9530-7",
+      "title": "An improved multiscale method for life-cycle production optimization",
+      "published": "2015-10-01T00:00:00.000Z",
+      "search_workstream": 5
+    },
+    {
+      "url": "https://doi.org/10.2118/220821-ms",
+      "title": "Nonlinearly Constrained Life-Cycle Production Optimization Under Geological Uncertainty: A Realistic Application",
+      "published": "2024-09-20T00:00:00.000Z",
+      "search_workstream": 5
+    },
+    {
+      "url": "https://doi.org/10.1080/21642583.2017.1378935",
+      "title": "Receding horizon control for oil reservoir waterflooding process",
+      "published": "2017-01-01T00:00:00.000Z",
+      "search_workstream": 8
+    },
+    {
+      "url": "https://otexts.com/fpptr/tscv.html",
+      "title": "5.10 Time series cross-validation | Forecasting: Principles and Practice (3rd ed)",
+      "published": "N/A",
+      "search_workstream": 1
+    },
+    {
+      "url": "https://otexts.com/fpp3/tscv.html",
+      "title": "5.10 Time series cross-validation | Forecasting",
+      "published": "N/A",
+      "search_workstream": 1
+    },
+    {
+      "url": "https://robjhyndman.com/hyndsight/tscv/",
+      "title": "Cross-validation for time series",
+      "published": "2016-12-05T00:00:00.000Z",
+      "search_workstream": 1
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9718476/",
+      "title": "Forecast evaluation for data scientists: common pitfalls ... - PMC",
+      "published": "2022-12-02T00:00:00.000Z",
+      "search_workstream": 1
+    },
+    {
+      "url": "https://arxiv.org/html/2603.20315v1",
+      "title": "Rolling-Origin Validation Reverses Model Rankings in ...",
+      "published": "2026-03-19T00:00:00.000Z",
+      "search_workstream": 1
+    },
+    {
+      "url": "https://docs.aws.amazon.com/pdfs/whitepapers/latest/time-series-forecasting-principles-with-amazon-forecast/time-series-forecasting-principles-with-amazon-forecast.pdf",
+      "title": "Time Series Forecasting Principles with Amazon Forecast - AWS Whitepaper",
+      "published": "N/A",
+      "search_workstream": 1
+    },
+    {
+      "url": "https://openforecast.org/adam/rollingOrigin.html",
+      "title": "2.4 Rolling origin | Forecasting and Analytics with the ...",
+      "published": "N/A",
+      "search_workstream": 1
+    },
+    {
+      "url": "https://github.com/google-research/timesfm/blob/master/timesfm-forecasting/references/api_reference.md",
+      "title": "timesfm-forecasting/references/api_reference.md",
+      "published": "N/A",
+      "search_workstream": 4
+    },
+    {
+      "url": "https://github.com/google-research/timesfm",
+      "title": "google-research/timesfm",
+      "published": "N/A",
+      "search_workstream": 4
+    },
+    {
+      "url": "https://github.com/google-research/timesfm/blob/master/README.md",
+      "title": "README.md",
+      "published": "N/A",
+      "search_workstream": 2
+    },
+    {
+      "url": "https://research.google/blog/timesfm-3-a-zero-shot-foundation-model-for-multivariate-forecasting/",
+      "title": "TimesFM-3: A zero-shot foundation model for multivariate forecasting",
+      "published": "2026-09-03T18:27:50.000Z",
+      "search_workstream": 4
+    },
+    {
+      "url": "https://github.com/google-research/timesfm/blob/f085b907/timesfm-forecasting/examples/covariates-forecasting/demo_covariates.py",
+      "title": "timesfm-forecasting/examples/covariates-forecasting/demo_covariates.py at f085b907 · google-research/timesfm",
+      "published": "N/A",
+      "search_workstream": 2
+    },
+    {
+      "url": "https://github.com/google-research/timesfm/blob/HEAD/timesfm-forecasting/SKILL.md",
+      "title": "timesfm-forecasting/SKILL.md",
+      "published": "N/A",
+      "search_workstream": 2
+    },
+    {
+      "url": "https://deepwiki.com/google-research/timesfm/3.4-forecasting-with-covariates-(xreg)",
+      "title": "Forecasting with Covariates (XReg) | google-research/timesfm | DeepWiki",
+      "published": "2026-05-13T00:00:00.000Z",
+      "search_workstream": 2
+    },
+    {
+      "url": "https://doi.org/10.2118/119098-ms",
+      "title": "Closed-Loop Reservoir Management",
+      "published": "2009-02-02T00:00:00.000Z",
+      "search_workstream": 3
+    },
+    {
+      "url": "https://doi.org/10.2118/118926-pa",
+      "title": "Ensemble-Based Closed-Loop Optimization Applied to Brugge Field",
+      "published": "2010-02-11T00:00:00.000Z",
+      "search_workstream": 3
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0098300412002610",
+      "title": "Extended Brugge benchmark case for history matching and water flooding optimization",
+      "published": "N/A",
+      "search_workstream": 3
+    },
+    {
+      "url": "https://doi.org/10.1007/978-3-031-99155-4_12",
+      "title": "Closed Loop Reservoir Management",
+      "published": "2025-11-20T00:00:00.000Z",
+      "search_workstream": 3
+    },
+    {
+      "url": "https://repository.tno.nl/SingleDoc?docId=30120",
+      "title": "Results of the brugge benchmark study for flooding optimization and history matching",
+      "published": "N/A",
+      "search_workstream": 3
+    },
+    {
+      "url": "https://doi.org/10.2118/175608-ms",
+      "title": "Value of Multiple Production Measurements and Water Front Tracking in Closed-Loop Reservoir Management",
+      "published": "2015-09-14T00:00:00.000Z",
+      "search_workstream": 3
+    },
+    {
+      "url": "https://huggingface.co/google/timesfm-3.0-pytorch",
+      "title": "google/timesfm-3.0-pytorch",
+      "published": "2023-10-14T00:00:00.000Z",
+      "search_workstream": 4
+    },
+    {
+      "url": "https://pypi.org/project/timesfm/3.0.0/",
+      "title": "timesfm v3.0.0",
+      "published": "N/A",
+      "search_workstream": 4
+    },
+    {
+      "url": "https://doi.org/10.2118/173273-pa",
+      "title": "Hierarchical Multiscale Methods for Life-Cycle-Production Optimization: A Field Case Study",
+      "published": "2015-08-10T00:00:00.000Z",
+      "search_workstream": 5
+    },
+    {
+      "url": "https://repository.tudelft.nl/file/File_65a75687-4898-4d94-92e7-c2e56afe07a1?preview=1",
+      "title": "N/A",
+      "published": "N/A",
+      "search_workstream": 5
+    },
+    {
+      "url": "https://doi.org/10.1016/j.petrol.2018.09.047",
+      "title": "An Efficient Robust Optimization Workflow using Multiscale Simulation and Stochastic Gradients",
+      "published": "2018-09-20T00:00:00.000Z",
+      "search_workstream": 5
+    },
+    {
+      "url": "https://www.math.lsu.edu/~hozhang/papers/SPE-142043-MS-P.pdf",
+      "title": "Using Multiscale Regularization to Obtain Realistic Optimal Control Strategies",
+      "published": "N/A",
+      "search_workstream": 5
+    },
+    {
+      "url": "https://arxiv.org/pdf/2511.02137",
+      "title": "N/A",
+      "published": "N/A",
+      "search_workstream": 6
+    },
+    {
+      "url": "https://proceedings.mlr.press/v275/norimatsu25a.html",
+      "title": "Encode-Decoder-based GAN for Estimating Counterfactual Outcomes under Sequential Selection Bias and Combinatorial Explosion",
+      "published": "2025-06-15T00:00:00.000Z",
+      "search_workstream": 6
+    },
+    {
+      "url": "https://arxiv.org/html/2505.09113",
+      "title": "Sequential Treatment Effect Estimation with Unmeasured Confounders",
+      "published": "N/A",
+      "search_workstream": 6
+    },
+    {
+      "url": "https://doi.org/10.48550/arxiv.2411.00126",
+      "title": "Training and Evaluating Causal Forecasting Models for Time-Series",
+      "published": "2024-10-31T00:00:00.000Z",
+      "search_workstream": 6
+    },
+    {
+      "url": "https://arxiv.org/abs/2511.16006",
+      "title": "[2511.16006] Synergizing Deconfounding and Temporal Generalization For Time-series Counterfactual Outcome Estimation",
+      "published": "2025-11-20T23:37:24.000Z",
+      "search_workstream": 6
+    },
+    {
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/file/02cef2ae63853724eb99e70721d3bc65-Paper-Conference.pdf",
+      "title": "Causal Contrastive Learning for Counterfactual Regression Over Time",
+      "published": "N/A",
+      "search_workstream": 6
+    },
+    {
+      "url": "https://doi.org/10.2118/220783-pa",
+      "title": "Embed-to-Control-Based Deep Learning Surrogate for Robust Nonlinearly Constrained Life Cycle Production Optimization: A Realistic Deepwater Application",
+      "published": "2025-12-15T00:00:00.000Z",
+      "search_workstream": 7
+    },
+    {
+      "url": "https://ar5iv.labs.arxiv.org/html/2406.08367",
+      "title": "[2406.08367] Hierarchical Bayesian Emulation of the Expected Net Present Value Utility Function via a Multi-Model Ensemble Member Decomposition",
+      "published": "N/A",
+      "search_workstream": 7
+    },
+    {
+      "url": "https://doi.org/10.1016/j.petsci.2025.02.014",
+      "title": "Efficient deep-learning-based surrogate model for reservoir production optimization using transfer learning and multi-fidelity data",
+      "published": "2025-02-25T00:00:00.000Z",
+      "search_workstream": 7
+    },
+    {
+      "url": "https://doi.org/10.35470/2226-4116-2025-14-3-285-291",
+      "title": "PDE-constrained optimal control of subsurface reservoir systems via neural operator surrogates",
+      "published": "2025-11-30T00:00:00.000Z",
+      "search_workstream": 7
+    },
+    {
+      "url": "https://www.earthdoc.org/content/papers/10.3997/2214-4609.202437090",
+      "title": "Reservoir Forecast and Production Optimization Under Geological Uncertainty Using an Embed-to-Control Deep-Learning Surrogate Model | Earthdoc",
+      "published": "N/A",
+      "search_workstream": 7
+    },
+    {
+      "url": "https://doi.org/10.48550/arxiv.2604.00352",
+      "title": "Deep Learning-Accelerated Surrogate Optimization for High-Dimensional Well Control in Stress-Sensitive Reservoirs",
+      "published": "2026-04-01T00:00:00.000Z",
+      "search_workstream": 7
+    },
+    {
+      "url": "https://doi.org/10.1021/acs.iecr.9b01553",
+      "title": "Economic Model-Based Controller Design Framework for Hydraulic Fracturing To Optimize Shale Gas Production and Water Usage",
+      "published": "2019-06-17T00:00:00.000Z",
+      "search_workstream": 8
+    },
+    {
+      "url": "https://publications.rwth-aachen.de/record/1039304/files/1039304.pdf",
+      "title": "Mitigating the end-of-horizon effect in seasonal storage operation with forecast-updated cost-to-go functions",
+      "published": "N/A",
+      "search_workstream": 8
+    },
+    {
+      "url": "https://arxiv.org/abs/2609.02628",
+      "title": "[2609.02628] Economic Model Predictive Control with Policy-Guided Terminal Ingredients",
+      "published": "2026-09-02T05:47:26.000Z",
+      "search_workstream": 8
+    },
+    {
+      "url": "https://link.springer.com/chapter/10.1007/978-3-030-63281-6_3",
+      "title": "Primal or Dual Terminal Constraints in Economic MPC? Comparison and Insights",
+      "published": "N/A",
+      "search_workstream": 8
+    },
+    {
+      "url": "https://aiche.confex.com/aiche/2016/webprogram/Paper472902.html",
+      "title": "Abstract: Economic MPC with Local Optimality (2016 Annual Meeting)",
+      "published": "N/A",
+      "search_workstream": 8
+    }
+  ]
+}
