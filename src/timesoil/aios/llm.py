@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+from email.utils import parsedate_to_datetime
 from ipaddress import ip_address
 import json
+from math import isfinite
 import os
 import re
+import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Literal, Self
@@ -304,14 +307,34 @@ class ExternalQwenClient:
             raise ValueError("request timeout must fit configured timeout")
         try:
             async with asyncio.timeout(timeout):
-                response = await self._client.post(
-                    "chat/completions",
-                    json=payload,
-                    headers={
-                        "Accept-Encoding": "identity",
-                        "Authorization": f"Bearer {self.config.api_key}",
-                    },
-                )
+                for attempt in range(3):
+                    delay = float(2 ** attempt)
+                    try:
+                        response = await self._client.post(
+                            "chat/completions", json=payload,
+                            headers={"Accept-Encoding": "identity",
+                                     "Authorization": f"Bearer {self.config.api_key}"},
+                        )
+                    except httpx.TransportError:
+                        if attempt == 2:
+                            raise
+                    else:
+                        if response.status_code not in (408, 429, 500, 502, 503, 504) or attempt == 2:
+                            break
+                        if response.status_code == 429:
+                            delay = float(15 * 2 ** attempt)
+                        retry_after = response.headers.get("retry-after")
+                        if retry_after:
+                            try:
+                                requested = float(retry_after)
+                            except ValueError:
+                                try:
+                                    requested = parsedate_to_datetime(retry_after).timestamp() - time.time()
+                                except (TypeError, ValueError, OverflowError):
+                                    requested = delay
+                            if isfinite(requested) and requested >= 0:
+                                delay = requested
+                    await asyncio.sleep(delay)
             response.raise_for_status()
             body = response.json()
             result = _parse_response(body)
