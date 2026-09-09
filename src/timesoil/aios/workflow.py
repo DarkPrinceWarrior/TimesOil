@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import errno
 import json
+import math
 import os
 import re
 import shutil
@@ -538,8 +539,10 @@ class FullCycleWorkflow:
             chdd_csv,
             trajectory_csv,
         )
+        physical_records = _csv_rows(chdd_csv)
+        physical_constraints = _physical_control_evidence(physical_records, request.controls)
         economics = self._economics.calculate(
-            opm_management_rows(_csv_rows(chdd_csv), management_period),
+            opm_management_rows(physical_records, management_period),
             start_year=request.start_year,
             output_dir=result.run_dir / f"economics-{request.start_year}",
             charge_initial_pump=request.charge_initial_pump,
@@ -552,6 +555,12 @@ class FullCycleWorkflow:
             {
                 "available": True,
                 "controls": controls_evidence,
+                "constraints": {
+                    **physical_constraints,
+                    "source_well_scope_verified": True,
+                    "provided_operating_constraints_checked": True,
+                    "provided_operating_constraint_count": len(operating_constraints),
+                },
                 "schedule": {
                     "action_count": overlay.action_count,
                     "input_sha256": _sha256_file(schedule_path),
@@ -855,6 +864,7 @@ def _terminal_context(
     facts = dict(value.get("facts", {}))
     facts["terminal_evidence"] = dict(terminal_evidence)
     value["facts"] = facts
+    value["phase"] = "completed_physical_run_audit"
     value["readiness"] = {
         "full_controls_verified": True,
         "opm_complete": True,
@@ -864,6 +874,25 @@ def _terminal_context(
         "official_chdd_complete": True,
     }
     return value
+
+
+def _physical_control_evidence(
+    records: Sequence[Mapping[str, Any]], controls: Sequence[ControlAction]
+) -> dict[str, Any]:
+    expected = {
+        ((action.month.replace(day=28) + timedelta(days=4)).replace(day=1).isoformat(), action.well)
+        for action in controls
+    }
+    report_months = {month for month, _well in expected}
+    managed = [row for row in records if str(row["DATA"]) in report_months]
+    if len(managed) != len(expected) or {(str(row["DATA"]), row["well"]) for row in managed} != expected:
+        raise CycleError("physical report must cover every controlled month and well exactly once")
+    rates = [float(row["WLPR"]) for row in managed]
+    if any(not math.isfinite(rate) or rate < 0 or rate > 500 + 1e-6 for rate in rates):
+        raise CycleError("actual per-well liquid rate violates the 500 m3/day limit")
+    return {"complete_physical_month_well_grid": True,
+            "actual_per_well_liquid_limit_m3d": 500,
+            "observed_max_liquid_m3d": max(rates), "observations_checked": len(managed)}
 
 
 def _authenticate_export(

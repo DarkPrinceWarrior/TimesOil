@@ -132,6 +132,7 @@ def main():
     unit, _, _, deck_hash, connections, _, deck_text = _read_deck_densities_and_start(root / 'input')
     if unit != 'METRIC':
         raise ValueError('connectivity currently requires METRIC units')
+    np.testing.assert_array_equal(array(deck_text, 'DIMENS')[:3], dimensions)
     wells = tuple(sorted(connections))
     cells, static = [], []
     permx, permy, poro, dz, ntg = [global_array(k) for k in ('PERMX', 'PERMY', 'PORO', 'DZ', 'NTG')]
@@ -147,6 +148,11 @@ def main():
         cells.append(indices)
         static.append([np.average(np.sqrt(permx[indices] * permy[indices]), weights=net),
                        np.average(poro[indices], weights=net), net.sum()])
+    if not graph.nnz:
+        raise ValueError('grid contains no conducting connections')
+    # ponytail: coincident completions are resolved only to one grid edge; use exported well connection factors for wellbore-scale resistance.
+    resistance_floor = float(graph.data.min())
+    shared_cells = []
     weights = np.zeros((len(wells), len(wells)))
     for i, indices in enumerate(cells):
         distance = dijkstra(graph, directed=False, indices=indices, min_only=True)
@@ -155,9 +161,9 @@ def main():
                 continue
             resistance = float(distance[target].min())
             if resistance == 0:
-                raise ValueError('wells share a completed cell; explicit wellbore resistance is required')
+                shared_cells.append([wells[i], wells[j]])
             if np.isfinite(resistance):
-                weights[i, j] = 1 / resistance
+                weights[i, j] = 1 / max(resistance, resistance_floor)
     np.testing.assert_allclose(weights, weights.T, rtol=1e-10, atol=1e-12)
     value = {'well_ids': wells, 'weights': weights.tolist(), 'static': static,
              'provenance': {'source_sha256': manifest['source_sha256'], 'expanded_deck_sha256': deck_hash,
@@ -167,8 +173,9 @@ def main():
                 'method': 'inverse shortest resistance path through OPM TRANX/TRANY/TRANZ and exported NNC',
                 'global_cells': len(active), 'active_cells': int(active.sum()), 'directed_graph_edges': graph.nnz,
                 'nnc_count': len(nnc[0]), 'source_faults_present': bool(_keyword_offsets(deck_text, 'FAULTS')),
+                'grid_resistance_floor': resistance_floor, 'shared_completed_cell_pairs': shared_cells,
                 'threshold_pressure_present': bool(_keyword_offsets(deck_text, 'THPRES')),
-                'limitations': 'Static connectivity prior, not a dynamic flow model: shortest paths omit parallel-path effective conductance; phase mobilities and threshold-pressure activation require OPM.'}}
+                'limitations': 'Static connectivity prior, not a dynamic flow model: shortest paths omit parallel-path effective conductance; coincident completions use the minimum positive grid-edge resistance floor, not measured wellbore resistance; phase mobilities and threshold-pressure activation require OPM.'}}
     (args.output / 'connectivity.json').write_text(json.dumps(value, indent=2) + '\n')
     print(json.dumps({'well_count': len(wells), 'nonzero_well_links': int(np.count_nonzero(weights)), **value['provenance']}), flush=True)
 
