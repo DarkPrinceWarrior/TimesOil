@@ -27,6 +27,14 @@ from timesoil.metrics import rmse, wape
 METRICS_SHA256 = "d0e2a42468b10d0d0ec48442f1b8a7bc4450857537087d3b517abdbc36530de4"
 MODEL_REVISION = "43046b85ec22d584a13f8098c2ed39c889e129c2"
 HORIZON = 6
+PAST_FIELDS = ("WLPR", "WWIR", "BHP", "WEFF", "WOMT_Diff", "WLPT_Diff", "WWIT_Diff")
+
+
+def past_inputs(observations, origin, context_length):
+    """Observed covariates stop at the forecast origin, including actual outages."""
+    if origin + 1 < context_length or origin >= len(observations):
+        raise ValueError("incomplete observed covariate window")
+    return observations[origin + 1 - context_length:origin + 1].transpose(1, 2, 0).astype(np.float32)
 
 
 def forecast_inputs(states, actions, origin, context_length):
@@ -67,6 +75,8 @@ def self_check():
     _, other_cov = forecast_inputs(states, other, 20, 12)
     np.testing.assert_array_equal(other_cov[0, :4], cov[0, :4])
     np.testing.assert_array_equal(other_cov[0, 4, 12:], 2 * cov[0, 4, 12:])
+    observed = past_inputs(states, 20, 12)
+    np.testing.assert_array_equal(past_inputs(changed, 20, 12), observed)
     print("forecast alignment / leakage / field injection checks passed", flush=True)
 
 
@@ -88,6 +98,9 @@ def main():
     parser.add_argument("--context", type=int, default=128)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--full-field", action="store_true", help="Use Forecaster directly; retain every target and control channel")
+    parser.add_argument("--past-covariates", action="store_true", help="Add hash-verified historical CHDD observations")
+    parser.add_argument("--start-date", type=pd.Timestamp, help="First forecast origin, e.g. 2007-01-01")
+    parser.add_argument("--all-windows", action="store_true", help="Evaluate every complete six-month window from the selected start")
     parser.add_argument("--interwell-model", type=Path, help="Verified v5 artifact supplying geology for the eight-scenario refit")
     parser.add_argument("--self-check", action="store_true")
     args = parser.parse_args()
@@ -102,7 +115,7 @@ def main():
     if sha256(data).hexdigest() != METRICS_SHA256:
         raise ValueError("frozen KT2 metrics hash mismatch")
     reference = json.loads(data)
-    trajectories, sources = {}, []
+    trajectories, sources, observed = {}, [], {}
     for record in reference["scenario_batch"]["scenarios"]:
         scenario = record["scenario_id"]
         csv_path = args.bundle / f"scenario-runs/dataset/{scenario}.csv"
@@ -118,6 +131,20 @@ def main():
         if trajectory.scenario_id != scenario:
             raise ValueError("scenario identity mismatch")
         trajectories[scenario] = trajectory
+        if args.past_covariates and scenario in reference["test_scenarios"]:
+            path = args.bundle / f"scenario-runs/{scenario}/canonical/chdd.csv"
+            raw = path.read_bytes()
+            proof = json.loads((args.bundle / f"scenario-runs/manifests/{scenario}.json").read_text())
+            if sha256(raw).hexdigest() != proof["outputs"]["chdd_csv"]["sha256"]:
+                raise ValueError(f"historical covariate hash mismatch: {path}")
+            frame = pd.read_csv(path, dtype={"well": str})
+            frame["DATA"] = pd.to_datetime(frame["DATA"])
+            grid = pd.MultiIndex.from_product([trajectory.dates, trajectory.well_ids], names=["DATA", "well"])
+            values = frame.set_index(["DATA", "well"]).reindex(grid)[list(PAST_FIELDS)].to_numpy()
+            if not np.isfinite(values).all():
+                raise ValueError("observed covariates require a complete finite date/well grid")
+            observed[scenario] = values.reshape(len(trajectory.dates), len(trajectory.well_ids), -1)
+            sources.append({"path": str(path), "sha256": sha256(raw).hexdigest()})
     train_ids, test_ids = reference["train_scenarios"], reference["test_scenarios"]
     if set(train_ids) & set(test_ids) or set(train_ids + test_ids) != set(trajectories):
         raise ValueError("invalid scenario split")
@@ -134,16 +161,25 @@ def main():
     )
     cases, truths, controls, contexts, covariates, crm, persistence = [], [], [], [], [], [], []
     sensitivity = []
+    past_covariates = []
     for scenario in test_ids:
         t = trajectories[scenario]
-        origins = [o for o in range(0, len(t.dates) - HORIZON, HORIZON) if o >= args.context]
+        if args.start_date is None:
+            origins = [o for o in range(0, len(t.dates) - HORIZON, HORIZON) if o >= args.context]
+        else:
+            first = max(args.context, int(t.dates.searchsorted(args.start_date)))
+            origins = list(range(first, len(t.dates) - HORIZON, HORIZON))
+            if args.all_windows and origins and origins[-1] != len(t.dates) - HORIZON - 1:
+                origins.append(len(t.dates) - HORIZON - 1)
         if len(origins) < args.windows:
             raise ValueError("not enough complete windows with the requested history")
-        for origin in origins[-args.windows:]:
+        for origin in origins if args.all_windows else origins[-args.windows:]:
             action = t.actions[origin : origin + HORIZON]
             target, cov = forecast_inputs(t.states, t.actions, origin, args.context)
             contexts.extend(target)
             covariates.extend(cov)
+            if args.past_covariates:
+                past_covariates.append(past_inputs(observed[scenario], origin, args.context).reshape(-1, args.context))
             truth = t.states[origin + 1 : origin + HORIZON + 1]
             truths.append(truth)
             controls.append(action)
@@ -176,16 +212,20 @@ def main():
     joint_contexts = list(np.stack(contexts).reshape(len(cases), -1, args.context))
     joint_covariates = list(np.stack(covariates)[:, :4].reshape(len(cases), -1, args.context + HORIZON))
     timings = {}
-    for name, inputs, cov, batch_size in (
-        ("timesfm3_per_well_history", contexts, None, args.batch_size),
-        ("timesfm3_joint_history", joint_contexts, None, 1),
-        ("timesfm3_joint_controls", joint_contexts, joint_covariates, 1),
-    ):
+    variants = [
+        ("timesfm3_per_well_history", contexts, None, None, args.batch_size),
+        ("timesfm3_joint_history", joint_contexts, None, None, 1),
+        ("timesfm3_joint_controls", joint_contexts, joint_covariates, None, 1),
+    ]
+    if args.past_covariates:
+        variants.append(("timesfm3_joint_all_covariates", joint_contexts, joint_covariates, past_covariates, 1))
+    for name, inputs, cov, past_cov, batch_size in variants:
         forecaster.config = replace(forecaster.config, per_core_batch_size=batch_size)
         print(f"Forecasting {name}: {len(inputs)} windows, {inputs[0].shape[0]} targets", flush=True)
         begin = time.monotonic()
         forecast = list(forecaster.predict_batch(
             inputs, horizon=HORIZON, past_future_covariates=cov,
+            past_only_covariates=past_cov,
             use_symmetric_averaging=False, make_positive=True, return_quantiles=True,
         ))
         raw = np.stack([f.forecast for f in forecast]).reshape(len(cases), -1, 3, HORIZON)
@@ -200,6 +240,8 @@ def main():
         "model_revision": MODEL_REVISION, "frozen_metrics_sha256": METRICS_SHA256,
         "timesfm_interface": forecast_class.__name__,
         "all_control_channels_retained": args.full_field,
+        "past_only_fields": list(PAST_FIELDS) if args.past_covariates else [],
+        "requested_start_date": str(args.start_date) if args.start_date is not None else None,
         "crm_interwell_geology": connectivity is not None,
         "packages": {n: version(n) for n in ("timesfm", "torch", "numpy", "pandas", "lightgbm")},
         "input_sources": sources, "train_scenarios": train_ids, "test_scenarios": test_ids,
@@ -214,12 +256,14 @@ def main():
         "official_chdd_evaluated": False, "new_opm_replay": False,
         "limitations": [
             "Offline hash-verified snapshot; not a new OPM extraction receipt.",
-            f"Last {args.windows} complete six-month windows per held-out scenario, not the full KT2 test set.",
+            ("All complete six-month windows from requested start; final window may overlap to cover the last report."
+             if args.all_windows else f"Last {args.windows} complete six-month windows per held-out scenario, not the full KT2 test set."),
             "TimesFM receives observed history; CRM uses the current state and eight training scenarios.",
             ("Joint controls retain all 309 well targets and 412 planned rate/status channels."
              if args.full_field else
              "Evaluator chunks targets and samples 31 of 412 control channels; not full-field joint inference."),
             "No explicit geological connectivity features; attention alone does not prove causal validity.",
+            "Known planned closures are status covariates; no unprovided failure schedule or water quota is invented.",
             "No tuning on test outcomes, no independently calibrated uncertainty, no NPV improvement claim.",
         ],
     }
