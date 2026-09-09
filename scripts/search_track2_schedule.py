@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from dataclasses import replace
 from datetime import date
 from hashlib import sha256
 import io
@@ -943,7 +944,7 @@ def _search(args: argparse.Namespace) -> Path:
             "source_schedule_sha256": overlay.source_sha256,
             "controls_sha256": overlay.controls_sha256,
             "output_schedule_sha256": overlay.sha256,
-            "truncated_after": end_exclusive.isoformat(),
+            "stopped_after": end_exclusive.isoformat(),
         },
         "execution_sources": execution_sources,
         "final_replay_argv": replay_argv,
@@ -1130,14 +1131,22 @@ def _replay(args: argparse.Namespace) -> Path:
         raise ValueError("source schedule must be UTF-8") from exc
     # Old search artifacts retain their original full-history replay contract.
     truncation = search.get("schedule_transformation", {}).get("truncated_after")
-    if truncation is not None and truncation != end_exclusive.isoformat():
-        raise ValueError("replay truncation differs from the management horizon")
+    stop = search.get("schedule_transformation", {}).get("stopped_after")
+    if (truncation is not None and stop is not None) or any(
+        value is not None and value != end_exclusive.isoformat() for value in (truncation, stop)
+    ):
+        raise ValueError("replay stop differs from the management horizon")
     replay_overlay = apply_schedule_overlay(
         source_text,
         actions,
         known_wells={item.well for item in actions},
-        end_exclusive=end_exclusive if truncation is not None else None,
+        end_exclusive=end_exclusive if stop is not None else None,
     )
+    if truncation is not None:
+        # Reproduce the earlier experimental artifact byte-for-byte; new searches preserve the tail.
+        block = next(b for b in schedule_overlay_module._date_blocks(replay_overlay.text) if b.month == end_exclusive)
+        text = "".join(replay_overlay.text.splitlines(keepends=True)[:block.end_line])
+        replay_overlay = replace(replay_overlay, text=text, sha256=_sha256(text.encode()), truncated_after=end_exclusive)
     transformation = {
         "source_schedule_sha256": replay_overlay.source_sha256,
         "controls_sha256": replay_overlay.controls_sha256,
@@ -1145,6 +1154,8 @@ def _replay(args: argparse.Namespace) -> Path:
     }
     if truncation is not None:
         transformation["truncated_after"] = truncation
+    if stop is not None:
+        transformation["stopped_after"] = stop
     if (
         replay_overlay.controls_sha256 != wells_schedule_sha256
         or search.get("schedule_transformation") != transformation

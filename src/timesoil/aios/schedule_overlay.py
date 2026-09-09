@@ -39,6 +39,7 @@ class ScheduleOverlayArtifact:
     action_count: int
     action_months: tuple[date, ...]
     truncated_after: date | None
+    stopped_after: date | None = None
 
     @property
     def provenance(self) -> dict[str, object]:
@@ -52,6 +53,8 @@ class ScheduleOverlayArtifact:
             "truncated_after": (
                 self.truncated_after.isoformat() if self.truncated_after else None
             ),
+            **({"stopped_after": self.stopped_after.isoformat(), "future_schedule_preserved": True}
+               if self.stopped_after else {}),
         }
 
 
@@ -83,7 +86,8 @@ def apply_schedule_overlay(
 
     ``replay_month`` selects one-month replay: only that month's controls are
     accepted and output stops immediately after the following ``DATES`` block.
-    ``end_exclusive`` stops after that report date for a multi-month horizon.
+    ``end_exclusive`` uses ACTIONX/EXIT at that report date, keeping future
+    completion definitions required for identical OPM preprocessing.
     Otherwise every requested month is overlaid and the full source is kept.
     """
 
@@ -113,8 +117,8 @@ def apply_schedule_overlay(
             or end_exclusive not in by_month
         ):
             raise ScheduleOverlayError("exclusive end must be a source report date after all controls")
-        truncated_after = end_exclusive
-        cutoff = by_month[end_exclusive].end_line
+        if "TSSTOP" in source.upper():
+            raise ScheduleOverlayError("reserved TSSTOP action already exists")
     if replay_month is not None:
         if replay_month.day != 1 or months != (replay_month,):
             raise ScheduleOverlayError(
@@ -157,6 +161,12 @@ def apply_schedule_overlay(
         if index < limit:
             output.append(lines[index])
     text = "".join(output)
+    if end_exclusive is not None:
+        text = (
+            "ACTIONX\n 'TSSTOP' 1 /\n DAY >= 1 AND /\n"
+            f" MNTH = {_MONTHS[end_exclusive.month - 1]} AND /\n"
+            f" YEAR = {end_exclusive.year} /\n/\nEXIT\n 0 /\nENDACTIO\n" + text
+        )
     digest = sha256(text.encode()).hexdigest()
     return ScheduleOverlayArtifact(
         text=text,
@@ -167,6 +177,7 @@ def apply_schedule_overlay(
         action_count=len(actions),
         action_months=months,
         truncated_after=truncated_after,
+        stopped_after=end_exclusive,
     )
 
 
