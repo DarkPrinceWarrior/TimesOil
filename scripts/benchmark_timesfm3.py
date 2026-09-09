@@ -77,6 +77,16 @@ def self_check():
     np.testing.assert_array_equal(other_cov[0, 4, 12:], 2 * cov[0, 4, 12:])
     observed = past_inputs(states, 20, 12)
     np.testing.assert_array_equal(past_inputs(changed, 20, 12), observed)
+    from types import SimpleNamespace
+    class StepForecaster:
+        def predict_batch(self, histories, **kwargs):
+            assert kwargs["horizon"] == 1
+            for h in histories:
+                yield SimpleNamespace(forecast=h[:, -1:] + 1)
+    step_actions = np.array([[[[100, 1, 1]], [[100, 1, 1]], [[100, 1, 1]]]], dtype=float)
+    rolled = recursive_forecast(StepForecaster(), [np.array([[1, 2], [10, 11], [100, 101]])],
+                                [np.zeros((4, 5))], step_actions)
+    np.testing.assert_array_equal(rolled[0, :, 0, 0], [3, 4, 5])
     print("forecast alignment / leakage / field injection checks passed", flush=True)
 
 
@@ -90,6 +100,25 @@ def metrics(truth, prediction):
     }
 
 
+def recursive_forecast(forecaster, histories, covariates, actions):
+    """Advance on predictions only; no future observations enter this rollout."""
+    context = histories[0].shape[-1]
+    histories = [h.copy() for h in histories]
+    steps = []
+    for step in range(actions.shape[1]):
+        forecasts = list(forecaster.predict_batch(
+            [h[:, -context:] for h in histories], horizon=1,
+            past_future_covariates=[c[:, step:step + context + 1] for c in covariates],
+            use_symmetric_averaging=False, make_positive=True, return_quantiles=True,
+        ))
+        raw = np.stack([f.forecast for f in forecasts]).reshape(len(histories), 1, -1, 3)
+        projected = _project_physics(raw, actions[:, step:step + 1])[0]
+        steps.append(projected)
+        histories = [np.concatenate([h, p.reshape(-1, 1)], axis=1)
+                     for h, p in zip(histories, projected[:, 0], strict=True)]
+    return np.concatenate(steps, axis=1)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle", type=Path)
@@ -100,6 +129,7 @@ def main():
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--full-field", action="store_true", help="Use Forecaster directly; retain every target and control channel")
     parser.add_argument("--past-covariates", action="store_true", help="Add hash-verified historical CHDD observations")
+    parser.add_argument("--recursive", action="store_true", help="Also test one-month steps fed only their own predictions")
     parser.add_argument("--start-date", type=pd.Timestamp, help="First forecast origin, e.g. 2007-01-01")
     parser.add_argument("--all-windows", action="store_true", help="Evaluate every complete six-month window from the selected start")
     parser.add_argument("--interwell-model", type=Path, help="Verified v5 artifact supplying geology for the eight-scenario refit")
@@ -231,6 +261,13 @@ def main():
         ))
         raw = np.stack([f.forecast for f in forecast]).reshape(len(cases), -1, 3, args.horizon)
         predictions[name] = _project_physics(raw.transpose(0, 3, 1, 2), actions)[0]
+        timings[name] = round(time.monotonic() - begin, 3)
+        print(json.dumps({"model": name, **metrics(truth, predictions[name]), "seconds": timings[name]}), flush=True)
+    if args.recursive:
+        forecaster.config = replace(forecaster.config, per_core_batch_size=1)
+        begin = time.monotonic()
+        name = "timesfm3_recursive_joint_controls"
+        predictions[name] = recursive_forecast(forecaster, joint_contexts, joint_covariates, actions)
         timings[name] = round(time.monotonic() - begin, 3)
         print(json.dumps({"model": name, **metrics(truth, predictions[name]), "seconds": timings[name]}), flush=True)
     report = {
