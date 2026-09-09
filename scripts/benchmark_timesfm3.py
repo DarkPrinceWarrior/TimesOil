@@ -87,6 +87,8 @@ def main():
     parser.add_argument("--windows", type=int, default=6)
     parser.add_argument("--context", type=int, default=128)
     parser.add_argument("--batch-size", type=int, default=8)
+    parser.add_argument("--full-field", action="store_true", help="Use Forecaster directly; retain every target and control channel")
+    parser.add_argument("--interwell-model", type=Path, help="Verified v5 artifact supplying geology for the eight-scenario refit")
     parser.add_argument("--self-check", action="store_true")
     args = parser.parse_args()
     self_check()
@@ -120,7 +122,16 @@ def main():
     if set(train_ids) & set(test_ids) or set(train_ids + test_ids) != set(trajectories):
         raise ValueError("invalid scenario split")
     print("Refitting CRM+LightGBM on the original eight training scenarios", flush=True)
-    surrogate = Track2Surrogate.fit([trajectories[s] for s in train_ids], seed=20260831)
+    connectivity = None
+    if args.interwell_model:
+        connectivity = Track2Surrogate.load(args.interwell_model).baseline.connectivity
+        if connectivity is None:
+            raise ValueError("interwell artifact has no geological connectivity")
+        sources.append({"path": str(args.interwell_model / "manifest.json"),
+                        "sha256": sha256((args.interwell_model / "manifest.json").read_bytes()).hexdigest()})
+    surrogate = Track2Surrogate.fit(
+        [trajectories[s] for s in train_ids], seed=20260831, connectivity=connectivity
+    )
     cases, truths, controls, contexts, covariates, crm, persistence = [], [], [], [], [], [], []
     sensitivity = []
     for scenario in test_ids:
@@ -152,12 +163,13 @@ def main():
     truth, actions = np.stack(truths), np.stack(controls)
     predictions = {"persistence": np.stack(persistence), "crm_lightgbm": np.stack(crm)}
     import torch
-    from timesfm3 import ModelConfig, TimesFM3Evaluator
+    from timesfm3 import ModelConfig, TimesFM3Evaluator, TimesFM3Forecaster
     if not torch.cuda.is_available() or "A100" not in torch.cuda.get_device_name(0):
         raise RuntimeError("This experiment must run on an A100 GPU")
     torch.set_num_threads(4)
     torch.cuda.set_per_process_memory_fraction(0.35)
-    forecaster = TimesFM3Evaluator(ModelConfig(
+    forecast_class = TimesFM3Forecaster if args.full_field else TimesFM3Evaluator
+    forecaster = forecast_class(ModelConfig(
         checkpoint_path="google/timesfm-3.0-pytorch", revision=MODEL_REVISION,
         per_core_batch_size=args.batch_size, device="cuda",
     ))
@@ -174,7 +186,7 @@ def main():
         begin = time.monotonic()
         forecast = list(forecaster.predict_batch(
             inputs, horizon=HORIZON, past_future_covariates=cov,
-            use_symmetric_averaging=False, make_positive=True,
+            use_symmetric_averaging=False, make_positive=True, return_quantiles=True,
         ))
         raw = np.stack([f.forecast for f in forecast]).reshape(len(cases), -1, 3, HORIZON)
         predictions[name] = _project_physics(raw.transpose(0, 3, 1, 2), actions)[0]
@@ -186,6 +198,9 @@ def main():
         "host": platform.node(), "gpu": torch.cuda.get_device_name(0),
         "script_sha256": sha256(Path(__file__).read_bytes()).hexdigest(),
         "model_revision": MODEL_REVISION, "frozen_metrics_sha256": METRICS_SHA256,
+        "timesfm_interface": forecast_class.__name__,
+        "all_control_channels_retained": args.full_field,
+        "crm_interwell_geology": connectivity is not None,
         "packages": {n: version(n) for n in ("timesfm", "torch", "numpy", "pandas", "lightgbm")},
         "input_sources": sources, "train_scenarios": train_ids, "test_scenarios": test_ids,
         "cases": cases, "horizon": HORIZON, "context": args.context,
@@ -201,7 +216,9 @@ def main():
             "Offline hash-verified snapshot; not a new OPM extraction receipt.",
             f"Last {args.windows} complete six-month windows per held-out scenario, not the full KT2 test set.",
             "TimesFM receives observed history; CRM uses the current state and eight training scenarios.",
-            "Joint modes forecast 309 well targets; controls mode sees 412 planned rate/status channels.",
+            ("Joint controls retain all 309 well targets and 412 planned rate/status channels."
+             if args.full_field else
+             "Evaluator chunks targets and samples 31 of 412 control channels; not full-field joint inference."),
             "No explicit geological connectivity features; attention alone does not prove causal validity.",
             "No tuning on test outcomes, no independently calibrated uncertainty, no NPV improvement claim.",
         ],
