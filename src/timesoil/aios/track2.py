@@ -749,6 +749,8 @@ def _action_cube(
     months: tuple[date, ...],
     wells: tuple[str, ...],
 ) -> np.ndarray:
+    if any(action.bhp_limit is not None for action in actions):
+        raise ValueError("this surrogate has no BHP action feature; retraining is required")
     target_codes = {
         ControlTarget.OIL_RATE: 0.0,
         ControlTarget.LIQUID_RATE: 1.0,

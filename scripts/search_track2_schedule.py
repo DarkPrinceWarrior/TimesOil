@@ -304,15 +304,8 @@ def _candidate(candidate: Track2SearchCandidate) -> dict[str, Any]:
     }
 
 
-def _action(action: ControlAction) -> dict[str, str | float]:
-    return {
-        "month": action.month.isoformat(),
-        "well": action.well,
-        "role": action.role.value,
-        "status": action.status.value,
-        "target": action.target.value,
-        "value": action.value,
-    }
+def _action(action: ControlAction) -> dict[str, object]:
+    return action.to_dict()
 
 
 def _lineage_actions(value: object) -> tuple[ControlAction, ...]:
@@ -321,7 +314,7 @@ def _lineage_actions(value: object) -> tuple[ControlAction, ...]:
         raise ValueError("search lineage selected_actions must be a non-empty list")
     actions: list[ControlAction] = []
     for index, item in enumerate(value):
-        if not isinstance(item, dict) or set(item) != fields:
+        if not isinstance(item, dict) or not fields <= set(item) <= fields | {"bhp_limit"}:
             raise ValueError(f"search lineage action {index} has invalid fields")
         raw_value = item["value"]
         if (
@@ -342,9 +335,10 @@ def _lineage_actions(value: object) -> tuple[ControlAction, ...]:
                     WellStatus(item["status"]),
                     ControlTarget(item["target"]),
                     float(raw_value),
+                    item.get("bhp_limit"),
                 )
             )
-        except ValueError as exc:
+        except (TypeError, ValueError) as exc:
             raise ValueError(f"search lineage action {index} is invalid") from exc
     return tuple(actions)
 
