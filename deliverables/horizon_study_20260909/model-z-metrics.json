@@ -1,0 +1,399 @@
+{
+  "schema": "timesoil.horizon-benchmark/v1",
+  "as_of": "2026-09-09",
+  "timestamp_utc": "2026-09-09T12:30:06.359677+00:00",
+  "source_trajectory_sha256": "ca6561d0fff32ac50fd35a1e4896b098f9a4421cfd1d0e0eed642a21e9a57671",
+  "script_sha256": "2f1cd17032e2c5a9fb9c55fba74fef05272e8e0c180b17a42d463530c14c6d36",
+  "forecast_helper_sha256": "b68cc61936f79cb706c510f127fcc5cea2ede6fe3258ef81dd38ee1b6284e5a2",
+  "model_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "context_months": 128,
+  "observation_cutoff": "2007-01-01",
+  "well_count": 103,
+  "future_controls": "source schedule assumed known; retrospective training-archive experiment",
+  "learned_on_future_local_states": false,
+  "official_chdd": false,
+  "claim": "Forecast accuracy only; observed-update rows are not autonomous policy rollouts or causal evidence.",
+  "results": [
+    {
+      "name": "fixed_origin_direct",
+      "horizon_months": 23,
+      "block_months": 23,
+      "new_observations_between_blocks": false,
+      "seconds": 0.6367562785744667,
+      "oil_wape": 0.18335229443392595,
+      "liquid_wape": 0.15663937993714294,
+      "pressure_rmse_bar": 39.37170063470989,
+      "end_exclusive": "2008-12-01",
+      "prefix_metrics": {
+        "1": {
+          "oil_wape": 0.024380508711122503,
+          "liquid_wape": 0.02204800323308213,
+          "pressure_rmse_bar": 27.663742125883413
+        },
+        "3": {
+          "oil_wape": 0.04014581687613459,
+          "liquid_wape": 0.03597328422467069,
+          "pressure_rmse_bar": 29.761456970280925
+        },
+        "6": {
+          "oil_wape": 0.061193954231479164,
+          "liquid_wape": 0.055300021784819506,
+          "pressure_rmse_bar": 32.16277511860116
+        },
+        "12": {
+          "oil_wape": 0.09612888116827913,
+          "liquid_wape": 0.08539188736141784,
+          "pressure_rmse_bar": 34.9628680163041
+        },
+        "23": {
+          "oil_wape": 0.18335229443392595,
+          "liquid_wape": 0.15663937993714294,
+          "pressure_rmse_bar": 39.37170063470989
+        }
+      }
+    },
+    {
+      "name": "fixed_origin_block_1",
+      "horizon_months": 23,
+      "block_months": 1,
+      "new_observations_between_blocks": false,
+      "seconds": 8.20155293494463,
+      "oil_wape": 0.34853681613171367,
+      "liquid_wape": 0.28542776314353524,
+      "pressure_rmse_bar": 62.55289265784901,
+      "end_exclusive": "2008-12-01",
+      "prefix_metrics": {
+        "1": {
+          "oil_wape": 0.023084257863848164,
+          "liquid_wape": 0.020842167131076797,
+          "pressure_rmse_bar": 27.641088413928134
+        },
+        "3": {
+          "oil_wape": 0.03956991239990814,
+          "liquid_wape": 0.034700281809136445,
+          "pressure_rmse_bar": 29.71469789054354
+        },
+        "6": {
+          "oil_wape": 0.06510966283494388,
+          "liquid_wape": 0.05606644393430832,
+          "pressure_rmse_bar": 32.72756107491168
+        },
+        "12": {
+          "oil_wape": 0.11846753498083773,
+          "liquid_wape": 0.09595199653346162,
+          "pressure_rmse_bar": 39.14875363346137
+        },
+        "23": {
+          "oil_wape": 0.34853681613171367,
+          "liquid_wape": 0.28542776314353524,
+          "pressure_rmse_bar": 62.55289265784901
+        }
+      }
+    },
+    {
+      "name": "fixed_origin_block_6",
+      "horizon_months": 23,
+      "block_months": 6,
+      "new_observations_between_blocks": false,
+      "seconds": 1.4196412898600101,
+      "oil_wape": 0.1851537513845466,
+      "liquid_wape": 0.16405893809733862,
+      "pressure_rmse_bar": 38.83527315242052,
+      "end_exclusive": "2008-12-01",
+      "prefix_metrics": {
+        "1": {
+          "oil_wape": 0.02513450747175799,
+          "liquid_wape": 0.022698518117477785,
+          "pressure_rmse_bar": 27.6468239925225
+        },
+        "3": {
+          "oil_wape": 0.041143764118737026,
+          "liquid_wape": 0.03729851769179794,
+          "pressure_rmse_bar": 29.701114144012553
+        },
+        "6": {
+          "oil_wape": 0.06204758040852683,
+          "liquid_wape": 0.05704504414451284,
+          "pressure_rmse_bar": 31.980064327622493
+        },
+        "12": {
+          "oil_wape": 0.09743603822484044,
+          "liquid_wape": 0.08984744563399587,
+          "pressure_rmse_bar": 34.490395108962254
+        },
+        "23": {
+          "oil_wape": 0.1851537513845466,
+          "liquid_wape": 0.16405893809733862,
+          "pressure_rmse_bar": 38.83527315242052
+        }
+      }
+    },
+    {
+      "name": "observed_update_block_6",
+      "horizon_months": 23,
+      "block_months": 6,
+      "new_observations_between_blocks": true,
+      "seconds": 1.4415257275104523,
+      "oil_wape": 0.05541222512679895,
+      "liquid_wape": 0.049966371053020806,
+      "pressure_rmse_bar": 18.80121626016925,
+      "end_exclusive": "2008-12-01",
+      "prefix_metrics": {
+        "1": {
+          "oil_wape": 0.02512719640165217,
+          "liquid_wape": 0.02269439630696301,
+          "pressure_rmse_bar": 27.646814654805524
+        },
+        "3": {
+          "oil_wape": 0.04113430324800817,
+          "liquid_wape": 0.03728339821343945,
+          "pressure_rmse_bar": 29.701089539017897
+        },
+        "6": {
+          "oil_wape": 0.06205518012832474,
+          "liquid_wape": 0.057049898109665854,
+          "pressure_rmse_bar": 31.980013283441703
+        },
+        "12": {
+          "oil_wape": 0.0444914465455866,
+          "liquid_wape": 0.039312959121568826,
+          "pressure_rmse_bar": 22.658211247875858
+        },
+        "23": {
+          "oil_wape": 0.05541222512679895,
+          "liquid_wape": 0.049966371053020806,
+          "pressure_rmse_bar": 18.80121626016925
+        }
+      }
+    },
+    {
+      "name": "persistence",
+      "horizon_months": 23,
+      "new_observations_between_blocks": false,
+      "oil_wape": 0.19566752355583547,
+      "liquid_wape": 0.1611588640726106,
+      "pressure_rmse_bar": 38.56780546785333
+    },
+    {
+      "name": "fixed_origin_direct",
+      "horizon_months": 224,
+      "block_months": 224,
+      "new_observations_between_blocks": false,
+      "seconds": 0.5621747076511383,
+      "oil_wape": 0.9458256995670347,
+      "liquid_wape": 0.43312867784949516,
+      "pressure_rmse_bar": 71.56798229121554,
+      "end_exclusive": "2025-09-01",
+      "prefix_metrics": {
+        "1": {
+          "oil_wape": 0.025970326904234266,
+          "liquid_wape": 0.023699735484192866,
+          "pressure_rmse_bar": 27.62686060512999
+        },
+        "3": {
+          "oil_wape": 0.04224162432188906,
+          "liquid_wape": 0.03811293538191742,
+          "pressure_rmse_bar": 29.65911100214632
+        },
+        "6": {
+          "oil_wape": 0.0628345184806866,
+          "liquid_wape": 0.057241104752699924,
+          "pressure_rmse_bar": 31.884281268718947
+        },
+        "12": {
+          "oil_wape": 0.09629728198161577,
+          "liquid_wape": 0.08649150002644063,
+          "pressure_rmse_bar": 34.31029550216542
+        },
+        "23": {
+          "oil_wape": 0.18330784819541757,
+          "liquid_wape": 0.15778415121448025,
+          "pressure_rmse_bar": 38.45510072450633
+        },
+        "60": {
+          "oil_wape": 0.34998110999445775,
+          "liquid_wape": 0.24688435963543492,
+          "pressure_rmse_bar": 44.94904764106499
+        },
+        "120": {
+          "oil_wape": 0.5672373672844498,
+          "liquid_wape": 0.3434193978420143,
+          "pressure_rmse_bar": 59.734338941544266
+        },
+        "224": {
+          "oil_wape": 0.9458256995670347,
+          "liquid_wape": 0.43312867784949516,
+          "pressure_rmse_bar": 71.56798229121554
+        }
+      }
+    },
+    {
+      "name": "fixed_origin_block_1",
+      "horizon_months": 224,
+      "block_months": 1,
+      "new_observations_between_blocks": false,
+      "seconds": 80.17262279242277,
+      "oil_wape": 922.099717436726,
+      "liquid_wape": 24986922.54482431,
+      "pressure_rmse_bar": 6.360436812766197e+18,
+      "end_exclusive": "2025-09-01",
+      "prefix_metrics": {
+        "1": {
+          "oil_wape": 0.0231113077565908,
+          "liquid_wape": 0.020876621684388467,
+          "pressure_rmse_bar": 27.641078156964852
+        },
+        "3": {
+          "oil_wape": 0.03957512567796561,
+          "liquid_wape": 0.034700259653059076,
+          "pressure_rmse_bar": 29.714618327236135
+        },
+        "6": {
+          "oil_wape": 0.06503657386891752,
+          "liquid_wape": 0.055829447819121907,
+          "pressure_rmse_bar": 32.71537600754532
+        },
+        "12": {
+          "oil_wape": 0.11835798841719201,
+          "liquid_wape": 0.09537938838713848,
+          "pressure_rmse_bar": 39.164967086172396
+        },
+        "23": {
+          "oil_wape": 0.3447307857345242,
+          "liquid_wape": 0.280330469839685,
+          "pressure_rmse_bar": 62.882895901820476
+        },
+        "60": {
+          "oil_wape": 0.6933139300965104,
+          "liquid_wape": 0.544781932193064,
+          "pressure_rmse_bar": 102.98974383102043
+        },
+        "120": {
+          "oil_wape": 1.5634935310648268,
+          "liquid_wape": 79706.07090097343,
+          "pressure_rmse_bar": 2666272824286.4224
+        },
+        "224": {
+          "oil_wape": 922.099717436726,
+          "liquid_wape": 24986922.54482431,
+          "pressure_rmse_bar": 6.360436812766197e+18
+        }
+      }
+    },
+    {
+      "name": "fixed_origin_block_6",
+      "horizon_months": 224,
+      "block_months": 6,
+      "new_observations_between_blocks": false,
+      "seconds": 13.715537745505571,
+      "oil_wape": 1.6193185859708907,
+      "liquid_wape": 0.48720311133480576,
+      "pressure_rmse_bar": 94.34141066703705,
+      "end_exclusive": "2025-09-01",
+      "prefix_metrics": {
+        "1": {
+          "oil_wape": 0.025122252645638707,
+          "liquid_wape": 0.022679387977341474,
+          "pressure_rmse_bar": 27.646842742768822
+        },
+        "3": {
+          "oil_wape": 0.041141202174379804,
+          "liquid_wape": 0.0372815896879654,
+          "pressure_rmse_bar": 29.701148692625708
+        },
+        "6": {
+          "oil_wape": 0.06205470513432436,
+          "liquid_wape": 0.057043872666818936,
+          "pressure_rmse_bar": 31.980143739044134
+        },
+        "12": {
+          "oil_wape": 0.09744800059243666,
+          "liquid_wape": 0.0898272105617758,
+          "pressure_rmse_bar": 34.490575536061485
+        },
+        "23": {
+          "oil_wape": 0.18480843204806885,
+          "liquid_wape": 0.16390519603525186,
+          "pressure_rmse_bar": 38.834468779884595
+        },
+        "60": {
+          "oil_wape": 0.34540764405982,
+          "liquid_wape": 0.23687289782818638,
+          "pressure_rmse_bar": 46.30366276896832
+        },
+        "120": {
+          "oil_wape": 0.7193720553870625,
+          "liquid_wape": 0.3428847639445869,
+          "pressure_rmse_bar": 65.34471509735725
+        },
+        "224": {
+          "oil_wape": 1.6193185859708907,
+          "liquid_wape": 0.48720311133480576,
+          "pressure_rmse_bar": 94.34141066703705
+        }
+      }
+    },
+    {
+      "name": "observed_update_block_6",
+      "horizon_months": 224,
+      "block_months": 6,
+      "new_observations_between_blocks": true,
+      "seconds": 13.725056063383818,
+      "oil_wape": 0.02525094015718871,
+      "liquid_wape": 0.013189503588851681,
+      "pressure_rmse_bar": 11.453312293657998,
+      "end_exclusive": "2025-09-01",
+      "prefix_metrics": {
+        "1": {
+          "oil_wape": 0.025134183921593264,
+          "liquid_wape": 0.022686874212435558,
+          "pressure_rmse_bar": 27.64682886953472
+        },
+        "3": {
+          "oil_wape": 0.04113890648142489,
+          "liquid_wape": 0.037287961129201186,
+          "pressure_rmse_bar": 29.701118034033996
+        },
+        "6": {
+          "oil_wape": 0.06205783861852137,
+          "liquid_wape": 0.05703918997798055,
+          "pressure_rmse_bar": 31.98006048006431
+        },
+        "12": {
+          "oil_wape": 0.04447096921574221,
+          "liquid_wape": 0.039303551202320895,
+          "pressure_rmse_bar": 22.658230486504923
+        },
+        "23": {
+          "oil_wape": 0.05549429422237685,
+          "liquid_wape": 0.050075465792677604,
+          "pressure_rmse_bar": 18.794724808500447
+        },
+        "60": {
+          "oil_wape": 0.03629586686652605,
+          "liquid_wape": 0.029182478827093634,
+          "pressure_rmse_bar": 13.83332790903045
+        },
+        "120": {
+          "oil_wape": 0.031016887146334084,
+          "liquid_wape": 0.022902069700986207,
+          "pressure_rmse_bar": 15.245921068321127
+        },
+        "224": {
+          "oil_wape": 0.02525094015718871,
+          "liquid_wape": 0.013189503588851681,
+          "pressure_rmse_bar": 11.453312293657998
+        }
+      }
+    },
+    {
+      "name": "persistence",
+      "horizon_months": 224,
+      "new_observations_between_blocks": false,
+      "oil_wape": 0.8282121412349522,
+      "liquid_wape": 0.47276517298529847,
+      "pressure_rmse_bar": 70.9346041710249
+    }
+  ],
+  "complete": true
+}

@@ -98,6 +98,8 @@ if __name__ == "__main__":
     parser.add_argument("--expected-months", type=int, help="Reject a shorter experimental window, e.g. require all 224 months")
     parser.add_argument("--select-from", type=Path, nargs="*", help="Additional completed candidates; select by full-period CHDD including the baseline")
     args = parser.parse_args()
+    if args.select_from is not None and args.expected_months is None:
+        parser.error("--select-from requires an explicit --expected-months economic horizon")
     result = compare(args.baseline, args.candidate, args.expected_months)
     if args.select_from is not None:
         comparisons = [result] + [compare(args.baseline, candidate, args.expected_months) for candidate in args.select_from]
