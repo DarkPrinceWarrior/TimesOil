@@ -7,7 +7,7 @@ import pytest
 from timesoil.aios.llm import APPROVED_MODEL, ChatMessage, ExternalQwenClient, LLMConfig, LLMError
 
 
-@pytest.mark.parametrize("statuses, expected_calls", [([0, 429, 200], 3), ([429] * 3, 3), ([401], 1)])
+@pytest.mark.parametrize("statuses, expected_calls", [([0, 429, 200], 3), ([429] * 5, 5), ([401], 1)])
 def test_transient_retries_preserve_payload_and_stop_on_fatal_errors(statuses, expected_calls):
     requests = []
 
@@ -53,3 +53,24 @@ def test_retry_after_cannot_extend_total_request_deadline():
 
     asyncio.run(run())
     assert calls == 1
+
+
+def test_rate_limit_retries_can_cross_a_minute_window():
+    calls = []
+
+    def handler(request):
+        calls.append(request.content)
+        return httpx.Response(429 if len(calls) < 4 else 200, json={
+            "model": APPROVED_MODEL,
+            "choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}],
+        })
+
+    async def run():
+        config = LLMConfig(api_key="test-only", base_url="https://litellm.tatneft.guru/v1")
+        async with httpx.AsyncClient(base_url=config.base_url, transport=httpx.MockTransport(handler)) as transport:
+            return await ExternalQwenClient(config, http_client=transport).chat([ChatMessage("user", "bounded retry")])
+
+    with patch("timesoil.aios.llm.asyncio.sleep", new_callable=AsyncMock) as sleep:
+        assert asyncio.run(run()).content == "ok"
+        assert [call.args[0] for call in sleep.call_args_list] == [15, 30, 60]
+    assert len(calls) == 4 and len(set(calls)) == 1
