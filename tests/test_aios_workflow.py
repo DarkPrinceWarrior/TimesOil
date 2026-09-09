@@ -225,8 +225,9 @@ def _exporter(
         writer = csv.DictWriter(stream, fieldnames=list(CHDD_FIELDS), lineterminator="\n")
         writer.writeheader()
         writer.writerows(
-            {"DATA": f"2007-{month:02d}-01", "well": "P1", **{name: 1 for name in CHDD_FIELDS[2:]}}
+            {"DATA": f"2007-{month:02d}-01", "well": well, **{name: 1 for name in CHDD_FIELDS[2:]}}
             for month in range(1, 8)
+            for well in (*[f"P{i}" for i in range(1, 72)], *[f"I{i}" for i in range(1, 33)])
         )
     trajectory_csv.write_text("scenario_id\nselected\n", encoding="utf-8")
     opm_manifest = Path(kwargs["opm_run_manifest"])
