@@ -165,7 +165,8 @@ class _Runner:
             "DATES\n  1 MAR 2007 /\n/\n"
             "DATES\n  1 APR 2007 /\n/\n"
             "DATES\n  1 MAY 2007 /\n/\n"
-            "DATES\n  1 JUN 2007 /\n/\n",
+            "DATES\n  1 JUN 2007 /\n/\n"
+            "DATES\n  1 JUL 2007 /\n/\n",
             encoding="utf-8",
         )
         deck_path = input_dir / "CASE.DATA"

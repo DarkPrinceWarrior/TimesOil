@@ -160,7 +160,7 @@ def _monthly_injection(actions: tuple[ControlAction, ...]) -> dict[date, float]:
 
 def _schedule_source() -> str:
     blocks = []
-    for month in pd.date_range("2020-01-01", periods=6, freq="MS"):
+    for month in pd.date_range("2020-01-01", periods=7, freq="MS"):
         blocks.extend(
             ("DATES", f" 01 {month.strftime('%b').upper()} {month.year} /", "/")
         )
@@ -742,6 +742,7 @@ def test_search_cli_writes_uncertified_lineage_and_replay_command(
         "output_schedule_sha256": sha256(
             (output / "Model_Z_sch.inc").read_bytes()
         ).hexdigest(),
+        "truncated_after": "2020-07-01",
     }
     assert lineage["selected_actions"]
     assert all(

@@ -141,6 +141,23 @@ def test_one_month_replay_stops_after_following_date() -> None:
     assert "END" not in artifact.text
 
 
+def test_horizon_truncation_preserves_history_and_all_managed_months() -> None:
+    source = _source() + "-- unused future\n"
+    actions = (_action(date(2025, 1, 1)), _action(date(2025, 2, 1)))
+    full = apply_schedule_overlay(source, actions, known_wells=("P1",))
+    bounded = apply_schedule_overlay(
+        source, actions, known_wells=("P1",), end_exclusive=date(2025, 3, 1)
+    )
+    assert full.text.startswith(bounded.text)
+    assert bounded.text.endswith(" 01 MAR 2025 /\n/\n")
+    assert bounded.text.count("-- TIMESOIL AIOS OVERRIDE") == 2
+    assert bounded.controls_sha256 == full.controls_sha256
+    assert bounded.truncated_after == date(2025, 3, 1)
+    for invalid in (date(2025, 2, 1), date(2025, 3, 2), date(2026, 1, 1)):
+        with pytest.raises(ScheduleOverlayError):
+            apply_schedule_overlay(source, actions, known_wells=("P1",), end_exclusive=invalid)
+
+
 @pytest.mark.parametrize(
     ("source", "controls", "wells", "replay"),
     [

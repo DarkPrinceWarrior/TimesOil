@@ -1,4 +1,4 @@
-# Linux host profile for the loopback CONNECT proxy provided by the SSH tunnel.
+# Linux host profile for the existing loopback CONNECT proxy on A100.
 services:
   api:
     network_mode: host

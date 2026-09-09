@@ -77,12 +77,14 @@ def apply_schedule_overlay(
     *,
     known_wells: Iterable[str],
     replay_month: date | None = None,
+    end_exclusive: date | None = None,
 ) -> ScheduleOverlayArtifact:
     """Append controls to matching report-date blocks without mutating ``source``.
 
     ``replay_month`` selects one-month replay: only that month's controls are
     accepted and output stops immediately after the following ``DATES`` block.
-    Without it, every requested month is overlaid and the full source is kept.
+    ``end_exclusive`` stops after that report date for a multi-month horizon.
+    Otherwise every requested month is overlaid and the full source is kept.
     """
 
     _validate_source(source)
@@ -102,6 +104,17 @@ def apply_schedule_overlay(
     mode: Literal["full", "one_month"] = "one_month" if replay_month else "full"
     truncated_after: date | None = None
     cutoff: int | None = None
+    if end_exclusive is not None:
+        if (
+            replay_month is not None
+            or type(end_exclusive) is not date
+            or end_exclusive.day != 1
+            or end_exclusive <= months[-1]
+            or end_exclusive not in by_month
+        ):
+            raise ScheduleOverlayError("exclusive end must be a source report date after all controls")
+        truncated_after = end_exclusive
+        cutoff = by_month[end_exclusive].end_line
     if replay_month is not None:
         if replay_month.day != 1 or months != (replay_month,):
             raise ScheduleOverlayError(

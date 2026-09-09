@@ -456,10 +456,15 @@ class FullCycleWorkflow:
                     "Qwen planning rejected controls before OPM execution"
                 )
 
+            management_period = (
+                control_months[0],
+                (control_months[-1].replace(day=28) + timedelta(days=4)).replace(day=1),
+            )
             overlay = apply_schedule_overlay(
                 source_text,
                 request.controls,
                 known_wells=source_wells,
+                end_exclusive=management_period[1],
             )
             if (
                 overlay.action_count != len(request.controls)
@@ -506,10 +511,6 @@ class FullCycleWorkflow:
             result.manifest_path,
             chdd_csv,
             trajectory_csv,
-        )
-        management_period = (
-            control_months[0],
-            (control_months[-1].replace(day=28) + timedelta(days=4)).replace(day=1),
         )
         economics = self._economics.calculate(
             opm_management_rows(_csv_rows(chdd_csv), management_period),
