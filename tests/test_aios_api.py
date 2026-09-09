@@ -37,7 +37,7 @@ def test_health_and_capabilities_do_not_expose_secret(monkeypatch) -> None:
     assert health.json() == {"status": "ok"}
     payload = capabilities.json()
     assert payload["qwen"] == {
-        "model": "qwen-3.8-27b",
+        "model": "qwen3.8-27b",
         "configured": True,
         "connectivity_verified": False,
     }
