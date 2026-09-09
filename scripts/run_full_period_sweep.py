@@ -23,6 +23,7 @@ def scaled_request(original, producer, injector):
             if action['target'] == 'LRAT':
                 action['value'] = min(500.0, action['value'])
     request['context'] = {
+        **request.get('context', {}),
         'track': 2,
         'objective': 'Verify a numerical control-search hypothesis using full-period OPM and official CHDD. Audit numerical validity; do not claim surrogate certification or improvement before paired comparison.',
         'facts': {'is_baseline': False, 'schedule_kind': 'bounded_physical_search',
@@ -34,12 +35,16 @@ def scaled_request(original, producer, injector):
 
 
 def self_check():
-    original = {'controls': [dict(status='OPEN', role='producer', target='LRAT', value=400),
+    original = {'context': {'constraints': {'allow_conversion_to_injection': True},
+                            'operating_constraints': [{'well': 'P', 'limit': 100}]},
+                'controls': [dict(status='OPEN', role='producer', target='LRAT', value=400),
                              dict(status='SHUT', role='injector', target='WRAT', value=0),
                              dict(status='OPEN', role='injector', target='WRAT', value=100)]}
     result = scaled_request(original, 2, .5)
     assert [a['value'] for a in result['controls']] == [500, 0, 50]
     assert original['controls'][0]['value'] == 400
+    assert result['context']['constraints'] == original['context']['constraints']
+    assert result['context']['operating_constraints'] == original['context']['operating_constraints']
     print('Bounded rates, shut status and source preservation checks passed', flush=True)
 
 
