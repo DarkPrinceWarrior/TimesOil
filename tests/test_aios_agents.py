@@ -471,3 +471,25 @@ def test_management_period_uses_elapsed_opm_months_and_preserves_history(tmp_pat
     assert manifest["management_period"] == selected
     assert [row["month"] for row in raw["fieldMonthly"]] == ["2014-01", "2014-02", "2014-03"]
     assert run.total_chdd_m != raw["summary"]["totalChddM"]
+
+
+def test_required_tool_retry_never_executes_a_partial_response():
+    class Truncated(_WorkflowLLM):
+        async def chat(self, messages, **kwargs):
+            if self.chat_calls == 0:
+                self.chat_calls += 1
+                return LLMResponse("", None, "length")
+            assert kwargs["reasoning"] is False
+            return await super().chat(messages, **kwargs)
+    executed = []
+    tool = ToolDefinition("inspect_state", "Read evidence", {
+        "type": "object", "properties": {"month": {"type": "integer"}},
+        "required": ["month"], "additionalProperties": False},
+        lambda args, _: executed.append(args) or {"verified": True})
+    llm = Truncated()
+    flow = AgentWorkflow(llm, ToolRegistry([tool]),
+        role_tools={AgentRole.COORDINATOR: (tool.name,)},
+        required_tools={AgentRole.COORDINATOR: (tool.name,)})
+    result = asyncio.run(flow.run({"track": 1}))
+    assert result.complete and llm.chat_calls == 2
+    assert executed == [{"month": 1}]

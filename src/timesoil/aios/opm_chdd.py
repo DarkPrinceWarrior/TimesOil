@@ -780,12 +780,14 @@ def _check_connection_total(
 
 def _scheduled_control(record: Sequence[str], keyword: str) -> tuple[str, ScheduledControl]:
     values = _expanded_record(record, keyword)
-    if keyword == "WCONPROD":
+    if keyword in {"WCONPROD", "WCONHIST"}:
         if len(values) < 3:
             raise OpmChddError(f"short {keyword} record: {record!r}")
         well, status, mode = values[:3]
         target_index = {"ORAT": 3, "LRAT": 6}.get(mode.upper())
         target = mode.upper()
+        if keyword == "WCONHIST" and target != "ORAT":
+            raise OpmChddError('history export currently requires explicit WCONHIST ORAT')
     else:
         if len(values) < 4:
             raise OpmChddError(f"short {keyword} record: {record!r}")
@@ -811,7 +813,8 @@ def _scheduled_control(record: Sequence[str], keyword: str) -> tuple[str, Schedu
         if control_value < 0:
             raise OpmChddError(f"negative {keyword} control value for {well!r}")
     bhp_index = 8 if keyword == "WCONPROD" else 6
-    bhp_token = values[bhp_index] if len(values) > bhp_index else "*"
+    # WCONHIST pressure is an observation, not a requested BHP constraint.
+    bhp_token = values[bhp_index] if keyword != "WCONHIST" and len(values) > bhp_index else "*"
     bhp = 0.0 if bhp_token == "*" else _number(bhp_token, f"{keyword} {well} BHP")
     if bhp < 0:
         raise OpmChddError(f"negative {keyword} BHP for {well!r}")
@@ -841,7 +844,7 @@ def _scheduled_controls(
         well: [] for well in wells
     }
     commands = re.finditer(
-        r"(?mi)^\s*(DATES|TSTEP|WCONPROD|WCONINJE|WELTARG)\b", schedule
+        r"(?mi)^\s*(DATES|TSTEP|WCONPROD|WCONINJE|WCONHIST|WELTARG)\b", schedule
     )
     for match in commands:
         keyword = match.group(1).upper()
