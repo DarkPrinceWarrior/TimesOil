@@ -644,19 +644,29 @@ def execute(
             "verify_month_evidence", "Read deterministic checks and provenance for this completed simulator month.",
             {"type": "object", "properties": {}, "required": [], "additionalProperties": False},
             lambda _arguments, _context: {
+                **context,
                 "verified": True,
                 "constraints_checked_before_simulation": True,
-                "provenance": context["provenance"],
                 "constraints": context["verified_constraints"],
-                "economics": context["economics"],
-                "surrogate_used": False,
             },
         )
         async with TatneftLLMClient(llm_config) as client:
-            reviewed = await AgentWorkflow(client, ToolRegistry((evidence_tool,)),
+            workflow = AgentWorkflow(client, ToolRegistry((evidence_tool,)),
                 role_tools={AgentRole.CRITIC: (evidence_tool.name,)},
                 required_tools={AgentRole.CRITIC: (evidence_tool.name,)},
-            ).run_critic(planning, context)
+            )
+            for attempt in range(2):
+                reviewed = await workflow.run_critic(planning, context)
+                if reviewed.critic_approved or attempt:
+                    break
+                record({"phase": "rejected_month_review", "month": result.trajectory.month.isoformat(),
+                        "agent": asdict(reviewed)})
+                context["previous_rejection"] = reviewed.decisions[-1].summary
+                context["review_instruction"] = (
+                    "Recheck the rejection against the complete evidence tool: selected simulator trajectory, "
+                    "constraints, official economics, provenance and claim limits. Approve only if supported. "
+                    "No improvement is claimed; surrogate UQ/OOD is inapplicable because no surrogate was used."
+                )
         record({"phase": "terminal_month_review", "month": result.trajectory.month.isoformat(), "agent": asdict(reviewed)})
         if not reviewed.critic_approved:
             raise RuntimeError("critic rejected simulated month; see agent decision log")

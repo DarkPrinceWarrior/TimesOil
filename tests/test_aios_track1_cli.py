@@ -375,6 +375,14 @@ def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_p
     class FullFieldClient(_AgentClient):
         rejected_role = None
         proposals = 0
+        reviews = 0
+
+        async def structured(self, messages: Any, **kwargs: Any):
+            decision, response = await super().structured(messages, **kwargs)
+            if decision["role"] == "critic":
+                decision["approved"] = self.reviews > 0
+                type(self).reviews += 1
+            return decision, response
 
         async def chat(self, _: Any, **kwargs: Any) -> LLMResponse:
             if kwargs.get("tool_choice") == {"type": "function", "function": {"name": "verify_month_evidence"}}:
@@ -393,6 +401,9 @@ def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_p
     result = json.loads(outputs[Path("result.json")])
     actions = result["schedule"]["actions"]
     assert result["agent"]["records"][0]["phase"] == "invalid_proposal"
+    assert FullFieldClient.reviews == 4
+    rejected = [r for r in result["agent"]["records"] if r["phase"] == "rejected_month_review"]
+    assert len(rejected) == 1 and not rejected[0]["agent"]["decisions"][-1]["approved"]
     assert not result["agent"]["records"][0]["simulator_executed"]
     assert [a["status"] for a in actions if a["well"] == "P1"] == ["SHUT"] * 3
     assert [a["value"] for a in actions if a["well"] == "I1"] == [90, 90, 120]
@@ -407,6 +418,9 @@ def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_p
     assert len(tool_evidence) == 1 and tool_evidence[0]["tool"] == "verify_month_evidence"
     assert tool_evidence[0]["output"]["provenance"] == review["provenance"]
     assert tool_evidence[0]["output"]["constraints"] == review["verified_constraints"]
+    assert tool_evidence[0]["output"]["trajectory"] == review["trajectory"]
+    assert tool_evidence[0]["output"]["claim_limits"] == review["claim_limits"]
+    assert tool_evidence[0]["output"]["planning_economics"] == review["planning_economics"]
     baseline = config.candidates[config.case.start][0]
     tail = cli._continuation_tail(config, config.initial_state, cli._propose_controls(config.case, baseline, updates))
     assert [a.status.value for a in tail if a.well == "P1"] == ["SHUT", "SHUT"]
