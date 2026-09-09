@@ -574,10 +574,23 @@ def execute(
         return selected
 
     async def review(result: Any) -> None:
+        verified_schedule = ScheduleCompiler().compile(config.case, result.trajectory.actions)
+        next_wells = result.trajectory.next_state.wells
         context = {
             "track": 1, "phase": "terminal_month_review", "surrogate_used": False,
             "source_sha256": config.source_sha256,
             "trajectory": asdict(result.trajectory), "economics": asdict(result.economics),
+            "provenance": {"backend": backend.get_provenance(), "planning_run_id": planning.run_id,
+                "controls_sha256": verified_schedule.sha256,
+                "source_sha256": config.source_sha256,
+                "verified_state_receipt": result.trajectory.next_state.restart_ref},
+            "verified_constraints": {"controls_validated_by": "ScheduleCompiler",
+                "result_checked_by": "MonthlyMPC._check_result",
+                "well_count": len(next_wells),
+                "inventory_matches_case": {w.well for w in next_wells} == set(config.case.producers + config.case.injectors),
+                "actual_max_liquid_m3d": max((w.liquid_rate for w in next_wells), default=0),
+                "allowed_max_liquid_m3d": config.case.max_liquid_rate,
+                "invariant_violations": list(result.trajectory.invariant_violations)},
             "claim_limits": "No surrogate used; UQ/OOD not applicable. No NPV improvement or global optimality claim. Deterministic MPC gates already passed.",
         }
         # Dates belong to the typed simulator result, not to model-generated data.

@@ -391,6 +391,10 @@ def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_p
     assert all(r["agent"]["context"]["verified_inventory"]["well_count"] == 2
                for r in result["agent"]["records"] if r["phase"] == "planning")
     assert result["agent"]["records"][-1]["phase"] == "terminal_month_review"
+    review = result["agent"]["records"][-1]["agent"]["context"]
+    assert review["verified_constraints"]["inventory_matches_case"]
+    assert review["verified_constraints"]["well_count"] == 2
+    assert review["provenance"]["verified_state_receipt"] == result["evidence"]["trajectories"][-1]["next_state"]["restart_ref"]
     baseline = config.candidates[config.case.start][0]
     _raises(ValueError, "unknown or duplicate", lambda: cli._propose_controls(config.case, baseline, updates * 2))
     _raises(ValueError, "exceeds", lambda: cli._propose_controls(config.case, baseline, [{**updates[0], "status": "OPEN", "value": 501}]))
