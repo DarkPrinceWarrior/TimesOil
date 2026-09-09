@@ -1,0 +1,47 @@
+[
+  {
+    "index": 0,
+    "producer_scale": 1,
+    "injector_scale": 1,
+    "scope": "Full-period physical planning experiment; future states are not committed to the monthly controller.",
+    "run": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-y-20260909/opm/opm-full-replay-40f2f804257afe12efd408b7",
+    "total_chdd_m": 1030.940233654993,
+    "baseline_chdd_m": 1030.940233654993,
+    "uplift_percent": 0.0,
+    "max_liquid_m3d": 100.0,
+    "months": 23,
+    "wells": 49,
+    "artifacts_verified": true,
+    "seconds": 598.3852521628141
+  },
+  {
+    "index": 1,
+    "producer_scale": 2,
+    "injector_scale": 1,
+    "scope": "Full-period physical planning experiment; future states are not committed to the monthly controller.",
+    "run": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-y-20260909/opm/opm-full-replay-baefb2006fa1f88f5021e972",
+    "total_chdd_m": 1192.4832872638278,
+    "baseline_chdd_m": 1030.940233654993,
+    "uplift_percent": 15.669487748685107,
+    "max_liquid_m3d": 200.0,
+    "months": 23,
+    "wells": 49,
+    "artifacts_verified": true,
+    "seconds": 597.8984793275595
+  },
+  {
+    "index": 2,
+    "producer_scale": 3,
+    "injector_scale": 1,
+    "scope": "Full-period physical planning experiment; future states are not committed to the monthly controller.",
+    "run": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-y-20260909/opm/opm-full-replay-dfce247a09f5b0229fd6b85e",
+    "total_chdd_m": 1174.5411421738447,
+    "baseline_chdd_m": 1030.940233654993,
+    "uplift_percent": 13.929120605735147,
+    "max_liquid_m3d": 300.0,
+    "months": 23,
+    "wells": 49,
+    "artifacts_verified": true,
+    "seconds": 595.4334703721106
+  }
+]
