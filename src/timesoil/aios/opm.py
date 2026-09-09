@@ -1435,7 +1435,8 @@ class OpmGdmBackend:
         return f"{self.runner.get_provenance()}; restart=authenticated-full-replay/v1"
 
     def run_from_restart(
-        self, case: Case, state: State, actions: tuple[ControlAction, ...]
+        self, case: Case, state: State, actions: tuple[ControlAction, ...],
+        *, planning_tail: tuple[ControlAction, ...] | None = None,
     ) -> GdmResult:
         from .economics import CHDDEconomicsAdapter, opm_management_rows
         from .opm_chdd import export_opm_chdd
@@ -1462,6 +1463,19 @@ class OpmGdmBackend:
         if any(action.month >= state.month for action in history):
             raise OpmCertificationError("restart lineage contains future controls")
         accepted = compiler.validate(case, (*history, *ordered))
+        simulated = accepted
+        simulation_end = state.month
+        if planning_tail is not None:
+            tail = compiler.validate(case, planning_tail)
+            expected = set()
+            cursor = self._next_month(state.month)
+            while cursor <= case.end:
+                expected.update((cursor, well) for well in (*case.producers, *case.injectors))
+                cursor = self._next_month(cursor)
+            if {(a.month, a.well) for a in tail} != expected or len(tail) != len(expected):
+                raise OpmCertificationError("planning tail must cover every remaining month and well exactly once")
+            simulated = compiler.validate(case, (*accepted, *tail))
+            simulation_end = case.end
 
         source_sha = _source_digest(self.source)
         payload = {
@@ -1470,6 +1484,9 @@ class OpmGdmBackend:
             "source_sha256": source_sha,
             "actions": [self._action_value(action) for action in ordered],
         }
+        if planning_tail is not None:
+            payload["planning_tail"] = [self._action_value(action) for action in tail]
+            payload["planning_end"] = self._next_month(simulation_end).isoformat()
         run_id = "opm-full-replay-" + sha256(
             json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()[:24]
@@ -1486,9 +1503,9 @@ class OpmGdmBackend:
         source_schedule = schedule_path.read_bytes().decode("utf-8")
         overlay_text, overlay_provenance = self._full_replay_schedule(
             source_schedule,
-            accepted,
+            simulated,
             known_wells=(*case.producers, *case.injectors),
-            replay_month=state.month,
+            replay_month=simulation_end,
         )
         schedule_path.write_bytes(overlay_text.encode("utf-8"))
         overlay_manifest = prepared.run_dir / "schedule-overlay.json"
@@ -1551,6 +1568,23 @@ class OpmGdmBackend:
             output_dir=result.run_dir / "economics",
             management_period=management_period,
         )
+        planning_result = None
+        planning_end = None
+        if planning_tail is not None:
+            planning_end = self._next_month(case.end)
+            planning_period = (case.economics_start, planning_end)
+            if any(
+                state.month.isoformat() < str(row["DATA"]) <= planning_end.isoformat()
+                and float(row["WLPR"]) > case.max_liquid_rate + 1e-6
+                for row in records
+            ):
+                raise OpmCertificationError("planning trajectory exceeds the liquid rate limit")
+            planning_result = economic_result if next_month == planning_end else adapter.calculate(
+                opm_management_rows(records, planning_period),
+                start_year=case.economics_start.year,
+                output_dir=result.run_dir / "planning-economics",
+                management_period=planning_period,
+            )
         if economic_result.start_date != case.economics_start.isoformat():
             raise OpmCertificationError(
                 "official CHDD start date differs from case economics_start"
@@ -1596,6 +1630,19 @@ class OpmGdmBackend:
                 economic_result.output_dir,
             ),
         }
+        if planning_result is not None:
+            lineage_value["planning"] = {
+                "end_exclusive": planning_end.isoformat(),
+                "total_chdd_m": planning_result.total_chdd_m,
+                "tail_actions": [self._action_value(action) for action in tail],
+                "future_states_committed": False,
+            }
+            if planning_result is not economic_result:
+                lineage_value["artifacts"].extend(
+                    {"purpose": "planning_chdd_artifact", "path": path.relative_to(result.run_dir).as_posix(),
+                     "sha256": _sha256_file(path)}
+                    for path in _regular_files(planning_result.output_dir)
+                )
         self._write_new_json(lineage_path, lineage_value)
         lineage_sha = _sha256_file(lineage_path)
         lineage_sidecar = lineage_path.with_suffix(".sha256")
@@ -1619,7 +1666,11 @@ class OpmGdmBackend:
             npv_million_rub=economic_result.total_chdd_m,
             complete=True,
         )
-        return GdmResult(trajectory, economics)
+        planned = None if planning_result is None else Economics(
+            run_id=run_id, start_date=case.economics_start,
+            npv_million_rub=planning_result.total_chdd_m, complete=True,
+        )
+        return GdmResult(trajectory, economics, planned, planning_end)
 
     def _output_root(self) -> Path:
         assert self.runs_dir is not None

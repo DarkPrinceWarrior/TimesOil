@@ -451,6 +451,25 @@ def _propose_controls(case: Case, baseline: Candidate, updates: Any) -> Candidat
     return ScheduleCompiler().validate(case, controls.values())
 
 
+def _continuation_tail(config: RunConfig, state: State, candidate: Candidate) -> Candidate:
+    """Carry controls forward; only explicit source-calendar changes override them."""
+    current = {a.well: a for a in candidate}
+    source_previous = {a.well: a for a in config.candidates[state.month][0]}
+    output = []
+    month = _next_month(state.month)
+    while month <= config.case.end:
+        source = {a.well: a for a in config.candidates[month][0]}
+        current = {
+            well: replace(current[well], month=month)
+            if replace(action, month=source_previous[well].month) == source_previous[well]
+            else action for well, action in source.items()
+        }
+        output.extend(current.values())
+        source_previous = source
+        month = _next_month(month)
+    return ScheduleCompiler().validate(config.case, output)
+
+
 def execute(
     config: RunConfig,
     backend: GdmBackend,
@@ -459,10 +478,13 @@ def execute(
     agent: bool = False,
     agent_log: Path | None = None,
     full_field: bool = False,
+    lifecycle: bool = False,
 ) -> tuple[dict[Path, bytes], dict[str, Any]]:
     started = monotonic()
     if full_field and (not agent or any(len(options) != 1 for options in config.candidates.values())):
         raise ValueError("full-field mode requires --agent and exactly one baseline per month")
+    if lifecycle and not full_field:
+        raise ValueError("lifecycle mode requires full-field agent proposals")
     if agent and config.case.economics_start != config.case.start:
         raise ValueError("agent economics_start must equal the AIOS management start")
     source_contract = script_source_contract or _script_source_contract()
@@ -495,6 +517,15 @@ def execute(
             "state": _state_payload(state),
             "candidates": [[_action_payload(a) for a in option] for option in options],
             "selection_policy": "Choose one candidate for full OPM and official CHDD; numerical results are not known yet. Candidate index is zero-based. No global optimality claim.",
+        }
+        context["horizon_protocol"] = {
+            "observation_cutoff_inclusive": state.month.isoformat(),
+            "commit_months": 1,
+            "economic_start": config.case.economics_start.isoformat(),
+            "economic_end_exclusive": _next_month(config.case.end).isoformat(),
+            "selection": "compare proposal and incumbent by full remaining OPM economics" if lifecycle else "one proposed candidate; no lookahead comparison",
+            "future_calendar": "provided source schedule, assumed known for this training experiment",
+            "future_observed_states_available": False,
         }
         if full_field:
             context.update({
@@ -540,7 +571,7 @@ def execute(
                         "missing_wells": [], "extra_wells": [],
                         "controls": [_action_payload(a) for a in candidate],
                         "schedule_sha256": ScheduleCompiler().compile(config.case, candidate).sha256}
-            tool = ToolDefinition("propose_controls", "Propose updates to any well; retain complete baseline for other wells.",
+            tool = ToolDefinition("propose_controls", "Propose updates to any well; retain complete baseline for other wells. SHUT requires value=0; OPEN LRAT must be <=500; injectors use WRAT.",
                 {"type": "object", "properties": {"updates": {"type": "array", "items": {
                     "type": "object", "properties": {"well": {"type": "string"},
                         "status": {"type": "string", "enum": ["OPEN", "SHUT"]},
@@ -553,7 +584,18 @@ def execute(
             workflow = AgentWorkflow(client, registry,
                 role_tools={AgentRole.PLANNER: (tool.name,)},
                 required_tools={AgentRole.PLANNER: (tool.name,)})
-            plan = await workflow.run_plan(context)
+            for attempt in range(2):
+                try:
+                    plan = await workflow.run_plan(context)
+                    break
+                except ValueError as exc:
+                    if not full_field or attempt:
+                        raise
+                    proposed.clear()
+                    record({"phase": "invalid_proposal", "month": state.month.isoformat(),
+                            "error": str(exc), "simulator_executed": False})
+                    context["previous_validation_error"] = str(exc)
+                    context["repair_instruction"] = "Correct the invalid proposal and call propose_controls once. SHUT must have value=0. No invalid control was executed."
         selections = plan.decisions[-1].tool_evidence
         record({"phase": "planning", "month": state.month.isoformat(), "agent": asdict(plan)})
         if not all(decision.approved for decision in plan.decisions):
@@ -563,7 +605,7 @@ def execute(
         if full_field:
             if len(proposed) != 1:
                 raise RuntimeError("planner must propose one complete field schedule")
-            return plan, (proposed[0],)
+            return plan, (options[0], proposed[0]) if lifecycle else (proposed[0],)
         return plan, (options[selections[0].output["selected_index"]],)
 
     def candidates(state: State) -> Any:
@@ -580,6 +622,9 @@ def execute(
             "track": 1, "phase": "terminal_month_review", "surrogate_used": False,
             "source_sha256": config.source_sha256,
             "trajectory": asdict(result.trajectory), "economics": asdict(result.economics),
+            "planning_economics": None if result.planning_economics is None else asdict(result.planning_economics),
+            "planning_end_exclusive": result.planning_end,
+            "selection_policy": "best full-horizon OPM CHDD among incumbent and agent proposal; only this month committed" if lifecycle else "single agent proposal",
             "provenance": {"backend": backend.get_provenance(), "planning_run_id": planning.run_id,
                 "controls_sha256": verified_schedule.sha256,
                 "source_sha256": config.source_sha256,
@@ -621,7 +666,10 @@ def execute(
                          "controls": [_action_payload(a) for a in result.trajectory.actions],
                          "state": _state_payload(result.trajectory.next_state)})
 
-    result: Track1Result = MonthlyMPC(backend).run(
+    result: Track1Result = MonthlyMPC(
+        backend,
+        planning_tail=(lambda state, candidate: _continuation_tail(config, state, candidate)) if lifecycle else None,
+    ).run(
         config.case,
         config.initial_state,
         candidates,
@@ -638,6 +686,14 @@ def execute(
         "source_sha256": config.source_sha256,
         "script_source_contract": source_contract,
         "case_id": config.case.case_id,
+        "horizon_protocol": {
+            "economic_start": config.case.economics_start.isoformat(),
+            "economic_end_exclusive": _next_month(config.case.end).isoformat(),
+            "commit_months": 1,
+            "planning": "full_remaining_period" if lifecycle else "one_month",
+            "future_states_committed": False,
+            "final_chdd": "last cumulative economics, never sum cumulative monthly values",
+        },
         "schedule": {
             "sha256": result.schedule.sha256,
             "text": result.schedule.text,
@@ -672,7 +728,7 @@ def execute(
     if agent:
         payload["agent"] = {"model": llm_config.model, "base_url": llm_config.base_url,
                             "elapsed_seconds": monotonic() - started,
-                            "selection_policy": "all-well agent proposals, full OPM then critic" if full_field else "one configured candidate per month, full OPM then critic",
+                            "selection_policy": "incumbent versus agent proposal, full-horizon OPM, commit one month then critic" if lifecycle else ("all-well agent proposals, full OPM then critic" if full_field else "one configured candidate per month, full OPM then critic"),
                             "records": agent_records}
     result_bytes = _json(payload)
     schedule_bytes = result.schedule.text.encode("utf-8")
@@ -756,6 +812,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--proof-script", type=Path)
     parser.add_argument("--agent", action="store_true", help="Use external Qwen to select one candidate per month, then review each full OPM/CHDD result")
     parser.add_argument("--full-field", action="store_true", help="Allow Qwen to propose validated controls for every well")
+    parser.add_argument("--lifecycle", action="store_true", help="Compare incumbent and proposal over the full remaining period; commit only one month")
     return parser
 
 
@@ -779,6 +836,7 @@ def main(argv: list[str] | None = None) -> int:
             agent=args.agent,
             agent_log=agent_log,
             full_field=args.full_field,
+            lifecycle=args.lifecycle,
         )
         run_dir = publish(args.runs_dir, config.run_id, outputs)
     except (KeyError, OSError, RuntimeError, TypeError, ValueError) as exc:

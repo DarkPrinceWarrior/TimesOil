@@ -36,6 +36,8 @@ class CertificationError(RuntimeError):
 class GdmResult:
     trajectory: Trajectory
     economics: Economics
+    planning_economics: Economics | None = None
+    planning_end: date | None = None
 
 
 @runtime_checkable
@@ -45,7 +47,8 @@ class GdmBackend(Protocol):
     def validate_case(self, case: Case) -> None: ...
 
     def run_from_restart(
-        self, case: Case, state: State, actions: Candidate
+        self, case: Case, state: State, actions: Candidate,
+        *, planning_tail: Candidate | None = None,
     ) -> GdmResult: ...
 
     def get_provenance(self) -> str: ...
@@ -85,10 +88,12 @@ class MonthlyMPC:
         *,
         compiler: ScheduleCompiler | None = None,
         prescreen: Prescreener | None = None,
+        planning_tail: Callable[[State, Candidate], Candidate] | None = None,
     ) -> None:
         self.backend = backend
         self.compiler = compiler or ScheduleCompiler()
         self.prescreen = prescreen
+        self.planning_tail = planning_tail
 
     def run_step(
         self,
@@ -171,7 +176,15 @@ class MonthlyMPC:
         certified: list[GdmResult] = []
         for candidate in candidates:
             try:
-                result = self.backend.run_from_restart(case, state, candidate)
+                if self.planning_tail is None:
+                    result = self.backend.run_from_restart(case, state, candidate)
+                else:
+                    result = self.backend.run_from_restart(
+                        case, state, candidate,
+                        planning_tail=self.planning_tail(state, candidate),
+                    )
+                    if result.planning_economics is None:
+                        raise CertificationError("backend omitted full-horizon planning economics")
                 self._check_result(case, state, candidate, result)
                 certified.append(result)
             except Exception as exc:
@@ -188,7 +201,7 @@ class MonthlyMPC:
         return max(
             certified,
             key=lambda result: (
-                result.economics.npv_million_rub,
+                (result.planning_economics or result.economics).npv_million_rub,
                 _candidate_key(result.trajectory.actions),
             ),
         )
@@ -256,6 +269,14 @@ class MonthlyMPC:
             raise CertificationError("economics is incomplete or unrelated")
         if economics.start_date != case.economics_start:
             raise CertificationError("economics start date differs from case contract")
+        if result.planning_economics is not None:
+            planned = result.planning_economics
+            if (
+                not planned.complete or planned.run_id != trajectory.run_id
+                or planned.start_date != case.economics_start
+                or result.planning_end != _next_month(case.end)
+            ):
+                raise CertificationError("planning economics must cover the full case horizon")
 
 
 class DeterministicGdmBackend:

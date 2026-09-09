@@ -54,6 +54,29 @@ def _actions(month: date, production: float) -> tuple[ControlAction, ...]:
 
 
 class Track1Test(unittest.TestCase):
+    def test_full_horizon_selection_rejects_short_term_trap(self) -> None:
+        class PlanningBackend(DeterministicGdmBackend):
+            def run_from_restart(self, case, state, actions, *, planning_tail=None):
+                result = super().run_from_restart(case, state, actions)
+                if planning_tail is None:
+                    return result
+                self.asserted_tail = planning_tail
+                # Higher immediate production destroys later value in this example.
+                planned = replace(result.economics, npv_million_rub=1000 - actions[-1].value)
+                return replace(result, planning_economics=planned, planning_end=date(2014, 3, 1))
+
+        case = _case()
+        state = State(case.case_id, case.start, "initial", ())
+        choices = (_actions(case.start, 80), _actions(case.start, 120))
+        backend = PlanningBackend()
+        self.assertEqual(MonthlyMPC(backend).run_step(case, state, choices).trajectory.actions[-1].value, 120)
+        result = MonthlyMPC(backend, planning_tail=lambda *_: _actions(case.end, 60)).run_step(case, state, choices)
+        self.assertEqual(result.trajectory.actions[-1].value, 80)
+        self.assertEqual(result.economics.npv_million_rub, 70)
+        self.assertEqual(result.planning_economics.npv_million_rub, 920)
+        self.assertEqual(result.trajectory.next_state.month, date(2014, 2, 1))
+        self.assertTrue(all(a.month == case.start for a in result.trajectory.actions))
+
     def test_schedule_is_deterministic_and_round_trips(self) -> None:
         case = _case(date(2014, 1, 1))
         compiler = ScheduleCompiler()

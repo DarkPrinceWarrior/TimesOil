@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+from dataclasses import replace
 from datetime import date, datetime, timezone
 import json
 from pathlib import Path
@@ -213,8 +214,10 @@ def test_wells_at_uses_deck_start_for_whitespace_time_summary(
     ]
 
 
+@pytest.mark.parametrize("lifecycle", [False, True])
 def test_full_replay_carries_authenticated_controls_and_emits_lineage(
     tmp_path: Path,
+    lifecycle: bool,
 ) -> None:
     source = _source(tmp_path)
     source_sha = _source_digest(source)
@@ -345,7 +348,7 @@ def test_full_replay_carries_authenticated_controls_and_emits_lineage(
         with Path(chdd).open("w", newline="") as stream:
             writer = csv.DictWriter(stream, fieldnames=CHDD_FIELDS)
             writer.writeheader()
-            for endpoint in ("2014-01-01", "2014-02-01", "2014-03-01"):
+            for endpoint in ("2014-01-01", "2014-02-01", "2014-03-01", "2014-04-01"):
                 writer.writerow(
                     {
                         field: (
@@ -367,7 +370,11 @@ def test_full_replay_carries_authenticated_controls_and_emits_lineage(
         patch.object(runner, "extract_summary_report", side_effect=extract),
         patch("timesoil.aios.opm_chdd.export_opm_chdd", side_effect=export),
     ):
-        result = backend.run_from_restart(case, state, february)
+        tail = tuple(replace(a, month=case.end) for a in february)
+        if lifecycle:
+            with pytest.raises(OpmCertificationError, match="every remaining month"):
+                backend.run_from_restart(case, state, february, planning_tail=tail[:1])
+        result = backend.run_from_restart(case, state, february, planning_tail=tail if lifecycle else None)
 
     assert result.economics.npv_million_rub == 42.5
     assert result.trajectory.next_state.month == date(2014, 3, 1)
@@ -376,16 +383,24 @@ def test_full_replay_carries_authenticated_controls_and_emits_lineage(
     )
     run_dir = tmp_path / "runs" / result.trajectory.run_id
     replay = (run_dir / "input" / "schedule.inc").read_text()
-    assert replay.count("-- TIMESOIL AIOS OVERRIDE") == 2
+    assert replay.count("-- TIMESOIL AIOS OVERRIDE") == (3 if lifecycle else 2)
     assert "2014-01-01" in replay and "2014-02-01" in replay
-    assert "1 MAR 2014" in replay and "1 APR 2014" not in replay
+    assert "1 MAR 2014" in replay
+    assert ("1 APR 2014" in replay) == lifecycle
     proof = json.loads((run_dir / "schedule-overlay.json").read_text())
     assert proof["provenance"]["mode"] == "full-replay"
-    assert proof["provenance"]["action_count"] == 3
+    assert proof["provenance"]["action_count"] == (5 if lifecycle else 3)
     assert backend._authenticated_history(case, result.trajectory.next_state) == (
         january,
         *february,
     )
+    if lifecycle:
+        assert result.planning_end == date(2014, 4, 1)
+        assert result.planning_economics.npv_million_rub == 42.5
+        lineage = json.loads((run_dir / "lineage.json").read_text())
+        assert not lineage["planning"]["future_states_committed"]
+        assert len(lineage["planning"]["tail_actions"]) == 2
+        assert any(a["path"] == "planning-economics/result.json" for a in lineage["artifacts"])
 
     (run_dir / "lineage.json").write_text("{}\n")
     with pytest.raises(OpmCertificationError, match="hash-mismatched"):
