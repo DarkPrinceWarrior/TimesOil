@@ -23,14 +23,16 @@ from timesoil.aios.contracts import (
     Case,
     ControlAction,
     ControlTarget,
+    Economics,
     State,
+    Trajectory,
     WellRole,
     WellState,
     WellStatus,
 )
 from timesoil.aios.opm import OpmFlowRunner, OpmGdmBackend, _source_digest
 from timesoil.aios.schedule import ScheduleCompiler
-from timesoil.aios.track1 import Candidate, GdmBackend, MonthlyMPC, Track1Result
+from timesoil.aios.track1 import Candidate, GdmBackend, GdmResult, MonthlyMPC, Track1Result
 
 
 _SCHEMA = "timesoil.aios.track1-mpc-input/v1"
@@ -470,6 +472,60 @@ def _continuation_tail(config: RunConfig, state: State, candidate: Candidate) ->
     return ScheduleCompiler().validate(config.case, output)
 
 
+def _resume_steps(config: RunConfig, backend: OpmGdmBackend, path: Path):
+    """Load only the contiguous approved prefix, authenticated against physical receipts."""
+    raw = path.read_bytes()
+    records = [json.loads(line) for line in raw.decode().splitlines() if line.strip()]
+    steps, accepted = [], []
+    state, plan, prefix_end = config.initial_state, None, 0
+    for index, record in enumerate(records):
+        if record["phase"] == "planning":
+            plan = record["agent"]
+        if record["phase"] != "terminal_month_review":
+            continue
+        review = record["agent"]
+        if not all(d["approved"] for d in review["decisions"]):
+            break
+        context = review["context"]
+        if (not plan or not all(d["approved"] for d in plan["decisions"])
+                or plan["context"]["state"] != _state_payload(state)
+                or context["source_sha256"] != config.source_sha256
+                or record["month"] != state.month.isoformat()
+                or not review["decisions"][-1]["tool_evidence"]):
+            raise ValueError("resume journal does not match the approved state chain")
+        item = context["trajectory"]
+        trajectory = Trajectory(**{**item, "month": _month(item["month"], "resume month"),
+            "actions": backend._actions_value(item["actions"]),
+            "next_state": _state(item["next_state"]),
+            "invariant_violations": tuple(item["invariant_violations"])})
+        def economics(value):
+            return Economics(**{**value, "start_date": _month(value["start_date"], "economics start")})
+        step = GdmResult(trajectory, economics(context["economics"]),
+            economics(context["planning_economics"]),
+            _month(context["planning_end_exclusive"], "planning end"))
+        MonthlyMPC._check_result(config.case, state, trajectory.actions, step)
+        lineage_path, _ = backend._parse_restart_ref(trajectory.next_state.restart_ref)
+        backend._verify_opm_manifest(lineage_path.parent / "manifest.json", baseline=False)
+        lineage = json.loads(lineage_path.read_text())
+        if (lineage["prior_restart_ref"] != state.restart_ref
+                or lineage["input_state"] != backend._state_value(state)
+                or lineage["economics"]["total_chdd_m"] != step.economics.npv_million_rub
+                or lineage["planning"]["total_chdd_m"] != step.planning_economics.npv_million_rub
+                or lineage["planning"]["end_exclusive"] != step.planning_end.isoformat()
+                or lineage["planning"]["future_states_committed"]):
+            raise ValueError("resume journal disagrees with physical lineage")
+        accepted.extend(trajectory.actions)
+        if backend._authenticated_history(config.case, trajectory.next_state) != tuple(accepted):
+            raise ValueError("resume controls differ from authenticated physical history")
+        steps.append(step)
+        state, prefix_end = trajectory.next_state, index + 1
+    if not steps:
+        raise ValueError("resume journal has no approved contiguous prefix")
+    return steps, records[:prefix_end], {"path": str(path.resolve()), "sha256": _digest(raw),
+        "approved_months": len(steps), "remaining_records_preserved_in_source": len(records) - prefix_end,
+        "physical_lineage_verified": True}
+
+
 def execute(
     config: RunConfig,
     backend: GdmBackend,
@@ -479,6 +535,7 @@ def execute(
     agent_log: Path | None = None,
     full_field: bool = False,
     lifecycle: bool = False,
+    resume_log: Path | None = None,
 ) -> tuple[dict[Path, bytes], dict[str, Any]]:
     started = monotonic()
     if full_field and (not agent or any(len(options) != 1 for options in config.candidates.values())):
@@ -493,6 +550,7 @@ def execute(
     llm_config = LLMConfig.from_env() if agent else None
     feedback: list[dict[str, Any]] = []
     previous_controls: dict[str, ControlAction] = {}
+    completed_steps, resume_receipt = (), None
 
     def record(item: dict[str, Any]) -> None:
         agent_records.append(item)
@@ -501,6 +559,19 @@ def execute(
                 stream.write(json.dumps(item, ensure_ascii=False, allow_nan=False) + "\n")
                 stream.flush()
                 os.fsync(stream.fileno())
+
+    if resume_log is not None:
+        if not lifecycle or not isinstance(backend, OpmGdmBackend):
+            raise ValueError("resume requires lifecycle mode and the physical OPM backend")
+        completed_steps, saved_records, resume_receipt = _resume_steps(config, backend, resume_log)
+        for item in saved_records:
+            record(item)
+        for step in completed_steps:
+            previous_controls.update({a.well: a for a in step.trajectory.actions})
+            feedback.append({"month": step.trajectory.month.isoformat(),
+                "cumulative_chdd_m": step.economics.npv_million_rub,
+                "controls": [_action_payload(a) for a in step.trajectory.actions],
+                "state": _state_payload(step.trajectory.next_state)})
 
     async def choose(state: State) -> Any:
         options = tuple(ScheduleCompiler().validate(config.case, option) for option in config.candidates[state.month])
@@ -534,6 +605,7 @@ def execute(
                     "producers": list(config.case.producers), "injectors": list(config.case.injectors)},
                 "state_units": {"oil_rate": "surface m3/day, NOT tonnes/day", "liquid_rate": "surface m3/day", "injection_rate": "surface m3/day", "bhp": "bar"},
                 "constraints": {"max_producer_liquid_m3d": config.case.max_liquid_rate,
+                    "status_changes": "OPEN/SHUT are permitted control decisions, not immutable source data; SHUT requires value=0",
                     "pressure": "source schedule BHP bounds remain enforced by OPM",
                     "water_quota": "no additional numeric quota supplied in this archive; do not invent one",
                     "availability": "respect source completions; no drilling or unprovided repair assumptions",
@@ -568,6 +640,7 @@ def execute(
                 candidate = _propose_controls(config.case, options[0], arguments["updates"])
                 proposed.append(candidate)
                 return {"well_count": len(candidate), "inventory_matches_case": True,
+                        "controls_validated": True, "status_changes_permitted": True,
                         "missing_wells": [], "extra_wells": [],
                         "controls": [_action_payload(a) for a in candidate],
                         "schedule_sha256": ScheduleCompiler().compile(config.case, candidate).sha256}
@@ -587,7 +660,12 @@ def execute(
             for attempt in range(2):
                 try:
                     plan = await workflow.run_plan(context)
-                    break
+                    if all(d.approved for d in plan.decisions) or not full_field or attempt:
+                        break
+                    record({"phase": "rejected_planning", "month": state.month.isoformat(), "agent": asdict(plan)})
+                    proposed.clear()
+                    context["previous_rejection"] = plan.decisions[-1].summary
+                    context["repair_instruction"] = "Recheck against explicit control permissions and tool validation. OPEN/SHUT changes are allowed hypotheses. Correct or withdraw your proposal if needed; do not approve unsupported controls. Call propose_controls once."
                 except ValueError as exc:
                     if not full_field or attempt:
                         raise
@@ -685,6 +763,7 @@ def execute(
         config.initial_state,
         candidates,
         on_step=(lambda step: asyncio.run(review(step))) if agent else None,
+        completed_steps=completed_steps,
     )
     if _source_digest(config.source) != config.source_sha256:
         raise RuntimeError("OPM source changed while Track 1 was running")
@@ -742,6 +821,9 @@ def execute(
                             "elapsed_seconds": monotonic() - started,
                             "selection_policy": "incumbent versus agent proposal, full-horizon OPM, commit one month then critic" if lifecycle else ("all-well agent proposals, full OPM then critic" if full_field else "one configured candidate per month, full OPM then critic"),
                             "records": agent_records}
+        if resume_receipt is not None:
+            payload["agent"]["resume"] = resume_receipt
+            payload["agent"]["elapsed_seconds_scope"] = "current invocation; historical resumed calls excluded"
     result_bytes = _json(payload)
     schedule_bytes = result.schedule.text.encode("utf-8")
     manifest = {
@@ -825,6 +907,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--agent", action="store_true", help="Use external Qwen to select one candidate per month, then review each full OPM/CHDD result")
     parser.add_argument("--full-field", action="store_true", help="Allow Qwen to propose validated controls for every well")
     parser.add_argument("--lifecycle", action="store_true", help="Compare incumbent and proposal over the full remaining period; commit only one month")
+    parser.add_argument("--resume-log", type=Path, help="Resume a lifecycle run from a physically verified approved journal prefix")
     return parser
 
 
@@ -849,6 +932,7 @@ def main(argv: list[str] | None = None) -> int:
             agent_log=agent_log,
             full_field=args.full_field,
             lifecycle=args.lifecycle,
+            resume_log=args.resume_log,
         )
         run_dir = publish(args.runs_dir, config.run_id, outputs)
     except (KeyError, OSError, RuntimeError, TypeError, ValueError) as exc:

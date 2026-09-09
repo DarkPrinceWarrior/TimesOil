@@ -113,6 +113,7 @@ class MonthlyMPC:
     def run(
         self, case: Case, initial_state: State, candidates: CandidateProvider,
         *, on_step: Callable[[GdmResult], None] | None = None,
+        completed_steps: Sequence[GdmResult] = (),
     ) -> Track1Result:
         self.backend.validate_case(case)
         if initial_state.case_id != case.case_id or initial_state.month != case.start:
@@ -129,17 +130,24 @@ class MonthlyMPC:
         while month <= case.end:
             if state.month != month:
                 raise CertificationError("backend state skipped an MPC month")
-            try:
-                proposed = candidates(state)
-            except Exception as exc:
-                raise CertificationError(
-                    f"candidate provider failed for {month.isoformat()}: "
-                    f"{type(exc).__name__}: {exc}"
-                ) from exc
-            best = self._select(case, state, proposed)
+            resumed = len(trajectories) < len(completed_steps)
+            if resumed:
+                best = completed_steps[len(trajectories)]
+                actions = self.compiler.validate(case, best.trajectory.actions)
+                self._check_result(case, state, actions, best)
+                self._validate_state(case, best.trajectory.next_state)
+            else:
+                try:
+                    proposed = candidates(state)
+                except Exception as exc:
+                    raise CertificationError(
+                        f"candidate provider failed for {month.isoformat()}: "
+                        f"{type(exc).__name__}: {exc}"
+                    ) from exc
+                best = self._select(case, state, proposed)
             if best.trajectory.run_id in run_ids:
                 raise CertificationError("backend reused run_id across MPC months")
-            if on_step is not None:
+            if on_step is not None and not resumed:
                 on_step(best)
             run_ids.add(best.trajectory.run_id)
             accepted_actions.extend(best.trajectory.actions)
@@ -148,6 +156,8 @@ class MonthlyMPC:
             state = best.trajectory.next_state
             month = _next_month(month)
 
+        if len(completed_steps) > len(trajectories):
+            raise CertificationError("completed prefix extends beyond the case horizon")
         schedule = self.compiler.compile(case, accepted_actions)
         evidence = Evidence(
             case_id=case.case_id,

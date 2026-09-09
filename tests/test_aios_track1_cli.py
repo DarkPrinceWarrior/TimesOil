@@ -361,6 +361,34 @@ def test_agent_mode_selects_one_candidate_and_records_each_month(
     assert secret not in json.dumps(summary)
 
 
+def test_full_field_planner_can_repair_a_rejection_without_executing_it(tmp_path: Path, monkeypatch: Any) -> None:
+    class RepairClient(_AgentClient):
+        rejected_role = None
+        plans = 0
+
+        async def structured(self, messages: Any, **kwargs: Any):
+            decision, response = await super().structured(messages, **kwargs)
+            if decision["role"] == "planner":
+                decision["approved"] = self.plans > 0
+                type(self).plans += 1
+            return decision, response
+
+        async def chat(self, messages: Any, **kwargs: Any):
+            if kwargs.get("tool_choice") == {"type": "function", "function": {"name": "verify_month_evidence"}}:
+                return await super().chat(messages, **kwargs)
+            calls = (ToolCall("proposal", "propose_controls", {"updates": []}),) if kwargs.get("tools") else ()
+            return LLMResponse("plan", None, "tool_calls" if calls else "stop", calls)
+
+    monkeypatch.setenv("LLM_API_KEY", "test-secret")
+    monkeypatch.setattr(cli, "TatneftLLMClient", RepairClient)
+    outputs, _ = cli.execute(_config(tmp_path), DeterministicGdmBackend(), agent=True, full_field=True)
+    records = json.loads(outputs[Path("result.json")])["agent"]["records"]
+    assert records[0]["phase"] == "rejected_planning"
+    assert not records[0]["agent"]["decisions"][-1]["approved"]
+    assert len([r for r in records if r["phase"] == "planning"]) == 2
+    assert RepairClient.plans == 3
+
+
 def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_path: Path, monkeypatch: Any) -> None:
     from dataclasses import replace
     config = _config(tmp_path)

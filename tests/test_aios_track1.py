@@ -54,6 +54,27 @@ def _actions(month: date, production: float) -> tuple[ControlAction, ...]:
 
 
 class Track1Test(unittest.TestCase):
+    def test_resume_keeps_verified_prefix_and_calls_only_remaining_months(self) -> None:
+        case = _case()
+        initial = State(case.case_id, case.start, "initial", ())
+        full = MonthlyMPC(DeterministicGdmBackend()).run(
+            case, initial, lambda state: (_actions(state.month, 100),))
+        prefix = GdmResult(full.evidence.trajectories[0], full.evidence.step_economics[0])
+        calls, reviews = [], []
+
+        def candidates(state):
+            calls.append(state.month)
+            return (_actions(state.month, 100),)
+
+        resumed = MonthlyMPC(DeterministicGdmBackend()).run(
+            case, initial, candidates, completed_steps=(prefix,), on_step=reviews.append)
+        self.assertEqual(resumed, full)
+        self.assertEqual(calls, [case.end])
+        self.assertEqual(len(reviews), 1)
+        invalid = replace(prefix, trajectory=replace(prefix.trajectory, month=case.end))
+        with self.assertRaisesRegex(CertificationError, "another case or month"):
+            MonthlyMPC(DeterministicGdmBackend()).run(case, initial, candidates, completed_steps=(invalid,))
+
     def test_parallel_candidates_share_state_and_keep_months_sequential(self) -> None:
         from threading import Barrier
         barrier = Barrier(2)
