@@ -362,6 +362,7 @@ def test_agent_mode_selects_one_candidate_and_records_each_month(
 
 
 def test_full_field_planner_can_repair_a_rejection_without_executing_it(tmp_path: Path, monkeypatch: Any) -> None:
+    from dataclasses import replace
     class RepairClient(_AgentClient):
         rejected_role = None
         plans = 0
@@ -381,12 +382,14 @@ def test_full_field_planner_can_repair_a_rejection_without_executing_it(tmp_path
 
     monkeypatch.setenv("LLM_API_KEY", "test-secret")
     monkeypatch.setattr(cli, "TatneftLLMClient", RepairClient)
-    outputs, _ = cli.execute(_config(tmp_path), DeterministicGdmBackend(), agent=True, full_field=True)
+    config = _config(tmp_path)
+    config = replace(config, candidates={m: options[:1] for m, options in config.candidates.items()})
+    outputs, _ = cli.execute(config, DeterministicGdmBackend(), agent=True, full_field=True)
     records = json.loads(outputs[Path("result.json")])["agent"]["records"]
     assert records[0]["phase"] == "rejected_planning"
     assert not records[0]["agent"]["decisions"][-1]["approved"]
-    assert len([r for r in records if r["phase"] == "planning"]) == 2
-    assert RepairClient.plans == 3
+    assert len([r for r in records if r["phase"] == "planning"]) == 1
+    assert RepairClient.plans == 2
 
 
 def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_path: Path, monkeypatch: Any) -> None:

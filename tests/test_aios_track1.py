@@ -71,7 +71,7 @@ class Track1Test(unittest.TestCase):
         self.assertEqual(resumed, full)
         self.assertEqual(calls, [case.end])
         self.assertEqual(len(reviews), 1)
-        invalid = replace(prefix, trajectory=replace(prefix.trajectory, month=case.end))
+        invalid = GdmResult(full.evidence.trajectories[1], full.evidence.step_economics[1])
         with self.assertRaisesRegex(CertificationError, "another case or month"):
             MonthlyMPC(DeterministicGdmBackend()).run(case, initial, candidates, completed_steps=(invalid,))
 
