@@ -87,6 +87,7 @@ def main():
     parser.add_argument('--initial-head-sha256')
     parser.add_argument('--unfreeze-last-layer', action='store_true')
     parser.add_argument('--model-y', action='store_true')
+    parser.add_argument('--condition-last-layer', action='store_true')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -98,6 +99,9 @@ def main():
         parser.error('learning-rate must be in [1e-7, 1e-3]')
     if bool(args.initial_head) != bool(args.initial_head_sha256):
         parser.error('initial-head and its SHA-256 must be supplied together')
+    if args.condition_last_layer and not args.connectivity:
+        parser.error('static last-layer conditioning requires verified connectivity')
+    args.unfreeze_last_layer |= args.condition_last_layer
     args.output.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
     if args.model_y:
@@ -153,6 +157,9 @@ def main():
         if connectivity is not None:
             torch.testing.assert_close(initial['features'], model.output_head.features, rtol=0, atol=0)
         model.output_head.load_state_dict(initial)
+    if args.condition_last_layer:
+        from timesfm_geology import StaticConditionedLayer
+        model.transformer_stack.layers[-1] = StaticConditionedLayer(model.transformer_stack.layers[-1], model.output_head)
     model.requires_grad_(False)
     model.output_head.requires_grad_(True)
     if args.unfreeze_last_layer:
@@ -205,7 +212,8 @@ def main():
     def selected_weights():
         if args.unfreeze_last_layer:
             return {'output_head': model.output_head.state_dict(),
-                    'last_layer': model.transformer_stack.layers[-1].state_dict()}
+                    'last_layer': model.transformer_stack.layers[-1].state_dict(),
+                    'static_last_layer': args.condition_last_layer}
         return model.output_head.state_dict()
     torch.save(selected_weights(), checkpoint)
     report = dict(schema='timesoil.timesfm-head-adaptation/v1', model_revision=MODEL_REVISION,
@@ -214,6 +222,7 @@ def main():
         trained_component='TimesFM3Torch.output_head' + (' + transformer_stack.layers[-1]' if args.unfreeze_last_layer else ''),
         backbone_frozen=not args.unfreeze_last_layer,
         last_layer_trainable=args.unfreeze_last_layer,
+        static_last_layer=args.condition_last_layer,
         all_other_backbone_parameters_frozen=True,
         initial_head_sha256=args.initial_head_sha256,
         trainable_parameters=sum(p.numel() for p in trainable), learning_rate=args.learning_rate,
