@@ -77,7 +77,8 @@ def seal_forecast_selection(root):
         if (economics['management_period']['total_chdd_m'] != row['forecast_chdd_m']
                 or economics['norms_source_sha256'] != profile['source_sha256']['Нормативы_ЧДД.xlsx']
                 or any(value != profile['source_sha256'][key] for key, value in economics['calculator_sha256'].items())
-                or economics['assumption_overrides'] != {'chargeInitialPump': request.charge_initial_pump}):
+                or economics['assumption_overrides'] != ({'chargeInitialPump': request.charge_initial_pump}
+                    if request.charge_initial_pump is not None else {})):
             raise ValueError('forecast score, norms or official calculator changed')
         for artifact, hash_key in [('input', 'input_sha256'), ('result', 'result_sha256')]:
             name = f"{directory}/{economics['artifacts'][artifact]}"
