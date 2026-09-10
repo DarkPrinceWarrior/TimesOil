@@ -1,0 +1,86 @@
+{
+  "source_sha256": "5d46c89fce3c2ae7ed343afc23ef18c861d1fe58afacf95de283e7168aba931a",
+  "checkpoint_sha256": "9b954acbe64f0c5ff8dc213315a46b9324a948294ac19bc3b087d55fb50844ae",
+  "torch": "2.9.1+cu128",
+  "matmul_precision": "highest",
+  "tf32": false,
+  "cublas_workspace_config": ":4096:8",
+  "deterministic": true,
+  "sdp": {
+    "flash": false,
+    "mem_efficient": false,
+    "cudnn": false,
+    "math": true
+  },
+  "comparisons": [
+    {
+      "call": "wrapped-2",
+      "maximum_scaled_difference_from_previous": 0.0015039443969726562,
+      "elements_above_original_tolerance": 166,
+      "auxiliary_maximum_differences": {
+        "logits": 20000.0,
+        "__call__:resblock_input": 0.0,
+        "__call__:transformer_input": 0.0,
+        "__call__:transformer_output": 0.0009765625
+      }
+    },
+    {
+      "call": "unwrapped",
+      "maximum_scaled_difference_from_previous": 0.0012912750244140625,
+      "elements_above_original_tolerance": 73,
+      "auxiliary_maximum_differences": {
+        "logits": 21248.0,
+        "__call__:resblock_input": 0.0,
+        "__call__:transformer_input": 0.0,
+        "__call__:transformer_output": 0.001953125
+      }
+    },
+    {
+      "call": "inference",
+      "maximum_scaled_difference_from_previous": 0.0012788772583007812,
+      "elements_above_original_tolerance": 104,
+      "auxiliary_maximum_differences": {
+        "logits": 14464.0,
+        "__call__:resblock_input": 0.0,
+        "__call__:transformer_input": 0.0,
+        "__call__:transformer_output": 0.0009765625
+      }
+    },
+    {
+      "call": "wrapped-3",
+      "maximum_scaled_difference_from_previous": 0.0018564462661743164,
+      "elements_above_original_tolerance": 118,
+      "auxiliary_maximum_differences": {
+        "logits": 21376.0,
+        "__call__:resblock_input": 0.0,
+        "__call__:transformer_input": 0.0,
+        "__call__:transformer_output": 0.0009765625
+      }
+    },
+    {
+      "call": "without-checkpoint-1",
+      "maximum_scaled_difference_from_previous": 0.0022639036178588867,
+      "elements_above_original_tolerance": 212,
+      "auxiliary_maximum_differences": {
+        "logits": 33920.0,
+        "__call__:resblock_input": 0.0,
+        "__call__:transformer_input": 0.0,
+        "__call__:transformer_output": 0.001220703125
+      }
+    },
+    {
+      "call": "without-checkpoint-2",
+      "maximum_scaled_difference_from_previous": 0.0018634796142578125,
+      "elements_above_original_tolerance": 238,
+      "auxiliary_maximum_differences": {
+        "logits": 33024.0,
+        "__call__:resblock_input": 0.0,
+        "__call__:transformer_input": 0.0,
+        "__call__:transformer_output": 0.00146484375
+      }
+    }
+  ],
+  "inputs_unchanged": true,
+  "changed_parameter_buffer_versions": [],
+  "peak_gpu_allocated_bytes": 7490105856
+}

@@ -303,7 +303,7 @@
     },
     "provenance/diagnose_decoder_parity.py": {
       "source": "Executed from GitHub frozen source on A100; diagnostic only before optimizer steps.",
-      "sha256": "08c2b91365ba3720d45846fc76e4945bfdb6fe68365717baa37aff4f126d994a"
+      "sha256": "7c4e43614c74a335d74697f22c694de005c3011826eeb344b0e406a19bdc2cc9"
     }
   }
 }

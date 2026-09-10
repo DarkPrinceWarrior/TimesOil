@@ -3,8 +3,8 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 5298,
-      "sha256": "c7363e58734e75187bf9022d89793d5896dd5e05df140c437e6b9b1a493b628e"
+      "bytes": 6555,
+      "sha256": "33b67a3679728b98aa920f1c38fc0047d53d3bddb1afee40cc8581fb7ef3c243"
     },
     {
       "path": "baseline-roundtrip.json",
@@ -15,6 +15,16 @@
       "path": "conversion-roundtrip.json",
       "bytes": 1298,
       "sha256": "3e59f803bed1306dadacd96f4ccb45d82338c9c8ea4d5114a528acfe84a743ab"
+    },
+    {
+      "path": "decoder-repeatability.json",
+      "bytes": 1005,
+      "sha256": "889568f7a5789be26986c29361a8db1ee136e614dd6b225e06ff5c18db4787a2"
+    },
+    {
+      "path": "decoder-stages.json",
+      "bytes": 2808,
+      "sha256": "6659cb793a171d5a476ebee78b792c02c8e0a66cdeec327481f538095b3b34a2"
     },
     {
       "path": "regime-training-protocol.json",
