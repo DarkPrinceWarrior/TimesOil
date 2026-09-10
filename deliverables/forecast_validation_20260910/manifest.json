@@ -100,6 +100,14 @@
     "y-monthly-controller-protocol.json": {
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-integrated-monthly-y-20260910/controller-protocol.json",
       "sha256": "1f5ba6bf03ef1235e9f4ccd953daeda1df7dfd490ced027be60d588f6cb16678"
+    },
+    "z-cold-start-diagnosis.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-cold-start-z-20260910/diagnosis.json",
+      "sha256": "ab4d073593ccb1567f4ea24cdfbafe73be91cd14e6b0f662d69ac11dd3181dc1"
+    },
+    "z-cold-start-protocol.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-cold-start-z-20260910/launch-protocol.json",
+      "sha256": "952fb5dce37524f855d3f46d29b21e23b1bafb027a90b0ea6d01be6903ff618c"
     }
   }
 }
