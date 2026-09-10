@@ -12,6 +12,8 @@ for name, record in manifest['files'].items():
     assert not path.is_symlink() and path.resolve().is_relative_to(root)
     assert path.stat().st_size == record['bytes']
     assert sha256(path.read_bytes()).hexdigest() == record['sha256'], name
+for name in ['model_y/selected', 'model_z/selected', 'model_z/timesfm_candidate']:
+    assert (root / name / 'wells_schedule.inc').read_bytes() == (root / name / 'full-opm-schedule.inc').read_bytes(), name
 for name, record in manifest['cases'].items():
     result = json.loads((root / name / 'official-result.json').read_text())
     rows = result['fieldMonthly']
