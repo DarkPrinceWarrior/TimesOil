@@ -477,7 +477,7 @@ def main():
                 'eligibility_scope': 'Forecast well liquid limit 500 m3/day, supplied liquid/injection/BHP/outage limits and exact schedule constraints; physical feasibility and uncertainty require final verification.',
                 'training_report_sha256': sha256(args.head_report.read_bytes()).hexdigest()}
             forecast_path = args.output / f'forecast-{len(candidates):02d}.npz'
-            np.savez_compressed(forecast_path, prediction=prediction, timestamps=timestamps,
+            np.savez_compressed(forecast_path, prediction=prediction, timestamps=np.asarray(timestamps, dtype=str),
                                 well_ids=np.asarray(trajectory.well_ids), targets=np.asarray(ECONOMIC_TARGETS))
             economic_record['forecast_sha256'] = sha256(forecast_path.read_bytes()).hexdigest()
             proposed['context']['objective'] = 'Verify the graph selected and sealed by TimesFM forecast CHDD. Run OPM once; report physical CHDD even if it is worse than predicted. Do not select another graph using the result.'
