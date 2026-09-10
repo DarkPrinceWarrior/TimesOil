@@ -1,0 +1,19 @@
+{
+  "image_reference": "timesoil-opm:2026.04-pinch935@sha256:204fb421e0900e64ec89f8bc661a27fceb6f2d8562f3dcd034f81590a3dd5a42",
+  "build_exit": 0,
+  "build_log": "/root/projects/TimesOil/results/audit-20260909/opm-pinch-build-v3-20260910.log",
+  "build_log_sha256": "a8ee86d9396580df64c72e0d93c2f1631c33386be6a0c11b6e6b4a5cbd36cc41",
+  "upstream_test_output": [
+    "#9 26.12 Running 5 test cases...",
+    "#9 26.12 \u001b[0;39;49m\u001b[1;34;49m/src/opm-grid/tests/test_minpvprocessor.cpp(31): Entering test case \"GAP_MAXGAP\"",
+    "#9 26.12 \u001b[0;39;49m\u001b[1;34;49m/src/opm-grid/tests/test_minpvprocessor.cpp(61): Entering test case \"GAP_MAXGAP_no_pinched_cells\"",
+    "#9 26.12 \u001b[0;39;49m\u001b[1;34;49m/src/opm-grid/tests/test_minpvprocessor.cpp(89): Entering test case \"Pinch4ALL\"",
+    "#9 26.12 \u001b[0;39;49m\u001b[1;34;49m/src/opm-grid/tests/test_minpvprocessor.cpp(173): Entering test case \"Pinch\"",
+    "#9 26.12 \u001b[0;39;49m\u001b[1;34;49m/src/opm-grid/tests/test_minpvprocessor.cpp(296): Entering test case \"Processing\"",
+    "#9 26.12 \u001b[1;32;49m*** No errors detected"
+  ],
+  "library_sha256": "4f83d5f1232eb8f8f5708c010fd8b4b3adc9809cc4b195a640301d567f54efd7",
+  "linkage": [
+    "libopmgrid.so.2026.04 => /usr/local/lib/libopmgrid.so.2026.04 (0x0000710d90191000)"
+  ]
+}

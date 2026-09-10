@@ -1,0 +1,63 @@
+{
+  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+  "dimensions": [
+    91,
+    102,
+    59
+  ],
+  "collapsed_input_cells": 414,
+  "collapsed_actnum_positive_porv_gt_minpv": 414,
+  "first_cells_ijk_1based": [
+    [
+      59,
+      10,
+      30
+    ],
+    [
+      57,
+      11,
+      30
+    ],
+    [
+      58,
+      11,
+      30
+    ],
+    [
+      59,
+      11,
+      30
+    ],
+    [
+      60,
+      11,
+      30
+    ],
+    [
+      61,
+      11,
+      30
+    ],
+    [
+      56,
+      12,
+      30
+    ],
+    [
+      57,
+      12,
+      30
+    ],
+    [
+      58,
+      12,
+      30
+    ],
+    [
+      59,
+      12,
+      30
+    ]
+  ],
+  "interpretation": "Matches the collapsed positive-PORV condition addressed by upstream OPM grid PR935; not a tNavigator comparison."
+}
