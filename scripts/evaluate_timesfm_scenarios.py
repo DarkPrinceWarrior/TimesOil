@@ -2,6 +2,7 @@
 
 import argparse
 from copy import deepcopy
+import csv
 from hashlib import sha256
 import json
 import os
@@ -16,22 +17,53 @@ from benchmark_timesfm_layouts import forecast_layout
 from timesoil.aios.interwell import WellConnectivity
 from timesoil.aios.surrogate import _project_physics
 from timesoil.aios.track2 import MODEL_Z_SOURCE_SHA256, load_trajectory_dataset
+from timesfm_economics import (ECONOMIC_TARGETS, ECONOMIC_UNITS, economic_metrics,
+    economic_targets, forecast_economic, observed_economic_history)
 
 
 def digest(path):
     return sha256(path.read_bytes()).hexdigest()
 
 
-def interval_check(calibration_errors, test_errors):
+def interval_check(calibration_errors, test_errors, *, economic=False):
     # ponytail: five fixed scenario groups; report empirical coverage, not exchangeability or deployment certification.
+    calibration_errors, test_errors = np.asarray(calibration_errors), np.asarray(test_errors)
+    targets = len(ECONOMIC_TARGETS) if economic else 3
+    if (calibration_errors.ndim != 4 or test_errors.ndim != 4
+            or calibration_errors.shape[0] != 5 or test_errors.shape[0] != 3
+            or calibration_errors.shape[1:] != test_errors.shape[1:]
+            or calibration_errors.shape[-1] != targets
+            or not all(np.isfinite(x).all() and (x >= 0).all() and x.size
+                       for x in (calibration_errors, test_errors))):
+        raise ValueError('finite nonnegative errors for five calibration and three test trajectory groups required')
     radius = np.max(calibration_errors, axis=(0, 1, 2))
     covered = test_errors <= radius
     return {'nominal_group_coverage': .8, 'calibration_groups': len(calibration_errors),
-        'radius_oil_tpd_liquid_tpd_pressure_bar': radius.tolist(),
+        **({'radius_by_target': dict(zip(ECONOMIC_TARGETS, radius.tolist())),
+            'units_by_target': dict(zip(ECONOMIC_TARGETS, ECONOMIC_UNITS))} if economic else
+           {'radius_oil_tpd_liquid_tpd_pressure_bar': radius.tolist()}),
+        'nominal_coverage_scope': 'Per target across one whole field trajectory; not joint across targets.',
         'test_pointwise_coverage': covered.mean(axis=(0, 1, 2)).tolist(),
         'test_whole_trajectory_coverage_by_target': covered.all(axis=(1, 2)).mean(axis=0).tolist(),
+        'test_whole_trajectory_joint_coverage': float(covered.all(axis=(1, 2, 3)).mean()),
         'guaranteed_coverage_claimed': False,
         'limitation': 'Fixed intervention scenarios are not established as exchangeable; only three independent test groups.'}
+
+
+def economic_evaluation_inputs(root, manifest, trajectory, origin, months, development_hashes):
+    """Keep scoring truth separate from inference; economic development hashes are CSV hashes."""
+    expected = manifest['outputs']['chdd_csv']['sha256']
+    if expected in development_hashes.values():
+        raise ValueError('economic evaluation CSV was already used during training/development')
+    _, inputs = observed_economic_history(root, manifest, trajectory, origin)
+    raw = (root / 'chdd.csv').read_bytes()
+    if sha256(raw).hexdigest() != expected:
+        raise ValueError('economic scoring CSV hash mismatch')
+    stamps = trajectory.dates[origin + 1:origin + months + 1].strftime('%Y-%m-%d')
+    endpoints = set(stamps)
+    truth = economic_targets((row for row in csv.DictReader(raw.decode('utf-8-sig').splitlines())
+                              if row['DATA'] in endpoints), stamps, trajectory.well_ids)
+    return inputs, truth, expected
 
 
 def reference_delta(reference_truth, reference_prediction, candidate_prediction, actions):
@@ -114,6 +146,10 @@ def main():
         raise ValueError('evaluation batch hash mismatch')
     manifest = json.loads((args.batch / 'manifest.json').read_text())
     training = json.loads(args.head_report.read_text())
+    economic = bool(training.get('economic_targets'))
+    if economic and (tuple(training['economic_targets']) != ECONOMIC_TARGETS or args.model_y
+                     or args.reference or not args.fixed_origin_only):
+        raise ValueError('nine economic targets require fixed-origin Model Z evaluation without physical reference future')
     validate_split(manifest)
     if args.model_y != (manifest['schema'] == 'timesoil.model-y-forecast-evaluation/v1'):
         raise ValueError('evaluation reservoir and split schema differ')
@@ -129,7 +165,8 @@ def main():
         raise ValueError('official reservoir geology required')
     months = 23 if args.model_y else MONTHS
     start = '2014-01-01' if args.model_y else START
-    trained_mode = 'trained_observed_update_1' if args.model_y else 'trained_fixed_origin_224'
+    trained_mode = ('trained_economic_fixed_origin_224' if economic else
+                    'trained_observed_update_1' if args.model_y else 'trained_fixed_origin_224')
     modes = [trained_mode] if args.fixed_origin_only else [trained_mode, 'pretrained_observed_update_1']
     if args.reference:
         modes += ['trained_reference_delta_224', 'reference_only_224']
@@ -153,6 +190,9 @@ def main():
         'reference_manifest_sha256': args.reference_sha256,
         'reference_correction_sha256': args.reference_correction_sha256,
         'head_validation_loss': training['validation_loss_best'], 'metrics': [], 'source_scenarios': {}}
+    if economic:
+        report.update(economic_targets=list(ECONOMIC_TARGETS), target_units=list(ECONOMIC_UNITS),
+                      source_scenario_hash_semantics='canonical economic CSV SHA-256')
     (args.output / 'protocol.json').write_text(json.dumps(report, indent=2) + '\n')
     started = time.monotonic()
     os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
@@ -176,6 +216,8 @@ def main():
     report['checkpoint_requires_physical_reference'] = bool(selected.get('reference_manifest_sha256'))
     selected_model = load_frozen_model(deepcopy(original_model), connectivity, selected,
                                        reference_sha256=args.reference_sha256)
+    if economic and selected_model.output_head.target_count != len(ECONOMIC_TARGETS):
+        raise ValueError('checkpoint and economic evaluation target counts differ')
     reference = None
     if args.reference:
         if digest(args.reference / 'manifest.json') != args.reference_sha256:
@@ -219,6 +261,11 @@ def main():
         if t.actions.shape[-1] != 4 or origin < (24 if args.model_y else 128) or len(t.states[origin + 1:origin + months + 1]) != months:
             raise ValueError('complete historical/control/target grid required')
         truth = t.states[origin + 1:origin + months + 1]
+        scenario_hash = t.content_hash
+        if economic:
+            economic_input, truth, scenario_hash = economic_evaluation_inputs(root,
+                json.loads((root / 'manifest.json').read_text()), t, origin, months,
+                training['source_scenario_hashes'])
         if reference is not None:
             if t.content_hash == reference.content_hash:
                 raise ValueError('evaluation trajectory is the physical reference')
@@ -226,11 +273,13 @@ def main():
                 raise ValueError('reference and candidate temporal grids differ')
             np.testing.assert_allclose(t.states[:origin + 1], reference.states[:origin + 1], rtol=0, atol=1e-6)
             np.testing.assert_array_equal(t.actions[:origin], reference.actions[:origin])
-        report['source_scenarios'][str(index)] = t.content_hash
+        report['source_scenarios'][str(index)] = scenario_hash
         outputs = {'truth': truth}
         for mode in errors:
             forecaster.model = selected_model if mode.startswith('trained') else original_model
-            if mode == 'trained_reference_corrected_224':
+            if mode == 'trained_economic_fixed_origin_224':
+                prediction = forecast_economic(forecaster, economic_input, origin, months, context, connectivity)
+            elif mode == 'trained_reference_corrected_224':
                 features = bhp_features(t.actions[origin:origin + months],
                     reference.actions[origin:origin + months], correction['degree'])
                 adjusted = outputs['trained_reference_delta_224'] + np.tensordot(features, coefficients, axes=(0, 0))
@@ -247,19 +296,21 @@ def main():
                     'joint', connectivity=connectivity) for offset in range(months)])
             outputs[mode] = prediction
             errors[mode][index] = np.abs(prediction - truth)
+            measure = economic_metrics if economic else metrics
             row = {'index': index, 'split': 'test' if index in manifest['test_cases'] else 'calibration',
-                'mode': mode, **metrics(truth, prediction), 'first_month': metrics(truth[:1], prediction[:1])}
+                'mode': mode, **measure(truth, prediction), 'first_month': measure(truth[:1], prediction[:1])}
             report['metrics'].append(row)
             print(json.dumps(row), flush=True)
-        naive = t.states[origin:origin + months]
-        report['metrics'].append({'index': index, 'mode': 'naive_observed_update_1', **metrics(truth, naive)})
+        if not economic:
+            naive = t.states[origin:origin + months]
+            report['metrics'].append({'index': index, 'mode': 'naive_observed_update_1', **metrics(truth, naive)})
         np.savez_compressed(args.output / f'candidate-{index:02d}.npz', **outputs)
         (args.output / 'report.partial.json').write_text(json.dumps(report, indent=2) + '\n')
     if args.test_only:
         assert set(report['source_scenarios']) == {str(i) for i in manifest['test_cases']}
     report['intervals'] = {} if args.calibration_only or args.test_only else {
         mode: interval_check(np.stack([e[i] for i in manifest['calibration_cases']]),
-            np.stack([e[i] for i in manifest['test_cases']])) for mode, e in errors.items()}
+            np.stack([e[i] for i in manifest['test_cases']]), economic=economic) for mode, e in errors.items()}
     report.update(complete=True, seconds=time.monotonic() - started, is_optimization_result=False,
         script_sha256=digest(Path(__file__)), independently_certified_for_surrogate_control=False)
     (args.output / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
