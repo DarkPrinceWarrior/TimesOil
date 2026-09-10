@@ -96,6 +96,13 @@ class OpmFlowRunnerTest(unittest.TestCase):
 
         self.assertNotIn("1", selected)
         self.assertNotIn("GGOR:GROUP", selected)
+        optional = ["WVPT:P1", "WVIT:P1"]
+        self.assertEqual(_canonical_summary_selection([*available, *optional]), selected)
+        expanded = _canonical_summary_selection([*available, *optional], include_optional=True)
+        self.assertTrue(set(optional) <= set(expanded))
+        self.assertEqual(_canonical_summary_selection(available, include_optional=True), selected)
+        self.assertIn("WVPT\n", build_summary_overlay(("P1",)))
+        self.assertIn("WVIT\n", build_summary_overlay(("P1",)))
         with self.assertRaisesRegex(OpmSummaryError, "duplicate canonical"):
             _canonical_summary_selection([*available, selected[-1]])
 

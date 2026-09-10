@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator, Mapping, Sequence
 
 from .economics import CHDD_FIELDS
-from .opm import OpmSummaryError, verify_summary_extraction
+from .opm import OPM_OPTIONAL_WELL_VECTORS, OpmSummaryError, verify_summary_extraction
 from .track2 import CANONICAL_COLUMNS as TRACK2_FIELDS
 
 
@@ -591,7 +591,7 @@ def _read_summary(
                     ignored.append(column[0])
             else:
                 parts = [part.strip() for part in header.split(":")]
-                if len(parts) == 2 and parts[0].upper() in REQUIRED_VECTORS and parts[1]:
+                if len(parts) == 2 and parts[0].upper() in (*REQUIRED_VECTORS, *OPM_OPTIONAL_WELL_VECTORS) and parts[1]:
                     column = (parts[0].upper(), parts[1], None)
                 elif (
                     len(parts) == 3
@@ -626,6 +626,10 @@ def _read_summary(
             ]
             if missing:
                 raise OpmChddError(f"well {well!r} misses SUMMARY vectors: {missing}")
+        for vector in OPM_OPTIONAL_WELL_VECTORS:
+            optional_wells = {well for v, well, _ in seen if v == vector}
+            if optional_wells and optional_wells != set(wells):
+                raise OpmChddError(f"optional {vector} requires complete well coverage")
         connection_keys = {
             (well, completion)
             for vector, well, completion in columns
