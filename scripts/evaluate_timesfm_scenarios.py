@@ -89,7 +89,10 @@ def main():
     parser.add_argument('--model-y', action='store_true')
     parser.add_argument('--reference', type=Path)
     parser.add_argument('--reference-sha256')
-    parser.add_argument('--calibration-only', action='store_true')
+    split_group = parser.add_mutually_exclusive_group()
+    split_group.add_argument('--calibration-only', action='store_true')
+    split_group.add_argument('--test-only', action='store_true',
+        help='Evaluate only held-out cases; do not reuse development cases for intervals')
     parser.add_argument('--fixed-origin-only', action='store_true')
     parser.add_argument('--reference-correction', type=Path)
     parser.add_argument('--reference-correction-sha256')
@@ -145,6 +148,7 @@ def main():
         'model_selection_allowed_on_test': False, 'head_retraining_allowed_after_test': False,
         'source_sha256': expected_source, 'horizon_months': months,
         'modes_fixed_before_evaluation': modes, 'calibration_only': args.calibration_only,
+        'test_only': args.test_only,
         'simulated_reference_future_used': bool(args.reference), 'candidate_future_observations_used_for_fixed_origin': False,
         'reference_manifest_sha256': args.reference_sha256,
         'reference_correction_sha256': args.reference_correction_sha256,
@@ -191,6 +195,8 @@ def main():
     for record in manifest['scenarios']:
         index = record['index']
         if args.calibration_only and index not in manifest['calibration_cases']:
+            continue
+        if args.test_only and index not in manifest['test_cases']:
             continue
         root = Path(record['directory']).resolve()
         if root != (args.batch / f'candidate-{index:02d}').resolve():
@@ -249,7 +255,9 @@ def main():
         report['metrics'].append({'index': index, 'mode': 'naive_observed_update_1', **metrics(truth, naive)})
         np.savez_compressed(args.output / f'candidate-{index:02d}.npz', **outputs)
         (args.output / 'report.partial.json').write_text(json.dumps(report, indent=2) + '\n')
-    report['intervals'] = {} if args.calibration_only else {
+    if args.test_only:
+        assert set(report['source_scenarios']) == {str(i) for i in manifest['test_cases']}
+    report['intervals'] = {} if args.calibration_only or args.test_only else {
         mode: interval_check(np.stack([e[i] for i in manifest['calibration_cases']]),
             np.stack([e[i] for i in manifest['test_cases']])) for mode, e in errors.items()}
     report.update(complete=True, seconds=time.monotonic() - started, is_optimization_result=False,
