@@ -3,8 +3,8 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 5935,
-      "sha256": "0a304fc14ca587209ba7d44d6929aa5771d7e11135989267c893d74c5505060c"
+      "bytes": 7139,
+      "sha256": "b62bad831690b2d6d789929487ac078824f76e80ae70b408e60e5698f0e44b7f"
     },
     {
       "path": "conversion-control-repair-tests-20260910.txt",
@@ -42,9 +42,24 @@
       "sha256": "9d217607c5bfd18bd15304246a97a9704b413ea871d762e9c2f0e1e06fc73efd"
     },
     {
+      "path": "z-repair-full-cycle-receipt.json",
+      "bytes": 69223,
+      "sha256": "8b6057b9106503cfea4501b6abc132488e83ca89ec97f8c1508ba0519b9dbf10"
+    },
+    {
       "path": "z-repair-protocol.json",
       "bytes": 1054,
       "sha256": "8dd2aea69e358e2d8c2e25d65cb7c579801c94f48534b068a1ab0fce427e4d43"
+    },
+    {
+      "path": "z-repair-result.json",
+      "bytes": 1816,
+      "sha256": "0311c6d38ed5c9fe267b860f2b12aa8ca8b656a1a7a96195eba57eb5eb09765e"
+    },
+    {
+      "path": "z-repair-selection.json",
+      "bytes": 93957,
+      "sha256": "3dfedb7a4ad112c21dc8da952210e902c8077b443cf5604c9e2aaed40df2b860"
     }
   ]
 }

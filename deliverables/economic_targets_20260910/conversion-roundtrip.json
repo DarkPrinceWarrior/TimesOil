@@ -1,0 +1,54 @@
+{
+  "schema": "timesoil.economic-target-roundtrip/v1",
+  "export_manifest_sha256": "43e643bd8531881f80b2cdb6290340830f83053ec7ae640f84429dc1a0eedbcc",
+  "csv_sha256": "4950b1693805c65876a43fe79fc6e7aa8baf3e35b37cd9268ac681bad0de4f9e",
+  "targets": [
+    "WOMR",
+    "WLPR",
+    "WWIR",
+    "THP",
+    "BHP",
+    "WEFF",
+    "WOMT_Diff",
+    "WLPT_Diff",
+    "WWIT_Diff"
+  ],
+  "units": [
+    "t/day",
+    "m3/day",
+    "m3/day",
+    "bar",
+    "bar",
+    "fraction",
+    "t/month",
+    "t/month",
+    "m3/month"
+  ],
+  "months": 224,
+  "wells": 103,
+  "start": "2007-01-01",
+  "end_exclusive": "2025-09-01",
+  "max_absolute_error_by_field": {
+    "WLPT": 0.0,
+    "WLPR": 0.0,
+    "WOMT": 0.0,
+    "WOMR": 0.0,
+    "WWIR": 0.0,
+    "WWIT": 0.0,
+    "THP": 0.0,
+    "BHP": 0.0,
+    "WEFF": 0.0,
+    "WLPT_Diff": 0.0,
+    "WOMT_Diff": 0.0,
+    "WWIT_Diff": 0.0
+  },
+  "original_chdd_m": 14113.468580527848,
+  "reconstructed_chdd_m": 14113.468580527848,
+  "economics_manifests_sha256": [
+    "de2d7a240e838998a53ee9975590262ff5ee6704674323b584bbfa8dc746d0fe",
+    "56eddc19c5416a5d41eeb61a6dd67e7dcc712806e5ff85ccfbc091cee235b69a"
+  ],
+  "new_opm_runs": 0,
+  "forecast_accuracy_tested": false,
+  "scope": "Lossless economic target representation; physical truth used only for this roundtrip check."
+}
