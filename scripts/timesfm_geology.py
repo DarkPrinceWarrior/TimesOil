@@ -80,7 +80,9 @@ def load_selected_layer(layer, head, selected):
     return layer
 
 
-def load_frozen_model(model, connectivity, selected):
+def load_frozen_model(model, connectivity, selected, *, reference_sha256=None):
+    if selected.get('reference_manifest_sha256') not in (None, reference_sha256):
+        raise ValueError('trained response weights require the matching physical reference')
     model.output_head = StaticConditionedHead(model.output_head, connectivity)
     full = selected.get('full_model')
     head_weights = ({k.removeprefix('output_head.'): v for k, v in full.items() if k.startswith('output_head.')}
@@ -147,6 +149,14 @@ def self_check():
     with torch.no_grad():
         adapted.transformer_stack.layers[0].weight.fill_(.125)
     full = {'full_model': adapted.state_dict(), 'static_last_layer': True}
+    sealed = {**full, 'reference_manifest_sha256': 'a' * 64}
+    try:
+        load_frozen_model(deepcopy(native), connection, sealed)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('response checkpoint loaded without its physical reference')
+    load_frozen_model(deepcopy(native), connection, sealed, reference_sha256='a' * 64)
     restored = load_frozen_model(deepcopy(native), connection, full)
     for key, value in adapted.state_dict().items():
         torch.testing.assert_close(restored.state_dict()[key], value, rtol=0, atol=0)
