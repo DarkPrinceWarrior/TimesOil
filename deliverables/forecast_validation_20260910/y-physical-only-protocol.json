@@ -1,0 +1,20 @@
+{
+  "started_utc": "2026-09-10T06:10:57.101316+00:00",
+  "source_commit": "5f167bb",
+  "surrogate_used": false,
+  "llm_model": "qwen3.8-27b",
+  "command": [
+    "/tmp/timesoil-kt3-20260908/venv/bin/python",
+    "scripts/run_track1_mpc.py",
+    "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/case.json",
+    "--runs-dir",
+    "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/runs",
+    "--agent",
+    "--full-field",
+    "--lifecycle"
+  ],
+  "case_sha256": "2fa90146a479017efdd40bac65aa82b3936edb10bdc8c072841040e55fcdb4a4",
+  "scope": "49 wells, 23 monthly agent decisions, full remaining physical OPM and official CHDD",
+  "baseline": "original organizer controls, unchanged pre-control history and economics",
+  "tests": "32 passed: track1 CLI, monthly MPC and Model Y proof; A100"
+}

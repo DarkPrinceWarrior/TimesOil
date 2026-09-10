@@ -124,6 +124,14 @@
     "z-early-identity-protocol.json": {
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-20260910/launch-protocol.json",
       "sha256": "42da5c2e6e6d851336533be0fd36b13932fde616e7df82337fb1b14169c38aa0"
+    },
+    "y-physical-only-protocol.json": {
+      "sha256": "2503b82e5fb1b5ea6e1a04c1862268e2470f03cced83e10442d827a3fec53031",
+      "source": "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/protocol.json"
+    },
+    "y-integrated-experiment-cancelled.json": {
+      "sha256": "5db5bd36e3bb0a0f5f72a316d59e3700ca99b75681e62ade7200502a38f91dac",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-integrated-monthly-y-20260910/cancelled.json"
     }
   }
 }
