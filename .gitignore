@@ -20,3 +20,12 @@ work/
 artifacts/
 *.zip
 *.log
+
+# Local tool state
+.codegraph/
+.ruff_cache/
+
+# Organizer inputs and source data: kept locally, never committed
+raw_data/
+docs/hackathon/models/
+docs/hackathon/sources/
