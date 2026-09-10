@@ -1,0 +1,64 @@
+[
+  {
+    "track": "track2",
+    "container": "scorp-timesoil-kt3-api-1",
+    "source_commit": "0f1c62e8b2ea496514a49eb5184e8ccee5724d22",
+    "image": "sha256:25fc316601e8301e352829a7c0793573add9e72c905cf9f352ef79863984bce4",
+    "healthy": "healthy",
+    "mounts": [
+      {
+        "Type": "volume",
+        "Source": "/var/lib/docker/volumes/scorp-timesoil-kt3_runs/_data",
+        "Destination": "/app/runs"
+      },
+      {
+        "Type": "bind",
+        "Source": "/root/projects/TimesOil/secrets/tatneft_qwen38_20260909",
+        "Destination": "/run/secrets/qwen_api_key"
+      }
+    ],
+    "verification": {
+      "pytest_ui_passed": 2,
+      "live_api_model": "qwen3.8-27b",
+      "browser_verified": true,
+      "legacy_surrogate_label": "CRM + LightGBM / Model Z",
+      "viewport": [
+        390,
+        844
+      ],
+      "horizontal_overflow": false,
+      "certification_not_inferred_from_training": true
+    }
+  },
+  {
+    "track": "track1",
+    "container": "timesoil-track1-kt3-api-1",
+    "source_commit": "0b7902af9ea01f8aa29de2a2fe076fb0453869b3",
+    "image": "sha256:07175d16c5cc0ab0ead64c96ccd923f97de05274459ab2f1be8c7d5f8838bb55",
+    "healthy": "healthy",
+    "mounts": [
+      {
+        "Type": "volume",
+        "Source": "/var/lib/docker/volumes/timesoil-track1-kt3_runs/_data",
+        "Destination": "/app/runs"
+      },
+      {
+        "Type": "bind",
+        "Source": "/root/projects/TimesOil/secrets/tatneft_qwen38_20260909",
+        "Destination": "/run/secrets/qwen_api_key"
+      }
+    ],
+    "verification": {
+      "pytest_ui_passed": 2,
+      "live_api_model": "qwen3.8-27b",
+      "browser_verified": true,
+      "legacy_surrogate_label": "CRM + LightGBM / Model Z",
+      "viewport": [
+        390,
+        844
+      ],
+      "horizontal_overflow": false,
+      "certification_not_inferred_from_training": true
+    }
+  }
+]
