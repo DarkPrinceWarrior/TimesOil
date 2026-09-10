@@ -17,12 +17,12 @@ def digest(path):
     return sha256(path.read_bytes()).hexdigest()
 
 
-def audit(root, expected_months):
+def audit(root, expected_months, *, run_dir=None, baseline_run=None):
     config = load_config(root / "case.json")
     backend = build_backend(config)
     months = sorted(config.candidates)
     assert len(months) == expected_months
-    run = root / "delivery" / config.run_id
+    run = run_dir if run_dir is not None else root / "delivery" / config.run_id
     manifest = json.loads((run / "manifest.json").read_text())
     assert digest(run / "manifest.json") == (run / "manifest.sha256").read_text().split()[0]
     for item in manifest["artifacts"].values():
@@ -77,8 +77,8 @@ def audit(root, expected_months):
     baseline_actions = [_action_payload(a) for a in ScheduleCompiler().validate(
         config.case, (a for m in months for a in config.candidates[m][0])
     )]
-    baseline = []
-    for path in config.opm_runs_dir.glob("*/lineage.json"):
+    baseline = [baseline_run] if baseline_run is not None else []
+    for path in ([] if baseline_run is not None else config.opm_runs_dir.glob("*/lineage.json")):
         item = json.loads(path.read_text())
         if item["input_state"]["month"] == config.case.start.isoformat() and (
             item["step_actions"] + item.get("planning", {}).get("tail_actions", []) == baseline_actions
@@ -86,6 +86,7 @@ def audit(root, expected_months):
             baseline.append(path.parent)
     assert len(baseline) == 1, "a unique complete incumbent baseline is required"
     base, final = baseline[0], lineages[-1].parent
+    backend._verify_opm_manifest(base / "manifest.json", baseline=False)
     opm = [json.loads((p / "manifest.json").read_text()) for p in (base, final)]
     for key in ("source_sha256", "deck_sha256", "image_reference"):
         assert opm[0][key] == opm[1][key]
@@ -93,6 +94,12 @@ def audit(root, expected_months):
                and a["path"] != "input/" + str(config.schedule_include)} for m in opm]
     assert inputs[0] == inputs[1], "non-schedule physical inputs differ"
     rows = [list(csv.DictReader((p / "canonical/chdd.csv").open())) for p in (base, final)]
+    expected_grid = {(_next_month(m).isoformat(), well) for m in months for well in wells}
+    for data in rows:
+        managed = [r for r in data if config.case.start.isoformat() < r['DATA'] <= _next_month(config.case.end).isoformat()]
+        assert len(managed) == len(expected_grid)
+        assert {(r['DATA'], r['well']) for r in managed} == expected_grid
+        assert max(float(r['WLPR']) for r in managed) <= config.case.max_liquid_rate + 1e-6
     history = [{(r["DATA"], r["well"]): r for r in data if r["DATA"] <= config.case.start.isoformat()} for data in rows]
     assert history[0] == history[1], "pre-control history differs"
     econ_dirs = [base / ("planning-economics" if expected_months > 1 else "economics"), final / "economics"]
@@ -117,8 +124,10 @@ if __name__ == "__main__":
     parser.add_argument("root", type=Path)
     parser.add_argument("--expected-months", type=int, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--run-dir", type=Path)
+    parser.add_argument("--baseline-run", type=Path)
     args = parser.parse_args()
-    checked = audit(args.root, args.expected_months)
+    checked = audit(args.root, args.expected_months, run_dir=args.run_dir, baseline_run=args.baseline_run)
     with args.output.open("x") as stream:
         json.dump(checked, stream, indent=2)
     print(json.dumps(checked))

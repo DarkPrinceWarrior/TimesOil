@@ -43,6 +43,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('config', type=Path)
     parser.add_argument('output', type=Path)
+    parser.add_argument('--forecast-validation', type=Path, help='Authenticated BHP reference export for eight independent scenarios')
     args = parser.parse_args()
     config = load_config(args.config)
     args.output.mkdir(parents=True, exist_ok=False)
@@ -53,9 +54,40 @@ def main():
     assert all(a.value <= 500 for a in scale(original, 100, 1) if a.target is ControlTarget.LIQUID_RATE)
     print('Identity and liquid-rate cap checks passed', flush=True)
     results, baseline = [], None
-    for index, (producer, injector) in enumerate([(1, 1), (2, 1), (3, 1), (4, 1), (2, .5), (2, 1.5), (3, 2), (1, .5), (1, 2)]):
+    designs = [(p, i, 0, 1) for p, i in [(1, 1), (2, 1), (3, 1), (4, 1), (2, .5), (2, 1.5), (3, 2), (1, .5), (1, 2)]]
+    if args.forecast_validation:
+        from timesoil.aios.track2 import load_trajectory_dataset
+        from timesoil.aios.opm_chdd import export_opm_chdd
+        reference = args.forecast_validation
+        dataset = load_trajectory_dataset(reference / 'trajectory.csv', manifest=reference / 'manifest.json')
+        assert len(dataset) == 1
+        metadata = json.loads((reference / 'manifest.json').read_text())
+        assert metadata['provenance']['opm_source_sha256'] == config.source_sha256
+        with (reference / 'trajectory.csv').open() as stream:
+            limits = {(r['date'], r['well']): float(r['bhp_limit']) for r in csv.DictReader(stream)}
+        designs = [(1.5, .75, 5, 1), (2.5, 1.25, 10, .95), (3.25, 1.6, 20, .9),
+                   (3.5, 1.75, 0, .9), (2.25, .8, 15, 1), (1.75, 1.1, 10, .85),
+                   (2.75, 1.8, 10, .95), (2.8, 1.9, 20, .9)]
+        evaluation = {'schema': 'timesoil.model-y-forecast-evaluation/v1', 'source_sha256': config.source_sha256,
+            'calibration_cases': [0, 1, 3, 4, 6], 'test_cases': [2, 5, 7], 'designs': designs,
+            'model_selection_allowed_on_test': False, 'scenarios': [], 'complete': False,
+            'reference_manifest_sha256': sha256((reference / 'manifest.json').read_bytes()).hexdigest()}
+        (args.output / 'protocol.json').write_text(json.dumps(evaluation, indent=2) + '\n')
+    for index, (producer, injector, producer_bhp_add, injector_bhp_factor) in enumerate(designs):
         started = time.monotonic()
         controls = compiler.validate(config.case, scale(original, producer, injector))
+        if args.forecast_validation:
+            pressure_controls = []
+            for action in controls:
+                if action.status is WellStatus.OPEN:
+                    limit = limits[action.month.isoformat(), action.well]
+                    assert limit > 0
+                    pressure_controls.append(replace(action, bhp_limit=(limit * injector_bhp_factor
+                        if action.role is WellRole.INJECTOR else limit + producer_bhp_add)))
+                else:
+                    pressure_controls.append(action)
+            assert tuple(replace(a, bhp_limit=b.bhp_limit) for a, b in zip(pressure_controls, controls, strict=True)) == controls
+            controls = compiler.validate(config.case, pressure_controls)
         (args.output / f'controls-{index:02d}.json').write_text(json.dumps([a.to_dict() for a in controls], indent=2) + '\n')
         current = tuple(a for a in controls if a.month == config.initial_state.month)
         tail = tuple(a for a in controls if a.month > config.initial_state.month)
@@ -94,6 +126,16 @@ def main():
             entry.update(run=str(root), total_chdd_m=value, baseline_chdd_m=base,
                          uplift_percent=(value / base - 1) * 100, max_liquid_m3d=maximum,
                          months=len({a.month for a in controls}), wells=len(current), artifacts_verified=True)
+            if args.forecast_validation:
+                exported = args.output / f'candidate-{index:02d}'
+                export_opm_chdd(root / 'summary-report.txt', exported / 'chdd.csv', exported / 'trajectory.csv',
+                    exported / 'manifest.json', scenario_id=f'forecast-validation-{index:02d}', source_model='model_y_opm',
+                    opm_run_manifest=root / 'manifest.json', summary_extraction_manifest=root / 'summary-extraction.json',
+                    deck_dir=root / 'input', include_bhp=True)
+                evaluation['scenarios'].append({'index': index, 'run': str(root.resolve()), 'directory': str(exported.resolve()),
+                    'trajectory_sha256': sha256((exported / 'trajectory.csv').read_bytes()).hexdigest(),
+                    'export_manifest_sha256': sha256((exported / 'manifest.json').read_bytes()).hexdigest()})
+                (args.output / 'manifest.json').write_text(json.dumps(evaluation, indent=2) + '\n')
         except Exception as error:
             entry['error'] = f'{type(error).__name__}: {error}'
         entry['seconds'] = time.monotonic() - started
@@ -102,6 +144,10 @@ def main():
         print(json.dumps(entry), flush=True)
         if index == 0 and 'error' in entry:
             raise RuntimeError('baseline failed verification')
+    if args.forecast_validation:
+        assert [r['index'] for r in evaluation['scenarios']] == list(range(8))
+        evaluation['complete'] = True
+        (args.output / 'manifest.json').write_text(json.dumps(evaluation, indent=2) + '\n')
 
 
 if __name__ == '__main__':
