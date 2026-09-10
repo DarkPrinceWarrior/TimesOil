@@ -1,0 +1,82 @@
+{
+  "verified_utc": "2026-09-10T11:47:02.927171+00:00",
+  "complete": true,
+  "source_root": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910",
+  "exit_codes": {
+    "physics": 0,
+    "evaluation": 0,
+    "driver": 0
+  },
+  "report_sha256": "68f5ee4fcbc1ba2d29b10b64c7352163063c4b39de6a2a872fbd37aaa9fb086a",
+  "physical_manifest_sha256": "4a9a8e53f8a44813fae8211d3a902f43f3c251b747d623c5dc47e78697a8eeef",
+  "frozen_protocol_sha256": "8dbf76457aca0ce4a20e30476b55e5baa112ecefd7da4bed5ef8a3182939ec31",
+  "scenario_artifacts_verified": [
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-00/trajectory.csv",
+      "sha256": "c483607d6768ba037122be56e5ede315f6c39936bc5eeac2d6489f614637d613"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-00/manifest.json",
+      "sha256": "e06b9a72816ae6f1282cd05ad1276bdc95a0469638abc8dcbd37d40edc1896a6"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-01/trajectory.csv",
+      "sha256": "6ce4eab160c1f8ebdcbd9a069c18f310ba1a5cf14d70da78b1052216c5f99524"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-01/manifest.json",
+      "sha256": "adf60f8854f7e75f97c31ea00ff78ed0743a621e0011282a276e568780cb0b74"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-02/trajectory.csv",
+      "sha256": "58726d0eab2ce844d4d5a4a418eb33474558fb38d2fb8bd116d382d0e1f6c48e"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-02/manifest.json",
+      "sha256": "1eb391b256ebd2e0c17577e7fabcc8824fc42fe74b5b9085553f043d0096ae7b"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-03/trajectory.csv",
+      "sha256": "06303c58d615994deb9f17b466a732b7afeed0711d5af3ebc1a112158006aa29"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-03/manifest.json",
+      "sha256": "776363b9ca584f0a0ea6df75d13cbe652899247eedef1f6179c211767c849c23"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-04/trajectory.csv",
+      "sha256": "3728a9ac14e6c0583c1b6bee026e1f2b96fb172ba5ab99093fa5a43ce4b84b31"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-04/manifest.json",
+      "sha256": "a152c5eaea5a7bc8a661c77e92c0bfe524ef0e7e816be58606ad9c4c3c435f9a"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-05/trajectory.csv",
+      "sha256": "2e9df482b656e04e6ccb71249edd5a4b57b53e8316289a8f47060b14542cf117"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-05/manifest.json",
+      "sha256": "8719e247e09f9549fcf56d758ed94362b533beceddff169a46569b74cda5953c"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-06/trajectory.csv",
+      "sha256": "64e976583e387f42deed37fd7a185e210cbd49e73195d9e03566a6ac381de141"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-06/manifest.json",
+      "sha256": "386d62bfbf62f4817863534f6effa23b830a7611456e123903e1771c8b47d376"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-07/trajectory.csv",
+      "sha256": "d4ca80c4ae47c4f49a90c5d7315a01b500d20b6b0cce6b0f64c0d18f6afde6ed"
+    },
+    {
+      "path": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-07/manifest.json",
+      "sha256": "6635504b2ae59760acb3307f7cb9fd26b592adaaa2ac9c533d2503bbe8a77955"
+    }
+  ],
+  "frozen_weights_and_split_unchanged": true,
+  "candidate_future_observations_used": false,
+  "independently_certified_for_surrogate_control": false
+}

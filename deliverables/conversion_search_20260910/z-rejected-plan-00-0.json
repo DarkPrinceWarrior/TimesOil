@@ -1,0 +1,22 @@
+{
+  "error": "controls before a well's first source WCON must be SHUT at zero: well=105, month=2007-01-01, first_source=2013-05-01",
+  "attempt": 0,
+  "policy": {
+    "producer_scale": 1,
+    "injector_scale": 1,
+    "shut_wells": [],
+    "well_updates": [
+      {
+        "well": "105",
+        "start": "2007-01-01",
+        "end": "2025-08-01",
+        "role": "injector",
+        "status": "OPEN",
+        "target": "WRAT",
+        "value": 100,
+        "bhp_limit": 300
+      }
+    ]
+  },
+  "accepted_candidates_added": 0
+}

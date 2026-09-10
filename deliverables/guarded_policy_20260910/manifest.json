@@ -3,8 +3,8 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 3986,
-      "sha256": "620df5c04942f8616c962d93543bceb7f5ecbf4474013b19e1ff66e3000162a5"
+      "bytes": 4667,
+      "sha256": "535f2140f40821ef63810b25d5085de9cb1f732bf3a783c623bf3a47b0fdc019"
     },
     {
       "path": "candidate-full-cycle-receipt.json",
@@ -30,6 +30,11 @@
       "path": "protocol.json",
       "bytes": 937,
       "sha256": "d9d3be55a2ea61157bb9c90ea1728eee3b5902c80ea57059aa0cb7be22e0ad84"
+    },
+    {
+      "path": "review-scope-tests-20260910.txt",
+      "bytes": 99,
+      "sha256": "83084ad5a3a435568d7d2073edd791927447ab171de1705a4ee811450aec6767"
     },
     {
       "path": "selection-recovered.json",

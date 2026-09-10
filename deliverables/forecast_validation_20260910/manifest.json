@@ -270,12 +270,12 @@
       "source": "A100 read-only source control inventory check at 287343a"
     },
     "README.md": {
-      "sha256": "e622aef18ab54131f4a52a0bdc75f30f2339e05b532221df05458585ac7652a8",
-      "source": "WSL committed source; historical runs retain their recorded commit"
+      "sha256": "9b80dac6705f092f21fc1e7665e9cbc6c284aa799586da97259343b52a4a60ff",
+      "source": "WSL committed source; historical runs retain recorded commits"
     },
     "provenance/run_z_guarded_policy.py": {
-      "sha256": "62a29dda97b003398c30c4cfe171d15bdf7c815a8f4b9fd697deb3237a90fcbf",
-      "source": "WSL committed source; historical runs retain their recorded commit"
+      "sha256": "462ea297f7326c7ec5351a06b12add83c47c90eb9384cf957c068d943afae583",
+      "source": "WSL committed source; historical runs retain recorded commits"
     },
     "provenance/run_z_fresh_uncertainty.py": {
       "source": "WSL committed source",
@@ -284,6 +284,10 @@
     "provenance/resume_z_guarded_selection.py": {
       "sha256": "18a2455f4c440d0e52cd7304539426a6a1299b11cc3976489ebfed6175f70066",
       "source": "WSL committed source; historical runs retain their recorded commit"
+    },
+    "provenance/run_z_conversion_repair.py": {
+      "sha256": "f7be053c5e342210555c02b03dfd666c3b2c2323610c3b341f59a39245eec549",
+      "source": "WSL committed source; historical runs retain recorded commits"
     }
   }
 }
