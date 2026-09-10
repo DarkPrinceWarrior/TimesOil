@@ -82,6 +82,22 @@ def check_controls(rules: Sequence[OperatingConstraint], actions):
                     raise ValueError(f"planned {key} exceeds organizer limit in {month}")
 
 
+def own_control_constraints(actions):
+    """Express validated schedule controls as limits on the resulting well response."""
+    rules = []
+    for action in actions:
+        shut = action.status.value == 'SHUT'
+        limits = []
+        if not shut:
+            rate = {'ORAT': 'max_oil_m3d', 'LRAT': 'max_liquid_m3d', 'WRAT': 'max_injection_m3d'}[action.target.value]
+            limits.append((rate, action.value))
+            limits.append(('max_liquid_m3d' if action.role.value == 'injector' else 'max_injection_m3d', 0.))
+            if action.bhp_limit is not None:
+                limits.append(('max_bhp_bar' if action.role.value == 'injector' else 'min_bhp_bar', action.bhp_limit))
+        rules.append(OperatingConstraint(action.month, action.month, (action.well,), tuple(limits), shut))
+    return tuple(rules)
+
+
 def check_observed(rules: Sequence[OperatingConstraint], month: date, values: Mapping[str, Mapping[str, float]]):
     """Check group rate totals and each well's water cut / BHP at reported endpoints."""
     for rule in rules:

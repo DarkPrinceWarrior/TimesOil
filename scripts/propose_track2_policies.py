@@ -29,7 +29,7 @@ from timesoil.aios.workflow import (CycleError, CycleRequest, _controls,
     _source_control_inventory, _validate_source_well_scope)
 from timesoil.aios.opm import OpmFlowRunner
 from timesoil.aios.schedule_overlay import apply_schedule_overlay
-from timesoil.aios.operating_constraints import check_controls, parse_constraints
+from timesoil.aios.operating_constraints import check_controls, parse_constraints, own_control_constraints
 from timesoil.aios.economics import CHDDEconomicsAdapter, opm_management_rows
 from timesoil.aios.schedule import ScheduleError
 
@@ -416,6 +416,12 @@ def main():
                 and any(a['role'] != original_roles[a['month'], a['well']] for a in controls)):
             raise ValueError('new role changes are not permitted by this case')
         check_controls(operating_rules, checked.controls)
+        if args.economic_selection:
+            candidate_rules = (*operating_rules, *own_control_constraints(checked.controls))
+            try:
+                validate_economic_constraints(candidate_rules)
+            except ValueError as error:
+                raise CycleError(str(error)) from error
         overlay = apply_schedule_overlay(source_schedule, checked.controls,
             known_wells=trajectory.well_ids, end_exclusive=trajectory.dates[origin + horizon].date())
         actions = trajectory.actions.copy()
@@ -458,7 +464,7 @@ def main():
         economic_record = {}
         if args.economic_selection:
             timestamps = trajectory.dates[origin + 1:origin + horizon + 1].strftime('%Y-%m-%d')
-            violations = economic_constraint_violations(prediction, timestamps, trajectory.well_ids, operating_rules)
+            violations = economic_constraint_violations(prediction, timestamps, trajectory.well_ids, candidate_rules)
             if not (prediction[..., 1] <= 500 + 1e-6).all():
                 violations.append('forecast well liquid rate exceeds 500 m3/day')
             predicted_rows = forecast_chdd_rows(economic_history, timestamps, trajectory.well_ids, prediction)
@@ -474,7 +480,7 @@ def main():
                 'forecast_economics_directory': str(result.output_dir.relative_to(args.output.resolve())),
                 'forecast_eligible': not violations,
                 'forecast_constraint_violations': violations,
-                'eligibility_scope': 'Forecast well liquid limit 500 m3/day, supplied liquid/injection/BHP/outage limits and exact schedule constraints; physical feasibility and uncertainty require final verification.',
+                'eligibility_scope': 'Forecast well liquid limit 500 m3/day, own LRAT/WRAT/BHP/role/status bounds, supplied operating limits and exact schedule constraints; physical feasibility and uncertainty require final verification.',
                 'training_report_sha256': sha256(args.head_report.read_bytes()).hexdigest()}
             forecast_path = args.output / f'forecast-{len(candidates):02d}.npz'
             np.savez_compressed(forecast_path, prediction=prediction, timestamps=np.asarray(timestamps, dtype=str),

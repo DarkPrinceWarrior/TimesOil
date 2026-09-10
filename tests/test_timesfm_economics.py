@@ -15,6 +15,39 @@ economics = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(economics)
 
 
+def test_forecast_checks_own_rate_bhp_role_and_shut_controls():
+    from datetime import date
+    from dataclasses import replace
+    from timesoil.aios.contracts import ControlAction, ControlTarget, WellRole, WellStatus
+    from timesoil.aios.operating_constraints import own_control_constraints
+
+    month = date(2007, 1, 1)
+    controls = [ControlAction(month, 'P', WellRole.PRODUCER, WellStatus.OPEN,
+                             ControlTarget.LIQUID_RATE, 25., 50.),
+                ControlAction(month, 'I', WellRole.INJECTOR, WellStatus.OPEN,
+                             ControlTarget.WATER_INJECTION_RATE, 40., 300.),
+                ControlAction(month, 'S', WellRole.PRODUCER, WellStatus.SHUT,
+                             ControlTarget.OIL_RATE, 0., 50.)]
+    rules = own_control_constraints(controls)
+    forecast = np.zeros((1, 3, 9))
+    forecast[0, 0, [1, 4]] = [20., 60.]
+    forecast[0, 1, [2, 4]] = [30., 280.]
+    def violations(values):
+        return economics.economic_constraint_violations(values, ['2007-02-01'], ['P', 'I', 'S'], rules)
+    assert not violations(forecast)
+    for well, column, value, expected in [(0, 1, 26., 'max_liquid_m3d'),
+            (1, 2, 41., 'max_injection_m3d'), (0, 4, 49., 'min_bhp_bar'),
+            (1, 4, 301., 'max_bhp_bar'), (0, 2, 1., 'max_injection_m3d'),
+            (1, 1, 1., 'max_liquid_m3d'), (2, 0, 1., 'unavailable')]:
+        bad = forecast.copy(); bad[0, well, column] = value
+        assert expected in violations(bad)[0]
+    stopped = forecast.copy(); stopped[..., :3] = 0.; stopped[..., 4] = 0.
+    assert not violations(stopped)
+    unsupported = own_control_constraints([replace(controls[0], target=ControlTarget.OIL_RATE)])
+    with pytest.raises(ValueError, match='max_oil_m3d'):
+        economics.validate_economic_constraints(unsupported)
+
+
 def test_forecast_limits_use_surface_units_groups_and_control_months():
     from datetime import date
     from timesoil.aios.operating_constraints import parse_constraints, check_observed
