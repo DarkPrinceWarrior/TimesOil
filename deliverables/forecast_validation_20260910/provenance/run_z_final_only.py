@@ -11,7 +11,7 @@ from timesoil.aios.track2 import load_trajectory_dataset
 from timesoil.aios.workflow import CycleRequest
 
 R = Path('/root/projects/TimesOil/results/audit-20260909')
-OUT = R / 'timesfm-final-only-z-repair-20260910'
+OUT = R / 'timesfm-final-only-z-bounded-20260910'
 TRAINING = R / 'timesfm-economic-targets-z-20260910'
 GPU_PYTHON = '/tmp/timesoil-kt3-20260908/venv/bin/python'
 ROOT_PYTHON = '/root/projects/TimesOil/.venv/bin/python'
@@ -20,7 +20,7 @@ ROOT_PYTHON = '/root/projects/TimesOil/.venv/bin/python'
 def run():
     protocol = {'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
         'waiting_for_session': 'timesoil-economic-targets-z-20260910',
-        'search': 'Original source schedule, deterministic grid and three Qwen proposals; rank forecast CHDD.',
+        'search': 'Original source schedule, deterministic grid and three bounded Qwen proposal rounds; require at least one approved proposal and rank forecast CHDD.',
         'historical_physical_candidate_bank_used_for_selection': False,
         'new_search_opm_calls': 0, 'maximum_final_opm_calls': 1,
         'independently_certified_forecast_accuracy': False}
