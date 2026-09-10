@@ -108,6 +108,10 @@
     "z-cold-start-protocol.json": {
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-cold-start-z-20260910/launch-protocol.json",
       "sha256": "952fb5dce37524f855d3f46d29b21e23b1bafb027a90b0ea6d01be6903ff618c"
+    },
+    "z-cold-start-independent-protocol.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/cold-start-independent-z-20260910/launch-protocol.json",
+      "sha256": "6b5e6879f1cd79cfa43c710d70bfd9afeba9605810feaca9c7da62f377d9dd2b"
     }
   }
 }
