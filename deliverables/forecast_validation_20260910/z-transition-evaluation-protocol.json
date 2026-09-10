@@ -1,0 +1,12 @@
+{
+  "waiting_for_session": "timesoil-transition-training-z-20260910",
+  "selected_model": "selected_transition",
+  "comparison_model": "previous_early_identity",
+  "evaluated_cases": [
+    2,
+    5,
+    7
+  ],
+  "selection_basis": "development validation only, before these test forecasts",
+  "uncertainty_calibration_claimed": false
+}

@@ -176,6 +176,10 @@
     "z-transition-training-protocol.json": {
       "sha256": "c1dfba91bd5ae3e0605e261f7bbed28dc120877de850712c0c69ca6b743112a6",
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-coverage-z-20260910/wait-protocol.json"
+    },
+    "z-transition-evaluation-protocol.json": {
+      "sha256": "04f4b0320e21cf7326de530e330536fd1b970114b6b8885b4510dc9d0cfb27ad",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-evaluation-z-20260910/wait-protocol.json"
     }
   }
 }
