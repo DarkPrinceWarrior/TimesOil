@@ -456,6 +456,11 @@ def main():
         tool = ToolDefinition("propose_policy", "Propose a full-field policy. Optional producer_bhp_add (bar) and injector_bhp_factor tighten open-well BHP limits uniformly before individual updates. well_updates changes a well over inclusive monthly start/end dates after rate scaling: rate, status, target, role, BHP limit. Conversion requires explicit WRAT, value and BHP, must be permitted by the case, and cannot be reversed; extend its role to the end. Omitted scales default to 1, arrays to empty. Respect the explicit forecast_reference domain when present. Full-period TimesFM hypothesis forecast; every retained candidate requires full-period OPM, and official CHDD selects the winner.", schema,
             lambda policy, _: evaluate(policy))
         context_value = {"track": 2, "round": index,
+            "search_focus": checked_request.context.get('search_focus'),
+            "conversion_search": {
+                "permitted": allow_conversion,
+                "instruction": "Assess producer-to-injector conversions across the full eligible producer inventory using only pre-origin state, geology and official conversion costs. For a producer_to_injector search, propose at least one new permanent conversion as a hypothesis for full OPM; include explicit WRAT, rate, start date and injection BHP ceiling. Keep other controls unchanged to isolate its effect. Do not claim gain or surrogate accuracy for new roles before physical validation. Reverse conversion is forbidden.",
+            } if allow_conversion else {"permitted": False},
             "pressure_semantics": pressure_semantics,
             "surrogate_evidence": {"model": "Google TimesFM 3.0", "revision": MODEL_REVISION,
                 "adapted_checkpoint_loaded": args.head is not None, "verified_checkpoint_sha256": args.head_sha256,

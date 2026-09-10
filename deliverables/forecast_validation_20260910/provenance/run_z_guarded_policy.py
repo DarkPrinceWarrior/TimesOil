@@ -7,8 +7,9 @@ from timesoil.aios.opm import OPM_IMAGE
 import run_z_transition_policy as driver
 
 
-def run():
-    driver.OUT = driver.R / 'timesfm-guarded-z-policy-20260910'
+def run(*, conversion_search=False):
+    driver.OUT = driver.R / ('timesfm-conversion-z-policy-20260910' if conversion_search
+                            else 'timesfm-guarded-z-policy-20260910')
     driver.OUT.mkdir(exist_ok=False)
     records = []
     for relative in ('timesfm-bhp-policy-20260909/cycles/baseline',
@@ -24,7 +25,7 @@ def run():
         experimental_PINCH_data_used=False, new_proposal_required=True,
         source_schedule_checked_before_forecast=True, receipts=records), indent=2) + '\n')
     try:
-        driver.run()
+        driver.run(conversion_search=conversion_search)
     except Exception:
         (driver.OUT / 'exit').write_text('1\n')
         raise
@@ -33,4 +34,4 @@ def run():
 if __name__ == '__main__':
     driver.self_check()
     if '--self-check' not in sys.argv:
-        run()
+        run(conversion_search='--conversion-search' in sys.argv)

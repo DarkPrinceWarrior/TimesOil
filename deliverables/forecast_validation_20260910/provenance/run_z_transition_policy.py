@@ -43,7 +43,7 @@ def self_check():
     print('Frozen weights, full horizon, no future reference and one new proposal verified.')
 
 
-def run():
+def run(*, conversion_search=False):
     training = R / 'timesfm-transition-coverage-z-20260910'
     evaluation = R / 'timesfm-transition-evaluation-z-20260910'
     protocol = dict(source_commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
@@ -72,6 +72,13 @@ def run():
         assert set(tested['source_scenarios']) == {'2', '5', '7'}
     request = R / 'physical-sweep-z-20260909/request-03.json'
     assert sha256(request.read_bytes()).hexdigest() == '2ecf8acc3a5f1cf7ea91b09f45ef7795c584c28a9ea41620a9b420ecf827d5c7'
+    if conversion_search:
+        permitted = json.loads(request.read_text())
+        permitted['context']['constraints'] = {
+            **permitted['context'].get('constraints', {}), 'allow_conversion_to_injection': True}
+        permitted['context']['search_focus'] = 'producer_to_injector'
+        request = OUT / 'conversion-request.json'
+        request.write_text(json.dumps(permitted, indent=2) + '\n')
     baseline = R / 'timesfm-bhp-policy-20260909/cycles/baseline'
     forecast_baseline = R / 'timesfm-bhp-policy-20260909/baseline-view'
     forecast_source = forecast_baseline / 'canonical/trajectory.csv'
@@ -86,6 +93,7 @@ def run():
            'LLM_TIMEOUT_SECONDS': '600', 'LLM_MAX_OUTPUT_TOKENS': '8192',
            'LLM_API_KEY': Path('/dev/shm/timesoil-tatneft-20260909-key').read_text().strip()}
     protocol.update(checkpoint_sha256=checkpoint, started_utc=datetime.now(timezone.utc).isoformat(),
+                    conversion_search=conversion_search, request_sha256=sha256(request.read_bytes()).hexdigest(),
                     forecast_baseline=str(forecast_baseline), economic_baseline=str(baseline),
                     evaluation_protocol_sha256=sha256((evaluation / 'frozen-models-protocol.json').read_bytes()).hexdigest())
     (OUT / 'protocol.json').write_text(json.dumps(protocol, indent=2) + '\n')
@@ -103,6 +111,19 @@ def run():
         '--connectivity', str(R / 'static-head-geology-20260909/model-z/connectivity.json')])
     receipt = json.loads((OUT / 'proposals/proposal-receipt.json').read_text())
     index = proposal_id(receipt, checkpoint)
+    if conversion_search:
+        original_roles = {(a['month'], a['well']): a['role'] for a in permitted['controls']}
+        candidate = json.loads((OUT / f'proposals/request-{index:02d}.json').read_text())
+        converted = [a for a in candidate['controls']
+                     if original_roles[a['month'], a['well']] == 'producer' and a['role'] == 'injector']
+        assert converted, 'Focused conversion search returned no new producer-to-injector action'
+        assert all(a.get('bhp_limit', 0) > 0 and a['target'] == 'WRAT' for a in converted)
+        (OUT / 'conversion-proposal-evidence.json').write_text(json.dumps({
+            'new_converted_wells': sorted({a['well'] for a in converted}),
+            'changed_well_months': len(converted), 'explicit_injection_bhp': True,
+            'physical_and_financial_confirmation_pending': True,
+            'proposal_sha256': sha256((OUT / f'proposals/request-{index:02d}.json').read_bytes()).hexdigest(),
+        }, indent=2) + '\n')
     execute('candidate', [CYCLE_PYTHON, '-m', 'timesoil.aios.cli', 'full-cycle',
         str(OUT / f'proposals/request-{index:02d}.json'), '--runs-dir', str(OUT / 'cycles'),
         '--run-id', 'candidate', '--timeout', '7200'])
