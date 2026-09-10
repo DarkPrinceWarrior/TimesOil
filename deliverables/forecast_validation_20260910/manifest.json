@@ -132,6 +132,38 @@
     "y-integrated-experiment-cancelled.json": {
       "sha256": "5db5bd36e3bb0a0f5f72a316d59e3700ca99b75681e62ade7200502a38f91dac",
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-integrated-monthly-y-20260910/cancelled.json"
+    },
+    "z-early-identity-training.json": {
+      "sha256": "e48a015a4b53addeb7e377fb1e962d8ba8da97b458ca79126ab583dd8c2b46c4",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-20260910/training/report.json"
+    },
+    "z-early-identity-independent.json": {
+      "sha256": "19cb67bcb0954640c2eb50b62a2a35027c9b57687fdecea349c1044a415fb1ac",
+      "source": "/root/projects/TimesOil/results/audit-20260909/cold-start-independent-z-20260910/selected_early_identity/report.json"
+    },
+    "z-full80-cold-start-independent.json": {
+      "sha256": "b2d053350e71d086b332315a5cf1b1fdf15976f9c796acd49512a98593516366",
+      "source": "/root/projects/TimesOil/results/audit-20260909/cold-start-independent-z-20260910/previous_full80_ablation/report.json"
+    },
+    "z-early-identity-frozen-models.json": {
+      "sha256": "23d6889ea7758c63e8c196bb2c1dad400c2d6aaed02ee34d36f0cd164d250e59",
+      "source": "/root/projects/TimesOil/results/audit-20260909/cold-start-independent-z-20260910/frozen-models-protocol.json"
+    },
+    "z-early-identity-policy-protocol.json": {
+      "sha256": "f30a00000373b0f90cc48333ca195bfa08a4bc65552cc6d22e83a7532015fcbb",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-policy-20260910/protocol.json"
+    },
+    "z-early-identity-policy-selection.json": {
+      "sha256": "610daea21ae828ee3e1ab65ddc74ac434faeb410052d66b6ed538ae61d95d879",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-policy-20260910/selection.json"
+    },
+    "z-early-identity-policy-receipt.json": {
+      "sha256": "c4ea4f99a25fb928e3eb1303e741ed0ea23f6af5bc1b780571eedc5f4bb264ee",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-policy-20260910/proposals/proposal-receipt.json"
+    },
+    "y-physical-only-full-audit.json": {
+      "sha256": "d837e00edc194276440f60ab0299a120ee3aeea2c04b595893d89280e7506162",
+      "source": "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/full-audit.json"
     }
   }
 }

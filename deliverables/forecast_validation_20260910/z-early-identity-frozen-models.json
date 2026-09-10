@@ -1,0 +1,20 @@
+{
+  "created_utc": "2026-09-10T06:20:44.643741+00:00",
+  "source_commit": "d917906",
+  "batch_sha256": "8c3e90449fdd64d8aec9991bea54648d331e832b54254eb0a5aeb1108ac86108",
+  "amendment": "Early identity added after diagnosis on old calibration only; fresh test forecasts have not been evaluated.",
+  "model_selection_allowed_on_test": false,
+  "selected_model": "selected_early_identity",
+  "selection_basis": "existing train/validation only",
+  "forecast_mode": "direct 224-month Google forecast, no physical reference future or candidate future observations",
+  "models": {
+    "selected_early_identity": {
+      "report_sha256": "e48a015a4b53addeb7e377fb1e962d8ba8da97b458ca79126ab583dd8c2b46c4",
+      "head_sha256": "fdecfb70ecd5fc816ad8d443d0d4e8235e7c2b3ccbb911b280652c81eeacc6b8"
+    },
+    "previous_full80_ablation": {
+      "report_sha256": "76bde19368201d5d74f8455c09098c86a963e3e2c05f170310fab07cf67623c3",
+      "head_sha256": "6807c27e953099299496cbfbf23761e5aeaaef614da09e435f9faccf0861f7c6"
+    }
+  }
+}
