@@ -126,7 +126,7 @@ OPERATOR_PAGE = """<!doctype html>
     const chdd = data.chdd || {};
 addCapability(
   list,
-  "Qwen3.6",
+  qwen.model || "Qwen",
   qwen.configured
     ? (qwen.connectivity_verified ? "настроен, связь подтверждена" : "ключ настроен, связь не проверена")
     : "не настроен",
@@ -146,7 +146,7 @@ addCapability(
       track2.certified
         ? "сертифицирован"
         : (track2.component_available
-          ? `доступен, не сертифицирован; Model Z ${track2.model_z_trained ? "обучен" : "не обучен"}`
+          ? `доступен, не сертифицирован; сравнительный CRM + LightGBM / Model Z ${track2.model_z_trained ? "обучен" : "не обучен"}`
           : "недоступен"),
       Boolean(track2.certified)
     );
