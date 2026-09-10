@@ -42,6 +42,11 @@ def policy_controls(controls, policy):
     values = [policy["producer_scale"], policy["injector_scale"], *scales.values()]
     if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not np.isfinite(v) or v < 0 for v in values):
         raise ValueError("policy scales must be finite and nonnegative")
+    producer_bhp = policy.get('producer_bhp_add', 0)
+    injector_bhp = policy.get('injector_bhp_factor', 1)
+    if (any(isinstance(v, bool) or not isinstance(v, (int, float)) or not np.isfinite(v)
+            for v in (producer_bhp, injector_bhp)) or producer_bhp < 0 or not 0 < injector_bhp <= 1):
+        raise ValueError('BHP changes must be finite and cannot relax the reference limits')
     output = []
     for action in controls:
         item = dict(action)
@@ -52,6 +57,11 @@ def policy_controls(controls, policy):
             item["value"] *= factor
             if item["target"] == "LRAT":
                 item["value"] = min(item["value"], 500.0)
+            if producer_bhp or injector_bhp != 1:
+                if not item.get('bhp_limit', 0) > 0:
+                    raise ValueError('global BHP changes require explicit known reference limits')
+                item['bhp_limit'] = (item['bhp_limit'] * injector_bhp if item['role'] == 'injector'
+                                     else item['bhp_limit'] + producer_bhp)
         output.append(item)
     by_key = {(a['month'], a['well']): a for a in output}
     months = sorted({a['month'] for a in output})
@@ -99,6 +109,10 @@ def self_check():
     result = policy_controls(controls, policy)
     assert [r["value"] for r in result] == [500, 80, 0] and result[-1]["status"] == "SHUT"
     assert controls[0]["value"] == 300
+    pressured = [dict(a, bhp_limit=300 if a['role'] == 'injector' else 50) for a in controls]
+    changed = policy_controls(pressured, {**policy, 'producer_bhp_add': 5, 'injector_bhp_factor': .9})
+    assert [a['bhp_limit'] for a in changed] == [55, 270, 50]
+    assert pressured[0]['bhp_limit'] == 50
     assert policy_controls(controls, {**policy, "shut_wells": ["I"]})[1]["status"] == "SHUT"
     try:
         policy_controls(controls, {**policy, "well_scales": [{"well": "unknown", "scale": 1}]})
@@ -139,6 +153,10 @@ def main():
     parser.add_argument('--head', type=Path)
     parser.add_argument('--head-sha256')
     parser.add_argument('--skip-grid', action='store_true')
+    parser.add_argument('--reference', type=Path)
+    parser.add_argument('--reference-sha256')
+    parser.add_argument('--reference-correction', type=Path)
+    parser.add_argument('--reference-correction-sha256')
     args = parser.parse_args()
     os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
     self_check()
@@ -146,6 +164,11 @@ def main():
         parser.error("rounds must be in [1, 12]")
     if bool(args.head) != bool(args.head_sha256) or (args.head and not args.connectivity):
         parser.error('trained head requires its SHA-256 and connectivity')
+    if bool(args.reference) != bool(args.reference_sha256) or args.reference and not args.head:
+        parser.error('physical reference requires its manifest hash and trained weights')
+    if (bool(args.reference_correction) != bool(args.reference_correction_sha256)
+            or args.reference_correction and (not args.reference or not args.skip_grid)):
+        parser.error('local correction requires reference, correction hash and --skip-grid')
     request = json.loads(args.request.read_text())
     checked_request = CycleRequest.from_mapping(request)
     normative_profile = CHDDEconomicsAdapter.from_env().normative_profile(
@@ -161,14 +184,35 @@ def main():
     if len(dataset) != 1 or not dataset.model_z_identity:
         raise ValueError('one authenticated Model Z baseline is required')
     trajectory = dataset[0]
-    has_bhp = trajectory.actions.shape[-1] == 4
-    if not has_bhp and any(a.bhp_limit is not None for a in checked_request.controls):
-        raise ValueError('BHP screening requires an authenticated baseline with the BHP action channel')
     start = pd.Timestamp(min(a["month"] for a in request["controls"]))
     origin = int(trajectory.dates.get_loc(start))
     horizon, context = checked_request.horizon_months, 128
     if origin < context or origin + horizon >= len(trajectory.dates):
         raise ValueError('verified history and complete forecast horizon required')
+    reference = None
+    if args.reference:
+        reference_manifest = args.reference / 'manifest.json'
+        if sha256(reference_manifest.read_bytes()).hexdigest() != args.reference_sha256:
+            raise ValueError('physical reference manifest hash mismatch')
+        data = load_trajectory_dataset(args.reference / 'trajectory.csv', manifest=reference_manifest)
+        if (len(data) != 1 or not data.model_z_identity or data[0].well_ids != trajectory.well_ids
+                or not data[0].dates.equals(trajectory.dates) or data[0].actions.shape[-1] != 4
+                or json.loads(reference_manifest.read_text())['provenance']['opm_source_sha256']
+                != manifest['provenance']['opm_source_sha256']):
+            raise ValueError('physical reference reservoir, BHP controls or temporal grid differs')
+        reference = data[0]
+        np.testing.assert_allclose(reference.states[:origin + 1], trajectory.states[:origin + 1], rtol=0, atol=1e-6)
+        np.testing.assert_array_equal(reference.actions[:origin, :, :trajectory.actions.shape[-1]], trajectory.actions[:origin])
+        trajectory = reference
+        raw = (args.reference / 'trajectory.csv').read_bytes()
+        for a in request['controls']:
+            if a['status'] == 'OPEN' and a.get('bhp_limit') is None:
+                a['bhp_limit'] = float(reference.actions[reference.dates.get_loc(pd.Timestamp(a['month'])),
+                                                         reference.well_ids.index(a['well']), 3])
+        checked_request = CycleRequest.from_mapping(request)
+    has_bhp = trajectory.actions.shape[-1] == 4
+    if not has_bhp and any(a.bhp_limit is not None for a in checked_request.controls):
+        raise ValueError('BHP screening requires an authenticated baseline with the BHP action channel')
     connectivity = None
     if args.connectivity:
         from timesoil.aios.interwell import WellConnectivity
@@ -205,7 +249,20 @@ def main():
         if sha256(args.head.read_bytes()).hexdigest() != args.head_sha256:
             raise ValueError('trained head hash mismatch')
         selected = torch.load(args.head, map_location='cuda', weights_only=True)
-        forecaster.model = load_frozen_model(forecaster.model, connectivity, selected)
+        forecaster.model = load_frozen_model(forecaster.model, connectivity, selected,
+                                             reference_sha256=args.reference_sha256)
+    correction = None
+    if reference is not None:
+        from benchmark_timesfm_layouts import forecast_layout
+        from evaluate_timesfm_scenarios import reference_delta
+        reference_prediction = forecast_layout(forecaster, reference, origin, horizon, context,
+                                               'joint', connectivity=connectivity)
+        reference_truth = reference.states[origin + 1:origin + horizon + 1]
+    if args.reference_correction:
+        from fit_timesfm_reference import bhp_features, load_reference_correction
+        correction, coefficients = load_reference_correction(args.reference_correction,
+            args.reference_correction_sha256, args.head_sha256, args.reference_sha256,
+            horizon, len(well_index))
     candidates = []
     days = np.array([d.days_in_month for d in trajectory.dates[origin:origin + horizon]])[:, None]
 
@@ -219,6 +276,7 @@ def main():
             "facts": {"schedule_kind": "timesfm_policy_candidate", "is_baseline": False,
                       "surrogate_used_for_candidate_selection": False,
                       "surrogate_used_only_to_propose_hypotheses": True,
+                      "simulated_reference_future_used": reference is not None,
                       "independent_surrogate_uq_calibrated": False,
                       "optimization_improvement_claimed": False},
             "policy": policy,
@@ -238,6 +296,9 @@ def main():
             elif 'bhp_limit' in a:
                 raise ValueError('BHP policy requires the BHP action channel')
             actions[position] = value
+        future = actions[origin:origin + horizon]
+        if correction:
+            local_features = bhp_features(future, reference.actions[origin:origin + horizon], correction['degree'])
         _, cov = forecast_inputs(trajectory.states, actions, origin, context, horizon)
         cov = cov[:, :-1].reshape(-1, context + horizon)
         if connectivity is not None:
@@ -250,8 +311,12 @@ def main():
             past_future_covariates=[cov],
             use_symmetric_averaging=False, make_positive=True, return_quantiles=False))
         prediction = forecast.forecast.reshape(len(well_index), 3, horizon).transpose(2, 0, 1)
-        future = actions[origin:origin + horizon]
         prediction = _project_physics(prediction, future, zero_injectors=True)[0]
+        if reference is not None:
+            prediction = reference_delta(reference_truth, reference_prediction, prediction, future)
+        if correction:
+            prediction = _project_physics(prediction + np.tensordot(local_features, coefficients, axes=(0, 0)),
+                                          future, zero_injectors=True)[0]
         if not np.isfinite(prediction).all():
             raise ValueError("non-finite TimesFM forecast")
         oil = float((prediction[..., 0] * days).sum())
@@ -264,6 +329,8 @@ def main():
             "full_period_months": checked.horizon_months, "full_period_actions": len(controls),
             "bhp_channel": has_bhp,
             "trained_head_sha256": args.head_sha256,
+            "physical_reference_manifest_sha256": args.reference_sha256,
+            "reference_correction_sha256": args.reference_correction_sha256,
             "forecast_by_well": [{"well": w,
                 "oil_tonnes": float((prediction[:, i, 0] * days[:, 0]).sum()),
                 "liquid_tonnes": float((prediction[:, i, 1] * days[:, 0]).sum()),
@@ -297,16 +364,31 @@ def main():
             'value': {'type': 'number', 'minimum': 0},
             **({'bhp_limit': {'type': 'number', 'exclusiveMinimum': 0}} if has_bhp else {})},
         'required': ['well', 'start', 'end'], 'additionalProperties': False}}
+    if has_bhp:
+        schema['properties'].update(producer_bhp_add={'type': 'number', 'minimum': 0},
+                                    injector_bhp_factor={'type': 'number', 'exclusiveMinimum': 0, 'maximum': 1})
+    if correction:
+        schema['properties'].pop('well_updates')
+        for key in ('producer_scale', 'injector_scale'):
+            schema['properties'][key] = {'type': 'number', 'const': 1}
+        for key in ('shut_wells', 'well_scales'):
+            schema['properties'][key]['maxItems'] = 0
+        schema['properties']['producer_bhp_add']['maximum'] = 15
+        schema['properties']['injector_bhp_factor']['minimum'] = .9
     proposed_ids = []
 
     async def propose_round(index):
         before = len(candidates)
-        tool = ToolDefinition("propose_policy", "Propose a full-field policy. well_updates changes a well over inclusive monthly start/end dates after rate scaling: rate, status, target, role, BHP limit. Conversion requires explicit WRAT, value and BHP, must be permitted by the case, and cannot be reversed; extend its role to the end. Omitted scales default to 1, arrays to empty. Full-period TimesFM hypothesis forecast; every retained candidate requires full-period OPM, and official CHDD selects the winner.", schema,
+        tool = ToolDefinition("propose_policy", "Propose a full-field policy. Optional producer_bhp_add (bar) and injector_bhp_factor tighten open-well BHP limits uniformly before individual updates. well_updates changes a well over inclusive monthly start/end dates after rate scaling: rate, status, target, role, BHP limit. Conversion requires explicit WRAT, value and BHP, must be permitted by the case, and cannot be reversed; extend its role to the end. Omitted scales default to 1, arrays to empty. Respect the explicit forecast_reference domain when present. Full-period TimesFM hypothesis forecast; every retained candidate requires full-period OPM, and official CHDD selects the winner.", schema,
             lambda policy, _: evaluate(policy))
         context_value = {"track": 2, "round": index,
-            "objective": f"Propose a new policy for maximum official CHDD over the request's {checked_request.horizon_months} management months. Use per-well multipliers when useful; all wells are controllable. Call propose_policy exactly once. Avoid duplicate policies.",
+            "objective": f"Propose a new policy for maximum official CHDD over the request's {checked_request.horizon_months} management months. " + ("Use only uniform BHP changes inside forecast_reference.domain. " if correction else "Use per-well multipliers when useful; all wells are controllable. ") + "Call propose_policy exactly once. Avoid duplicate policies.",
             "candidates": candidates,
             "verified_well_count": len(well_index),
+            "forecast_reference": {'manifest_sha256': args.reference_sha256,
+                'future_is_prior_physical_planning_information': reference is not None,
+                'domain': correction['domain'] if correction else None,
+                'local_policy_parameters': 'producer_bhp_add in bar, injector_bhp_factor; x=add/15, y=(1-factor)/0.1; 0<=x<=1, 0<=y<=1-x/2. Rates, roles and statuses stay fixed.' if correction else None},
             "geology": None if connectivity is None else {
                 "static_feature_names": connectivity.provenance.get('static_feature_names', []),
                 "static_by_well": [[well, values] for well, values in zip(connectivity.well_ids,
@@ -327,7 +409,7 @@ def main():
                 'case_constraints': checked_request.context.get('constraints', {}),
                 'operating_constraints': checked_request.context.get('operating_constraints', []),
                 "additional_water_quota": "not supplied in the current training archive"},
-            "claim_limits": "Forecasts use only observed pre-origin history and planned controls. Screening margin is a full-period undiscounted rate-integration estimate excluding pump CAPEX, state events and tax. It is NOT CHDD and cannot select a winning control policy. Every retained hypothesis must undergo full OPM plus official CHDD before selection. Candidate requires full-period OPM plus the official calculator. Request dates describe this experiment, not a confirmed competition horizon. No independently calibrated TimesFM uncertainty or improvement claim."}
+            "claim_limits": "Forecasts use observed pre-origin history and planned controls. When forecast_reference is present, its prior simulated future is also used; candidate future observations are excluded. Screening margin is a full-period undiscounted rate-integration estimate excluding pump CAPEX, state events and tax. It is NOT CHDD and cannot select a winning control policy. Every retained hypothesis must undergo full OPM plus official CHDD before selection. Candidate requires full-period OPM plus the official calculator. Request dates describe this experiment, not a confirmed competition horizon. No independently calibrated TimesFM uncertainty or improvement claim."}
         async with ExternalQwenClient(LLMConfig.from_env()) as client:
             plan = await AgentWorkflow(client, ToolRegistry((tool,)),
                 role_tools={AgentRole.PLANNER: (tool.name,)}, required_tools={AgentRole.PLANNER: (tool.name,)}).run_plan(context_value)
@@ -343,6 +425,8 @@ def main():
         "source_trajectory_sha256": sha256(raw).hexdigest(), "request_sha256": sha256(args.request.read_bytes()).hexdigest(),
         "timesfm_revision": MODEL_REVISION, "agent_proposal_ids": proposed_ids,
         "horizon_months": horizon, "head_sha256": args.head_sha256,
+        "reference_manifest_sha256": args.reference_sha256,
+        "reference_correction_sha256": args.reference_correction_sha256,
         "connectivity_sha256": sha256(args.connectivity.read_bytes()).hexdigest() if args.connectivity else None,
         "script_sha256": sha256(Path(__file__).read_bytes()).hexdigest(), "requires_full_period_opm": True,
         "final_chdd_computed": False}, indent=2))

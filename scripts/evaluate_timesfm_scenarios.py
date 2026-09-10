@@ -132,18 +132,10 @@ def main():
         modes += ['trained_reference_delta_224', 'reference_only_224']
     correction = None
     if args.reference_correction:
-        from fit_timesfm_reference import bhp_features
-        if digest(args.reference_correction) != args.reference_correction_sha256:
-            raise ValueError('reference correction report hash mismatch')
-        correction = json.loads(args.reference_correction.read_text())
-        coefficients_file = args.reference_correction.parent / 'correction.npz'
-        if (correction.get('complete') is not True or correction['head_sha256'] != training['checkpoint_sha256']
-                or correction['reference_manifest_sha256'] != args.reference_sha256
-                or digest(coefficients_file) != correction['checkpoint_sha256']):
-            raise ValueError('reference correction does not match frozen weights and physical reference')
-        coefficients = np.load(coefficients_file, allow_pickle=False)['coefficients']
-        if coefficients.shape != ((2 if correction['degree'] == 1 else 5), months, len(connectivity.well_ids), 3) or not np.isfinite(coefficients).all():
-            raise ValueError('invalid correction coefficient grid')
+        from fit_timesfm_reference import bhp_features, load_reference_correction
+        correction, coefficients = load_reference_correction(args.reference_correction,
+            args.reference_correction_sha256, training['checkpoint_sha256'], args.reference_sha256,
+            months, len(connectivity.well_ids))
         modes += ['trained_reference_corrected_224']
     args.output.mkdir(parents=True, exist_ok=False)
     report = {'schema': 'timesoil.independent-timesfm-evaluation/v1', 'batch_sha256': args.batch_sha256,

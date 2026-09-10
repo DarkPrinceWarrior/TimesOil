@@ -11,6 +11,23 @@ from timesoil.aios.surrogate import _project_physics
 from timesoil.aios.track2 import load_trajectory_dataset
 
 
+def load_reference_correction(path, expected_sha256, head_sha256, reference_sha256, months, wells):
+    digest = lambda p: sha256(p.read_bytes()).hexdigest()
+    if digest(path) != expected_sha256:
+        raise ValueError('reference correction report hash mismatch')
+    report = json.loads(path.read_text())
+    checkpoint = path.parent / 'correction.npz'
+    if (report.get('schema') != 'timesoil.local-timesfm-reference-correction/v1'
+            or report.get('complete') is not True or report['degree'] not in (1, 2)
+            or report['head_sha256'] != head_sha256 or report['reference_manifest_sha256'] != reference_sha256
+            or digest(checkpoint) != report['checkpoint_sha256']):
+        raise ValueError('reference correction does not match frozen weights and physical reference')
+    coefficients = np.load(checkpoint, allow_pickle=False)['coefficients']
+    if coefficients.shape != ((2 if report['degree'] == 1 else 5), months, wells, 3) or not np.isfinite(coefficients).all():
+        raise ValueError('invalid correction coefficient grid')
+    return report, coefficients
+
+
 def bhp_features(actions, reference, degree):
     if actions.shape != reference.shape or not np.array_equal(actions[..., :3], reference[..., :3]):
         raise ValueError('local BHP correction requires unchanged rates, roles and statuses; full OPM required')
