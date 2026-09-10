@@ -196,6 +196,12 @@ def main():
     if len(dataset) != 1 or not dataset.model_z_identity:
         raise ValueError('one authenticated Model Z baseline is required')
     trajectory = dataset[0]
+    pressure_semantics = {
+        'forecast_vector': 'WBP9', 'forecast_definition': manifest['conversion']['THP'],
+        'bottom_hole_vector': 'WBHP', 'bottom_hole_definition': manifest['conversion']['BHP'],
+        'control_bhp_limit': 'Planned lower producer / upper injector BHP bound; not the forecast target.',
+        'inactive_zero': 'A zero WBP9 report for an inactive well is not evidence of zero physical reservoir pressure.',
+    }
     start = pd.Timestamp(min(a["month"] for a in request["controls"]))
     origin = int(trajectory.dates.get_loc(start))
     horizon, context = checked_request.horizon_months, 128
@@ -341,6 +347,7 @@ def main():
                                    - liquid * econ["liquidOpexRubT"] - injection * econ["injectionOpexRubM3"]) / 1e6,
             "full_period_months": checked.horizon_months, "full_period_actions": len(controls),
             "bhp_channel": has_bhp,
+            "pressure_semantics": pressure_semantics,
             "trained_head_sha256": args.head_sha256,
             "physical_reference_manifest_sha256": args.reference_sha256,
             "reference_correction_sha256": args.reference_correction_sha256,
@@ -395,6 +402,7 @@ def main():
         tool = ToolDefinition("propose_policy", "Propose a full-field policy. Optional producer_bhp_add (bar) and injector_bhp_factor tighten open-well BHP limits uniformly before individual updates. well_updates changes a well over inclusive monthly start/end dates after rate scaling: rate, status, target, role, BHP limit. Conversion requires explicit WRAT, value and BHP, must be permitted by the case, and cannot be reversed; extend its role to the end. Omitted scales default to 1, arrays to empty. Respect the explicit forecast_reference domain when present. Full-period TimesFM hypothesis forecast; every retained candidate requires full-period OPM, and official CHDD selects the winner.", schema,
             lambda policy, _: evaluate(policy))
         context_value = {"track": 2, "round": index,
+            "pressure_semantics": pressure_semantics,
             "surrogate_evidence": {"model": "Google TimesFM 3.0", "revision": MODEL_REVISION,
                 "adapted_checkpoint_loaded": args.head is not None, "verified_checkpoint_sha256": args.head_sha256,
                 "full_period_forecast_already_completed": True, "accuracy_certified": False,

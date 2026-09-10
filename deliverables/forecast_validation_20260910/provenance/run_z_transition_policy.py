@@ -10,7 +10,7 @@ import sys
 import time
 
 R = Path('/root/projects/TimesOil/results/audit-20260909')
-OUT = R / 'timesfm-transition-z-policy-20260910'
+OUT = R / 'timesfm-transition-z-policy-pressure-20260910'
 SESSION = 'timesoil-transition-evaluation-z-20260910'
 PYTHON = '/tmp/timesoil-kt3-20260908/venv/bin/python'
 
