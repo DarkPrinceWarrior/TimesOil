@@ -15,6 +15,7 @@ from timesoil.aios.opm import (
     OPM_IMAGE_DIGEST,
     OPM_EXPORT_VECTORS,
     OpmCertificationError,
+    OPM_OPTIONAL_WELL_VECTORS,
     OpmError,
     OpmFlowRunner,
     OpmGdmBackend,
@@ -418,6 +419,7 @@ WELSPECS
                     ],
                     "selected": proof["vector_selection"]["available"],
                     "required": list(OPM_EXPORT_VECTORS),
+                    "optional": list(OPM_OPTIONAL_WELL_VECTORS),
                 },
             )
             self.assertEqual(
