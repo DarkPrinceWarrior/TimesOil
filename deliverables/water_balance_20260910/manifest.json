@@ -2,6 +2,11 @@
   "schema": "timesoil.evidence-bundle/v1",
   "files": [
     {
+      "path": ".gitattributes",
+      "bytes": 30,
+      "sha256": "577b2445f6c9ea106f40dfe13b5d823eae730edee8c339b554f8a88c3ed6c495"
+    },
+    {
       "path": "README.md",
       "bytes": 3978,
       "sha256": "4f5172942d7e819254325b3bb2203b837032c68db72522069d86358c27c8cb20"
