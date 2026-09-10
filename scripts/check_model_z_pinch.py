@@ -89,7 +89,7 @@ def main():
         started = time.monotonic()
         manifest = json.loads((prior / 'manifest.json').read_text())
         assert manifest['source_sha256'] == MODEL_Z_SOURCE_SHA256 and manifest['status'] == 'success'
-        assert manifest['image_reference'] == runner.get_provenance().split('image=')[1]
+        assert manifest['image_reference'] == 'openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9'
         inputs = {r['path'][6:]: r for r in manifest['artifacts'] if r['path'].startswith('input/')}
         actual = {p.relative_to(prior / 'input').as_posix() for p in (prior / 'input').rglob('*') if p.is_file()}
         assert set(inputs) == actual and GRID in inputs
@@ -111,7 +111,8 @@ def main():
         assert changed == [GRID]
         record = dict(label=label, prior_run=str(prior), prior_manifest_sha256=digest(prior / 'manifest.json'),
             changed_files=changed, original_grid_sha256=GRID_SHA, transformed_grid_sha256=digest(grid),
-            input_file_count=len(inputs), run=str(prepared.run_dir), complete=False)
+            input_file_count=len(inputs), run=str(prepared.run_dir), complete=False,
+            original_engine=manifest['image_reference'], experimental_engine=runner.get_provenance())
         protocol['scenarios'].append(record)
         target.write_text(json.dumps(protocol, indent=2) + '\n')
         result = runner._run_prepared(prepared, parsing_strictness='low')

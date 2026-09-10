@@ -18,8 +18,8 @@ import time
 from typing import Any, Iterable, Iterator
 from zipfile import BadZipFile, ZipFile, ZipInfo
 
-OPM_IMAGE_TAG = "openporousmedia/opmreleases:2026.04_amd64"
-OPM_IMAGE_DIGEST = "sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9"
+OPM_IMAGE_TAG = "timesoil-opm:2026.04-pinch935"
+OPM_IMAGE_DIGEST = "sha256:204fb421e0900e64ec89f8bc661a27fceb6f2d8562f3dcd034f81590a3dd5a42"
 OPM_IMAGE = f"{OPM_IMAGE_TAG}@{OPM_IMAGE_DIGEST}"
 
 _LOW_PARSING_WARNING = (
