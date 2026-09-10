@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 
 from timesoil.aios.workflow import CycleRequest
+from timesoil.aios.operating_constraints import own_control_constraints
+from timesfm_economics import economic_constraint_violations
 
 
 def digest(path):
@@ -82,7 +84,8 @@ def main():
         index = candidate['id']
         request_path = args.search / f'request-{index:02d}.json'
         request = json.loads(request_path.read_text())
-        assert CycleRequest.from_mapping(request).controls_sha256 == candidate['controls_sha256']
+        checked = CycleRequest.from_mapping(request)
+        assert checked.controls_sha256 == candidate['controls_sha256']
         controls = request['controls']
         path = args.search / f'forecast-{index:02d}.npz'
         assert digest(path) == candidate['forecast_sha256']
@@ -101,8 +104,11 @@ def main():
             else:
                 assert stored == stamps
                 timestamp_encoding = 'safe_unicode'
+        rejected = economic_constraint_violations(values, stamps, wells, own_control_constraints(checked.controls))
         report['forecasts'].append(dict(id=index, forecast_sha256=digest(path),
             request_sha256=digest(request_path), timestamp_encoding=timestamp_encoding,
+            production_own_control_guard=dict(months_rejected=len(rejected), examples=rejected[:3],
+                count_scope='At most one reported violation per month; no reranking or new selection.'),
             controls=audit(values, controls, stamps, wells)))
         if index == 0:
             original = json.loads((args.search.parent / 'request.json').read_text())
