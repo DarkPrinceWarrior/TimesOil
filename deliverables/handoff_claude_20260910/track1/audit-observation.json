@@ -1,0 +1,35 @@
+{
+  "schema": "timesoil.handoff-track1-observation/v1",
+  "source": "Read-only A100 audit replay during handoff, plus copied result and manifests verified against remote SHA-256",
+  "controller_exit": 0,
+  "wrapper_exit": 1,
+  "audit_complete": false,
+  "audit_failure": {
+    "file": "scripts/audit_track1_lifecycle.py",
+    "line": 98,
+    "exception": "AssertionError: non-schedule physical inputs differ"
+  },
+  "non_schedule_input_differences": [
+    {
+      "path": "input/MODEL_Y/_TIMESOIL_SUMMARY.INC",
+      "baseline_sha256": "3ccf57a5e6f8b3bb7f1c1779944cf1818efacf161a20977ebf8af19a927e74d6",
+      "candidate_sha256": "482f8d82e92c45dcdf4076f384c7e58f66862c79db778ef07fd3aca28a098d30"
+    }
+  ],
+  "observed_text_diff": "Added only WVPT / and WVIT / SUMMARY requests; inspected on A100",
+  "remaining_audit_not_executed": [
+    "canonical grid and pre-control history comparison",
+    "economic profile comparison and paired uplift checks"
+  ],
+  "trajectories": 23,
+  "actions": 1127,
+  "monthly_reviews": 23,
+  "all_monthly_reviews_approved": true,
+  "new_role_changes": [],
+  "final_step_economics": {
+    "complete": true,
+    "npv_million_rub": 1597.0875715968057,
+    "run_id": "opm-full-replay-a7b08fb869b4fbbd9dd6ab3e",
+    "start_date": "2014-01-01"
+  }
+}

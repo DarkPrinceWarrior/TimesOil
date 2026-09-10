@@ -1,0 +1,162 @@
+{
+  "source_commit": "1025e110be6b2549ccf9c039951d14d7bf5a8178",
+  "full_report_path": "/root/projects/TimesOil/results/audit-20260909/forecast-own-control-guard-z-20260910/report.json",
+  "full_report_sha256": "55653317285897a02cf6003a10108d1d72bd1a45862b6079ddfc02bdc88229b2",
+  "scope": "Read-only application of new production guard to immutable historical forecasts; no reranking, new selection or OPM.",
+  "forecasts": [
+    {
+      "id": 0,
+      "forecast_sha256": "7d7266becd1d9777806a748a6fa255d581b5fda878a58a973e10b2b6b555f13e",
+      "request_sha256": "6e465f21e3dea55eb05d98707328c3e59e70142e12f2c42b293e8e39d5c8b880",
+      "production_own_control_guard": {
+        "months_rejected": 224,
+        "examples": [
+          "observed min_bhp_bar violates organizer limit in 2007-01-01",
+          "observed min_bhp_bar violates organizer limit in 2007-02-01",
+          "observed min_bhp_bar violates organizer limit in 2007-03-01"
+        ],
+        "count_scope": "At most one reported violation per month; no reranking or new selection."
+      }
+    },
+    {
+      "id": 1,
+      "forecast_sha256": "d5bab9881b96bc69315f733fc9fc5370456526a8662d558cfa938c120a670d4a",
+      "request_sha256": "ced42c3d1410d59450af7f00cdc9c47d06fa1e342cf06d6e30a174d1dc567b00",
+      "production_own_control_guard": {
+        "months_rejected": 224,
+        "examples": [
+          "observed min_bhp_bar violates organizer limit in 2007-01-01",
+          "observed min_bhp_bar violates organizer limit in 2007-02-01",
+          "observed min_bhp_bar violates organizer limit in 2007-03-01"
+        ],
+        "count_scope": "At most one reported violation per month; no reranking or new selection."
+      }
+    },
+    {
+      "id": 2,
+      "forecast_sha256": "be72c5e84b1d6a86c91eed2d5608c23e061d07681932cc0242bfc22597f71314",
+      "request_sha256": "678ff3d4cc42a7d4ce462515b1f98ca70b90e2fb5ba6275b4748cdac792323bd",
+      "production_own_control_guard": {
+        "months_rejected": 224,
+        "examples": [
+          "observed min_bhp_bar violates organizer limit in 2007-01-01",
+          "observed min_bhp_bar violates organizer limit in 2007-02-01",
+          "observed min_bhp_bar violates organizer limit in 2007-03-01"
+        ],
+        "count_scope": "At most one reported violation per month; no reranking or new selection."
+      }
+    },
+    {
+      "id": 3,
+      "forecast_sha256": "b0816284cc394503a05de24e279d5a6acfa8ce7d51e91bc57b84099dc0b9ef86",
+      "request_sha256": "c31f50a5378775556900ca9235110a80ed7ed99d6a75baae1992e0ed77db2b89",
+      "production_own_control_guard": {
+        "months_rejected": 224,
+        "examples": [
+          "observed min_bhp_bar violates organizer limit in 2007-01-01",
+          "observed min_bhp_bar violates organizer limit in 2007-02-01",
+          "observed min_bhp_bar violates organizer limit in 2007-03-01"
+        ],
+        "count_scope": "At most one reported violation per month; no reranking or new selection."
+      }
+    },
+    {
+      "id": 4,
+      "forecast_sha256": "faba0c3b01331cfd276397290361eab2d21b880f1b7872e29eee4d586cffa9d3",
+      "request_sha256": "4e39b6375839b1931d2a0bb83ce0ffd86eefa9af171d9461410430fc6380c2ea",
+      "production_own_control_guard": {
+        "months_rejected": 224,
+        "examples": [
+          "observed min_bhp_bar violates organizer limit in 2007-01-01",
+          "observed min_bhp_bar violates organizer limit in 2007-02-01",
+          "observed min_bhp_bar violates organizer limit in 2007-03-01"
+        ],
+        "count_scope": "At most one reported violation per month; no reranking or new selection."
+      }
+    },
+    {
+      "id": 5,
+      "forecast_sha256": "e1ae048407ba39ad4ec874a8db1285449716cc26673a0d16cd4ac86a4fc10e67",
+      "request_sha256": "9ebe2ff2ed6b7769f997f783f05c62113cbb58f78d418b0d8c42348d2d1fe9fc",
+      "production_own_control_guard": {
+        "months_rejected": 224,
+        "examples": [
+          "observed min_bhp_bar violates organizer limit in 2007-01-01",
+          "observed min_bhp_bar violates organizer limit in 2007-02-01",
+          "observed min_bhp_bar violates organizer limit in 2007-03-01"
+        ],
+        "count_scope": "At most one reported violation per month; no reranking or new selection."
+      }
+    },
+    {
+      "id": 6,
+      "forecast_sha256": "b252ecf4018db171e4521a5b4a6e9ac472d16fbcf9bb8c2c904fed4ff91c9cad",
+      "request_sha256": "2c7c4264e723c5295a50f240fe834baf19c3300d7367b957c06de4a87878838a",
+      "production_own_control_guard": {
+        "months_rejected": 224,
+        "examples": [
+          "observed min_bhp_bar violates organizer limit in 2007-01-01",
+          "observed min_bhp_bar violates organizer limit in 2007-02-01",
+          "observed min_bhp_bar violates organizer limit in 2007-03-01"
+        ],
+        "count_scope": "At most one reported violation per month; no reranking or new selection."
+      }
+    },
+    {
+      "id": 7,
+      "forecast_sha256": "54c534a020d9680edf625f08438a544f20a1c9ffb680d8fd896fa0105f08627d",
+      "request_sha256": "ee36113243894cf12e28451ecd30d3399a41f1b31deca0fad6f29f4b04f82f4a",
+      "production_own_control_guard": {
+        "months_rejected": 224,
+        "examples": [
+          "observed min_bhp_bar violates organizer limit in 2007-01-01",
+          "observed min_bhp_bar violates organizer limit in 2007-02-01",
+          "observed min_bhp_bar violates organizer limit in 2007-03-01"
+        ],
+        "count_scope": "At most one reported violation per month; no reranking or new selection."
+      }
+    },
+    {
+      "id": 8,
+      "forecast_sha256": "2cd6f4272eab2190058cc7aa84079f910ebb905c157e757d12b41e3af33c0d34",
+      "request_sha256": "269b52ca15fa5522d618ff6fe8bcb028dc31f45218f8695ac02e843f844098f7",
+      "production_own_control_guard": {
+        "months_rejected": 224,
+        "examples": [
+          "observed min_bhp_bar violates organizer limit in 2007-01-01",
+          "observed min_bhp_bar violates organizer limit in 2007-02-01",
+          "observed min_bhp_bar violates organizer limit in 2007-03-01"
+        ],
+        "count_scope": "At most one reported violation per month; no reranking or new selection."
+      }
+    },
+    {
+      "id": 9,
+      "forecast_sha256": "cef34748467e9b30dc0a8ea39682f1fae36466f37cc7b48193c24bcf15ca41ea",
+      "request_sha256": "f57fdc4d1ccf279f71eefaec26513166779453dfba008df63a5d636bb725ed54",
+      "production_own_control_guard": {
+        "months_rejected": 224,
+        "examples": [
+          "observed min_bhp_bar violates organizer limit in 2007-01-01",
+          "observed min_bhp_bar violates organizer limit in 2007-02-01",
+          "observed min_bhp_bar violates organizer limit in 2007-03-01"
+        ],
+        "count_scope": "At most one reported violation per month; no reranking or new selection."
+      }
+    },
+    {
+      "id": 10,
+      "forecast_sha256": "a50b193f74774654f4a2781d7626f5fbaf803e9ed03d57a30247bc8ecb29f774",
+      "request_sha256": "67f6b222040560ad355dee3c1649bcc077d452588547a75e7587b1452b0c96c2",
+      "production_own_control_guard": {
+        "months_rejected": 224,
+        "examples": [
+          "observed min_bhp_bar violates organizer limit in 2007-01-01",
+          "observed min_bhp_bar violates organizer limit in 2007-02-01",
+          "observed min_bhp_bar violates organizer limit in 2007-03-01"
+        ],
+        "count_scope": "At most one reported violation per month; no reranking or new selection."
+      }
+    }
+  ]
+}

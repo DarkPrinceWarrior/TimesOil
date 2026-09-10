@@ -270,7 +270,7 @@
       "source": "A100 read-only source control inventory check at 287343a"
     },
     "README.md": {
-      "sha256": "9b80dac6705f092f21fc1e7665e9cbc6c284aa799586da97259343b52a4a60ff",
+      "sha256": "a6020dff45cf5a6cd9241480d59a864694c86d565235545847b84033da3f300e",
       "source": "WSL committed source; historical runs retain recorded commits"
     },
     "provenance/run_z_guarded_policy.py": {
@@ -314,12 +314,40 @@
       "sha256": "c5e1ba208d2f28e5794ff07eae8bad646be902330e5eb98bdd4dc86444f97558"
     },
     "provenance/audit_forecast_control_bounds.py": {
-      "source": "WSL source delivered through GitHub at a209d65; executed on A100",
-      "sha256": "9a14e96dbc8c3e54dea9f7a0bd70bc0c2c5da48de946614a87fd5b466dd0becd"
+      "source": "WSL source delivered through GitHub at 1025e11; executed read-only on A100",
+      "sha256": "6302714773d362169e310ee0dd0fefed33a33f64f6770d566a60a9c9eae155c0"
     },
     "provenance/check_final_forecast.py": {
       "source": "WSL source delivered through GitHub at 89c398c; passed full final-graph diagnostic on A100",
       "sha256": "753ec1aa5f16030432c9238e7ede9ac7c4f3eb71bb20610de3ab8eeda13892d0"
+    },
+    "provenance/diagnose_z_pressure_status.py": {
+      "source": "Committed WSL evidence/source; historical executions retain their recorded commits",
+      "sha256": "6f766cddfca3d2fb378f517483c017452991a1aa7ca8d298f0af1a917d0b7926"
+    },
+    "provenance/diagnose_z_transition.py": {
+      "source": "Committed WSL evidence/source; historical executions retain their recorded commits",
+      "sha256": "111fcd211bd927511a53bed3f3af730559db5d4e39ef87f3fc114f60f8a27526"
+    },
+    "provenance/evaluate_reference_ablation.py": {
+      "source": "Committed WSL evidence/source; historical executions retain their recorded commits",
+      "sha256": "ad587cc0f333bb3bb12c48045ebf741b0c23ca26e5e43b39843803fba60195b7"
+    },
+    "provenance/evaluate_z_transition_holdout.py": {
+      "source": "Committed WSL evidence/source; historical executions retain their recorded commits",
+      "sha256": "d6554f8e365e911d30eaaf8108edbf106c15fb4ce4010e87b00dbd743d67718a"
+    },
+    "provenance/generate_z_transition_coverage.py": {
+      "source": "Committed WSL evidence/source; historical executions retain their recorded commits",
+      "sha256": "6af1d803ffa4b1ed9b90e4a7dd5ceead53cf1ee227f239e9ab8f57f60ede6d7e"
+    },
+    "provenance/run_z_economic_uncertainty.py": {
+      "source": "WSL source delivered through GitHub at a9f5e99; A100 evaluation stopped on CUDA OOM",
+      "sha256": "3ff1b77d552fdcd1edfa33f45cdec94156b67000c6e5806f34de2f613efbade0"
+    },
+    "provenance/train_z_transition_coverage.py": {
+      "source": "Committed WSL evidence/source; historical executions retain their recorded commits",
+      "sha256": "315d28539f24f4290827586ecc29ab8c4d2612b4e69732ec01172c9ec7668f5d"
     }
   }
 }

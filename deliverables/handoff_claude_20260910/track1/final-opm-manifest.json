@@ -1,0 +1,399 @@
+{
+  "artifacts": [
+    {
+      "bytes": 45750952,
+      "path": "input/MODEL_Y/INCLUDE/DemoSpe_002_2_grid.inc",
+      "sha256": "2d89e82b076e53d873e2a67e11028ccdc9ac532222492d9cd3bdd49c6fdbc7b0"
+    },
+    {
+      "bytes": 305,
+      "path": "input/MODEL_Y/INCLUDE/DemoSpe_002_2_init.inc",
+      "sha256": "d7da72cdd46f766fdbadba0a5b91d6a7b261356b5823906ebc187fa6c6394bf1"
+    },
+    {
+      "bytes": 4405,
+      "path": "input/MODEL_Y/INCLUDE/DemoSpe_002_2_pvt.inc",
+      "sha256": "db198626251d56b56c438f1d6b1821c506827fe7f269fa4159fdc6251f61a1eb"
+    },
+    {
+      "bytes": 96746,
+      "path": "input/MODEL_Y/INCLUDE/DemoSpe_002_2_regs.inc",
+      "sha256": "8e52781242ea3e9131bcfea8859e0dada4be39fb80691ba159d3ee6de7f9c346"
+    },
+    {
+      "bytes": 1913,
+      "path": "input/MODEL_Y/INCLUDE/DemoSpe_002_2_rp.inc",
+      "sha256": "e2f53aa222da43e1f4006ba7e39e274bbefd0cea4be521d3ec9497315efeada6"
+    },
+    {
+      "bytes": 117244,
+      "path": "input/MODEL_Y/INCLUDE/DemoSpe_002_2_sch.inc",
+      "sha256": "0658a9bccc3059854cf3230a6e673e15ddf45886ddd223607c6a502a3329e3cf"
+    },
+    {
+      "bytes": 1021,
+      "path": "input/MODEL_Y/MODEL_Y.DATA",
+      "sha256": "dce80edf53c4f6c5841d086f720856a4b4bf792466aa6fc811ed42bcd63cc36f"
+    },
+    {
+      "bytes": 1018,
+      "path": "input/MODEL_Y/SUMMARY/SUMMARY.INC",
+      "sha256": "02ecadd844b6ba4bc27d65f60a9530e16172c57ca3d3c7adb2d350effaffc379"
+    },
+    {
+      "bytes": 123,
+      "path": "input/MODEL_Y/USER/MODEL_Y/graph_calculator_settings.xml",
+      "sha256": "04459556f9c0cdeaa563bf3d21642be1c9419839251d5c72bbb069e3d873e423"
+    },
+    {
+      "bytes": 61758,
+      "path": "input/MODEL_Y/USER/MODEL_Y/log_filtering_settings.xml",
+      "sha256": "eb400d5a1cdf613b2ddb14dc713e7319ececd2741e67b4a6ca7203596f3a64c1"
+    },
+    {
+      "bytes": 3413,
+      "path": "input/MODEL_Y/USER/MODEL_Y/script_1.py",
+      "sha256": "f46c9908b150e04aa22f251d17967c02ac6f9aec56c5ccf23389c3bf301c588b"
+    },
+    {
+      "bytes": 3698,
+      "path": "input/MODEL_Y/_TIMESOIL_SUMMARY.INC",
+      "sha256": "482f8d82e92c45dcdf4076f384c7e58f66862c79db778ef07fd3aca28a098d30"
+    },
+    {
+      "bytes": 1199648,
+      "path": "output/MODEL_Y.DBG",
+      "sha256": "ca2f47f6d6e1c1bd44a019f4e1ce04f85b5b43f87a7b9e5ac49b09095f77a91e"
+    },
+    {
+      "bytes": 11772140,
+      "path": "output/MODEL_Y.EGRID",
+      "sha256": "1baa2f5b4387b83b9b08026f2d1314014efa537e7da26b632a585e67a5435b05"
+    },
+    {
+      "bytes": 12727616,
+      "path": "output/MODEL_Y.ESMRY",
+      "sha256": "eb43f0fde4da71b8b92c8f5906670b6fcb0b76123d837c05269e814c47e1d427"
+    },
+    {
+      "bytes": 10608764,
+      "path": "output/MODEL_Y.INIT",
+      "sha256": "cd875dcba5c202dc63f29d1bd588bc6653713ebc606ad53ec54660830dd15b3e"
+    },
+    {
+      "bytes": 837887,
+      "path": "output/MODEL_Y.PRT",
+      "sha256": "45d45d1ce744813edbb237b33fd47843f236ed70fc41b58e8902f4bac5dad660"
+    },
+    {
+      "bytes": 730772,
+      "path": "output/MODEL_Y.SMSPEC",
+      "sha256": "6371c4c1de4ec48433a7121ab8707bcbeb792f36ed7666809f1d7f4a87be681c"
+    },
+    {
+      "bytes": 1645596,
+      "path": "output/MODEL_Y.UNRST",
+      "sha256": "a107a0b9ac78b9c778dababfc87490a4513d6712e17521b059cc665b37b77e4d"
+    },
+    {
+      "bytes": 11203740,
+      "path": "output/MODEL_Y.UNSMRY",
+      "sha256": "4dfd877afbee6e1ebbb283117d71d171ad7086cc53ef35aba20a4bbf231e98a7"
+    },
+    {
+      "bytes": 1013,
+      "path": "schedule-overlay.json",
+      "sha256": "44c737ba4cd0b8ba4637adb955b8ad58a5e243cfaac2e53bf7c602b33149300a"
+    },
+    {
+      "bytes": 116,
+      "path": "stderr.log",
+      "sha256": "cacd3dc760ecdef3a0f67a4a373d55c90d79dc6378a84658321720529b278562"
+    },
+    {
+      "bytes": 476821,
+      "path": "stdout.log",
+      "sha256": "8e74ee208823ee7aaf02eebeafe172272997773233c0ff4fcdcbd1766685b8d8"
+    }
+  ],
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--name",
+    "timesoil-aios-a7c67dee94e5ba31ce78",
+    "--network=none",
+    "--shm-size=1g",
+    "--user",
+    "0:0",
+    "--mount",
+    "type=bind,src=/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/opm/opm-full-replay-a7b08fb869b4fbbd9dd6ab3e/input,dst=/case,readonly",
+    "--mount",
+    "type=bind,src=/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/opm/opm-full-replay-a7b08fb869b4fbbd9dd6ab3e/output,dst=/output",
+    "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+    "taskset",
+    "-c",
+    "48-63",
+    "mpirun",
+    "--allow-run-as-root",
+    "--oversubscribe",
+    "-np",
+    "16",
+    "--bind-to",
+    "none",
+    "flow",
+    "--output-dir=/output",
+    "--threads-per-process=1",
+    "--parsing-strictness=low",
+    "/case/MODEL_Y/MODEL_Y.DATA"
+  ],
+  "container": {
+    "name": "timesoil-aios-a7c67dee94e5ba31ce78",
+    "timeout_cleanup": "not-needed"
+  },
+  "deck": "MODEL_Y/MODEL_Y.DATA",
+  "deck_sha256": "dce80edf53c4f6c5841d086f720856a4b4bf792466aa6fc811ed42bcd63cc36f",
+  "deck_transformations": [
+    {
+      "deck_sha256_after": "c5040e071a10162d16592fd909aa53d986445771b954e07c4cca8f94a75dea40",
+      "deck_sha256_before": "729abbff4977b0aa067c839e92ee3a7ac85be9b87f20b92b03e69ed44fe1f4ef",
+      "end_line": 35,
+      "name": "remove_model_y_tnavigator_disabled_block",
+      "opt_in": true,
+      "removed_sha256": "7dbb7ea6cf8f2ebf9eeda640a25973d307556f88720beab74a60397070d4932a",
+      "start_line": 31
+    }
+  ],
+  "duration_seconds": 539.5874728560448,
+  "finished_at": "2026-09-10T16:32:06.524763+00:00",
+  "image": "openporousmedia/opmreleases:2026.04_amd64",
+  "image_digest": "sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+  "image_reference": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+  "provenance": "OPM Flow 2026.04; image=openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+  "returncode": 0,
+  "schema": "timesoil.aios.opm-run/v1",
+  "source": "/tmp/timesoil-kt2/model_y/Model_Y (3).zip",
+  "source_sha256": "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e",
+  "started_at": "2026-09-10T16:23:06.937287+00:00",
+  "status": "success",
+  "summary_contract": {
+    "all_wells": true,
+    "connection_wells": [
+      "1",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "19",
+      "2",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "25",
+      "26",
+      "27",
+      "28",
+      "29",
+      "3",
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37",
+      "38",
+      "4",
+      "40",
+      "41",
+      "42",
+      "43",
+      "44",
+      "45",
+      "47",
+      "48",
+      "49",
+      "50",
+      "51",
+      "52",
+      "53",
+      "54",
+      "55",
+      "56",
+      "6",
+      "7",
+      "9"
+    ],
+    "overlay": "MODEL_Y/_TIMESOIL_SUMMARY.INC",
+    "overlay_sha256": "482f8d82e92c45dcdf4076f384c7e58f66862c79db778ef07fd3aca28a098d30",
+    "postprocessor_certified": false,
+    "unit_system": "METRIC",
+    "unsupported_direct_vectors": {
+      "WLPT_Diff": "requires a proven cumulative-delta postprocessor",
+      "WOMT": "requires a proven volume-to-mass conversion and density source",
+      "WOMT_Diff": "requires proven mass conversion before cumulative delta",
+      "WWIT_Diff": "requires a proven cumulative-delta postprocessor"
+    },
+    "vectors": {
+      "COFR": {
+        "chdd_field": "",
+        "quantity": "connection signed net surface oil flow rate",
+        "transform": "signed-net audit only: derive COIR=COPR-COFR and reconcile with WOIR",
+        "unit": "SM3/DAY"
+      },
+      "COIT": {
+        "chdd_field": "",
+        "quantity": "connection cumulative surface oil injection",
+        "transform": "connection cumulative oil-injection reconciliation only",
+        "unit": "SM3"
+      },
+      "COPR": {
+        "chdd_field": "WOMR",
+        "quantity": "connection surface oil production rate",
+        "transform": "signed completion production terms converted with cell oil density",
+        "unit": "SM3/DAY"
+      },
+      "COPT": {
+        "chdd_field": "WOMT",
+        "quantity": "connection cumulative surface oil production",
+        "transform": "aggregate connections per well, then convert oil volume to mass",
+        "unit": "SM3"
+      },
+      "CWFR": {
+        "chdd_field": "",
+        "quantity": "connection signed net surface water flow rate",
+        "transform": "signed-net audit only: reconcile CWPR-CWIR with WWPR-WWIR",
+        "unit": "SM3/DAY"
+      },
+      "CWIR": {
+        "chdd_field": "WWIR",
+        "quantity": "connection surface water injection rate",
+        "transform": "connection water-injection reconciliation only",
+        "unit": "SM3/DAY"
+      },
+      "CWIT": {
+        "chdd_field": "WWIT",
+        "quantity": "connection cumulative surface water injection",
+        "transform": "connection cumulative water-injection reconciliation only",
+        "unit": "SM3"
+      },
+      "CWPR": {
+        "chdd_field": "WLPR",
+        "quantity": "connection surface water production rate",
+        "transform": "signed completion production terms converted with cell water density",
+        "unit": "SM3/DAY"
+      },
+      "CWPT": {
+        "chdd_field": "WLPT",
+        "quantity": "connection cumulative surface water production",
+        "transform": "aggregate with COPT per well, then convert phase volumes to liquid mass",
+        "unit": "SM3"
+      },
+      "DATE": {
+        "chdd_field": "DATA",
+        "quantity": "calendar date",
+        "transform": "direct date normalization",
+        "unit": "calendar date"
+      },
+      "WBHP": {
+        "chdd_field": "BHP",
+        "quantity": "well bottom-hole pressure",
+        "transform": "direct after pressure-unit verification",
+        "unit": "BARSA"
+      },
+      "WBP9": {
+        "chdd_field": "THP",
+        "quantity": "well nine-point averaged block pressure",
+        "transform": "candidate reservoir-pressure mapping; not certified",
+        "unit": "BARSA"
+      },
+      "WEFF": {
+        "chdd_field": "WEFF",
+        "quantity": "well efficiency factor",
+        "transform": "direct dimensionless well efficiency factor",
+        "unit": "dimensionless"
+      },
+      "WLPR": {
+        "chdd_field": "WLPR",
+        "quantity": "well surface liquid production rate",
+        "transform": "direct after unit verification",
+        "unit": "SM3/DAY"
+      },
+      "WLPT": {
+        "chdd_field": "WLPT",
+        "quantity": "well cumulative surface liquid production",
+        "transform": "requires oil/water surface volumes and densities for liquid mass",
+        "unit": "SM3"
+      },
+      "WOIR": {
+        "chdd_field": "",
+        "quantity": "well surface oil injection rate",
+        "transform": "validates signed connection oil flow; not a CHDD output",
+        "unit": "SM3/DAY"
+      },
+      "WOIT": {
+        "chdd_field": "",
+        "quantity": "well cumulative surface oil injection",
+        "transform": "validates signed connection oil total; not a CHDD output",
+        "unit": "SM3"
+      },
+      "WOPR": {
+        "chdd_field": "WOMR",
+        "quantity": "well surface oil production rate",
+        "transform": "requires proven oil volume-to-mass conversion",
+        "unit": "SM3/DAY"
+      },
+      "WOPT": {
+        "chdd_field": "WOMT",
+        "quantity": "well cumulative surface oil production",
+        "transform": "requires proven oil volume-to-mass conversion",
+        "unit": "SM3"
+      },
+      "WVIT": {
+        "chdd_field": "",
+        "quantity": "well cumulative reservoir volume injection",
+        "transform": "optional monthly voidage balance; never surface volume or CHDD mass",
+        "unit": "RM3"
+      },
+      "WVPT": {
+        "chdd_field": "",
+        "quantity": "well cumulative reservoir volume production",
+        "transform": "optional monthly voidage balance; never surface volume or CHDD mass",
+        "unit": "RM3"
+      },
+      "WWIR": {
+        "chdd_field": "WWIR",
+        "quantity": "well surface water injection rate",
+        "transform": "direct after unit verification",
+        "unit": "SM3/DAY"
+      },
+      "WWIT": {
+        "chdd_field": "WWIT",
+        "quantity": "well cumulative surface water injection",
+        "transform": "direct after unit verification",
+        "unit": "SM3"
+      },
+      "WWPR": {
+        "chdd_field": "WLPR",
+        "quantity": "well surface water production rate",
+        "transform": "validates WLPR-WOPR and production-only connections",
+        "unit": "SM3/DAY"
+      },
+      "WWPT": {
+        "chdd_field": "WLPT",
+        "quantity": "well cumulative surface water production",
+        "transform": "validates WLPT-WOPT and production-only connections",
+        "unit": "SM3"
+      }
+    },
+    "well_selector": "empty '/' record requests all wells for well vectors; connection vectors enumerate sorted WELSPECS names explicitly"
+  },
+  "warnings": [
+    "LOW_PARSING: --parsing-strictness=low explicitly enabled; unsupported keywords, if any, are recorded in stdout.log and stderr.log"
+  ]
+}

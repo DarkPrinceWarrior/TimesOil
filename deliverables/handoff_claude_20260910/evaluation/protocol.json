@@ -1,0 +1,31 @@
+{
+  "created_utc": "2026-09-10T14:12:33.143616+00:00",
+  "source_commit": "a9f5e99c950a187e054a4fa263fb4f3eb374526f",
+  "script_sha256": "3ff1b77d552fdcd1edfa33f45cdec94156b67000c6e5806f34de2f613efbade0",
+  "batch_sha256": "4a9a8e53f8a44813fae8211d3a902f43f3c251b747d623c5dc47e78697a8eeef",
+  "waiting_for_session": "timesoil-economic-regimes-precise-z-20260910",
+  "training_protocol_sha256": "20c9ab3bf9d6b89ecf25b10d35f4ca441e71ad42fef567e121c8f918b50de621",
+  "model_selection": "One final checkpoint chosen by the existing 60-epoch development validation rule.",
+  "calibration_cases": [
+    0,
+    1,
+    3,
+    4,
+    6
+  ],
+  "test_cases": [
+    2,
+    5,
+    7
+  ],
+  "training_or_model_selection_on_evaluation_cases_allowed": false,
+  "previously_evaluated_with_three_target_model": true,
+  "unseen_new_reservoir_claimed": false,
+  "coverage_guaranteed": false,
+  "final_operational_result_used_for_training_or_selection": false,
+  "forecast_mode": "fixed origin, 103 wells, 224 months, nine economic targets; future observations masked",
+  "new_opm_calls": 0,
+  "checkpoint_sha256": "5be40e0cd1bae70e9b30ea7def1454f8033e66b2d100323f70827052e24a3712",
+  "training_report_sha256": "216c198fa64a7b868995d86e548a517c62bd81bd1272a7d4d913f25f8abbced7",
+  "evaluation_started_utc": "2026-09-10T15:24:05.643323+00:00"
+}

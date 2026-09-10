@@ -3,8 +3,8 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 10192,
-      "sha256": "bd5bb067b3d01a266acbc3b6e638ca35e02ee7aa061a4ac857c8b52dedd7cf1f"
+      "bytes": 10666,
+      "sha256": "8aa7141ba10ae1154c3df29c1087f0d1bc792b7379b0ccd99f6cca109c692184"
     },
     {
       "path": "attention-operations.json",
@@ -37,9 +37,19 @@
       "sha256": "6659cb793a171d5a476ebee78b792c02c8e0a66cdeec327481f538095b3b34a2"
     },
     {
+      "path": "evaluation-junit.xml",
+      "bytes": 810,
+      "sha256": "df34c73a08333b519f3e6227b8e966a6683e72a062949a347f7499ce2ef15649"
+    },
+    {
       "path": "precise-attention-check.json",
       "bytes": 860,
       "sha256": "d6b66a3cb808851636968e7b52ed62f89f6c5b67a92bbd2846443e6b66a1dfdc"
+    },
+    {
+      "path": "precise-regime-progress-v2.json",
+      "bytes": 2312,
+      "sha256": "118d85dbdf805e21ed0c07e6c29bcfbdba91a9062f36739333f9ca052a958818"
     },
     {
       "path": "precise-regime-progress.json",
@@ -50,6 +60,11 @@
       "path": "precise-regime-training-protocol.json",
       "bytes": 2427,
       "sha256": "20c9ab3bf9d6b89ecf25b10d35f4ca441e71ad42fef567e121c8f918b50de621"
+    },
+    {
+      "path": "queued-evaluation-protocol.json",
+      "bytes": 1072,
+      "sha256": "4892e73cf3f680aa453c5577bb3bf3416f61c29490f3c1efd73ce042bd30bb0b"
     },
     {
       "path": "regime-training-protocol.json",

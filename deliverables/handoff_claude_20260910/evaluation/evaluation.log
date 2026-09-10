@@ -1,0 +1,76 @@
+Scenario-group interval and independent target coverage checks passed
+Traceback (most recent call last):
+  File "/root/projects/TimesOil-audit-economic-uncertainty-z-20260910/scripts/evaluate_timesfm_scenarios.py", line 320, in <module>
+    main()
+    ~~~~^^
+  File "/root/projects/TimesOil-audit-economic-uncertainty-z-20260910/scripts/evaluate_timesfm_scenarios.py", line 281, in main
+    prediction = forecast_economic(forecaster, economic_input, origin, months, context, connectivity)
+  File "/root/projects/TimesOil-audit-economic-uncertainty-z-20260910/scripts/timesfm_economics.py", line 168, in forecast_economic
+    prediction, = forecaster.predict_batch([targets], horizon=horizon,
+    ^^^^^^^^^^^
+  File "/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/timesfm3/torch/timesfm3_forecaster.py", line 708, in predict_batch
+    out_logits = self.model.decode(
+      target=tgt_torch,
+    ...<3 lines>...
+      mask=mask_torch,
+    )
+  File "/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+  File "/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/timesfm3/torch/model.py", line 605, in decode
+    forward_out = self.forward(
+      inputs,
+    ...<2 lines>...
+      return_aux_outputs=return_aux_outputs,
+    )
+  File "/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/timesfm3/torch/model.py", line 318, in forward
+    transformer_output, _, seq_attn_mask = self.transformer_stack(
+                                           ~~~~~~~~~~~~~~~~~~~~~~^
+      transformer_input,
+      ^^^^^^^^^^^^^^^^^^
+      effective_patch_mask,
+      ^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/timesfm3/torch/transformer.py", line 592, in forward
+    output, layer_cache, layer_mask = layer(
+                                      ~~~~~^
+      output,
+      ^^^^^^^
+    ...<4 lines>...
+      var_segment_pos,
+      ^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/timesfm3/torch/transformer.py", line 523, in forward
+    var_attn_out_flat, _, _ = self.var_attn(
+                              ~~~~~~~~~~~~~^
+      var_attn_in_flat,
+      ^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+      patch_mask=var_patch_mask,
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/root/projects/TimesOil-audit-economic-uncertainty-z-20260910/scripts/timesfm_geology.py", line 26, in forward
+    return _original(*args, **kwargs)
+  File "/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/timesfm3/torch/transformer.py", line 384, in forward
+    attn_weights = F.softmax(attn_logits, dim=-1)
+  File "/root/projects/TimesOil-audit-economic-uncertainty-z-20260910/scripts/timesfm_geology.py", line 19, in softmax
+    return torch.softmax(values, dim=dim, dtype=torch.float64).to(dtype or values.dtype)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 3.13 GiB. GPU 0 has a total capacity of 39.49 GiB of which 16.10 GiB is free. Process 1496885 has 11.94 GiB memory in use. Including non-PyTorch memory, this process has 11.44 GiB memory in use. 13.82 GiB allowed; Of the allocated memory 9.18 GiB is allocated by PyTorch, and 1.74 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

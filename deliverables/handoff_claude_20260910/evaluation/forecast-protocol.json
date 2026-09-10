@@ -1,0 +1,59 @@
+{
+  "schema": "timesoil.independent-timesfm-evaluation/v1",
+  "batch_sha256": "4a9a8e53f8a44813fae8211d3a902f43f3c251b747d623c5dc47e78697a8eeef",
+  "model_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "head_sha256": "5be40e0cd1bae70e9b30ea7def1454f8033e66b2d100323f70827052e24a3712",
+  "training_report_sha256": "216c198fa64a7b868995d86e548a517c62bd81bd1272a7d4d913f25f8abbced7",
+  "connectivity_sha256": "cff65939ad943dd1df28460306fc433663a22707bd66a087732077135f7992c0",
+  "calibration_cases": [
+    0,
+    1,
+    3,
+    4,
+    6
+  ],
+  "test_cases": [
+    2,
+    5,
+    7
+  ],
+  "model_selection_allowed_on_test": false,
+  "head_retraining_allowed_after_test": false,
+  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+  "horizon_months": 224,
+  "modes_fixed_before_evaluation": [
+    "trained_economic_fixed_origin_224"
+  ],
+  "calibration_only": false,
+  "test_only": false,
+  "simulated_reference_future_used": false,
+  "candidate_future_observations_used_for_fixed_origin": false,
+  "reference_manifest_sha256": null,
+  "reference_correction_sha256": null,
+  "head_validation_loss": 0.06936201453208923,
+  "metrics": [],
+  "source_scenarios": {},
+  "economic_targets": [
+    "WOMR",
+    "WLPR",
+    "WWIR",
+    "THP",
+    "BHP",
+    "WEFF",
+    "WOMT_Diff",
+    "WLPT_Diff",
+    "WWIT_Diff"
+  ],
+  "target_units": [
+    "t/day",
+    "m3/day",
+    "m3/day",
+    "bar",
+    "bar",
+    "fraction",
+    "t/month",
+    "t/month",
+    "m3/month"
+  ],
+  "source_scenario_hash_semantics": "canonical economic CSV SHA-256"
+}
