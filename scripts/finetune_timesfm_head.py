@@ -23,6 +23,15 @@ def pinball_loss(prediction, target, scale, quantiles):
     return (error * quantiles).maximum(error * (quantiles - 1)).mean()
 
 
+def project_quantiles(prediction, actions):
+    """Differentiable version of the inference projection, for every quantile."""
+    import torch
+    values = prediction.reshape(1, actions.shape[1], 3, actions.shape[0], -1).clamp_min(0)
+    active = ((actions[..., 2] == 1) & (actions[..., 1] != 2)).T[None, ..., None]
+    oil, liquid, pressure = values.unbind(dim=2)
+    return torch.stack([torch.minimum(oil, liquid) * active, liquid * active, pressure], dim=2).reshape_as(prediction)
+
+
 def self_check():
     import torch
     predicted = torch.zeros((1, 1, 1, 2), requires_grad=True)
@@ -31,6 +40,15 @@ def self_check():
     torch.testing.assert_close(loss, torch.tensor(.5))
     loss.backward()
     torch.testing.assert_close(predicted.grad.flatten(), torch.tensor([-.125, -.375]))
+    actions = torch.tensor([[[100., 0, 1, 50], [100., 2, 1, 300.]]])
+    values = torch.tensor([[[[4., 5.]], [[2., 3.]], [[-1., 5.]], [[8., 9.]], [[9., 10.]], [[100., 110.]]]], requires_grad=True)
+    projected = project_quantiles(values, actions)
+    torch.testing.assert_close(projected.flatten(), torch.tensor([2., 3., 2., 3., 0., 5., 0., 0., 0., 0., 100., 110.]))
+    physical = torch.ones((1, 6, 1, 1))
+    anchored = physical + projected - projected[..., :1]
+    torch.testing.assert_close(anchored[..., :1], physical)
+    anchored[..., :1].sum().backward()
+    torch.testing.assert_close(values.grad, torch.zeros_like(values))
     print('normalized quantile loss and gradients verified', flush=True)
 
 
@@ -130,6 +148,8 @@ def main():
     parser.add_argument('--bhp-calibration', type=Path)
     parser.add_argument('--bhp-calibration-sha256')
     parser.add_argument('--monthly-observed-training', action='store_true')
+    parser.add_argument('--reference', type=Path, help='Verified physical reference for additive-response training')
+    parser.add_argument('--reference-sha256')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -147,6 +167,9 @@ def main():
         parser.error('monthly observed training currently requires Model Y')
     if args.unfreeze_backbone and not args.condition_last_layer:
         parser.error('full-backbone adaptation requires static last-layer conditioning')
+    if (bool(args.reference) != bool(args.reference_sha256)
+            or args.reference and (args.model_y or not args.condition_last_layer)):
+        parser.error('reference-response training requires Model Z, static conditioning and a manifest hash')
     if (bool(args.bhp_calibration) != bool(args.bhp_calibration_sha256)
             or args.bhp_calibration and args.model_y):
         parser.error('Model Z BHP calibration requires a paired manifest hash')
@@ -222,6 +245,8 @@ def main():
         if sha256(args.initial_head.read_bytes()).hexdigest() != args.initial_head_sha256:
             raise ValueError('initial output-head hash mismatch')
         initial = torch.load(args.initial_head, map_location='cuda', weights_only=True)
+        if initial.get('reference_manifest_sha256') not in (None, args.reference_sha256):
+            raise ValueError('initial weights require their original physical reference')
         initial_weights = ({k.removeprefix('output_head.'): v for k, v in initial['full_model'].items()
                             if k.startswith('output_head.')} if 'full_model' in initial else initial.get('output_head', initial))
         if connectivity is not None:
@@ -273,6 +298,26 @@ def main():
             torch.tensor(cov[None], device='cuda', dtype=torch.float32),
             torch.tensor(t.states[position + 1:position + training_horizon + 1].transpose(1, 2, 0).reshape(1, targets_count, training_horizon),
                          device='cuda', dtype=torch.float32))
+    reference = None
+    if args.reference:
+        from timesoil.aios.track2 import load_trajectory_dataset
+        if sha256((args.reference / 'manifest.json').read_bytes()).hexdigest() != args.reference_sha256:
+            raise ValueError('physical reference manifest hash mismatch')
+        data = load_trajectory_dataset(args.reference / 'trajectory.csv', manifest=args.reference / 'manifest.json')
+        if len(data) != 1 or not data.model_z_identity or data[0].well_ids != connectivity.well_ids:
+            raise ValueError('physical reference reservoir or well inventory differs')
+        reference = data[0]
+        for t in trajectories:
+            if not t.dates.equals(reference.dates):
+                raise ValueError('physical reference temporal grid differs')
+            np.testing.assert_allclose(t.states[:origin + 1], reference.states[:origin + 1], rtol=0, atol=1e-6)
+            np.testing.assert_array_equal(t.actions[:origin], reference.actions[:origin])
+        ref_target, ref_cov = geological_inputs(reference, origin, context, horizon, connectivity)
+        ref_target = torch.tensor(ref_target[None], device='cuda')
+        ref_cov = torch.tensor(ref_cov[None], device='cuda', dtype=torch.float32)
+        ref_truth = torch.tensor(reference.states[origin + 1:origin + horizon + 1].transpose(1, 2, 0).reshape(1, targets_count, horizon, 1), device='cuda', dtype=torch.float32)
+        ref_actions = torch.tensor(reference.actions[origin:origin + horizon], device='cuda')
+        median = forecaster.config.median_quantile_index
     decode = type(model).decode.__wrapped__  # Same pinned decoder, with autograd enabled.
     refine = torch.no_grad()(cpm_revin_refine.cpm_iterative_revin_refine)
 
@@ -281,6 +326,11 @@ def main():
         # ponytail: process-local patch for this single-threaded trainer; replace with a native 3.0 trainer when available.
         with patch.object(cpm_revin_refine, 'cpm_iterative_revin_refine', refine):
             prediction = decode(model, target, horizon=training_horizon, past_future_covariates=cov)[:, :targets_count]
+            if reference is not None:
+                reference_prediction = decode(model, ref_target, horizon=horizon, past_future_covariates=ref_cov)[:, :targets_count]
+                actions = torch.tensor(by_id[name[0]].actions[origin:origin + horizon], device='cuda')
+                reference_point = project_quantiles(reference_prediction, ref_actions)[..., median:median + 1]
+                prediction = project_quantiles(ref_truth + project_quantiles(prediction, actions) - reference_point, actions)
         return pinball_loss(prediction, truth, scale, quantiles)
 
     target, cov, _ = examples[train_keys[0]]
@@ -300,12 +350,16 @@ def main():
         'last-layer-and-head.pt' if args.unfreeze_last_layer else 'output-head.pt')
     def selected_weights():
         if args.unfreeze_backbone:
-            return {'full_model': model.state_dict(), 'static_last_layer': args.condition_last_layer}
-        if args.unfreeze_last_layer:
-            return {'output_head': model.output_head.state_dict(),
+            weights = {'full_model': model.state_dict(), 'static_last_layer': args.condition_last_layer}
+        elif args.unfreeze_last_layer:
+            weights = {'output_head': model.output_head.state_dict(),
                     'last_layer': model.transformer_stack.layers[-1].state_dict(),
                     'static_last_layer': args.condition_last_layer}
-        return model.output_head.state_dict()
+        else:
+            return model.output_head.state_dict()
+        if args.reference:
+            weights['reference_manifest_sha256'] = args.reference_sha256
+        return weights
     torch.save(selected_weights(), checkpoint)
     report = dict(schema='timesoil.timesfm-head-adaptation/v1', model_revision=MODEL_REVISION,
         batch_manifest_sha256=args.batch_sha256, source_scenario_hashes={t.scenario_id: t.content_hash for t in trajectories},
@@ -320,6 +374,9 @@ def main():
         initial_head_sha256=args.initial_head_sha256,
         regime_calibration_manifest_sha256=args.regime_calibration_sha256,
         bhp_calibration_manifest_sha256=args.bhp_calibration_sha256,
+        reference_manifest_sha256=args.reference_sha256,
+        reference_trajectory_sha256=reference.content_hash if reference is not None else None,
+        training_prediction='projected OPM(reference) + Google(candidate) - Google(reference)' if args.reference else 'Google absolute response',
         regime_calibration_reused_for_development=args.regime_calibration is not None,
         development_test_scenarios_previously_inspected=True,
         trainable_parameters=sum(p.numel() for p in trainable), learning_rate=args.learning_rate,
@@ -351,10 +408,19 @@ def main():
                 raise ValueError('geological block forecast requires actual observed updates')
             results.append(forecast_layout(forecaster, t, origin + offset, size, context,
                                            'joint', connectivity=connectivity))
-        return np.concatenate(results)
+        prediction = np.concatenate(results)
+        if reference is not None:
+            from evaluate_timesfm_scenarios import reference_delta
+            reference_prediction = forecast_layout(forecaster, reference, origin, horizon, context,
+                                                  'joint', connectivity=connectivity)
+            prediction = reference_delta(reference.states[origin + 1:origin + horizon + 1],
+                reference_prediction, prediction, t.actions[origin:origin + horizon])
+        return prediction
 
     evaluation_modes = [('observed_update_block_1', 1, True)] if args.monthly_observed_training else [
         ('fixed_origin_direct', horizon, False), ('observed_update_block_6', 6, True)]
+    if reference is not None:
+        evaluation_modes = [('reference_delta_direct', horizon, False)]
     for name in test_ids:
         t = by_id[name]
         initial_mode, block, observe = evaluation_modes[0]

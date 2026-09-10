@@ -177,7 +177,9 @@ def main():
         revision=MODEL_REVISION, per_core_batch_size=1, device='cuda'))
     original_model = forecaster.model
     selected = torch.load(args.head, map_location='cuda', weights_only=True)
-    selected_model = load_frozen_model(deepcopy(original_model), connectivity, selected)
+    report['checkpoint_requires_physical_reference'] = bool(selected.get('reference_manifest_sha256'))
+    selected_model = load_frozen_model(deepcopy(original_model), connectivity, selected,
+                                       reference_sha256=args.reference_sha256)
     reference = None
     if args.reference:
         if digest(args.reference / 'manifest.json') != args.reference_sha256:
@@ -220,6 +222,8 @@ def main():
             raise ValueError('complete historical/control/target grid required')
         truth = t.states[origin + 1:origin + months + 1]
         if reference is not None:
+            if t.content_hash == reference.content_hash:
+                raise ValueError('evaluation trajectory is the physical reference')
             if not t.dates.equals(reference.dates) or t.actions.shape != reference.actions.shape:
                 raise ValueError('reference and candidate temporal grids differ')
             np.testing.assert_allclose(t.states[:origin + 1], reference.states[:origin + 1], rtol=0, atol=1e-6)
