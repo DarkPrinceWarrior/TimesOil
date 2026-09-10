@@ -14,14 +14,14 @@ Y: январь 2014 — ноябрь 2015; Z: январь 2007 — авгус�
 
 ## Файлы
 
-- [Model Y: официальный отчёт](model_y/selected/official-report.xlsx), [полный аудит](model_y/full-audit.json), [исполненный график](model_y/selected/full-opm-schedule.inc).
-- [Model Z: официальный отчёт лучшего графика](model_z/selected/official-report.xlsx), [исполненный график](model_z/selected/full-opm-schedule.inc), [парное сравнение и агентский аудит](model_z/full-comparison.json).
-- [Model Z: официальный отчёт нового TimesFM-кандидата](model_z/timesfm_candidate/official-report.xlsx), [его исполненный график](model_z/timesfm_candidate/full-opm-schedule.inc).
+- [Model Y: официальный отчёт](model_y/selected/official-report.xlsx), [полный аудит](model_y/full-audit.json), [wells_schedule.inc](model_y/selected/wells_schedule.inc).
+- [Model Z: официальный отчёт лучшего графика](model_z/selected/official-report.xlsx), [wells_schedule.inc](model_z/selected/wells_schedule.inc), [парное сравнение и агентский аудит](model_z/full-comparison.json).
+- [Model Z: официальный отчёт нового TimesFM-кандидата](model_z/timesfm_candidate/official-report.xlsx), [его wells_schedule.inc](model_z/timesfm_candidate/wells_schedule.inc).
 - `baseline/official-result.json` и `baseline/official-report.xlsx` в каждом треке — соответствующая база.
 - `selected/official-result.json` — все месяцы, годы, действующие нормативы, насосы и события; `physical-chdd-input.csv` — физический экспорт с историей, необходимой для переноса состояния оборудования.
 - [manifest.json](manifest.json) — SHA-256 каждого артефакта, исходные пути, полные номинальные суммы затрат и проверенные итоговые ЧДД.
 
-`full-opm-schedule.inc` — точная копия расписания успешного OPM-прогона, включая историю. Это не самостоятельная геологическая модель. Исходное расположение: Y — `MODEL_Y/INCLUDE/DemoSpe_002_2_sch.inc`; Z — `Model_Z/Model_Z_sch.inc`. Остальные данные организаторского архива и зафиксированная нормализация Y остаются необходимыми для воспроизведения.
+`wells_schedule.inc` — точная копия полного расписания успешного OPM-прогона, включая историю. Файл `full-opm-schedule.inc` сохранён как побайтово идентичная копия под прежним именем; `verify.py` проверяет их равенство. Это не самостоятельная геологическая модель. Исходное расположение: Y — `MODEL_Y/INCLUDE/DemoSpe_002_2_sch.inc`; Z — `Model_Z/Model_Z_sch.inc`. Для воспроизведения замените соответствующий исходный include содержимым `wells_schedule.inc`. Это замена полного расписания, а не дополнительная вставка после исходной истории. Остальные данные организаторского архива и зафиксированная нормализация Y остаются необходимыми для воспроизведения.
 
 ## Проверка
 
