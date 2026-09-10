@@ -1,0 +1,56 @@
+{
+  "schema": "timesoil.local-timesfm-reference-correction/v1",
+  "degrees_evaluated": [
+    1,
+    2
+  ],
+  "selection": "leave-one-calibration-scenario-out normalized absolute error",
+  "head_sha256": "71c4259f3bb59ee9fe95d1ea315c0e2de0db82199047fd28c856251e5f101b74",
+  "reference_manifest_sha256": "5898c09105a46afff83fe9fed2228d1638257b413bc371a97efec780237b20c8",
+  "pilot_report_sha256": "a0f30b1abf4c3a20acf13abfa0f634e22cc98c296be1955aee1e963059aed1f5",
+  "calibration_batch_sha256": "e5c7ae9439b4bd0dffe65b42ecaa1c95f2ee5a889d42988760c39a9d2977c4a1",
+  "calibration_cases": [
+    0,
+    1,
+    3,
+    4,
+    6
+  ],
+  "test_cases_used": [],
+  "source_scenarios": {
+    "0": "44cfa677b7f6efd926b73faaf4fcc89474fd5486ab9b88188adf296c3233b0df",
+    "1": "e2b45b88f930e5aa3267e12835e77b2162c91789aa2ebc28633d7cff7a65ae71",
+    "3": "57da27345de1a7da62c9eadea74907729519720e050f4f226d2b3768369eb74d",
+    "4": "f2a64399a4d4c9bae4bdac4d7450816c561746c1f812f27a1d7d98451e9645c4",
+    "6": "86b2b6b6b14f1901a403fb1f0cee8b0afb7771364778b5ddbf52f8031bda2c86"
+  },
+  "cv": [
+    {
+      "degree": 1,
+      "score": 0.02633582205329667,
+      "without_google_delta_score": 0.00567633414301287
+    },
+    {
+      "degree": 2,
+      "score": 0.04110402143990723,
+      "without_google_delta_score": 0.014237822529989019
+    }
+  ],
+  "full_opm_required_outside_region": true,
+  "pilot_array_sha256": {
+    "0": "2eba66228eba0d9172bc0bfd0f01cde83c2d00c9ca93fd7702770da9a657d79e",
+    "1": "0ab850a6cc7354f6420b2ec356e55c9100eb2f313c92f59e80d3e7d853303567",
+    "3": "a82cb5720c16645fd741abacbe763fb7f0518a70fb357077ff93d4444af64776",
+    "4": "1b1f39e018b7ac42621712229a3fad541362cc96154a52731b3b61b229d4cd6b",
+    "6": "edc256ef7cd1d7a3ad3e53e035cce221414a75b493ffcf5a32579e933d1334f8"
+  },
+  "training_report_sha256": "493589e336e5c5d888b1481bd467c0cafbb21487e032af38b18085703c4a6efe",
+  "uncorrected_delta_score": 0.10509054176666587,
+  "physical_reference_score": 0.07768447363916552,
+  "domain": "same source, origin, rates, roles and statuses; uniform producer BHP addition x*15 bar and injector reduction y*0.1; 0<=x<=1, 0<=y<=1-x/2",
+  "independent_accuracy_certified": false,
+  "complete": true,
+  "degree": 1,
+  "checkpoint_sha256": "1912cec39a08cda3b88218c078e4469c1f92796e35cede2fc582c658adb093c9",
+  "script_sha256": "d96adc76c17d30463be9a5e138223688dcf93418ae5924ca704456a6e93ef98e"
+}

@@ -1,0 +1,131 @@
+{
+  "schema": "timesoil.local-physical-reference-ablation/v1",
+  "calibration_report_sha256": "db899fa1d3682c6ee24948ba91b5d0a2847351623c0fa89f4255a3cf06756e0c",
+  "independent_report_sha256": "731114e3c02ccdfb1016e91768c391bf7d06c0f38c8a42980727d9e0a2061620",
+  "coefficient_sha256": "1c1eaf56f121fa6eb098239e37648e04c533186bc49e0015381fb21428c01808",
+  "degree": 1,
+  "training_used_independent_scenarios": false,
+  "degree_selection": "old leave-one-calibration-scenario-out score; before independent results",
+  "evaluation_scope": "Ablation of Google contribution; same local BHP domain, physical reference and old calibration scenarios.",
+  "metrics": [
+    {
+      "index": 0,
+      "split": "calibration",
+      "oil_wape": 0.0072639222086043195,
+      "liquid_wape": 0.0036393244797536554,
+      "pressure_rmse_bar": 0.5712811980005135,
+      "first_month": {
+        "oil_wape": 0.0019100791806075305,
+        "liquid_wape": 0.001794276264742226,
+        "pressure_rmse_bar": 0.4955879853875786
+      }
+    },
+    {
+      "index": 1,
+      "split": "calibration",
+      "oil_wape": 0.006036600672311291,
+      "liquid_wape": 0.0029035900275840463,
+      "pressure_rmse_bar": 0.4034490722033888,
+      "first_month": {
+        "oil_wape": 0.0012682059842117122,
+        "liquid_wape": 0.0011266367794084012,
+        "pressure_rmse_bar": 0.5214470787732544
+      }
+    },
+    {
+      "index": 2,
+      "split": "test",
+      "oil_wape": 0.004223150225225864,
+      "liquid_wape": 0.001988535749785758,
+      "pressure_rmse_bar": 0.5992937753128107,
+      "first_month": {
+        "oil_wape": 0.0017436864500772536,
+        "liquid_wape": 0.001648129442606675,
+        "pressure_rmse_bar": 1.4409178555173596
+      }
+    },
+    {
+      "index": 3,
+      "split": "calibration",
+      "oil_wape": 0.006797931446470088,
+      "liquid_wape": 0.003108198032145366,
+      "pressure_rmse_bar": 0.4920847039344754,
+      "first_month": {
+        "oil_wape": 0.004644805514390749,
+        "liquid_wape": 0.004392820181950027,
+        "pressure_rmse_bar": 1.4661588926507647
+      }
+    },
+    {
+      "index": 4,
+      "split": "calibration",
+      "oil_wape": 0.0051430889132305525,
+      "liquid_wape": 0.001979152941567933,
+      "pressure_rmse_bar": 0.6201039512566003,
+      "first_month": {
+        "oil_wape": 0.005260457417564519,
+        "liquid_wape": 0.0048449243717700735,
+        "pressure_rmse_bar": 2.4094648177367817
+      }
+    },
+    {
+      "index": 5,
+      "split": "test",
+      "oil_wape": 0.02050634399772547,
+      "liquid_wape": 0.008710061941493312,
+      "pressure_rmse_bar": 1.7274871423602534,
+      "first_month": {
+        "oil_wape": 0.004073742775605095,
+        "liquid_wape": 0.003795399423548866,
+        "pressure_rmse_bar": 1.6142132773361915
+      }
+    },
+    {
+      "index": 6,
+      "split": "calibration",
+      "oil_wape": 0.004799503447061699,
+      "liquid_wape": 0.002312871296586604,
+      "pressure_rmse_bar": 0.5928589070210729,
+      "first_month": {
+        "oil_wape": 0.0006978503356862969,
+        "liquid_wape": 0.0005971613282732584,
+        "pressure_rmse_bar": 0.4105013925415228
+      }
+    },
+    {
+      "index": 7,
+      "split": "test",
+      "oil_wape": 0.0020816639509432283,
+      "liquid_wape": 0.0009977580988374025,
+      "pressure_rmse_bar": 0.3034759433782113,
+      "first_month": {
+        "oil_wape": 0.005236855362607152,
+        "liquid_wape": 0.004815230308648782,
+        "pressure_rmse_bar": 3.7913719818865292
+      }
+    }
+  ],
+  "intervals": {
+    "nominal_group_coverage": 0.8,
+    "calibration_groups": 5,
+    "radius_oil_tpd_liquid_tpd_pressure_bar": [
+      23.334162442790763,
+      56.514390039590765,
+      74.12845795619049
+    ],
+    "test_pointwise_coverage": [
+      1.0,
+      1.0,
+      0.9999855524734166
+    ],
+    "test_whole_trajectory_coverage_by_target": [
+      1.0,
+      1.0,
+      0.6666666666666666
+    ],
+    "guaranteed_coverage_claimed": false,
+    "limitation": "Fixed intervention scenarios are not established as exchangeable; only three independent test groups."
+  },
+  "complete": true,
+  "script_sha256": "ad587cc0f333bb3bb12c48045ebf741b0c23ca26e5e43b39843803fba60195b7"
+}
