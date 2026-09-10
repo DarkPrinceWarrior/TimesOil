@@ -1,0 +1,10 @@
+{
+  "cancelled_utc": "2026-09-10T09:35:44.014519+00:00",
+  "reason": "Replace idle policy queue with explicit WBP9/WBHP agent evidence; no policy experiment had started.",
+  "source_commit": "53955cec1bc2bd312c4646b851f3ac7051341a2d",
+  "replacement_source_commit": "f91143e",
+  "replacement_session": "timesoil-transition-policy-pressure-z-20260910",
+  "training_restarted": false,
+  "evaluation_restarted": false,
+  "proposal_started": false
+}
