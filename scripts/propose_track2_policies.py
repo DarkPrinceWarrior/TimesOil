@@ -101,6 +101,25 @@ def policy_controls(controls, policy):
     return output
 
 
+def baseline_bhp_controls(controls, trajectory):
+    """Fill missing bounds from same-month planned actions, never observed pressures."""
+    if trajectory.actions.shape[-1] != 4:
+        raise ValueError('authenticated baseline BHP action channel required')
+    output = [dict(action) for action in controls]
+    for action in output:
+        if action['status'] != 'OPEN' or action.get('bhp_limit') is not None:
+            continue
+        row = trajectory.actions[trajectory.dates.get_loc(pd.Timestamp(action['month'])),
+                                 trajectory.well_ids.index(action['well'])]
+        if (row[1] == 2) != (action['role'] == 'injector'):
+            raise ValueError('role conversion requires an explicit BHP bound')
+        bound = float(row[3])
+        if not np.isfinite(bound) or bound <= 0:
+            raise ValueError('open well has no positive planned baseline BHP bound')
+        action['bhp_limit'] = bound
+    return output
+
+
 def reject_duplicate_controls(controls_sha256, candidates):
     if any(row['controls_sha256'] == controls_sha256 for row in candidates):
         raise ValueError('policy repeats an already evaluated control schedule; propose different controls')
@@ -133,6 +152,24 @@ def self_check():
     else:
         raise AssertionError("unknown well accepted")
     two_months = controls + [{**a, 'month': '2007-02-01'} for a in controls]
+    from types import SimpleNamespace
+    planned = SimpleNamespace(dates=pd.to_datetime(['2007-01-01', '2007-02-01']),
+        well_ids=('P', 'I', 'F'), actions=np.array([
+            [[300, 1, 1, 50], [100, 2, 1, 300], [0, 1, 0, 0]],
+            [[300, 1, 1, 60], [100, 2, 1, 280], [0, 1, 0, 0]]], dtype=float))
+    filled = baseline_bhp_controls(two_months, planned)
+    assert [a.get('bhp_limit') for a in filled] == [50, 300, None, 60, 280, None]
+    assert all('bhp_limit' not in a for a in two_months)
+    assert baseline_bhp_controls([{**controls[0], 'bhp_limit': 70}], planned)[0]['bhp_limit'] == 70
+    adjusted = policy_controls(filled, {**policy, 'producer_bhp_add': 5, 'injector_bhp_factor': .9})
+    assert [a.get('bhp_limit') for a in adjusted] == [55, 270, None, 65, 252, None]
+    for bad in ([{**controls[0], 'role': 'injector'}], [{**controls[2], 'status': 'OPEN'}]):
+        try:
+            baseline_bhp_controls(bad, planned)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('unproven BHP bound accepted')
     update = dict(well='P', start='2007-01-01', end='2007-02-01',
                   role='injector', target='WRAT', value=80, bhp_limit=280)
     converted = policy_controls(two_months, {**policy, 'well_updates': [update]})
@@ -223,12 +260,10 @@ def main():
         np.testing.assert_array_equal(reference.actions[:origin, :, :trajectory.actions.shape[-1]], trajectory.actions[:origin])
         trajectory = reference
         raw = (args.reference / 'trajectory.csv').read_bytes()
-        for a in request['controls']:
-            if a['status'] == 'OPEN' and a.get('bhp_limit') is None:
-                a['bhp_limit'] = float(reference.actions[reference.dates.get_loc(pd.Timestamp(a['month'])),
-                                                         reference.well_ids.index(a['well']), 3])
-        checked_request = CycleRequest.from_mapping(request)
     has_bhp = trajectory.actions.shape[-1] == 4
+    if has_bhp:
+        request['controls'] = baseline_bhp_controls(request['controls'], trajectory)
+        checked_request = CycleRequest.from_mapping(request)
     if not has_bhp and any(a.bhp_limit is not None for a in checked_request.controls):
         raise ValueError('BHP screening requires an authenticated baseline with the BHP action channel')
     connectivity = None
