@@ -13,6 +13,7 @@ R = Path('/root/projects/TimesOil/results/audit-20260909')
 OUT = R / 'timesfm-transition-z-policy-bhp-20260910'
 SESSION = 'timesoil-transition-evaluation-z-20260910'
 PYTHON = '/tmp/timesoil-kt3-20260908/venv/bin/python'
+CYCLE_PYTHON = '/root/projects/TimesOil/.venv/bin/python'
 
 
 def proposal_id(receipt, checkpoint):
@@ -102,10 +103,10 @@ def run():
         '--connectivity', str(R / 'static-head-geology-20260909/model-z/connectivity.json')])
     receipt = json.loads((OUT / 'proposals/proposal-receipt.json').read_text())
     index = proposal_id(receipt, checkpoint)
-    execute('candidate', [PYTHON, '-m', 'timesoil.aios.cli', 'full-cycle',
+    execute('candidate', [CYCLE_PYTHON, '-m', 'timesoil.aios.cli', 'full-cycle',
         str(OUT / f'proposals/request-{index:02d}.json'), '--runs-dir', str(OUT / 'cycles'),
         '--run-id', 'candidate', '--timeout', '7200'])
-    execute('selection', [PYTHON, 'scripts/compare_track2_cycles.py', str(baseline),
+    execute('selection', [CYCLE_PYTHON, 'scripts/compare_track2_cycles.py', str(baseline),
         str(OUT / 'cycles/candidate'), str(OUT / 'selection.json'), '--expected-months', '224',
         '--select-from', str(incumbent), str(previous), '--agent-review'])
     selection = json.loads((OUT / 'selection.json').read_text())
