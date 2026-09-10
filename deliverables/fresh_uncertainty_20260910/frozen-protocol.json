@@ -1,0 +1,74 @@
+{
+  "created_utc": "2026-09-10T10:58:15.598947+00:00",
+  "source_commit": "0d9e9587f3ac9f50492c43c27bb077afbcfbdc80",
+  "checkpoint_sha256": "7a548a77f2acdb50c1dc6e48e2685b96e4305badb45dfb51dbc1eb705568ada3",
+  "training_report_sha256": "7ff52f200966bf76843ff583ca38e60dc5586bde893d824b0c9f367d86347ccc",
+  "script_sha256": "ca40e45649c09b3e787a885a8c2bd6b75f5755eb5a31997f87309517da12c9e8",
+  "request_sha256": "22336725cd1e0ffa51baef8e0a90238b438c7b0828ce035d3f2c81a9c9c26584",
+  "development_controls_sha256": [
+    "09f5eed7563c576036bd239dd50b2c51db0ae2324916b821b5fadbf5d8cd6651",
+    "6c705bad55c4f4aa929b495f9bbc1f5160e0bc0e05cf2941bd85527453e888e2",
+    "82757297b618e086b5aa457301e5900d530f059245155d6dcc7b14d43d03d18d",
+    "a3145d7043a82c17ccf1175afa315dbb560e1c12a24b2d401aa914420171ceab",
+    "ada87453ca4618318d36a20c68fb28e349796ba0b338c43eb9a25923ef30bfa0",
+    "ee68e94b79068597f50192ba6b6d38e3758d4a8efa332e6556d0fb320e441738",
+    "f1b2c9be923e99b4a51e339a2cd8d3e562fa1504ab883158976f1b0c39973f8a",
+    "f95dbc4f52395c402a648234570ea9444ebdbac25f3eab7e5c3b16ebe4fcf432"
+  ],
+  "rate_multipliers": {
+    "producer": 1.09,
+    "injector": 0.93
+  },
+  "bhp_designs": [
+    [
+      3.75,
+      0.985
+    ],
+    [
+      26.25,
+      0.895
+    ],
+    [
+      18.75,
+      0.925
+    ],
+    [
+      6.25,
+      0.955
+    ],
+    [
+      23.75,
+      0.975
+    ],
+    [
+      16.25,
+      0.905
+    ],
+    [
+      8.75,
+      0.885
+    ],
+    [
+      28.75,
+      0.945
+    ]
+  ],
+  "calibration_cases": [
+    0,
+    1,
+    3,
+    4,
+    6
+  ],
+  "test_cases": [
+    2,
+    5,
+    7
+  ],
+  "training_or_model_selection_on_these_cases_allowed": false,
+  "forecast_mode": "fixed origin, 224 months, no physical reference future",
+  "calibration_unit": "whole 103-well trajectory, not independent well-month rows",
+  "coverage_guaranteed": false,
+  "limitation": "Eight fixed controls on one training reservoir; exchangeability and final-case transfer unproven.",
+  "method_source": "https://arxiv.org/html/2402.09623v3"
+}

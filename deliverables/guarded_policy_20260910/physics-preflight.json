@@ -1,0 +1,17 @@
+{
+  "image_reference": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+  "original_PINCHREG_preserved": true,
+  "experimental_PINCH_data_used": false,
+  "new_proposal_required": true,
+  "source_schedule_checked_before_forecast": true,
+  "receipts": [
+    {
+      "run": "/root/projects/TimesOil/results/audit-20260909/timesfm-bhp-policy-20260909/cycles/baseline",
+      "manifest_sha256": "7eed58ebd275491b58b48cf2d5d6bcf717d74c73788a307d999ba8fa907f3cfb"
+    },
+    {
+      "run": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-z-20260909/cycles/candidate-03",
+      "manifest_sha256": "ea3f634f487f0171996f68b8bc6e905335c97688a35734e4335434da69d535a7"
+    }
+  ]
+}

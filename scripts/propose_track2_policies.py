@@ -493,7 +493,12 @@ def main():
                     else item.first_control_month.isoformat()
                     for well, item in next(iter(source_inventory.values())).items()},
                 'before_first_source_control': 'Must remain SHUT with zero rate; well_updates must not open wells earlier.',
-                "additional_water_quota": "not supplied in the current training archive"},
+                "water_limits_source": "Read operating_constraints. An absent bound is unspecified; it is not proof of unlimited water availability.",
+                "water_balance_semantics": {
+                    "max_monthly_water_deficit_m3": "Cap max(0, injected minus produced surface water volume) per month and explicit well group; excludes storage/processing losses.",
+                    "min_monthly_voidage_replacement": "Lower bound on monthly injected/produced reservoir volumes for the explicit well group.",
+                    "max_monthly_voidage_replacement": "Upper bound on monthly injected/produced reservoir volumes; positive injection with zero withdrawal violates this bound.",
+                    "verification": "Requires actual OPM cumulative volume differences; predicted oil/liquid/pressure alone cannot certify these limits."}},
             "claim_limits": "Forecasts use observed pre-origin history and planned controls. When forecast_reference is present, its prior simulated future is also used; candidate future observations are excluded. Screening margin is a full-period undiscounted rate-integration estimate excluding pump CAPEX, state events and tax. It is NOT CHDD and cannot select a winning control policy. Every retained hypothesis must undergo full OPM plus official CHDD before selection. Candidate requires full-period OPM plus the official calculator. Request dates describe this experiment, not a confirmed competition horizon. No independently calibrated TimesFM uncertainty or improvement claim."}
         async with ExternalQwenClient(LLMConfig.from_env()) as client:
             plan = await AgentWorkflow(client, ToolRegistry((tool,)),

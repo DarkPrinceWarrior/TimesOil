@@ -1,0 +1,15 @@
+{
+  "schema": "timesoil.evidence-bundle/v1",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3212,
+      "sha256": "6b3915562a4834983d5425904369eea36c272fd33325b8dfb294fd4d8b66efb9"
+    },
+    {
+      "path": "frozen-protocol.json",
+      "bytes": 2030,
+      "sha256": "8dbf76457aca0ce4a20e30476b55e5baa112ecefd7da4bed5ef8a3182939ec31"
+    }
+  ]
+}

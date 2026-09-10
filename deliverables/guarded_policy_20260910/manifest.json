@@ -1,0 +1,30 @@
+{
+  "schema": "timesoil.evidence-bundle/v1",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 2480,
+      "sha256": "66ea853da595a1b17cba6fe1602a0d49aae12e6a07ba553186ffd35582d98d2e"
+    },
+    {
+      "path": "physics-preflight.json",
+      "bytes": 751,
+      "sha256": "83848c939d6067f7b7f8de68bf4a7f3517acb920f5ccc86872b7e05a4175790b"
+    },
+    {
+      "path": "proposal-receipt.json",
+      "bytes": 725,
+      "sha256": "d1ac487e990d912bbb4be32aa0c6eb841bf799fcf74f2301f0099362c49ea844"
+    },
+    {
+      "path": "protocol.json",
+      "bytes": 937,
+      "sha256": "d9d3be55a2ea61157bb9c90ea1728eee3b5902c80ea57059aa0cb7be22e0ad84"
+    },
+    {
+      "path": "validation.json",
+      "bytes": 643,
+      "sha256": "b5007dfb6a660d25255498c0b4592e1fe1414fa6af90bbf1e9f77862078605dc"
+    }
+  ]
+}
