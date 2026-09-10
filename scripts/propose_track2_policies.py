@@ -158,14 +158,14 @@ def baseline_bhp_controls(controls, trajectory):
 
 def reject_duplicate_controls(controls_sha256, candidates):
     if any(row['controls_sha256'] == controls_sha256 for row in candidates):
-        raise ValueError('policy repeats an already evaluated control schedule; propose different controls')
+        raise CycleError('policy repeats an already evaluated control schedule; propose different controls')
 
 
 def self_check():
     reject_duplicate_controls('new', [{'controls_sha256': 'old'}])
     try:
         reject_duplicate_controls('same', [{'controls_sha256': 'same'}])
-    except ValueError:
+    except CycleError:
         pass
     else:
         raise AssertionError('duplicate physical controls accepted as a new hypothesis')

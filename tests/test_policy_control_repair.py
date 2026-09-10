@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from propose_track2_policies import CycleError, agent_candidate_context, plan_with_control_repair
+from propose_track2_policies import CycleError, agent_candidate_context, plan_with_control_repair, reject_duplicate_controls
 
 
 def test_all_candidate_scores_and_full_well_detail_fit_without_repetition():
@@ -63,3 +63,20 @@ def test_invalid_control_gets_one_repair_without_relaxing_constraints(tmp_path):
     with pytest.raises(CycleError):
         asyncio.run(plan_with_control_repair(partial, context, candidates, [], tmp_path, 2))
     assert partial.calls == 1
+
+
+def test_duplicate_policy_is_returned_to_agent_for_one_correction(tmp_path):
+    candidates = [{'controls_sha256': 'existing'}]
+    class Workflow:
+        calls = 0
+        async def run_plan(self, context):
+            self.calls += 1
+            if self.calls == 1:
+                reject_duplicate_controls('existing', candidates)
+            assert 'already evaluated' in context['previous_invalid_proposal']['error']
+            reject_duplicate_controls('new', candidates)
+            return 'corrected'
+    workflow = Workflow()
+    assert asyncio.run(plan_with_control_repair(workflow, {}, candidates,
+        [{'producer_scale':1.5}], tmp_path, 0)) == 'corrected'
+    assert workflow.calls == 2 and len(candidates) == 1
