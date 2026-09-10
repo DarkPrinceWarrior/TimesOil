@@ -26,6 +26,11 @@
       "source": "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/opm/opm-full-replay-4769989869d96c2be60ba2ff/input/MODEL_Y/INCLUDE/DemoSpe_002_2_sch.inc",
       "bytes": 117250
     },
+    "model_y/selected/wells_schedule.inc": {
+      "sha256": "b2f3e19eaeb40c4d07514c71edef1e048656be805068102ca2b60387450196c7",
+      "source": "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/opm/opm-full-replay-4769989869d96c2be60ba2ff/input/MODEL_Y/INCLUDE/DemoSpe_002_2_sch.inc",
+      "bytes": 117250
+    },
     "model_y/selected/physical-chdd-input.csv": {
       "sha256": "d497e4e9f207c0639cd2458526687ae7eb2aee722633ee53a46a7f6afc9c3afb",
       "source": "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/opm/opm-full-replay-4769989869d96c2be60ba2ff/canonical/chdd.csv",
@@ -61,6 +66,11 @@
       "source": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-z-20260909/cycles/candidate-03/input/Model_Z/Model_Z_sch.inc",
       "bytes": 2814090
     },
+    "model_z/selected/wells_schedule.inc": {
+      "sha256": "0f2c8d0331a297bacdd418b70fc29cb476ddca4cddcb56f8141dbea29f2be93f",
+      "source": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-z-20260909/cycles/candidate-03/input/Model_Z/Model_Z_sch.inc",
+      "bytes": 2814090
+    },
     "model_z/selected/physical-chdd-input.csv": {
       "sha256": "2a8b6819ea25cb3b6202b491992e92771ad18b446480c747dc61f8a94df1ae27",
       "source": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-z-20260909/cycles/candidate-03/canonical/chdd.csv",
@@ -81,15 +91,20 @@
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-policy-20260910/cycles/candidate/input/Model_Z/Model_Z_sch.inc",
       "bytes": 2813502
     },
+    "model_z/timesfm_candidate/wells_schedule.inc": {
+      "sha256": "ecf56c8ec8d21b5137c7e1b23339f8b52a94797376d62015e1cde3aaeb09e5b4",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-policy-20260910/cycles/candidate/input/Model_Z/Model_Z_sch.inc",
+      "bytes": 2813502
+    },
     "model_z/timesfm_candidate/physical-chdd-input.csv": {
       "sha256": "950a289d29288918f700aff1b19356a9954f641cf2b4c4a7008417cbec958809",
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-policy-20260910/cycles/candidate/canonical/chdd.csv",
       "bytes": 4701032
     },
     "provenance/package.py": {
-      "sha256": "f2ee4b3a14f3b31d188defe7440abad1f49e9551f368725b0526f7d5b83cfe84",
-      "source": "/root/projects/TimesOil-audit-delivery-physical-y-20260910/deliverables/verified_20260910/provenance/package.py",
-      "bytes": 5789
+      "sha256": "d0f6a13af42daf6ef520e0923428ac99a857e8166be7d7e12db9bad5cf064326",
+      "source": "/root/projects/TimesOil-audit-delivery-named-schedules-20260910/deliverables/verified_20260910/provenance/package.py",
+      "bytes": 6011
     },
     "model_z/full-comparison.json": {
       "sha256": "610daea21ae828ee3e1ab65ddc74ac434faeb410052d66b6ed538ae61d95d879",
