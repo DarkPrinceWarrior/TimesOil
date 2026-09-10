@@ -1,0 +1,85 @@
+{
+  "complete": true,
+  "experiment": "PINCHREG-to-PINCH2 plus opm-grid935; not tNavigator certification",
+  "source_commit": "669b17ba5afcff033b50cf5dacdcf48c15d4beba",
+  "protocol_sha256": "e3362d09a68b7cd39745a055690e87750ef60ff29be4d72acf4df8c37b7ce11b",
+  "script_sha256": "9a775819f3ca27a6d5704cce9571688e089ea1dbaa894b40dba26903e706fb69",
+  "scenarios": [
+    {
+      "label": "baseline",
+      "official_chdd_m": 7750.444366326061,
+      "management_summary": {
+        "conversionCount": 9,
+        "profitabilityIndex": 1.2394703218247658,
+        "pumpChanges": 39.0,
+        "startStopCount": 23,
+        "totalCapexM": 27.76588,
+        "totalChddM": 7750.444366326061,
+        "totalConversionOpexM": 45.0,
+        "totalFcfM": 13984.357429573876,
+        "totalInjectionK": 13017.736118651,
+        "totalLiquidKt": 11174.931365189934,
+        "totalOilKt": 2646.3584090323398,
+        "totalOpexM": 3546.5795564398168,
+        "totalRevenueM": 74098.0354529055,
+        "years": 19
+      },
+      "report_dates": 371,
+      "wells": 103
+    },
+    {
+      "label": "candidate",
+      "official_chdd_m": 8118.940837481515,
+      "management_summary": {
+        "conversionCount": 9,
+        "profitabilityIndex": 1.2342881977337166,
+        "pumpChanges": 58.0,
+        "startStopCount": 23,
+        "totalCapexM": 49.24367,
+        "totalChddM": 8118.940837481515,
+        "totalConversionOpexM": 45.0,
+        "totalFcfM": 14210.633235369241,
+        "totalInjectionK": 26453.054501463,
+        "totalLiquidKt": 13172.830538938857,
+        "totalOilKt": 2762.074628719709,
+        "totalOpexM": 4188.257674086564,
+        "totalRevenueM": 77338.08960415184,
+        "years": 19
+      },
+      "report_dates": 371,
+      "wells": 103
+    }
+  ],
+  "settings_equal": true,
+  "physical_history_through_origin_equal": true,
+  "history_rows": 15141,
+  "uplift_percent": 4.7545205634465075,
+  "target_15_percent_met": false,
+  "tnavigator_equivalence_proven": false,
+  "receipts": [
+    {
+      "path": "baseline/manifest.json",
+      "sha256": "ba40aaa7c50fbb85162a68860549576207eca5a5ace4350548300b33c13daf0f"
+    },
+    {
+      "path": "baseline/canonical/manifest.json",
+      "sha256": "ff980bf3374ef6e47838e55a8a7ee31de56bfd6df365ae942ceadbae36269b79"
+    },
+    {
+      "path": "baseline/economics-2007/manifest.json",
+      "sha256": "fc52c39409e39c039e8cb1dfcc44de17f932934090e6f9271813a7bf4b108ce2"
+    },
+    {
+      "path": "candidate/manifest.json",
+      "sha256": "478efd37e2cb9984cd6cf49e7f5dd61ee0bd3a00d36a02c62dda1d802c88dde2"
+    },
+    {
+      "path": "candidate/canonical/manifest.json",
+      "sha256": "1901c4d4a7289a6a4801b036148b8b7294e7c259591017219003d2298661dfd9"
+    },
+    {
+      "path": "candidate/economics-2007/manifest.json",
+      "sha256": "b09d24c55564789bc8b816d498e2975eb0a1b6cec8aeeaa2303cd391fa566d50"
+    }
+  ]
+}

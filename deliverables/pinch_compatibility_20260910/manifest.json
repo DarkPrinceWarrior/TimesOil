@@ -1,0 +1,60 @@
+{
+  "schema": "timesoil.evidence-bundle/v1",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 8757,
+      "sha256": "4ab3434275cf84a79432788013863d69ed74e1b8ab7277e9bef5b81680038dd0"
+    },
+    {
+      "path": "build-completion.json",
+      "bytes": 1316,
+      "sha256": "0fdb479c132e162cd6faf6f3fc21eb9e3675ca3c1d0c46e63e222b8d6f9b0092"
+    },
+    {
+      "path": "collapsed-cells.json",
+      "bytes": 809,
+      "sha256": "49f68cc8b6ae996015e5469b94b869f22a9cc9d1e6dad53e26e93f79fb8efda9"
+    },
+    {
+      "path": "failed-stock-protocol.json",
+      "bytes": 1140,
+      "sha256": "3460edfb18471458dfaa2c1e03ac254593b849b13aa0f10f0971d29caa79883d"
+    },
+    {
+      "path": "pair-audit.json",
+      "bytes": 2867,
+      "sha256": "be09771f698c891e48bb40cd7fc286b162099ceddc316708b4ed95ca7d4feb26"
+    },
+    {
+      "path": "patched-launch-protocol.json",
+      "bytes": 1448,
+      "sha256": "5da57bda178ca6561d9456101a333aa512c4eeedf1c8e28c1b69d27efb4d833a"
+    },
+    {
+      "path": "protocol.json",
+      "bytes": 3003,
+      "sha256": "e3362d09a68b7cd39745a055690e87750ef60ff29be4d72acf4df8c37b7ce11b"
+    },
+    {
+      "path": "provenance/Dockerfile",
+      "bytes": 873,
+      "sha256": "bd83f4e5923a07af41b3076070efa08a09b4d1f7239a89e1b7c1b4e98231271e"
+    },
+    {
+      "path": "provenance/build-inputs.json",
+      "bytes": 676,
+      "sha256": "b3473e2f07e01cfaab0eef0400c861d606fa3cddd4b37544c380148b2604295f"
+    },
+    {
+      "path": "provenance/verify_pair.py",
+      "bytes": 3576,
+      "sha256": "9a775819f3ca27a6d5704cce9571688e089ea1dbaa894b40dba26903e706fb69"
+    },
+    {
+      "path": "stock-failure.json",
+      "bytes": 660,
+      "sha256": "2502c48bbfe0acab23b75d15e97b8839bbaa811c344d854bab81be636d222910"
+    }
+  ]
+}
