@@ -247,8 +247,10 @@ class TimesFMPlanning:
         self.last_predictions[first_month_key] = one_month.copy()
         self.last_diagnostics[first_month_key] = {
             'model': 'Google TimesFM 3', 'revision': MODEL_REVISION,
-            'training': {'planning_head_sha256': self.head_sha256, 'monthly_head_sha256': self.monthly_head_sha256},
+            'training': ('Adapted full-period planner; ' if self.head_sha256 else 'Official full-period weights; ')
+                + ('adapted one-month monitor.' if self.monthly_head_sha256 else 'pretrained one-month monitor.'),
             'planning_head_sha256': self.head_sha256,
+            'monthly_head_sha256': self.monthly_head_sha256,
             'historical_validation_and_one_month_uq': self.calibration,
             'full_remaining_horizon_uq_calibrated': False,
             'ood_control_well_months': int(ood.sum()),
