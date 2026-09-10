@@ -13,7 +13,7 @@ from timesfm_geology import load_frozen_model
 from timesoil.aios.interwell import WellConnectivity
 
 r = Path('/root/projects/TimesOil/results/audit-20260909')
-out = r / 'attention-softmax-parity-z-20260910'
+out = r / 'attention-softmax64-parity-z-20260910'
 out.mkdir(exist_ok=False)
 paths = {
     r / 'decoder-parity-components-z-20260910/decoder-inputs.pt': '6ee35fcd634bb28f6695329b11bd24f0172c00e20be4a984e030f3caf032f655',
@@ -88,7 +88,8 @@ def repeated(operation, name):
                 exponent = (x - x.amax(dim=dim, keepdim=True)).exp()
                 return exponent / exponent.sum(dim=dim, keepdim=True)
             for label, alternate in [('log_softmax_exp', lambda: torch.nn.functional.log_softmax(x, dim=dim).exp()),
-                                     ('explicit_exp_sum', explicit)]:
+                                     ('explicit_exp_sum', explicit),
+                                     ('softmax64', lambda: operation(x, dim=dim, dtype=torch.float64).to(x.dtype))]:
                 a, b = alternate(), alternate()
                 report['operations'].append({'operation': label, 'difference': float((a - b).abs().max()),
                     'difference_from_native': float((a - first).abs().max())})

@@ -50,9 +50,9 @@ def test_invalid_control_gets_one_repair_without_relaxing_constraints(tmp_path):
             raise CycleError('still invalid')
 
     broken = Broken()
-    with pytest.raises(CycleError, match='still invalid'):
-        asyncio.run(plan_with_control_repair(broken, context, [], [], tmp_path, 1))
+    assert asyncio.run(plan_with_control_repair(broken, context, [], [], tmp_path, 1)) is None
     assert broken.calls == 2
+    assert json.loads((tmp_path / 'rejected-plan-01-1.json').read_text())['accepted_candidates_added'] == 0
 
     candidates = []
     class Partial:

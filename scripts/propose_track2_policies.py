@@ -52,7 +52,7 @@ def agent_candidate_context(candidates):
 
 
 async def plan_with_control_repair(workflow, context, candidates, attempted, output, index):
-    """Retry one rejected control proposal; never retry a partially accepted round."""
+    """Return no plan after two invalid proposals; never accept a partial round."""
     before = len(candidates)
     for attempt in range(2):
         try:
@@ -63,8 +63,10 @@ async def plan_with_control_repair(workflow, context, candidates, attempted, out
                         "accepted_candidates_added": len(candidates) - before}
             with (output / f"rejected-plan-{index:02d}-{attempt}.json").open('x') as stream:
                 json.dump(rejected, stream, indent=2)
-            if attempt or len(candidates) != before:
+            if len(candidates) != before:
                 raise
+            if attempt:
+                return None
             context = {**context, "previous_invalid_proposal": rejected,
                        "repair_instruction": "Correct the rejected controls and call propose_policy exactly once. Respect each well's first_source_control_month, original BHP bounds and conversion permission. No invalid controls were accepted. Do not change or bypass these constraints."}
 
@@ -618,17 +620,24 @@ def main():
             workflow = AgentWorkflow(client, ToolRegistry((tool,)),
                 role_tools={AgentRole.PLANNER: (tool.name,)}, required_tools={AgentRole.PLANNER: (tool.name,)})
             plan = await plan_with_control_repair(workflow, context_value, candidates, attempted, args.output, index)
-        (args.output / f"agent-{index:02d}.json").write_text(json.dumps(asdict(plan), ensure_ascii=False, indent=2))
+        if plan is None:
+            skipped_rounds.append(index)
+            return
+        (args.output / f"agent-{len(proposed_ids):02d}.json").write_text(json.dumps(asdict(plan), ensure_ascii=False, indent=2))
         if not all(d.approved for d in plan.decisions) or len(candidates) != before + 1:
             raise RuntimeError("Qwen must approve exactly one proposed policy")
         proposed_ids.append(candidates[-1]["id"])
         print(json.dumps(candidates[-1]), flush=True)
 
+    skipped_rounds = []
     for index in range(args.rounds):
         asyncio.run(propose_round(index))
+    if not proposed_ids:
+        raise RuntimeError('search requires at least one approved agent proposal')
     (args.output / "proposal-receipt.json").write_text(json.dumps({
         "source_trajectory_sha256": sha256(raw).hexdigest(), "request_sha256": sha256(args.request.read_bytes()).hexdigest(),
         "timesfm_revision": MODEL_REVISION, "agent_proposal_ids": proposed_ids,
+        "attempted_agent_rounds": args.rounds, "skipped_invalid_rounds": skipped_rounds,
         "horizon_months": horizon, "head_sha256": args.head_sha256,
         "reference_manifest_sha256": args.reference_sha256,
         "reference_correction_sha256": args.reference_correction_sha256,

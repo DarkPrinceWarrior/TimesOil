@@ -59,6 +59,9 @@ def seal_forecast_selection(root):
     files = {}
     for name in ('proposal-receipt.json', 'candidates.json'):
         files[name] = checked_file(root, name)[1]
+    for pattern in ('planning-context-*.json', 'policy-attempts-*.json', 'rejected-plan-*.json'):
+        for path in sorted(root.glob(pattern)):
+            files[path.name] = checked_file(root, path.name)[1]
     profile = receipt['normative_profile']
     for row in candidates:
         if row['trained_head_sha256'] != receipt['head_sha256'] or row['training_report_sha256'] != receipt['head_report_sha256']:
