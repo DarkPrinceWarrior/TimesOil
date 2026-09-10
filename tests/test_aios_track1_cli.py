@@ -475,6 +475,11 @@ def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_p
     assert all(a.role.value == "injector" and a.bhp_limit == 280 for a in tail if a.well == "P1")
     missing_pressure = [{k: v for k, v in conversion[0].items() if k != "bhp_limit"}]
     _raises(ValueError, "explicit BHP", lambda: cli._propose_controls(converted_case, baseline, missing_pressure))
+    bounded = tuple(replace(a, bhp_limit=70) if a.role.value == "producer" else a for a in baseline)
+    _raises(ValueError, "explicit BHP", lambda: cli._propose_controls(converted_case, bounded, missing_pressure))
+    retained = cli._propose_controls(converted_case, converted, [
+        {"well": "P1", "status": "OPEN", "target": "WRAT", "value": 25}])
+    assert next(a.bhp_limit for a in retained if a.well == "P1") == 280
     _raises(ValueError, "wrong role", lambda: cli._propose_controls(config.case, baseline, conversion))
 
 

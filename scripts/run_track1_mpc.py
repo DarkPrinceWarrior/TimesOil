@@ -447,10 +447,13 @@ def _propose_controls(case: Case, baseline: Candidate, updates: Any) -> Candidat
         if well not in controls or well in seen:
             raise ValueError("unknown or duplicate well update")
         seen.add(well)
+        role = WellRole(item.get("role", controls[well].role))
+        if role is WellRole.INJECTOR and controls[well].role is WellRole.PRODUCER and "bhp_limit" not in item:
+            raise ValueError("conversion to injection requires an explicit BHP ceiling")
         controls[well] = replace(
             controls[well], status=WellStatus(item["status"]),
             target=ControlTarget(item["target"]), value=_number(item["value"], "control value"),
-            role=WellRole(item.get("role", controls[well].role)),
+            role=role,
             bhp_limit=(controls[well].bhp_limit if "bhp_limit" not in item
                        else _number(item["bhp_limit"], "control bhp_limit")),
         )
