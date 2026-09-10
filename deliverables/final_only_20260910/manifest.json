@@ -3,13 +3,18 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 4966,
-      "sha256": "56c6922347eeaa404328bc1277d0594c666fda1bdf14d2030bbb72db4a0da0ef"
+      "bytes": 5853,
+      "sha256": "99533e19dc247c1c122eb3b06ca272183b0b6c0100b940b9068b6a2d6e6f1306"
     },
     {
       "path": "compact-protocol.json",
       "bytes": 756,
       "sha256": "2516073cfdf5dff06536ea24ce9b86b62f2666873586d45b794fc7b590143cad"
+    },
+    {
+      "path": "duplicate-repair-junit.xml",
+      "bytes": 807,
+      "sha256": "cb5bc0b2f7644e5d29228fd39dde4f3d4cbd6ee6a2ead58696df0fddb05e1029"
     },
     {
       "path": "first-agent-plan.json",
@@ -35,6 +40,11 @@
       "path": "progress.json",
       "bytes": 1341,
       "sha256": "9c2ef1d6ba28208db9ea587dc45f109b11562ff16853c06dd408da9b2669e929"
+    },
+    {
+      "path": "stopped-attempts.json",
+      "bytes": 4104,
+      "sha256": "b66d96fb951fa10480f4fea7a3999b95a26e7a0879492413ce6ccf1650d70f86"
     }
   ]
 }
