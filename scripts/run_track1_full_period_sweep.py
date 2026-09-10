@@ -44,6 +44,7 @@ def main():
     parser.add_argument('config', type=Path)
     parser.add_argument('output', type=Path)
     parser.add_argument('--forecast-validation', type=Path, help='Authenticated BHP reference export for eight independent scenarios')
+    parser.add_argument('--reuse-first-run', type=Path, help='Reuse and verify an already completed first physical scenario')
     args = parser.parse_args()
     config = load_config(args.config)
     args.output.mkdir(parents=True, exist_ok=False)
@@ -94,9 +95,14 @@ def main():
         entry = {'index': index, 'producer_scale': producer, 'injector_scale': injector,
                  'scope': 'Full-period physical planning experiment; future states are not committed to the monthly controller.'}
         try:
-            result = build_backend(config).run_from_restart(config.case, config.initial_state, current, planning_tail=tail)
-            root = config.opm_runs_dir / result.trajectory.run_id
+            if index == 0 and args.reuse_first_run:
+                root = args.reuse_first_run
+            else:
+                result = build_backend(config).run_from_restart(config.case, config.initial_state, current, planning_tail=tail)
+                root = config.opm_runs_dir / result.trajectory.run_id
             item = evidence(root)
+            assert item[0]['source_sha256'] == config.source_sha256
+            assert item[0]['step_actions'] + item[0]['planning']['tail_actions'] == [a.to_dict() for a in controls]
             if baseline is None:
                 assert index == 0
                 baseline = item
@@ -112,7 +118,7 @@ def main():
             for key in ('calculator_sha256', 'norms_source_sha256', 'norms_sha256', 'assumption_overrides', 'start_year'):
                 assert baseline[4][key] == item[4][key]
             assert baseline[3]['assumptions'] == item[3]['assumptions']
-            start, end = config.case.start.isoformat(), result.planning_end.isoformat()
+            start, end = config.case.start.isoformat(), _next_month(config.case.end).isoformat()
             history = [{(r['DATA'], r['well']): r for r in data[2] if r['DATA'] <= start} for data in (baseline, item)]
             assert history[0] == history[1], 'pre-control history changed'
             expected = {(a.month.isoformat(), a.well) for a in controls}
