@@ -302,7 +302,8 @@ def main():
     torch.backends.cuda.enable_cudnn_sdp(False)
     torch.backends.cuda.enable_math_sdp(True)
     torch.manual_seed(20260909)
-    torch.cuda.set_per_process_memory_fraction(.50 if args.unfreeze_backbone else .35)
+    torch.cuda.set_per_process_memory_fraction((.60 if args.precise_variate_softmax else .50)
+                                               if args.unfreeze_backbone else .35)
     forecaster = TimesFM3Forecaster(ModelConfig(checkpoint_path='google/timesfm-3.0-pytorch',
         revision=MODEL_REVISION, per_core_batch_size=1, device='cuda'))
     model = forecaster.model
