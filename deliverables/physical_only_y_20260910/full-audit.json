@@ -1,0 +1,23 @@
+{
+  "schema": "timesoil.track1-lifecycle-audit/v1",
+  "run_dir": "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/runs/track1-4b5ae89630139de2b63f9ce9",
+  "surrogate_used": false,
+  "months": 23,
+  "wells": 49,
+  "actions": 1127,
+  "start_inclusive": "2014-01-01",
+  "end_exclusive": "2015-12-01",
+  "lineage_files_verified": 364,
+  "approved_monthly_reviews": 23,
+  "future_states_committed": false,
+  "identical_pre_control_history": true,
+  "schedule_sha256": "c083496dc876379ea60d62477fa986f69edae1fcd1827084c8a685f24ec76d68",
+  "manifest_sha256": "8d0c0a12675e2d90eed22c07bf9fc03c219aad8026432777eff70d2e92058661",
+  "baseline_chdd_m": 1030.940233654993,
+  "candidate_chdd_m": 1596.777934459786,
+  "delta_chdd_m": 565.8377008047928,
+  "uplift_percent": 54.88559688845667,
+  "baseline_run": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-y-20260909/opm/opm-full-replay-40f2f804257afe12efd408b7",
+  "final_run": "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/opm/opm-full-replay-4769989869d96c2be60ba2ff",
+  "agent_seconds": 4475.445611014962
+}
