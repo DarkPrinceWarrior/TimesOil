@@ -3,13 +3,33 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 3212,
-      "sha256": "6b3915562a4834983d5425904369eea36c272fd33325b8dfb294fd4d8b66efb9"
+      "bytes": 5063,
+      "sha256": "2240b4ba615ad06c4132c6fb7be02d7507652632df265f68803aed2a9cff4bc4"
+    },
+    {
+      "path": "completion-verification.json",
+      "bytes": 4346,
+      "sha256": "3252fbe617a0f6a265edff51aa07cd3eb0b2f8edd8821c1c0a4ed45d412fbf8d"
+    },
+    {
+      "path": "evaluation.json",
+      "bytes": 7497,
+      "sha256": "68f5ee4fcbc1ba2d29b10b64c7352163063c4b39de6a2a872fbd37aaa9fb086a"
     },
     {
       "path": "frozen-protocol.json",
       "bytes": 2030,
       "sha256": "8dbf76457aca0ce4a20e30476b55e5baa112ecefd7da4bed5ef8a3182939ec31"
+    },
+    {
+      "path": "physical-manifest.json",
+      "bytes": 8044,
+      "sha256": "4a9a8e53f8a44813fae8211d3a902f43f3c251b747d623c5dc47e78697a8eeef"
+    },
+    {
+      "path": "physical-protocol.json",
+      "bytes": 1091,
+      "sha256": "3a61e503f18492959ec7f3d68df6e784e776136986d00554f195597572c08b26"
     }
   ]
 }

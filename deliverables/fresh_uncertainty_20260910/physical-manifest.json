@@ -1,0 +1,189 @@
+{
+  "schema": "timesoil.bhp-only-forecast-evaluation/v1",
+  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+  "incumbent_request_sha256": "22336725cd1e0ffa51baef8e0a90238b438c7b0828ce035d3f2c81a9c9c26584",
+  "reference_export_sha256": "5898c09105a46afff83fe9fed2228d1638257b413bc371a97efec780237b20c8",
+  "calibration_cases": [
+    0,
+    1,
+    3,
+    4,
+    6
+  ],
+  "test_cases": [
+    2,
+    5,
+    7
+  ],
+  "designs": [
+    [
+      3.75,
+      0.985
+    ],
+    [
+      26.25,
+      0.895
+    ],
+    [
+      18.75,
+      0.925
+    ],
+    [
+      6.25,
+      0.955
+    ],
+    [
+      23.75,
+      0.975
+    ],
+    [
+      16.25,
+      0.905
+    ],
+    [
+      8.75,
+      0.885
+    ],
+    [
+      28.75,
+      0.945
+    ]
+  ],
+  "model_selection_allowed_on_test": false,
+  "rate_status_and_role_controls_fixed": true,
+  "local_reference_evaluation": false,
+  "transition_coverage": false,
+  "uncertainty_validation": true,
+  "scenarios": [
+    {
+      "index": 0,
+      "run": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/opm/candidate-00",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-00",
+      "trajectory_sha256": "c483607d6768ba037122be56e5ede315f6c39936bc5eeac2d6489f614637d613",
+      "export_manifest_sha256": "e06b9a72816ae6f1282cd05ad1276bdc95a0469638abc8dcbd37d40edc1896a6",
+      "controls_sha256": "7ae6319adb437ceff669f6f227d3630a215928b9880bae39d0675267fa5abf8a",
+      "physical_control_evidence": {
+        "complete_physical_month_well_grid": true,
+        "actual_per_well_liquid_limit_m3d": 500,
+        "observed_max_liquid_m3d": 81.93544,
+        "observations_checked": 23072
+      },
+      "official_chdd_m": 13838.333425541745,
+      "seconds": 256.7018932029605
+    },
+    {
+      "index": 1,
+      "run": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/opm/candidate-01",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-01",
+      "trajectory_sha256": "6ce4eab160c1f8ebdcbd9a069c18f310ba1a5cf14d70da78b1052216c5f99524",
+      "export_manifest_sha256": "adf60f8854f7e75f97c31ea00ff78ed0743a621e0011282a276e568780cb0b74",
+      "controls_sha256": "322f82ee1f8b5c373de2509a27b22d99da375c5ae5879d4087ce9f3dee92eecb",
+      "physical_control_evidence": {
+        "complete_physical_month_well_grid": true,
+        "actual_per_well_liquid_limit_m3d": 500,
+        "observed_max_liquid_m3d": 60.513027,
+        "observations_checked": 23072
+      },
+      "official_chdd_m": 12198.98349267906,
+      "seconds": 291.2429516352713
+    },
+    {
+      "index": 2,
+      "run": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/opm/candidate-02",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-02",
+      "trajectory_sha256": "58726d0eab2ce844d4d5a4a418eb33474558fb38d2fb8bd116d382d0e1f6c48e",
+      "export_manifest_sha256": "1eb391b256ebd2e0c17577e7fabcc8824fc42fe74b5b9085553f043d0096ae7b",
+      "controls_sha256": "979126899fe51bcc5e262e1a002a71fd783f554a562c8d8288999fa2288dbcdf",
+      "physical_control_evidence": {
+        "complete_physical_month_well_grid": true,
+        "actual_per_well_liquid_limit_m3d": 500,
+        "observed_max_liquid_m3d": 67.680443,
+        "observations_checked": 23072
+      },
+      "official_chdd_m": 12806.246451460847,
+      "seconds": 290.77773482352495
+    },
+    {
+      "index": 3,
+      "run": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/opm/candidate-03",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-03",
+      "trajectory_sha256": "06303c58d615994deb9f17b466a732b7afeed0711d5af3ebc1a112158006aa29",
+      "export_manifest_sha256": "776363b9ca584f0a0ea6df75d13cbe652899247eedef1f6179c211767c849c23",
+      "controls_sha256": "a31928e1611c672599292837a1e94da59ec00474f8a3d610987c2e0ecb2e3ca1",
+      "physical_control_evidence": {
+        "complete_physical_month_well_grid": true,
+        "actual_per_well_liquid_limit_m3d": 500,
+        "observed_max_liquid_m3d": 77.866783,
+        "observations_checked": 23072
+      },
+      "official_chdd_m": 13565.117535631342,
+      "seconds": 253.40754222497344
+    },
+    {
+      "index": 4,
+      "run": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/opm/candidate-04",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-04",
+      "trajectory_sha256": "3728a9ac14e6c0583c1b6bee026e1f2b96fb172ba5ab99093fa5a43ce4b84b31",
+      "export_manifest_sha256": "a152c5eaea5a7bc8a661c77e92c0bfe524ef0e7e816be58606ad9c4c3c435f9a",
+      "controls_sha256": "eadbc015610c0bfbf2f6db73de06b764b576d34f49c5916c3dbe5606216171fd",
+      "physical_control_evidence": {
+        "complete_physical_month_well_grid": true,
+        "actual_per_well_liquid_limit_m3d": 500,
+        "observed_max_liquid_m3d": 70.879028,
+        "observations_checked": 23072
+      },
+      "official_chdd_m": 12909.289200653713,
+      "seconds": 250.14828485250473
+    },
+    {
+      "index": 5,
+      "run": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/opm/candidate-05",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-05",
+      "trajectory_sha256": "2e9df482b656e04e6ccb71249edd5a4b57b53e8316289a8f47060b14542cf117",
+      "export_manifest_sha256": "8719e247e09f9549fcf56d758ed94362b533beceddff169a46569b74cda5953c",
+      "controls_sha256": "500428da3c053bb553dce0f1dd6c251dcfd78280c3c77dc9c8adb5165f74be95",
+      "physical_control_evidence": {
+        "complete_physical_month_well_grid": true,
+        "actual_per_well_liquid_limit_m3d": 500,
+        "observed_max_liquid_m3d": 66.828995,
+        "observations_checked": 23072
+      },
+      "official_chdd_m": 12785.252597482113,
+      "seconds": 245.20936212688684
+    },
+    {
+      "index": 6,
+      "run": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/opm/candidate-06",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-06",
+      "trajectory_sha256": "64e976583e387f42deed37fd7a185e210cbd49e73195d9e03566a6ac381de141",
+      "export_manifest_sha256": "386d62bfbf62f4817863534f6effa23b830a7611456e123903e1771c8b47d376",
+      "controls_sha256": "a71cb29f2f4539c2116f30015cb0ab9fa07f81647ec48d2c158dc972b85759dc",
+      "physical_control_evidence": {
+        "complete_physical_month_well_grid": true,
+        "actual_per_well_liquid_limit_m3d": 500,
+        "observed_max_liquid_m3d": 68.73941,
+        "observations_checked": 23072
+      },
+      "official_chdd_m": 13000.3007898944,
+      "seconds": 242.65364715829492
+    },
+    {
+      "index": 7,
+      "run": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/opm/candidate-07",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/fresh-uncertainty-z-20260910/scenarios/candidate-07",
+      "trajectory_sha256": "d4ca80c4ae47c4f49a90c5d7315a01b500d20b6b0cce6b0f64c0d18f6afde6ed",
+      "export_manifest_sha256": "6635504b2ae59760acb3307f7cb9fd26b592adaaa2ac9c533d2503bbe8a77955",
+      "controls_sha256": "b4f61f293157bb66ded178ffb53f4a662f503a0e469f80b360c661a3831ad69c",
+      "physical_control_evidence": {
+        "complete_physical_month_well_grid": true,
+        "actual_per_well_liquid_limit_m3d": 500,
+        "observed_max_liquid_m3d": 72.034569,
+        "observations_checked": 23072
+      },
+      "official_chdd_m": 12464.950547813953,
+      "seconds": 258.8598309420049
+    }
+  ],
+  "complete": true,
+  "script_sha256": "1e6df4a6248fd1e952d615fa419bad919541de7f8afbbfe650939dd4ffe33a7b"
+}
