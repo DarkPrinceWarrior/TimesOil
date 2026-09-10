@@ -1,0 +1,77 @@
+{
+  "schema": "timesoil.pressure-status-diagnostic/v1",
+  "published_report_sha256": "19cb67bcb0954640c2eb50b62a2a35027c9b57687fdecea349c1044a415fb1ac",
+  "script_sha256": "6f766cddfca3d2fb378f517483c017452991a1aa7ca8d298f0af1a917d0b7926",
+  "cases": [
+    0,
+    1,
+    3,
+    4,
+    6
+  ],
+  "independent_test": false,
+  "headline_metric_changed": false,
+  "rows": [
+    {
+      "index": 0,
+      "trajectory_sha256": "b4ac686cb7427c770365dc40e3b5ba75ca47f23962597a25dd4d17290261af42",
+      "predictions_sha256": "3ffbe2be12d333a0379f1ece215222c3c1108a30c9cc9cb7a450bfef71af5b9d",
+      "closed_count": 1478,
+      "closed_nonzero_truth_count": 0,
+      "zero_truth_count": 1538,
+      "zero_truth_sse_fraction": 0.29583181965735456,
+      "closed_sse_fraction": 0.2705650381397882,
+      "active_rmse_bar": 15.906183825248933,
+      "all_rmse_bar": 18.017587365961397
+    },
+    {
+      "index": 1,
+      "trajectory_sha256": "404f5e102bb6503fac3375824d3a713798c495c790365028484a025db13c5728",
+      "predictions_sha256": "b79d802211764bc875f97032eb337e832e110a64483708414b5e0b9894c2e359",
+      "closed_count": 1478,
+      "closed_nonzero_truth_count": 0,
+      "zero_truth_count": 1538,
+      "zero_truth_sse_fraction": 0.24162465182409723,
+      "closed_sse_fraction": 0.22080594337902243,
+      "active_rmse_bar": 17.868146812549817,
+      "all_rmse_bar": 19.58306311123714
+    },
+    {
+      "index": 3,
+      "trajectory_sha256": "f846a96d407f3d8317000806a175ae241374a012b746c43077636791bf19fb54",
+      "predictions_sha256": "eaee136b26387a522f4871bb0876997962bf9e37c6754e79ddc6813bdb055507",
+      "closed_count": 1478,
+      "closed_nonzero_truth_count": 0,
+      "zero_truth_count": 1538,
+      "zero_truth_sse_fraction": 0.24841736985463703,
+      "closed_sse_fraction": 0.22827631779618826,
+      "active_rmse_bar": 16.45751294441934,
+      "all_rmse_bar": 18.124132079478333
+    },
+    {
+      "index": 4,
+      "trajectory_sha256": "a453e488116e0cea004acefcc11817d1f4bc9cd44e0975a0b300a604861c3c31",
+      "predictions_sha256": "b58d01f6d2ab7df97f181ea0238b421dd35a5689f2ee2911a4d4e9785a42c929",
+      "closed_count": 1478,
+      "closed_nonzero_truth_count": 0,
+      "zero_truth_count": 1538,
+      "zero_truth_sse_fraction": 0.2414688000308954,
+      "closed_sse_fraction": 0.221998633936641,
+      "active_rmse_bar": 16.86928464101532,
+      "all_rmse_bar": 18.502500026692832
+    },
+    {
+      "index": 6,
+      "trajectory_sha256": "eeb28d4abf2ca2404a97d5273df4ed3ef025d9568861e8b11813703eb0941c41",
+      "predictions_sha256": "ca0751b52b6b4e0acb35e51f34ec98ec61350faee765a876b24f820784b79289",
+      "closed_count": 1478,
+      "closed_nonzero_truth_count": 0,
+      "zero_truth_count": 1538,
+      "zero_truth_sse_fraction": 0.2772613669859513,
+      "closed_sse_fraction": 0.2527247216132111,
+      "active_rmse_bar": 16.198375830895596,
+      "all_rmse_bar": 18.128216977214404
+    }
+  ],
+  "complete": true
+}
