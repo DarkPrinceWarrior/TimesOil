@@ -162,7 +162,7 @@ def main():
     os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
     import torch
     from timesfm3 import ModelConfig, TimesFM3Forecaster
-    from timesfm_geology import StaticConditionedHead, load_selected_layer
+    from timesfm_geology import load_frozen_model
     if not torch.cuda.is_available() or 'A100' not in torch.cuda.get_device_name(0):
         raise RuntimeError('requires allocated A100')
     torch.set_num_threads(4)
@@ -175,15 +175,9 @@ def main():
     torch.manual_seed(20260909)
     forecaster = TimesFM3Forecaster(ModelConfig(checkpoint_path='google/timesfm-3.0-pytorch',
         revision=MODEL_REVISION, per_core_batch_size=1, device='cuda'))
-    model = forecaster.model
-    original_head = model.output_head
-    original_layer = model.transformer_stack.layers[-1]
+    original_model = forecaster.model
     selected = torch.load(args.head, map_location='cuda', weights_only=True)
-    selected_head = StaticConditionedHead(deepcopy(original_head), connectivity)
-    weights = selected.get('output_head', selected)
-    torch.testing.assert_close(weights['features'], selected_head.features, rtol=0, atol=0)
-    selected_head.load_state_dict(weights)
-    selected_layer = load_selected_layer(deepcopy(original_layer), selected_head, selected)
+    selected_model = load_frozen_model(deepcopy(original_model), connectivity, selected)
     reference = None
     if args.reference:
         if digest(args.reference / 'manifest.json') != args.reference_sha256:
@@ -194,7 +188,7 @@ def main():
         reference = data[0]
         reference_origin = int(reference.dates.get_loc(start))
         reference_truth = reference.states[reference_origin + 1:reference_origin + months + 1]
-        model.output_head, model.transformer_stack.layers[-1] = selected_head, selected_layer
+        forecaster.model = selected_model
         reference_prediction = forecast_layout(forecaster, reference, reference_origin, months, 128,
                                                'joint', connectivity=connectivity)
         report['reference_trajectory_sha256'] = reference.content_hash
@@ -233,8 +227,7 @@ def main():
         report['source_scenarios'][str(index)] = t.content_hash
         outputs = {'truth': truth}
         for mode in errors:
-            model.output_head = selected_head if mode.startswith('trained') else original_head
-            model.transformer_stack.layers[-1] = selected_layer if mode.startswith('trained') else original_layer
+            forecaster.model = selected_model if mode.startswith('trained') else original_model
             if mode == 'trained_reference_corrected_224':
                 features = bhp_features(t.actions[origin:origin + months],
                     reference.actions[origin:origin + months], correction['degree'])

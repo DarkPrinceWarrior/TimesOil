@@ -80,6 +80,25 @@ def load_selected_layer(layer, head, selected):
     return layer
 
 
+def load_frozen_model(model, connectivity, selected):
+    model.output_head = StaticConditionedHead(model.output_head, connectivity)
+    full = selected.get('full_model')
+    head_weights = ({k.removeprefix('output_head.'): v for k, v in full.items() if k.startswith('output_head.')}
+                    if full is not None else selected.get('output_head', selected))
+    torch.testing.assert_close(head_weights['features'], model.output_head.features, rtol=0, atol=0)
+    model.output_head.load_state_dict(head_weights)
+    layer_selected = selected
+    if full is not None:
+        prefix = f'transformer_stack.layers.{len(model.transformer_stack.layers) - 1}.'
+        layer_selected = {'static_last_layer': selected.get('static_last_layer', False),
+            'last_layer': {k.removeprefix(prefix): v for k, v in full.items() if k.startswith(prefix)}}
+    model.transformer_stack.layers[-1] = load_selected_layer(
+        model.transformer_stack.layers[-1], model.output_head, layer_selected)
+    if full is not None:
+        model.load_state_dict(full)
+    return model
+
+
 def self_check():
     from types import SimpleNamespace
     connection = SimpleNamespace(well_ids=('a', 'b'), static=[[10, .1, 1], [20, .2, 3]], provenance={})
@@ -119,6 +138,19 @@ def self_check():
         pass
     else:
         raise AssertionError('mismatched checkpoint geology accepted')
+    native = nn.Module()
+    native.output_head = nn.Linear(4, 9)
+    native.transformer_stack = nn.Module()
+    native.transformer_stack.layers = nn.ModuleList([nn.Linear(4, 4), nn.Identity()])
+    adapted = load_frozen_model(deepcopy(native), connection, head.state_dict())
+    adapted.transformer_stack.layers[-1] = StaticConditionedLayer(adapted.transformer_stack.layers[-1], adapted.output_head)
+    with torch.no_grad():
+        adapted.transformer_stack.layers[0].weight.fill_(.125)
+    full = {'full_model': adapted.state_dict(), 'static_last_layer': True}
+    restored = load_frozen_model(deepcopy(native), connection, full)
+    for key, value in adapted.state_dict().items():
+        torch.testing.assert_close(restored.state_dict()[key], value, rtol=0, atol=0)
+    assert not torch.equal(native.transformer_stack.layers[0].weight, restored.transformer_stack.layers[0].weight)
     from timesoil.aios.interwell import WellConnectivity
     connection = WellConnectivity(('a', 'b'), [[0, 1], [1, 0]], [[10, .1, 1], [20, .2, 3]], {})
     states = np.ones((12, 2, 3))
