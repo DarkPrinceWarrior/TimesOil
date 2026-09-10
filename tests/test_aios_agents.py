@@ -368,6 +368,26 @@ def test_four_role_workflow_is_fixed_and_tools_are_allow_listed() -> None:
         asyncio.run(workflow.run({"track": 2, "access_token": "test-only"}))
 
 
+def test_completed_audit_uses_numerical_approval_scope_for_planning_roles() -> None:
+    class ScopeLLM(_WorkflowLLM):
+        prompts: list[str]
+        def __init__(self):
+            super().__init__()
+            self.prompts = []
+        async def structured(self, messages, **kwargs):
+            self.prompts.append(messages[0].content)
+            return await super().structured(messages, **kwargs)
+
+    llm = ScopeLLM()
+    workflow = AgentWorkflow(llm, ToolRegistry(()))
+    asyncio.run(workflow.run({'track': 2, 'phase': 'completed_paired_numerical_audit'}))
+    assert all('численная проверка уже завершённой пары' in p for p in llm.prompts[:3])
+    assert all('Сейчас фаза планирования до запуска' not in p for p in llm.prompts)
+    llm.prompts.clear()
+    asyncio.run(workflow.run({'track': 2, 'phase': 'planning'}))
+    assert all('Сейчас фаза планирования до запуска' in p for p in llm.prompts[:3])
+
+
 def _chdd_row(date_value: str, well: str, *, producer: bool) -> dict[str, Any]:
     days = 31.0 if date_value.endswith("01-01") else 28.0
     liquid = 10.0 * days if producer else 0.0
