@@ -28,6 +28,7 @@ from timesoil.aios.track2 import load_trajectory_dataset
 from timesoil.aios.workflow import (CycleError, CycleRequest, _controls,
     _source_control_inventory, _validate_source_well_scope)
 from timesoil.aios.opm import OpmFlowRunner
+from timesoil.aios.schedule_overlay import apply_schedule_overlay
 from timesoil.aios.operating_constraints import check_controls, parse_constraints
 from timesoil.aios.economics import CHDDEconomicsAdapter
 
@@ -226,9 +227,9 @@ def main():
     with TemporaryDirectory(prefix='timesoil-policy-source-') as temporary:
         prepared = OpmFlowRunner().prepare(checked_request.source, Path(temporary) / 'case',
                                            deck=checked_request.deck)
+        source_schedule = (prepared.input_dir / checked_request.schedule_relative_path).read_text()
         source_inventory = _source_control_inventory(
-            (prepared.input_dir / checked_request.schedule_relative_path).read_text(),
-            sorted({a.month for a in checked_request.controls}))
+            source_schedule, sorted({a.month for a in checked_request.controls}))
     allow_conversion = checked_request.context.get('constraints', {}).get('allow_conversion_to_injection', False)
     _validate_source_well_scope(checked_request.controls, source_inventory,
                                allow_conversion_to_injection=allow_conversion)
@@ -355,6 +356,8 @@ def main():
                 and any(a['role'] != original_roles[a['month'], a['well']] for a in controls)):
             raise ValueError('new role changes are not permitted by this case')
         check_controls(operating_rules, checked.controls)
+        overlay = apply_schedule_overlay(source_schedule, checked.controls,
+            known_wells=trajectory.well_ids, end_exclusive=trajectory.dates[origin + horizon].date())
         actions = trajectory.actions.copy()
         for a in controls:
             position = date_index[a['month']], well_index[a['well']]
@@ -405,7 +408,9 @@ def main():
                 "liquid_tonnes": float((prediction[:, i, 1] * days[:, 0]).sum()),
                 "terminal_reservoir_pressure_bar": float(prediction[-1, i, 2])}
                 for i, w in enumerate(trajectory.well_ids)],
-            "controls_sha256": checked.controls_sha256, "inference_seconds": time.monotonic() - begin,
+            "controls_sha256": checked.controls_sha256, "schedule_overlay_sha256": overlay.sha256,
+            "source_schedule_constraints_checked_before_forecast": True,
+            "inference_seconds": time.monotonic() - begin,
             "is_official_chdd": False}
         candidates.append(record)
         proposed["context"]["screening"] = record
