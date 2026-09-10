@@ -9,6 +9,7 @@ from propose_track2_policies import CycleError, agent_candidate_context, plan_wi
 def test_all_candidate_scores_and_full_well_detail_fit_without_repetition():
     candidates = [dict(id=i, policy={'injector_scale':1+i/10}, forecast_chdd_m=100+i,
         forecast_eligible=True, controls_sha256=str(i),
+        forecast_constraint_violations=['example violation'] * 224,
         forecast_by_well=[dict(well=str(w), oil_tonnes=w, liquid_tonnes=2*w) for w in range(103)],
         pressure_semantics={'repeated':'x'*20000}) for i in range(20)]
     context = agent_candidate_context(candidates)
@@ -16,6 +17,8 @@ def test_all_candidate_scores_and_full_well_detail_fit_without_repetition():
     assert [row['forecast_chdd_m'] for row in context['candidates']] == list(range(100,120))
     assert [row['policy'] for row in context['candidates']] == [row['policy'] for row in candidates]
     assert context['forecast_detail']['candidate_id'] == 19
+    assert context['candidates'][0]['forecast_constraint_violation_count'] == 224
+    assert len(context['candidates'][0]['forecast_constraint_violations']) == 3
     assert len(context['forecast_detail']['by_well']) == 103
     assert len(candidates[0]['forecast_by_well']) == 103
 

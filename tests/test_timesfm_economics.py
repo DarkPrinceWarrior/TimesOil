@@ -15,6 +15,49 @@ economics = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(economics)
 
 
+def test_forecast_limits_use_surface_units_groups_and_control_months():
+    from datetime import date
+    from timesoil.aios.operating_constraints import parse_constraints, check_observed
+
+    start, end = date(2007, 1, 1), date(2007, 2, 1)
+    wells = ['P', 'I', 'I2']
+    prediction = np.zeros((2, 3, 9))
+    prediction[:, 0, 0] = 8  # Oil mass is not the missing oil surface-volume rate.
+    prediction[:, 0, 1] = 100
+    prediction[:, 1:, 2] = 20
+    prediction[:, :, 4] = [70, 280, 280]
+    stamps = ['2007-02-01', '2007-03-01']
+    def rules(**limits):
+        return parse_constraints([dict(start=str(start), end=str(start), wells=wells, limits=limits)],
+                                 wells=wells, start=start, end=end)
+    checked = rules(max_liquid_m3d=100, min_injection_m3d=40, max_injection_m3d=40,
+                    min_bhp_bar=70, max_bhp_bar=280)
+    assert not economics.economic_constraint_violations(prediction, stamps, wells, checked)
+    for key, value in [('max_liquid_m3d', 99), ('min_injection_m3d', 41),
+                       ('max_injection_m3d', 39), ('min_bhp_bar', 71), ('max_bhp_bar', 279)]:
+        errors = economics.economic_constraint_violations(prediction, stamps, wells, rules(**{key:value}))
+        assert len(errors) == 1 and key in errors[0] and '2007-01-01' in errors[0]
+    later = prediction.copy(); later[1, 0, 1] = 1000
+    assert not economics.economic_constraint_violations(later, stamps, wells, checked)
+    for key in ('max_oil_m3d', 'max_watercut', 'max_monthly_water_deficit_m3',
+                'min_monthly_voidage_replacement', 'max_monthly_voidage_replacement'):
+        with pytest.raises(ValueError, match='lack required vectors'):
+            economics.economic_constraint_violations(prediction, stamps, wells, rules(**{key:1}))
+    outage = parse_constraints([dict(start=str(start), end=str(start), wells=['P'], unavailable=True)],
+                               wells=wells, start=start, end=end)
+    assert 'unavailable' in economics.economic_constraint_violations(prediction, stamps, wells, outage)[0]
+    stopped = prediction.copy(); stopped[:, 0, :3] = 0
+    assert not economics.economic_constraint_violations(stopped, stamps, wells, outage)
+    rows = {well:dict(WLPR=0, WWIR=0, WBHP=0) for well in wells}
+    with pytest.raises(ValueError, match='required vectors'):
+        check_observed(rules(max_watercut=1), start, rows)
+    with pytest.raises(ValueError, match='required vectors'):
+        check_observed(outage, start, rows)
+    rows['P']['WOPR'] = float('nan')
+    with pytest.raises(ValueError, match='non-finite'):
+        check_observed(checked, start, rows)
+
+
 def test_economic_targets_roundtrip_and_reject_incomplete_forecasts(tmp_path):
     def row(stamp, well, **updates):
         return {'DATA': stamp, 'well': well, **dict.fromkeys(CHDD_FIELDS[2:], 0.), **updates}
