@@ -1,0 +1,21 @@
+{
+  "source_commit": "789394b7d192d2d39c9a842d78e5f452f7548ac7",
+  "script_sha256": "102f8448484ded4d7bde6a56811900c53bd1e19f36c8937759a1a986c8485972",
+  "source_sha256": "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e",
+  "prior_manifest_sha256": "83ca2445c6ccafb76b91d43aeb4f03ab06b06e7fa505d58c48d19614179ace84",
+  "run_manifest_sha256": "d8b6b0ba85d8dd983822ef24a5f1dfb643cc29f7b462222e60f4c036312307f7",
+  "changed_inputs": [
+    "MODEL_Y/_TIMESOIL_SUMMARY.INC"
+  ],
+  "report_dates": 103,
+  "wells": 49,
+  "required_vector_max_abs_difference": 0.0,
+  "all_connections_unchanged": true,
+  "optional_vectors": [
+    "WVPT",
+    "WVIT"
+  ],
+  "unit_system": "METRIC",
+  "monthly_field_water_sha256": "dc5b857946a87449b9caa55cd45e706547ef4f54cac6256cde6eeabfef803ba7",
+  "complete": true
+}

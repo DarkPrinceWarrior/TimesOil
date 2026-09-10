@@ -3,8 +3,18 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 2480,
-      "sha256": "66ea853da595a1b17cba6fe1602a0d49aae12e6a07ba553186ffd35582d98d2e"
+      "bytes": 3986,
+      "sha256": "620df5c04942f8616c962d93543bceb7f5ecbf4474013b19e1ff66e3000162a5"
+    },
+    {
+      "path": "candidate-full-cycle-receipt.json",
+      "bytes": 56723,
+      "sha256": "c9cc30e727300fc8b380968f7560866068f7b8bd99890d97b9f6d6d91c3a54e5"
+    },
+    {
+      "path": "numeric-selection.json",
+      "bytes": 13284,
+      "sha256": "c72847f41614377ccd80eeeb43826beb610c09988c29290f600d2cbde6bc8904"
     },
     {
       "path": "physics-preflight.json",
@@ -20,6 +30,26 @@
       "path": "protocol.json",
       "bytes": 937,
       "sha256": "d9d3be55a2ea61157bb9c90ea1728eee3b5902c80ea57059aa0cb7be22e0ad84"
+    },
+    {
+      "path": "selection-recovered.json",
+      "bytes": 89105,
+      "sha256": "bc2db51c49eb528b9bcdc7c61ca4f495a73fa236fa4944b7d26184bce12b0772"
+    },
+    {
+      "path": "selection-recovery-protocol.json",
+      "bytes": 308,
+      "sha256": "97e994eafb1f70f82940e0384291cd6243a5185a89594b3e6e42947d66945f97"
+    },
+    {
+      "path": "selection-review-status.json",
+      "bytes": 950,
+      "sha256": "17c5b42c293dc0f671a933489615c39cc9cf1cbeba13377734bce7712e7e4d39"
+    },
+    {
+      "path": "selection-review-tests-20260910.txt",
+      "bytes": 99,
+      "sha256": "8b861ff1d86c32c816b46b812ef4f2f3c7ba44293f383fea29c46eafa04269f0"
     },
     {
       "path": "validation.json",

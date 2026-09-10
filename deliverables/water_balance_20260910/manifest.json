@@ -3,13 +3,13 @@
   "files": [
     {
       "path": ".gitattributes",
-      "bytes": 30,
-      "sha256": "577b2445f6c9ea106f40dfe13b5d823eae730edee8c339b554f8a88c3ed6c495"
+      "bytes": 12,
+      "sha256": "b95357803c03ba40f5e35ab78e3a42c0997a597f9bd46b4c65c50967364444ea"
     },
     {
       "path": "README.md",
-      "bytes": 3978,
-      "sha256": "4f5172942d7e819254325b3bb2203b837032c68db72522069d86358c27c8cb20"
+      "bytes": 5014,
+      "sha256": "9605ed9a33b6046d2bfab490e4eaff5a6f0790fe04554ae8b34264ff06827fbf"
     },
     {
       "path": "constraint-verification.json",
@@ -35,6 +35,16 @@
       "path": "water-limits-tests-v2-20260910.log",
       "bytes": 173,
       "sha256": "3715b4c0ae765f14b51e1b2bf818112752415f695c95fd8df319b475b66d965f"
+    },
+    {
+      "path": "y-monthly-field-water.csv",
+      "bytes": 10226,
+      "sha256": "dc5b857946a87449b9caa55cd45e706547ef4f54cac6256cde6eeabfef803ba7"
+    },
+    {
+      "path": "y-verification.json",
+      "bytes": 810,
+      "sha256": "6e27ad0ab64dbedbc9c34e2f5ff100834ce858a9d5bf1ab13bcebaf8592b7e5e"
     }
   ]
 }

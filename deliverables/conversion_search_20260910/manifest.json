@@ -1,0 +1,30 @@
+{
+  "schema": "timesoil.evidence-bundle/v1",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3631,
+      "sha256": "8595463bcca94a908038a6dce1147e933e581e9b0d03bddd3f416762b6aa66f7"
+    },
+    {
+      "path": "conversion-y-tests-20260910.txt",
+      "bytes": 99,
+      "sha256": "bfb6e64f85f63cbbbde4da39962faa99903f0ef08682bdeebc030587ba6f9519"
+    },
+    {
+      "path": "conversion-z-tests-20260910.txt",
+      "bytes": 99,
+      "sha256": "044a3c1fd44c91419096aab811320a25e53125c4d0217b7230523ff24b638835"
+    },
+    {
+      "path": "y-protocol.json",
+      "bytes": 1062,
+      "sha256": "ac9eb4db425996dd2c1372726de7761e8f21c0f75c613450ec70c347d57cb78f"
+    },
+    {
+      "path": "z-protocol.json",
+      "bytes": 1054,
+      "sha256": "3aa7476009cf96faf73d344b06d81226ebe2956081e723b56b224b3528a16207"
+    }
+  ]
+}

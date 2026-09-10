@@ -1,0 +1,6 @@
+{
+  "source_commit": "c7543e88042b8696ea613472c3fcb5a0d5c4aac0",
+  "candidate_receipt_sha256": "c9cc30e727300fc8b380968f7560866068f7b8bd99890d97b9f6d6d91c3a54e5",
+  "physical_rerun": false,
+  "reason": "Only canonical passive water SUMMARY outputs differ; original source/physics/economic guards retained."
+}

@@ -1,0 +1,33 @@
+{
+  "source_review_sha256": "bc2db51c49eb528b9bcdc7c61ca4f495a73fa236fa4944b7d26184bce12b0772",
+  "scope": "completed_paired_numerical_audit",
+  "numerical_comparison_complete": true,
+  "critic_approved": true,
+  "all_roles_approved": false,
+  "roles": [
+    {
+      "role": "coordinator",
+      "approved": false,
+      "recommendation": "no_action"
+    },
+    {
+      "role": "reservoir_analyst",
+      "approved": false,
+      "recommendation": "no_action"
+    },
+    {
+      "role": "planner",
+      "approved": false,
+      "recommendation": "no_action"
+    },
+    {
+      "role": "critic",
+      "approved": true,
+      "recommendation": "no_action"
+    }
+  ],
+  "original_recovery_exit": 1,
+  "original_review_preserved": true,
+  "physical_rerun": false,
+  "explanation": "Legacy agent_review_approved meant critic only. Strict recovery correctly rejected lack of unanimous approval. New comparisons separate critic and all-role decisions."
+}
