@@ -5,6 +5,7 @@ import csv
 from dataclasses import replace
 from hashlib import sha256
 import json
+from math import isfinite
 from pathlib import Path
 import time
 
@@ -45,7 +46,11 @@ def main():
     parser.add_argument('output', type=Path)
     parser.add_argument('--forecast-validation', type=Path, help='Authenticated BHP reference export for eight independent scenarios')
     parser.add_argument('--reuse-first-run', type=Path, help='Reuse and verify an already completed first physical scenario')
+    parser.add_argument('--forecast-designs', type=Path, help='Eight frozen [producer scale, injector scale, producer BHP addition, injector BHP factor] designs')
+    parser.add_argument('--scenario-indices', nargs='+', type=int, help='Calculate a partition; its manifest remains incomplete until all eight scenarios are joined')
     args = parser.parse_args()
+    if (args.forecast_designs or args.scenario_indices) and not args.forecast_validation:
+        parser.error('custom designs and partitions require forecast validation')
     config = load_config(args.config)
     args.output.mkdir(parents=True, exist_ok=False)
     config = replace(config, opm_runs_dir=args.output / 'opm')
@@ -69,12 +74,25 @@ def main():
         designs = [(1.5, .75, 5, 1), (2.5, 1.25, 10, .95), (3.25, 1.6, 20, .9),
                    (3.5, 1.75, 0, .9), (2.25, .8, 15, 1), (1.75, 1.1, 10, .85),
                    (2.75, 1.8, 10, .95), (2.8, 1.9, 20, .9)]
+        if args.forecast_designs:
+            designs = json.loads(args.forecast_designs.read_text())
+            if (not isinstance(designs, list) or len(designs) != 8
+                    or any(not isinstance(d, list) or len(d) != 4
+                        or any(isinstance(v, bool) or not isinstance(v, (int, float)) or not isfinite(v) for v in d)
+                        or min(d[:3]) < 0 or not 0 < d[3] <= 1 for d in designs)):
+                parser.error('eight finite nonnegative designs with injector BHP factor in (0,1] required')
         evaluation = {'schema': 'timesoil.model-y-forecast-evaluation/v1', 'source_sha256': config.source_sha256,
             'calibration_cases': [0, 1, 3, 4, 6], 'test_cases': [2, 5, 7], 'designs': designs,
             'model_selection_allowed_on_test': False, 'scenarios': [], 'complete': False,
             'reference_manifest_sha256': sha256((reference / 'manifest.json').read_bytes()).hexdigest()}
+        evaluation['designs_sha256'] = sha256(args.forecast_designs.read_bytes()).hexdigest() if args.forecast_designs else None
         (args.output / 'protocol.json').write_text(json.dumps(evaluation, indent=2) + '\n')
+    indices = args.scenario_indices if args.scenario_indices is not None else list(range(len(designs)))
+    if not indices or indices != sorted(set(indices)) or any(i not in range(len(designs)) for i in indices):
+        parser.error('scenario indices must be distinct, sorted and inside the design set')
     for index, (producer, injector, producer_bhp_add, injector_bhp_factor) in enumerate(designs):
+        if index not in indices:
+            continue
         started = time.monotonic()
         controls = compiler.validate(config.case, scale(original, producer, injector))
         if args.forecast_validation:
@@ -104,7 +122,7 @@ def main():
             assert item[0]['source_sha256'] == config.source_sha256
             assert item[0]['step_actions'] + item[0]['planning']['tail_actions'] == [a.to_dict() for a in controls]
             if baseline is None:
-                assert index == 0
+                assert index == indices[0]
                 baseline = item
             for key in ('source_sha256',):
                 assert baseline[0][key] == item[0][key]
@@ -151,8 +169,9 @@ def main():
         if index == 0 and 'error' in entry:
             raise RuntimeError('baseline failed verification')
     if args.forecast_validation:
-        assert [r['index'] for r in evaluation['scenarios']] == list(range(8))
-        evaluation['complete'] = True
+        assert [r['index'] for r in evaluation['scenarios']] == indices
+        evaluation['complete'] = indices == list(range(8))
+        evaluation['scenario_partition'] = indices
         (args.output / 'manifest.json').write_text(json.dumps(evaluation, indent=2) + '\n')
 
 
