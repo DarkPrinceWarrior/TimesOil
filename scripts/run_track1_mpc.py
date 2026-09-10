@@ -60,7 +60,6 @@ class RunConfig:
     config_sha256: str
     source_sha256: str
     input_sha256: str
-    forecast: dict[str, str] | None = None
 
     @property
     def run_id(self) -> str:
@@ -314,7 +313,7 @@ def load_config(path: Path) -> RunConfig:
         payload = json.loads(raw, object_pairs_hook=_unique_object)
     except (UnicodeError, json.JSONDecodeError) as exc:
         raise ValueError("config must be unique-key UTF-8 JSON") from exc
-    root = _object(payload, "config", {"schema", "case", "initial_state", "candidates", "opm"}, {"forecast"})
+    root = _object(payload, "config", {"schema", "case", "initial_state", "candidates", "opm"})
     if root["schema"] != _SCHEMA:
         raise ValueError(f"config.schema must equal {_SCHEMA}")
     case = _case(root["case"])
@@ -371,22 +370,6 @@ def load_config(path: Path) -> RunConfig:
         if density_map.is_symlink() or not density_map.is_file():
             raise ValueError("opm.density_map must be a regular non-symlink file")
     timeout = _number(opm.get("timeout_seconds", 3600.0), "opm.timeout_seconds")
-    forecast = None
-    if 'forecast' in root:
-        forecast = dict(_object(root['forecast'], 'forecast',
-            {'history', 'history_sha256', 'geology', 'geology_sha256'},
-            {'head', 'head_sha256', 'monthly_head', 'monthly_head_sha256', 'monthly_report', 'monthly_report_sha256'}))
-        for name in ('head', 'monthly_head', 'monthly_report'):
-            if (name in forecast) != (name + '_sha256' in forecast):
-                raise ValueError('forecast ' + name + ' and SHA-256 must be supplied together')
-        if ('monthly_head' in forecast) != ('monthly_report' in forecast):
-            raise ValueError('monthly forecast weights require their training report')
-        for name in ('history', 'geology', *(n for n in ('head', 'monthly_head', 'monthly_report') if n in forecast)):
-            file = (path.absolute().parent / _string(forecast[name], 'forecast.' + name)).absolute()
-            _reject_symlink_components(file)
-            if not file.is_file() or _digest(file.read_bytes()) != forecast[name + '_sha256']:
-                raise ValueError('forecast input hash mismatch: ' + name)
-            forecast[name] = str(file)
     config_sha256 = _digest(_json(payload))
     source_sha256 = _source_digest(source)
     input_sha256 = _digest(
@@ -408,7 +391,6 @@ def load_config(path: Path) -> RunConfig:
         config_sha256=config_sha256,
         source_sha256=source_sha256,
         input_sha256=input_sha256,
-        forecast=forecast,
     )
 
 
@@ -569,8 +551,6 @@ def execute(
         raise ValueError("full-field mode requires --agent and exactly one baseline per month")
     if lifecycle and not full_field:
         raise ValueError("lifecycle mode requires full-field agent proposals")
-    if config.forecast and not lifecycle:
-        raise ValueError('Google forecast assistance requires full-field lifecycle verification')
     if agent and config.case.economics_start != config.case.start:
         raise ValueError("agent economics_start must equal the AIOS management start")
     source_contract = script_source_contract or _script_source_contract()
@@ -584,10 +564,6 @@ def execute(
     feedback: list[dict[str, Any]] = []
     previous_controls: dict[str, ControlAction] = {}
     completed_steps, resume_receipt = (), None
-    forecast = None
-    if config.forecast:
-        from timesfm_planning import TimesFMPlanning
-        forecast = TimesFMPlanning(config.forecast, config.case, config.initial_state, backend)
 
     def record(item: dict[str, Any]) -> None:
         agent_records.append(item)
@@ -604,8 +580,6 @@ def execute(
         for item in saved_records:
             record(item)
         for step in completed_steps:
-            if forecast:
-                forecast.observe(step.trajectory.next_state, step.trajectory.actions)
             previous_controls.update({a.well: a for a in step.trajectory.actions})
             feedback.append({"month": step.trajectory.month.isoformat(),
                 "cumulative_chdd_m": step.economics.npv_million_rub,
@@ -639,11 +613,6 @@ def execute(
             "future_calendar": "provided source schedule, assumed known for this training experiment",
             "future_observed_states_available": False,
         }
-        if forecast:
-            context['surrogate_used'] = True
-            context['geology'] = forecast.geology_context()
-            context['google_forecast'] = forecast.predict(state, options[0] + _continuation_tail(config, state, options[0]))
-            context['forecast_claim_limits'] = 'Google forecast assists the proposal. Uncertainty is not independently calibrated; every candidate is checked by full remaining OPM and official CHDD before committing one month.'
         if full_field:
             context.update({
                 "selection_policy": "Optimize official CHDD by proposing rate and OPEN/SHUT updates for ANY well in the complete baseline. Baseline carries forward approved agent controls, except explicit changes in the source calendar. Empty updates means keep these controls. No preselected well subset or percentage bounds. Exactly one propose_controls call. Every month is validated by full OPM and official CHDD. Use the verified inventory; never infer extra wells from gaps in numeric IDs.",
@@ -688,8 +657,6 @@ def execute(
                         "missing_wells": [], "extra_wells": [],
                         "controls": [_action_payload(a) for a in candidate],
                         "schedule_sha256": ScheduleCompiler().compile(config.case, candidate).sha256}
-                if forecast:
-                    output['google_forecast'] = forecast.predict(state, candidate + _continuation_tail(config, state, candidate))
                 return output
             tool = ToolDefinition("propose_controls", "Propose updates to any well; retain other controls. SHUT requires value=0; OPEN LRAT <=500; injectors use WRAT. Optional role changes require case permission; new injection needs bhp_limit (bar). Optional bhp_limit tightens the original pressure bound.",
                 {"type": "object", "properties": {"updates": {"type": "array", "items": {
@@ -768,12 +735,6 @@ def execute(
                 "invariant_violations": list(result.trajectory.invariant_violations)},
             "claim_limits": "No surrogate used; UQ/OOD not applicable. No NPV improvement or global optimality claim. Deterministic MPC gates already passed.",
         }
-        if forecast:
-            context.update(surrogate_used=True, forecast_provenance=forecast.provenance,
-                surrogate_used_only_to_propose_hypotheses=True,
-                candidate_selection_metric='official full remaining OPM CHDD',
-                forecast_diagnostics=forecast.diagnostics(result.trajectory.actions),
-                claim_limits='Google assisted the proposal; the selected full remaining trajectory, constraints and official CHDD were verified by OPM. Uncalibrated forecast uncertainty prevents autonomous surrogate certification, not an audit of completed physical calculations. No global optimality claim.')
         # Dates belong to the typed simulator result, not to model-generated data.
         context = json.loads(json.dumps(context, default=str, allow_nan=False))
         evidence_tool = ToolDefinition(
@@ -806,10 +767,6 @@ def execute(
         record({"phase": "terminal_month_review", "month": result.trajectory.month.isoformat(), "agent": asdict(reviewed)})
         if not reviewed.critic_approved:
             raise RuntimeError("critic rejected simulated month; see agent decision log")
-        if forecast:
-            forecast.observe(result.trajectory.next_state, result.trajectory.actions)
-            record({'phase': 'forecast_observation_check', 'month': result.trajectory.month.isoformat(),
-                    'observed_errors': forecast.observed_errors[-1:]})
         previous_controls.update({a.well: a for a in result.trajectory.actions})
         feedback.append({"month": result.trajectory.month.isoformat(),
                          "cumulative_chdd_m": result.economics.npv_million_rub,
@@ -830,8 +787,6 @@ def execute(
     if _source_digest(config.source) != config.source_sha256:
         raise RuntimeError("OPM source changed while Track 1 was running")
     _verify_script_source_contract(source_contract)
-    if forecast:
-        forecast.verify_files()
     payload = {
         "schema": _RESULT_SCHEMA,
         "run_id": config.run_id,
@@ -885,8 +840,6 @@ def execute(
                             "elapsed_seconds": monotonic() - started,
                             "selection_policy": "incumbent versus agent proposal, full-horizon OPM, commit one month then critic" if lifecycle else ("all-well agent proposals, full OPM then critic" if full_field else "one configured candidate per month, full OPM then critic"),
                             "records": agent_records}
-        if forecast:
-            payload['agent']['google_forecast'] = {**forecast.provenance, 'observed_errors': forecast.observed_errors}
         if resume_receipt is not None:
             payload["agent"]["resume"] = resume_receipt
             payload["agent"]["elapsed_seconds_scope"] = "current invocation; historical resumed calls excluded"

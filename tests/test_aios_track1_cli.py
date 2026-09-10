@@ -227,6 +227,10 @@ def test_cli_rejects_duplicate_keys_and_symlink_paths(tmp_path: Path) -> None:
     malformed.write_text('{"schema":"first","schema":"second"}', encoding="utf-8")
     _raises(ValueError, "duplicate JSON key", lambda: cli.load_config(malformed))
 
+    surrogate_config = tmp_path / "surrogate.json"
+    surrogate_config.write_text(json.dumps({**_payload(), "forecast": {}}))
+    _raises(ValueError, "unexpected=['forecast']", lambda: cli.load_config(surrogate_config))
+
     config_path = tmp_path / "track1.json"
     config_path.write_text(json.dumps(_payload()), encoding="utf-8")
     linked_config = tmp_path / "linked.json"
@@ -431,6 +435,10 @@ def test_full_field_agent_can_change_both_roles_outside_the_candidate_bank(tmp_p
     outputs, _ = cli.execute(config, DeterministicGdmBackend(), agent=True, full_field=True)
     result = json.loads(outputs[Path("result.json")])
     actions = result["schedule"]["actions"]
+    assert "google_forecast" not in result["agent"]
+    assert all(r["agent"]["context"]["surrogate_used"] is False
+               for r in result["agent"]["records"]
+               if r["phase"] in {"planning", "terminal_month_review"})
     assert result["agent"]["records"][0]["phase"] == "invalid_proposal"
     assert FullFieldClient.reviews == 4
     rejected = [r for r in result["agent"]["records"] if r["phase"] == "rejected_month_review"]

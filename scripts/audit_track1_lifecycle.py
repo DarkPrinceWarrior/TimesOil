@@ -68,8 +68,11 @@ def audit(root, expected_months, *, run_dir=None, baseline_run=None):
     planning = [r for r in result["agent"]["records"] if r["phase"] == "planning"]
     reviews = [r for r in result["agent"]["records"] if r["phase"] == "terminal_month_review"]
     assert len(planning) == len(reviews) == expected_months
+    assert "google_forecast" not in result["agent"]
     expected_state = _state_payload(config.initial_state)
     for plan, review, trajectory in zip(planning, reviews, trajectories, strict=True):
+        assert plan["agent"]["context"]["surrogate_used"] is False
+        assert review["agent"]["context"]["surrogate_used"] is False
         assert plan["agent"]["context"]["state"] == expected_state
         assert all(d["approved"] for d in review["agent"]["decisions"])
         assert review["agent"]["decisions"][-1]["tool_evidence"]
@@ -109,6 +112,7 @@ def audit(root, expected_months, *, run_dir=None, baseline_run=None):
     values = [json.loads((p / "result.json").read_text())["summary"]["totalChddM"] for p in econ_dirs]
     assert values[1] == result["evidence"]["step_economics"][-1]["npv_million_rub"]
     return {"schema": "timesoil.track1-lifecycle-audit/v1", "run_dir": str(run),
+            "surrogate_used": False,
             "months": expected_months, "wells": len(wells), "actions": len(actions),
             "start_inclusive": config.case.start.isoformat(), "end_exclusive": _next_month(config.case.end).isoformat(),
             "lineage_files_verified": verified_files, "approved_monthly_reviews": len(reviews),
