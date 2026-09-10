@@ -87,6 +87,67 @@ def forecast_chdd_rows(history, timestamps, well_ids, predictions):
     return normalize_chdd_rows(rows)
 
 
+def load_economic_trajectories(batch, trajectories, origin):
+    """Use canonical CSVs from the already verified development batch, retaining its split."""
+    from types import SimpleNamespace
+
+    records = {row['scenario_id']: row for row in json.loads((batch / 'manifest.json').read_text())['scenarios']}
+    result = []
+    for trajectory in trajectories:
+        record = records[trajectory.scenario_id]
+        path = (batch / record['canonical_chdd']).resolve()
+        if not path.is_relative_to(batch.resolve()):
+            raise ValueError('economic target CSV escapes verified batch')
+        raw = path.read_bytes()
+        if sha256(raw).hexdigest() != record['canonical_chdd_sha256']:
+            raise ValueError('economic target CSV hash mismatch')
+        states = economic_targets(csv.DictReader(raw.decode('utf-8-sig').splitlines()),
+                                  trajectory.dates.strftime('%Y-%m-%d'), trajectory.well_ids)
+        result.append(SimpleNamespace(scenario_id=trajectory.scenario_id, dates=trajectory.dates,
+            well_ids=trajectory.well_ids, actions=trajectory.actions, states=states,
+            content_hash=record['canonical_chdd_sha256']))
+    baseline = next(t for t in result if t.scenario_id == 'baseline')
+    for trajectory in result:
+        np.testing.assert_allclose(trajectory.states[:origin + 1], baseline.states[:origin + 1], rtol=0, atol=1e-6)
+    return result
+
+
+def project_economic_forecast(prediction, actions):
+    """Monthly control roles mask inactive outputs; actual injection remains a model output."""
+    values = np.asarray(prediction, dtype=float).copy()
+    if values.shape != (*actions.shape[:2], len(ECONOMIC_TARGETS)) or not np.isfinite(values).all():
+        raise ValueError('economic forecast must cover the complete control grid')
+    values = np.maximum(values, 0)
+    producing = (actions[..., 1] != 2) & (actions[..., 2] == 1)
+    injecting = (actions[..., 1] == 2) & (actions[..., 2] == 1)
+    values[..., [0, 1, 6, 7]] *= producing[..., None]
+    values[..., [2, 8]] *= injecting[..., None]
+    values[..., 5] = values[..., 5].clip(0, 1)
+    values[..., 6] = np.minimum(values[..., 6], values[..., 7])
+    return values
+
+
+def forecast_economic(forecaster, trajectory, origin, horizon, context, connectivity):
+    from timesfm_geology import geological_inputs
+
+    if forecaster.model.output_head.target_count != len(ECONOMIC_TARGETS):
+        raise ValueError('nine-target economic checkpoint required')
+    targets, covariates = geological_inputs(trajectory, origin, context, horizon, connectivity)
+    prediction, = forecaster.predict_batch([targets], horizon=horizon,
+        past_future_covariates=[covariates], use_symmetric_averaging=False,
+        make_positive=True, return_quantiles=False)
+    values = prediction.forecast.reshape(len(trajectory.well_ids), len(ECONOMIC_TARGETS), horizon).transpose(2, 0, 1)
+    return project_economic_forecast(values, trajectory.actions[origin:origin + horizon])
+
+
+def economic_metrics(truth, prediction):
+    error = np.abs(truth - prediction)
+    return {field: {'mae': float(error[..., i].mean()),
+                   'wape': float(error[..., i].sum() / np.abs(truth[..., i]).sum())
+                       if np.abs(truth[..., i]).sum() > 0 else None}
+            for i, field in enumerate(ECONOMIC_TARGETS)}
+
+
 def verify_roundtrip(canonical, manifest_sha256, output, start, end):
     """Prove the target representation against authenticated physical data, not forecast skill."""
     raw_manifest = (canonical / 'manifest.json').read_bytes()

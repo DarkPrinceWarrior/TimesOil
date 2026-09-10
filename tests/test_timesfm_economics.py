@@ -47,3 +47,11 @@ def test_economic_targets_roundtrip_and_reject_incomplete_forecasts():
         economics.economic_targets(future[:-1], stamps, wells)
     with pytest.raises(ValueError, match='consecutive'):
         economics.economic_targets(future, ['2007-02-01', '2007-04-01'], wells)
+    actions = np.array([[[10., 0., 1., 70.], [100., 2., 1., 280.]],
+                        [[10., 0., 0., 70.], [100., 2., 1., 280.]]])
+    forecast = np.ones((2, 2, 9)); forecast[..., 8] = 123.; forecast[..., 2] = 5.
+    projected = economics.project_economic_forecast(forecast, actions)
+    assert projected[0, 1, 8] == 123. and projected[0, 1, 2] == 5.
+    assert not projected[0, 1, [0, 1, 6, 7]].any()
+    assert not projected[0, 0, [2, 8]].any()
+    assert not projected[1, 0, [0, 1, 2, 6, 7, 8]].any()
