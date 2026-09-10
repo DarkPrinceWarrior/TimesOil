@@ -1,7 +1,7 @@
 """Offline TimesFM 3 benchmark on the frozen KT2 OPM snapshot; run on A100.
 
 This produces forecast metrics, not official CHDD or a replacement surrogate.
-Install TimesFM only in a separate experiment environment (see KT3_PREFLIGHT.md).
+Install TimesFM only in a separate experiment environment (see docs/RUNBOOK.md).
 """
 
 from __future__ import annotations
