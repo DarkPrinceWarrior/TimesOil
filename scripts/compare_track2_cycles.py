@@ -43,6 +43,25 @@ def load(root):
     return receipt, opm, econ, result, rows, sha256(receipt_raw).hexdigest()
 
 
+def compare_physical_inputs(roots, inputs, wells):
+    """Allow only the canonical addition of passive reservoir-volume outputs."""
+    assert inputs[0].keys() == inputs[1].keys(), "non-schedule simulator inputs changed"
+    changed = [p for p in inputs[0] if inputs[0][p] != inputs[1][p]]
+    if not changed:
+        return []
+    assert len(changed) == 1 and Path(changed[0]).name == '_TIMESOIL_SUMMARY.INC', "non-schedule simulator inputs changed"
+    from timesoil.aios.opm import build_summary_overlay
+    current = build_summary_overlay(wells).encode()
+    legacy = current.replace(b'WVPT\n/\n', b'').replace(b'WVIT\n/\n', b'')
+    assert current != legacy
+    for root in roots:
+        raw = (root / changed[0]).read_bytes()
+        assert raw in (legacy, current), "non-canonical SUMMARY change"
+    return [dict(path=changed[0], baseline_sha256=inputs[0][changed[0]],
+                 candidate_sha256=inputs[1][changed[0]],
+                 allowed_difference='Canonical all-well WVPT/WVIT SUMMARY requests only; no physics/control input change')]
+
+
 def compare(baseline, candidate, expected_months=None):
     left, right = load(baseline), load(candidate)
     a, b = left[0], right[0]
@@ -55,7 +74,8 @@ def compare(baseline, candidate, expected_months=None):
     schedules = {data[0]["artifacts"]["exact_opm_input_schedule"]["path"] for data in (left, right)}
     inputs = [{e["path"]: e["sha256"] for e in data[1]["artifacts"]
                if e["path"].startswith("input/") and e["path"] not in schedules} for data in (left, right)]
-    assert inputs[0] == inputs[1], "non-schedule simulator inputs changed"
+    summary_changes = compare_physical_inputs((baseline, candidate), inputs,
+        {r["well"] for r in left[4]})
     for key in ("calculator_sha256", "norms_source_sha256", "norms_sha256", "assumption_overrides", "start_year"):
         assert left[2][key] == right[2][key], key
     assert left[3]["assumptions"] == right[3]["assumptions"]
@@ -85,7 +105,8 @@ def compare(baseline, candidate, expected_months=None):
             "well_count": a["controls"]["well_count"], "months": len(period["months"]),
             "source_sha256": a["source_sha256"], "artifacts_verified": True,
             "verified_evidence": {
-                "simulator": {"image": left[1]["image_reference"], "both_runs_successful": True},
+                "simulator": {"image": left[1]["image_reference"], "both_runs_successful": True,
+                              "summary_output_changes": summary_changes},
                 "constraints": {"max_actual_liquid_m3d": 500, "both_runs_within_limit": True,
                                 "same_well_inventory_and_months": True},
                 "economics": {"calculator_sha256": left[2]["calculator_sha256"],
