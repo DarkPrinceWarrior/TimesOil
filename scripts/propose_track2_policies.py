@@ -14,6 +14,7 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 import time
 
 import numpy as np
@@ -24,7 +25,9 @@ from timesoil.aios.agents import AgentRole, AgentWorkflow, ToolDefinition, ToolR
 from timesoil.aios.llm import ExternalQwenClient, LLMConfig
 from timesoil.aios.surrogate import _project_physics
 from timesoil.aios.track2 import load_trajectory_dataset
-from timesoil.aios.workflow import CycleError, CycleRequest, _controls
+from timesoil.aios.workflow import (CycleError, CycleRequest, _controls,
+    _source_control_inventory, _validate_source_well_scope)
+from timesoil.aios.opm import OpmFlowRunner
 from timesoil.aios.operating_constraints import check_controls, parse_constraints
 from timesoil.aios.economics import CHDDEconomicsAdapter
 
@@ -220,6 +223,15 @@ def main():
         parser.error('local correction requires reference, correction hash and --skip-grid')
     request = json.loads(args.request.read_text())
     checked_request = CycleRequest.from_mapping(request)
+    with TemporaryDirectory(prefix='timesoil-policy-source-') as temporary:
+        prepared = OpmFlowRunner().prepare(checked_request.source, Path(temporary) / 'case',
+                                           deck=checked_request.deck)
+        source_inventory = _source_control_inventory(
+            (prepared.input_dir / checked_request.schedule_relative_path).read_text(),
+            sorted({a.month for a in checked_request.controls}))
+    allow_conversion = checked_request.context.get('constraints', {}).get('allow_conversion_to_injection', False)
+    _validate_source_well_scope(checked_request.controls, source_inventory,
+                               allow_conversion_to_injection=allow_conversion)
     normative_profile = CHDDEconomicsAdapter.from_env().normative_profile(
         charge_initial_pump=checked_request.charge_initial_pump
     )
@@ -335,6 +347,8 @@ def main():
             "policy": policy,
         }}
         checked = CycleRequest.from_mapping(proposed)
+        _validate_source_well_scope(checked.controls, source_inventory,
+                                   allow_conversion_to_injection=allow_conversion)
         reject_duplicate_controls(checked.controls_sha256, candidates)
         original_roles = {(a['month'], a['well']): a['role'] for a in request['controls']}
         if (not checked.context.get('constraints', {}).get('allow_conversion_to_injection', False)
@@ -470,6 +484,10 @@ def main():
                 "source_completions_preserved": True, 'bhp_channel': has_bhp,
                 'case_constraints': checked_request.context.get('constraints', {}),
                 'operating_constraints': checked_request.context.get('operating_constraints', []),
+                'first_source_control_month': {well: None if item.first_control_month is None
+                    else item.first_control_month.isoformat()
+                    for well, item in next(iter(source_inventory.values())).items()},
+                'before_first_source_control': 'Must remain SHUT with zero rate; well_updates must not open wells earlier.',
                 "additional_water_quota": "not supplied in the current training archive"},
             "claim_limits": "Forecasts use observed pre-origin history and planned controls. When forecast_reference is present, its prior simulated future is also used; candidate future observations are excluded. Screening margin is a full-period undiscounted rate-integration estimate excluding pump CAPEX, state events and tax. It is NOT CHDD and cannot select a winning control policy. Every retained hypothesis must undergo full OPM plus official CHDD before selection. Candidate requires full-period OPM plus the official calculator. Request dates describe this experiment, not a confirmed competition horizon. No independently calibrated TimesFM uncertainty or improvement claim."}
         async with ExternalQwenClient(LLMConfig.from_env()) as client:
