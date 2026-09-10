@@ -80,6 +80,31 @@ def load_selected_layer(layer, head, selected):
     return layer
 
 
+def enable_cold_start_normalization(model, scales):
+    """Give constant target histories a train-only scale for native output RevIN."""
+    scales = np.asarray(scales, dtype=float)
+    if scales.shape != (3,) or not np.isfinite(scales).all() or np.any(scales <= 0):
+        raise ValueError('cold-start scales must be three finite positive training statistics')
+    if hasattr(model, 'cold_start_scale'):
+        np.testing.assert_array_equal(model.cold_start_scale, scales)
+        return
+    count = len(model.output_head.features)
+    if count % 3:
+        raise ValueError('cold-start normalization requires joint oil/liquid/pressure targets')
+    original = model._preprocess
+
+    def preprocess(*args, **kwargs):
+        result = original(*args, **kwargs)
+        mean, sigma = result[3]
+        fallback = torch.as_tensor(np.tile(scales, count // 3), device=sigma.device, dtype=sigma.dtype)[None, :, None]
+        # Constant inputs normalize to zero under either scale; preserve covariate statistics.
+        adjusted = torch.cat([torch.where(sigma[:, :count] == 0, fallback, sigma[:, :count]), sigma[:, count:]], dim=1)
+        return (*result[:3], (mean, adjusted), result[4])
+
+    model._preprocess = preprocess
+    model.cold_start_scale = scales.tolist()
+
+
 def load_frozen_model(model, connectivity, selected, *, reference_sha256=None):
     if selected.get('reference_manifest_sha256') not in (None, reference_sha256):
         raise ValueError('trained response weights require the matching physical reference')
@@ -98,6 +123,8 @@ def load_frozen_model(model, connectivity, selected, *, reference_sha256=None):
         model.transformer_stack.layers[-1], model.output_head, layer_selected)
     if full is not None:
         model.load_state_dict(full)
+    if 'cold_start_scale' in selected:
+        enable_cold_start_normalization(model, selected['cold_start_scale'])
     return model
 
 
@@ -161,6 +188,31 @@ def self_check():
     for key, value in adapted.state_dict().items():
         torch.testing.assert_close(restored.state_dict()[key], value, rtol=0, atol=0)
     assert not torch.equal(native.transformer_stack.layers[0].weight, restored.transformer_stack.layers[0].weight)
+    from timesfm3.torch import util
+    sigma = torch.tensor([[[0.], [2.], [0.], [0.], [3.], [0.], [0.], [2.]]])
+    mean = torch.zeros_like(sigma)
+    original_stats = (None, None, None, (mean, sigma), torch.ones_like(sigma))
+    native._preprocess = lambda *args, **kwargs: original_stats
+    adapted = load_frozen_model(deepcopy(native), connection,
+        {**full, 'cold_start_scale': [10., 20., 250.]})
+    adjusted = adapted._preprocess()[3][1]
+    torch.testing.assert_close(adjusted.flatten(), torch.tensor([10., 2., 250., 10., 3., 250., 0., 2.]))
+    logits = torch.ones((1, 8, 1, 2), requires_grad=True)
+    fixed = util.revin(logits, mean, adjusted, reverse=True)
+    fixed.sum().backward()
+    assert logits.grad[0, 2, 0, 0] == 250
+    unchanged = util.revin(logits, mean, sigma, reverse=True)
+    torch.testing.assert_close(fixed[:, [1, 4, 6, 7]], unchanged[:, [1, 4, 6, 7]])
+    assert not torch.count_nonzero(unchanged[:, 2])
+    torch.testing.assert_close(native._preprocess()[3][1], sigma, rtol=0, atol=0)
+    enable_cold_start_normalization(adapted, [10., 20., 250.])
+    for invalid in ([0., 20., 250.], [10., float('nan'), 250.], [10., 20.]):
+        try:
+            enable_cold_start_normalization(deepcopy(native), invalid)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('invalid cold-start normalization accepted')
     from timesoil.aios.interwell import WellConnectivity
     connection = WellConnectivity(('a', 'b'), [[0, 1], [1, 0]], [[10, .1, 1], [20, .2, 3]], {})
     states = np.ones((12, 2, 3))

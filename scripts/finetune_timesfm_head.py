@@ -150,6 +150,7 @@ def main():
     parser.add_argument('--unfreeze-backbone', action='store_true')
     parser.add_argument('--model-y', action='store_true')
     parser.add_argument('--condition-last-layer', action='store_true')
+    parser.add_argument('--cold-start-normalization', action='store_true')
     parser.add_argument('--regime-calibration', type=Path)
     parser.add_argument('--regime-calibration-sha256')
     parser.add_argument('--bhp-calibration', type=Path)
@@ -173,6 +174,8 @@ def main():
         parser.error('initial-head and its SHA-256 must be supplied together')
     if args.condition_last_layer and not args.connectivity:
         parser.error('static last-layer conditioning requires verified connectivity')
+    if args.cold_start_normalization and not args.condition_last_layer:
+        parser.error('cold-start normalization requires static last-layer conditioning')
     if args.monthly_observed_training and not args.model_y:
         parser.error('monthly observed training currently requires Model Y')
     if not 1 <= args.intervention_repeats <= 23 or args.intervention_repeats != 1 and not args.monthly_observed_training:
@@ -267,6 +270,8 @@ def main():
         if sha256(args.initial_head.read_bytes()).hexdigest() != args.initial_head_sha256:
             raise ValueError('initial output-head hash mismatch')
         initial = torch.load(args.initial_head, map_location='cuda', weights_only=True)
+        if 'cold_start_scale' in initial and not args.cold_start_normalization:
+            raise ValueError('initial weights require cold-start normalization')
         if initial.get('reference_manifest_sha256') not in (None, args.reference_sha256):
             raise ValueError('initial weights require their original physical reference')
         initial_weights = ({k.removeprefix('output_head.'): v for k, v in initial['full_model'].items()
@@ -302,6 +307,11 @@ def main():
     quantiles = torch.tensor(model.quantiles, device='cuda')
     train_truth = np.stack([by_id[i].states[origin + 1:origin + horizon + 1] for i in train_ids])
     feature_scale = np.maximum(np.abs(train_truth).mean(axis=(0, 1, 2)), 1.0)
+    if args.cold_start_normalization:
+        from timesfm_geology import enable_cold_start_normalization
+        enable_cold_start_normalization(model, feature_scale)
+        if args.initial_head and 'cold_start_scale' in initial:
+            np.testing.assert_array_equal(initial['cold_start_scale'], feature_scale)
     scale = torch.tensor(np.tile(feature_scale, count)[None, :, None], device='cuda', dtype=torch.float32)
     examples = {}
     train_keys = [(name, offset) for name in train_ids for offset in offsets]
@@ -381,6 +391,8 @@ def main():
             return model.output_head.state_dict()
         if args.reference:
             weights['reference_manifest_sha256'] = args.reference_sha256
+        if args.cold_start_normalization:
+            weights['cold_start_scale'] = model.cold_start_scale
         return weights
     torch.save(selected_weights(), checkpoint)
     report = dict(schema='timesoil.timesfm-head-adaptation/v1', model_revision=MODEL_REVISION,
@@ -394,6 +406,9 @@ def main():
         all_other_backbone_parameters_frozen=not args.unfreeze_backbone,
         full_backbone_trainable=args.unfreeze_backbone, gradient_checkpointing=args.unfreeze_backbone,
         initial_head_sha256=args.initial_head_sha256,
+        cold_start_scale=getattr(model, 'cold_start_scale', None),
+        cold_start_source_sha256=sha256(Path(inspect.getsourcefile(enable_cold_start_normalization)).read_bytes()).hexdigest()
+            if args.cold_start_normalization else None,
         regime_calibration_manifest_sha256=args.regime_calibration_sha256,
         bhp_calibration_manifest_sha256=args.bhp_calibration_sha256,
         model_y_calibration_manifest_sha256=args.model_y_calibration_sha256,
