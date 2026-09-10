@@ -11,7 +11,7 @@ from timesoil.aios.track2 import load_trajectory_dataset
 from timesoil.aios.workflow import CycleRequest
 
 R = Path('/root/projects/TimesOil/results/audit-20260909')
-OUT = R / 'timesfm-final-only-z-20260910'
+OUT = R / 'timesfm-final-only-z-compact-20260910'
 TRAINING = R / 'timesfm-economic-targets-z-20260910'
 GPU_PYTHON = '/tmp/timesoil-kt3-20260908/venv/bin/python'
 ROOT_PYTHON = '/root/projects/TimesOil/.venv/bin/python'
