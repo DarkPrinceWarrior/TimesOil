@@ -56,8 +56,8 @@ def test_monthly_water_balance_uses_reservoir_deltas_and_explicit_groups(tmp_pat
             for stamp in dates:
                 end = stamp == "2014-02-01"
                 # Historical cumulative totals hide monthly overinjection unless differenced.
-                writer.writerow([stamp, *(10000 + (-1 if reverse else 1) * increments[w].get(v, 0) * end
-                                          if v in ("WVPT", "WVIT", "WWPT", "WWIT") else 0
+                writer.writerow([stamp, *(10000 + (-1 if reverse else 1) * increments[w].get("WWPT" if v == "WLPT" else v, 0) * end
+                                          if v in ("WVPT", "WVIT", "WWPT", "WWIT", "WLPT") else 0
                                           for w, v in columns)])
     def rules(group=wells, **limits):
         return parse_constraints([dict(start=str(month), end=str(month), wells=group, limits=limits)],
@@ -77,7 +77,7 @@ def test_monthly_water_balance_uses_reservoir_deltas_and_explicit_groups(tmp_pat
     check(rules(max_monthly_water_deficit_m3=20))
     with pytest.raises(ValueError, match="misses WV"):
         check(rules(max_monthly_voidage_replacement=1.15))
-    write_report(dates=("2014-02-01",))
+    write_report(dates=("2014-01-02", "2014-02-01"))
     with pytest.raises(ValueError, match="start-of-month"):
         check(rules(max_monthly_water_deficit_m3=20))
     write_report(reverse=True)
