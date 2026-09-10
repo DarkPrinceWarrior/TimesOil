@@ -89,7 +89,9 @@ def load_selected_layer(layer, head, selected):
 def enable_cold_start_normalization(model, scales):
     """Give constant target histories a train-only scale for native output RevIN."""
     scales = np.asarray(scales, dtype=float)
-    target_count = model.output_head.target_count
+    target_count = getattr(model.output_head, 'target_count', None)
+    if target_count not in (3, 9):
+        raise ValueError('cold-start normalization requires a conditioned target head')
     if scales.shape != (target_count,) or not np.isfinite(scales).all() or np.any(scales <= 0):
         raise ValueError('cold-start scales must match finite positive target training statistics')
     if hasattr(model, 'cold_start_scale'):
