@@ -10,7 +10,7 @@ R = Path('/root/projects/TimesOil/results/audit-20260909')
 OUT = Path(sys.argv[1])
 OUT.mkdir(parents=True, exist_ok=False)
 digest = lambda p: sha256(p.read_bytes()).hexdigest()
-read = lambda p: json.loads(p.read_text())
+read = lambda p: json.loads(Path(p).read_text())
 audit = read(R / 'timesfm-monthly-y-v5-20260909/full-audit.json')
 selection = read('/root/projects/TimesOil-audit-timesfm-head-20260909/deliverables/control_coverage_20260909/timesfm-trained-z-policy-selection.json')
 assert selection['agent_review_approved'] and audit['approved_monthly_reviews'] == 23
@@ -79,5 +79,6 @@ for model in ['model_y', 'model_z']:
     selected['uplift_percent'] = 100 * (selected['official_chdd_m'] / base['official_chdd_m'] - 1)
     assert selected['uplift_percent'] >= 15
 copy(Path(__file__), 'provenance/package.py')
+copy(Path('/root/projects/TimesOil-audit-timesfm-head-20260909/deliverables/control_coverage_20260909/timesfm-trained-z-policy-selection.json'), 'model_z/full-comparison.json')
 (OUT / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
 print(json.dumps({k: {'chdd_m': v['official_chdd_m'], 'months': v['months']} for k, v in manifest['cases'].items()}, indent=2))
