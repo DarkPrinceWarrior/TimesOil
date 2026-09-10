@@ -31,6 +31,25 @@ from timesoil.aios.opm import OpmFlowRunner
 from timesoil.aios.schedule_overlay import apply_schedule_overlay
 from timesoil.aios.operating_constraints import check_controls, parse_constraints
 from timesoil.aios.economics import CHDDEconomicsAdapter
+from timesoil.aios.schedule import ScheduleError
+
+
+async def plan_with_control_repair(workflow, context, candidates, attempted, output, index):
+    """Retry one rejected control proposal; never retry a partially accepted round."""
+    before = len(candidates)
+    for attempt in range(2):
+        try:
+            return await workflow.run_plan(context)
+        except (CycleError, ScheduleError) as error:
+            rejected = {"error": str(error), "attempt": attempt,
+                        "policy": attempted[-1] if attempted else None,
+                        "accepted_candidates_added": len(candidates) - before}
+            with (output / f"rejected-plan-{index:02d}-{attempt}.json").open('x') as stream:
+                json.dump(rejected, stream, indent=2)
+            if attempt or len(candidates) != before:
+                raise
+            context = {**context, "previous_invalid_proposal": rejected,
+                       "repair_instruction": "Correct the rejected controls and call propose_policy exactly once. Respect each well's first_source_control_month, original BHP bounds and conversion permission. No invalid controls were accepted. Do not change or bypass these constraints."}
 
 
 def policy_controls(controls, policy):
@@ -453,8 +472,13 @@ def main():
 
     async def propose_round(index):
         before = len(candidates)
+        attempted = []
+        def propose(policy, _context):
+            attempted.append(policy)
+            (args.output / f"policy-attempts-{index:02d}.json").write_text(json.dumps(attempted, indent=2))
+            return evaluate(policy)
         tool = ToolDefinition("propose_policy", "Propose a full-field policy. Optional producer_bhp_add (bar) and injector_bhp_factor tighten open-well BHP limits uniformly before individual updates. well_updates changes a well over inclusive monthly start/end dates after rate scaling: rate, status, target, role, BHP limit. Conversion requires explicit WRAT, value and BHP, must be permitted by the case, and cannot be reversed; extend its role to the end. Omitted scales default to 1, arrays to empty. Respect the explicit forecast_reference domain when present. Full-period TimesFM hypothesis forecast; every retained candidate requires full-period OPM, and official CHDD selects the winner.", schema,
-            lambda policy, _: evaluate(policy))
+            propose)
         context_value = {"track": 2, "round": index,
             "search_focus": checked_request.context.get('search_focus'),
             "conversion_search": {
@@ -506,8 +530,9 @@ def main():
                     "verification": "Requires actual OPM cumulative volume differences; predicted oil/liquid/pressure alone cannot certify these limits."}},
             "claim_limits": "Forecasts use observed pre-origin history and planned controls. When forecast_reference is present, its prior simulated future is also used; candidate future observations are excluded. Screening margin is a full-period undiscounted rate-integration estimate excluding pump CAPEX, state events and tax. It is NOT CHDD and cannot select a winning control policy. Every retained hypothesis must undergo full OPM plus official CHDD before selection. Candidate requires full-period OPM plus the official calculator. Request dates describe this experiment, not a confirmed competition horizon. No independently calibrated TimesFM uncertainty or improvement claim."}
         async with ExternalQwenClient(LLMConfig.from_env()) as client:
-            plan = await AgentWorkflow(client, ToolRegistry((tool,)),
-                role_tools={AgentRole.PLANNER: (tool.name,)}, required_tools={AgentRole.PLANNER: (tool.name,)}).run_plan(context_value)
+            workflow = AgentWorkflow(client, ToolRegistry((tool,)),
+                role_tools={AgentRole.PLANNER: (tool.name,)}, required_tools={AgentRole.PLANNER: (tool.name,)})
+            plan = await plan_with_control_repair(workflow, context_value, candidates, attempted, args.output, index)
         (args.output / f"agent-{index:02d}.json").write_text(json.dumps(asdict(plan), ensure_ascii=False, indent=2))
         if not all(d.approved for d in plan.decisions) or len(candidates) != before + 1:
             raise RuntimeError("Qwen must approve exactly one proposed policy")
