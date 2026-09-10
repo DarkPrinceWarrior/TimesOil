@@ -22,9 +22,11 @@
     "mobile.png"
   ],
   "sha256": {
-    "index.html": "75228392ea6040377b49232aac3fd79b05dec769c54a6a8dc41640e275500ee4",
-    "TimesOil_current.drawio": "97775729c4d4edf47e019ab241bd6b138070df618e42170d25170b75f5b1db80",
-    "desktop.png": "0367434bf9d702709d1c06a0ff4969bebbef864fac64fd7df7a15997a5a6d2f3",
-    "mobile.png": "3be7cc3da4320c94a8e7f73ac26d122725a7ce4bba4a2ad445a4e782a03ad502"
-  }
+    "index.html": "03ee6b5ab3f0cc2b52a7cdc3fa27ee7febbe482a183102213b10cdf2893f1ace",
+    "TimesOil_current.drawio": "912aab51af69e15b5cb3b7d7fb946bf0c0950fcc6236710b70f7f60f2ceab954",
+    "desktop.png": "84896ad5b88cc372ca4aa1b66c83cab8659d8e47f08a4700eb2dfee095e01cf2",
+    "mobile.png": "b49c4e6cdf4aa8ef567b4861ea5e1f3604236d197a75cc37765ebfb78db05931"
+  },
+  "updated_metrics": "2026-09-10 04:58 UTC",
+  "drawio_header_font_size": 20
 }

@@ -48,6 +48,58 @@
     "z-local-independent-protocol.json": {
       "sha256": "2e6f9cc9dc2d23b05d655e127fcbccb0206fb9cb92ca58e9cb3207bf1b9d1b3e",
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-local-independent-z-20260910/launch-protocol.json"
+    },
+    "y-intervention-training.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-intervention-y-20260910/training/report.json",
+      "sha256": "cbdd6ac57bdf196947f4959ba2a65a96014506353eb56cec94178f6670b1bb23"
+    },
+    "y-intervention-protocol.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-intervention-y-20260910/launch-protocol.json",
+      "sha256": "9376d2a163e3eef24d01d024fee97556640025188421832014bda60913bb94bb"
+    },
+    "y-monthly-integration-preview.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-integrated-monthly-y-20260910/preview.json",
+      "sha256": "efa174eb1a531075e989827886e326587bf6cf69246db60fe1b762445fedeb9d"
+    },
+    "z-local-policy-comparison.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-reference-z-policy-v2-20260910/selection.json",
+      "sha256": "cc8827dfdfb03a57a766c620dfe4a77aaee981cff8dbdaf412b87cd98ca14e76"
+    },
+    "z-local-policy-receipt.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-reference-z-policy-v2-20260910/proposals/proposal-receipt.json",
+      "sha256": "23c1f7602be985de6d5c97731ab19ef1019e9bf2efa579479d292f988c1b4eeb"
+    },
+    "z-reference-response-training.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-reference-trained-z-20260910/training/report.json",
+      "sha256": "861d24be65cec5dc1dec9e9331d6132e767a1daa5c50b721bf3566f33c44526f"
+    },
+    "z-reference-response-protocol.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-reference-trained-z-20260910/launch-protocol.json",
+      "sha256": "db0e204c3ba5f4d0a2253b9410742f30558487f2ed4c0d44431322823f10d230"
+    },
+    "z-reference-response-independent.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-reference-trained-z-20260910/evaluation/report.json",
+      "sha256": "ae9af8903cc291741353e2e28f35226d681420c84ed1fac629d596ca8b7dd1d4"
+    },
+    "y-intervention-independent-v3.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-independent-y-v3-relocated-20260910/evaluation/report.json",
+      "sha256": "8d6af5f9222a1ef61052705e50a5aedf0c565b86bcc96edd301c09615c6ef56b"
+    },
+    "y-intervention-evaluation-protocol.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-independent-y-v3-relocated-20260910/launch-protocol.json",
+      "sha256": "47a5b0b7128e83277487d992a02421cbcf5b1b34c2c55f1aa3fdf06c0b388b13"
+    },
+    "y-independent-v3-manifest.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/manifest.json",
+      "sha256": "aafd788cdf96497574c576dd2fa32c8042fb4fe9bb8becde2ca7f61352c1ab2c"
+    },
+    "y-independent-v3-physics-protocol.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/launch-protocol.json",
+      "sha256": "08559056cbe633b73b26fce06caf80cd4374f9a97fee5fd29cdc0c5a79689add"
+    },
+    "y-monthly-controller-protocol.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-integrated-monthly-y-20260910/controller-protocol.json",
+      "sha256": "1f5ba6bf03ef1235e9f4ccd953daeda1df7dfd490ced027be60d588f6cb16678"
     }
   }
 }

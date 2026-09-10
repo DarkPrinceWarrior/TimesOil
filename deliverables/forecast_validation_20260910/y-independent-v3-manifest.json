@@ -1,0 +1,301 @@
+{
+  "schema": "timesoil.model-y-forecast-evaluation/v1",
+  "source_sha256": "261591b458084eaaf8c86a601e68d3bdc6e91fed9f0117fdcbe58cfca4eb882e",
+  "calibration_cases": [
+    0,
+    1,
+    3,
+    4,
+    6
+  ],
+  "test_cases": [
+    2,
+    5,
+    7
+  ],
+  "designs": [
+    [
+      2,
+      0.9,
+      2.5,
+      0.975
+    ],
+    [
+      2.4,
+      1.35,
+      7.5,
+      0.975
+    ],
+    [
+      3.1,
+      1.65,
+      7.5,
+      0.94
+    ],
+    [
+      3.2,
+      1.55,
+      2.5,
+      0.95
+    ],
+    [
+      2.1,
+      1.15,
+      5,
+      0.925
+    ],
+    [
+      1.85,
+      1.3,
+      7.5,
+      0.96
+    ],
+    [
+      2.65,
+      1.65,
+      5,
+      0.975
+    ],
+    [
+      2.9,
+      1.85,
+      2.5,
+      0.94
+    ]
+  ],
+  "model_selection_allowed_on_test": false,
+  "scenarios": [
+    {
+      "index": 0,
+      "run": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/part-even/opm/opm-full-replay-83fc847c45c71563a0eca804",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/candidate-00",
+      "trajectory_sha256": "0ea247707b0c31e5a27e22b6896a91ae4e0f809a009a37972815c84d5b0ae0a5",
+      "export_manifest_sha256": "c9f3413373f5b058c4415baa87c1a0073dfde28099d68ed013c1ec4e9bbb663f"
+    },
+    {
+      "index": 1,
+      "run": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/part-odd/opm/opm-full-replay-73b8a8e8ee7efaf592d63dca",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/candidate-01",
+      "trajectory_sha256": "435090f56fc7658076e968b3d52d56cd7edd6100f6da29d6c015f252aa7e47ea",
+      "export_manifest_sha256": "a326976dc97787d398d9d0522dc669d0fa7e174b21f5b41c7a9b93d413cd1bae"
+    },
+    {
+      "index": 2,
+      "run": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/part-even/opm/opm-full-replay-a28a06cafdd5edfabd8e8749",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/candidate-02",
+      "trajectory_sha256": "54e9e7b8527e0d96c5e1870b32232be9931569cf8e04fc8ea7f5249dcfe7cfa4",
+      "export_manifest_sha256": "6e0ec4ecac94e7a985e6e739c5aa0286313a2734d930797503f74dd3d71d5e18"
+    },
+    {
+      "index": 3,
+      "run": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/part-odd/opm/opm-full-replay-42c585e7dc5fb93da4af2d0f",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/candidate-03",
+      "trajectory_sha256": "a6a153313800104bcb722766f1debb197fc655fbf98fe75e4cdec0fd5e2e469e",
+      "export_manifest_sha256": "33fb6aef433c4991827076a0bf3778d5bcc3c8c7bbad80e8206bd4b1a223e08d"
+    },
+    {
+      "index": 4,
+      "run": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/part-even/opm/opm-full-replay-86ddb0cdf2c15a6b68602057",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/candidate-04",
+      "trajectory_sha256": "0f9f106fb19f2776ccceea5b0a10816ae0f87e79007c5fd4a701cec0655355df",
+      "export_manifest_sha256": "b45cacc1f52bcf4d96cc616c93cc41198b14c66b93235e5c62c69e4416ae5077"
+    },
+    {
+      "index": 5,
+      "run": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/part-odd/opm/opm-full-replay-3b8e22bee50b2e4b0a8d0c16",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/candidate-05",
+      "trajectory_sha256": "12fe915d05d17c7cfac4166ec6a52a0a800e542b6e9ba47d490ac0c68239dcc5",
+      "export_manifest_sha256": "f59f5e566b1aa3d2d0e1714c38affd1ee50e3bd76009300a66441867bb7723e6"
+    },
+    {
+      "index": 6,
+      "run": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/part-even/opm/opm-full-replay-c46a13c28834014ba1266e34",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/candidate-06",
+      "trajectory_sha256": "a7414b32274ed598db1f591c5137c9dc1649de0542afabcae919aa9f78bf1e00",
+      "export_manifest_sha256": "8bd6f81778fae582d93d287f27232b63696969b3b33027b7defaa35448c80958"
+    },
+    {
+      "index": 7,
+      "run": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/part-odd/opm/opm-full-replay-080e55947c7135f930fb700a",
+      "directory": "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v3-20260910/candidate-07",
+      "trajectory_sha256": "3a9d398d8fa3d36501bd0ce227e2e7f349e9ecb01a6f6c0e3b9407bef6ee27cc",
+      "export_manifest_sha256": "a60854d1c6a02d70379c0c5333c5ecf0a231e3886d6dd0a7d43908c46783178d"
+    }
+  ],
+  "complete": true,
+  "reference_manifest_sha256": "65cabb4a4abf9ac9114d0aaddfe5a301b4728a8a8e9d7ecc9be18e4d44322ea1",
+  "designs_sha256": "573dc6d2b558724e1c41a302a2d938013eb863328748a5f2f6575943c693a531",
+  "scenario_partition": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "partition_manifest_sha256": {
+    "part-even": "5bcc7e161124eafa6d2c9ba99cc2ba360600b1f5f84cf3008c04acc492c6b136",
+    "part-odd": "b9daf962de7db9be0c216f8f57be0c331bcb1a8c0430e581ccfb451a9cde76db"
+  },
+  "composition_script_sha256": "e1eda7af8fa2de9f6c3250aafcb5cb43b3005190712395ceaad4cc4b5261188b",
+  "artifact_relocation": {
+    "original_batch_manifest_sha256": "81a70db96ad48aec8ba9cc612eabd33968edd10a0b998a1c2d9eff027c1dd8d0",
+    "physical_data_changed": false,
+    "changes": [
+      {
+        "index": 0,
+        "original_export_manifest_sha256": "2cf006de3330902c5bdf277f527b54b1878cd3281bb7af26f7afb1b622c37359",
+        "relocated_export_manifest_sha256": "c9f3413373f5b058c4415baa87c1a0073dfde28099d68ed013c1ec4e9bbb663f",
+        "only_changed_fields": {
+          "source.summary_csv": {
+            "before": "../opm/opm-full-replay-83fc847c45c71563a0eca804/summary-report.txt",
+            "after": "../part-even/opm/opm-full-replay-83fc847c45c71563a0eca804/summary-report.txt"
+          },
+          "provenance.opm_run_manifest": {
+            "before": "../opm/opm-full-replay-83fc847c45c71563a0eca804/manifest.json",
+            "after": "../part-even/opm/opm-full-replay-83fc847c45c71563a0eca804/manifest.json"
+          },
+          "provenance.summary_extraction_manifest": {
+            "before": "../opm/opm-full-replay-83fc847c45c71563a0eca804/summary-extraction.json",
+            "after": "../part-even/opm/opm-full-replay-83fc847c45c71563a0eca804/summary-extraction.json"
+          }
+        }
+      },
+      {
+        "index": 1,
+        "original_export_manifest_sha256": "0f831a3dde0a4489757d38d0615e25b2f85f8d4f53ab0711acfbd7ae80644bd3",
+        "relocated_export_manifest_sha256": "a326976dc97787d398d9d0522dc669d0fa7e174b21f5b41c7a9b93d413cd1bae",
+        "only_changed_fields": {
+          "source.summary_csv": {
+            "before": "../opm/opm-full-replay-73b8a8e8ee7efaf592d63dca/summary-report.txt",
+            "after": "../part-odd/opm/opm-full-replay-73b8a8e8ee7efaf592d63dca/summary-report.txt"
+          },
+          "provenance.opm_run_manifest": {
+            "before": "../opm/opm-full-replay-73b8a8e8ee7efaf592d63dca/manifest.json",
+            "after": "../part-odd/opm/opm-full-replay-73b8a8e8ee7efaf592d63dca/manifest.json"
+          },
+          "provenance.summary_extraction_manifest": {
+            "before": "../opm/opm-full-replay-73b8a8e8ee7efaf592d63dca/summary-extraction.json",
+            "after": "../part-odd/opm/opm-full-replay-73b8a8e8ee7efaf592d63dca/summary-extraction.json"
+          }
+        }
+      },
+      {
+        "index": 2,
+        "original_export_manifest_sha256": "9a1d95e9bcfd7510046e0ebf7d165789a08a172713b161f78fb671ec35343f65",
+        "relocated_export_manifest_sha256": "6e0ec4ecac94e7a985e6e739c5aa0286313a2734d930797503f74dd3d71d5e18",
+        "only_changed_fields": {
+          "source.summary_csv": {
+            "before": "../opm/opm-full-replay-a28a06cafdd5edfabd8e8749/summary-report.txt",
+            "after": "../part-even/opm/opm-full-replay-a28a06cafdd5edfabd8e8749/summary-report.txt"
+          },
+          "provenance.opm_run_manifest": {
+            "before": "../opm/opm-full-replay-a28a06cafdd5edfabd8e8749/manifest.json",
+            "after": "../part-even/opm/opm-full-replay-a28a06cafdd5edfabd8e8749/manifest.json"
+          },
+          "provenance.summary_extraction_manifest": {
+            "before": "../opm/opm-full-replay-a28a06cafdd5edfabd8e8749/summary-extraction.json",
+            "after": "../part-even/opm/opm-full-replay-a28a06cafdd5edfabd8e8749/summary-extraction.json"
+          }
+        }
+      },
+      {
+        "index": 3,
+        "original_export_manifest_sha256": "cc2cf53ecee680a17324c0e84c3c183c05a2582a6e1dd072a380049360b80a5f",
+        "relocated_export_manifest_sha256": "33fb6aef433c4991827076a0bf3778d5bcc3c8c7bbad80e8206bd4b1a223e08d",
+        "only_changed_fields": {
+          "source.summary_csv": {
+            "before": "../opm/opm-full-replay-42c585e7dc5fb93da4af2d0f/summary-report.txt",
+            "after": "../part-odd/opm/opm-full-replay-42c585e7dc5fb93da4af2d0f/summary-report.txt"
+          },
+          "provenance.opm_run_manifest": {
+            "before": "../opm/opm-full-replay-42c585e7dc5fb93da4af2d0f/manifest.json",
+            "after": "../part-odd/opm/opm-full-replay-42c585e7dc5fb93da4af2d0f/manifest.json"
+          },
+          "provenance.summary_extraction_manifest": {
+            "before": "../opm/opm-full-replay-42c585e7dc5fb93da4af2d0f/summary-extraction.json",
+            "after": "../part-odd/opm/opm-full-replay-42c585e7dc5fb93da4af2d0f/summary-extraction.json"
+          }
+        }
+      },
+      {
+        "index": 4,
+        "original_export_manifest_sha256": "2345e9564234f860f30ab6784087e28f71b12c0fdc881565ebe5f7b2223d275f",
+        "relocated_export_manifest_sha256": "b45cacc1f52bcf4d96cc616c93cc41198b14c66b93235e5c62c69e4416ae5077",
+        "only_changed_fields": {
+          "source.summary_csv": {
+            "before": "../opm/opm-full-replay-86ddb0cdf2c15a6b68602057/summary-report.txt",
+            "after": "../part-even/opm/opm-full-replay-86ddb0cdf2c15a6b68602057/summary-report.txt"
+          },
+          "provenance.opm_run_manifest": {
+            "before": "../opm/opm-full-replay-86ddb0cdf2c15a6b68602057/manifest.json",
+            "after": "../part-even/opm/opm-full-replay-86ddb0cdf2c15a6b68602057/manifest.json"
+          },
+          "provenance.summary_extraction_manifest": {
+            "before": "../opm/opm-full-replay-86ddb0cdf2c15a6b68602057/summary-extraction.json",
+            "after": "../part-even/opm/opm-full-replay-86ddb0cdf2c15a6b68602057/summary-extraction.json"
+          }
+        }
+      },
+      {
+        "index": 5,
+        "original_export_manifest_sha256": "00a30ca84751fad45031f10b3c56d19f161530024a3cc04610fa871d8d61c4fa",
+        "relocated_export_manifest_sha256": "f59f5e566b1aa3d2d0e1714c38affd1ee50e3bd76009300a66441867bb7723e6",
+        "only_changed_fields": {
+          "source.summary_csv": {
+            "before": "../opm/opm-full-replay-3b8e22bee50b2e4b0a8d0c16/summary-report.txt",
+            "after": "../part-odd/opm/opm-full-replay-3b8e22bee50b2e4b0a8d0c16/summary-report.txt"
+          },
+          "provenance.opm_run_manifest": {
+            "before": "../opm/opm-full-replay-3b8e22bee50b2e4b0a8d0c16/manifest.json",
+            "after": "../part-odd/opm/opm-full-replay-3b8e22bee50b2e4b0a8d0c16/manifest.json"
+          },
+          "provenance.summary_extraction_manifest": {
+            "before": "../opm/opm-full-replay-3b8e22bee50b2e4b0a8d0c16/summary-extraction.json",
+            "after": "../part-odd/opm/opm-full-replay-3b8e22bee50b2e4b0a8d0c16/summary-extraction.json"
+          }
+        }
+      },
+      {
+        "index": 6,
+        "original_export_manifest_sha256": "f1b7cf9c822ad2994f462908eca3acf05507bd1882703247f32f5b9dd413aa2b",
+        "relocated_export_manifest_sha256": "8bd6f81778fae582d93d287f27232b63696969b3b33027b7defaa35448c80958",
+        "only_changed_fields": {
+          "source.summary_csv": {
+            "before": "../opm/opm-full-replay-c46a13c28834014ba1266e34/summary-report.txt",
+            "after": "../part-even/opm/opm-full-replay-c46a13c28834014ba1266e34/summary-report.txt"
+          },
+          "provenance.opm_run_manifest": {
+            "before": "../opm/opm-full-replay-c46a13c28834014ba1266e34/manifest.json",
+            "after": "../part-even/opm/opm-full-replay-c46a13c28834014ba1266e34/manifest.json"
+          },
+          "provenance.summary_extraction_manifest": {
+            "before": "../opm/opm-full-replay-c46a13c28834014ba1266e34/summary-extraction.json",
+            "after": "../part-even/opm/opm-full-replay-c46a13c28834014ba1266e34/summary-extraction.json"
+          }
+        }
+      },
+      {
+        "index": 7,
+        "original_export_manifest_sha256": "b84a8e779f039abb8be9ede373cdba59aacdd52d3828b9bfdb7dff7effa9feb7",
+        "relocated_export_manifest_sha256": "a60854d1c6a02d70379c0c5333c5ecf0a231e3886d6dd0a7d43908c46783178d",
+        "only_changed_fields": {
+          "source.summary_csv": {
+            "before": "../opm/opm-full-replay-080e55947c7135f930fb700a/summary-report.txt",
+            "after": "../part-odd/opm/opm-full-replay-080e55947c7135f930fb700a/summary-report.txt"
+          },
+          "provenance.opm_run_manifest": {
+            "before": "../opm/opm-full-replay-080e55947c7135f930fb700a/manifest.json",
+            "after": "../part-odd/opm/opm-full-replay-080e55947c7135f930fb700a/manifest.json"
+          },
+          "provenance.summary_extraction_manifest": {
+            "before": "../opm/opm-full-replay-080e55947c7135f930fb700a/summary-extraction.json",
+            "after": "../part-odd/opm/opm-full-replay-080e55947c7135f930fb700a/summary-extraction.json"
+          }
+        }
+      }
+    ]
+  }
+}
