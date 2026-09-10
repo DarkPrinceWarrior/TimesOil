@@ -1,0 +1,8 @@
+{
+  "source_commit": "db47777fe572647da6f986b395822a9597ca9d64",
+  "wells": 103,
+  "management_months": 224,
+  "wide_explicit_bounds_passed": true,
+  "zero_net_deficit_cap_rejected": "observed max_monthly_water_deficit_m3 violates organizer limit in 2007-01-01",
+  "limits_are_test_scenarios_not_organizer_conditions": true
+}
