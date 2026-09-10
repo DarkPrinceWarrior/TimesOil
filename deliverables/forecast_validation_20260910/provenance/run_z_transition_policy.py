@@ -10,7 +10,7 @@ import sys
 import time
 
 R = Path('/root/projects/TimesOil/results/audit-20260909')
-OUT = R / 'timesfm-transition-z-policy-pressure-20260910'
+OUT = R / 'timesfm-transition-z-policy-bhp-20260910'
 SESSION = 'timesoil-transition-evaluation-z-20260910'
 PYTHON = '/tmp/timesoil-kt3-20260908/venv/bin/python'
 
@@ -72,6 +72,10 @@ def run():
     request = R / 'physical-sweep-z-20260909/request-03.json'
     assert sha256(request.read_bytes()).hexdigest() == '2ecf8acc3a5f1cf7ea91b09f45ef7795c584c28a9ea41620a9b420ecf827d5c7'
     baseline = R / 'timesfm-bhp-policy-20260909/cycles/baseline'
+    forecast_baseline = R / 'timesfm-bhp-policy-20260909/baseline-view'
+    forecast_source = forecast_baseline / 'canonical/trajectory.csv'
+    assert sha256(forecast_source.read_bytes()).hexdigest() == '1c5730d99b40403551c591845cf0e3d291ac7ee42fa9e3cb1de9e0ee1574f2ca'
+    assert 'bhp_limit' in forecast_source.open().readline().strip().split(',')
     incumbent = R / 'physical-sweep-z-20260909/cycles/candidate-03'
     previous = R / 'timesfm-early-identity-z-policy-20260910/cycles/candidate'
     env = {**os.environ, 'PYTHONPATH': 'src:scripts', 'CUDA_VISIBLE_DEVICES': '5',
@@ -81,6 +85,7 @@ def run():
            'LLM_TIMEOUT_SECONDS': '600', 'LLM_MAX_OUTPUT_TOKENS': '8192',
            'LLM_API_KEY': Path('/dev/shm/timesoil-tatneft-20260909-key').read_text().strip()}
     protocol.update(checkpoint_sha256=checkpoint, started_utc=datetime.now(timezone.utc).isoformat(),
+                    forecast_baseline=str(forecast_baseline), economic_baseline=str(baseline),
                     evaluation_protocol_sha256=sha256((evaluation / 'frozen-models-protocol.json').read_bytes()).hexdigest())
     (OUT / 'protocol.json').write_text(json.dumps(protocol, indent=2) + '\n')
 
@@ -91,7 +96,7 @@ def run():
         if code:
             raise RuntimeError(f'{name} exited with {code}; see its retained log')
 
-    execute('proposal', [PYTHON, 'scripts/propose_track2_policies.py', str(baseline), str(request),
+    execute('proposal', [PYTHON, 'scripts/propose_track2_policies.py', str(forecast_baseline), str(request),
         str(OUT / 'proposals'), '--rounds', '1', '--skip-grid',
         '--head', str(model / 'full-model.pt'), '--head-sha256', checkpoint,
         '--connectivity', str(R / 'static-head-geology-20260909/model-z/connectivity.json')])
