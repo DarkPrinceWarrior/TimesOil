@@ -180,6 +180,35 @@ def economic_metrics(truth, prediction):
             for i, field in enumerate(ECONOMIC_TARGETS)}
 
 
+def validate_economic_constraints(rules):
+    supported = {'max_liquid_m3d', 'min_injection_m3d', 'max_injection_m3d',
+                 'min_bhp_bar', 'max_bhp_bar'}
+    unsupported = {key for rule in rules for key, _ in rule.limits} - supported
+    if unsupported:
+        raise ValueError('economic forecasts lack required vectors for: ' + ', '.join(sorted(unsupported)))
+
+
+def economic_constraint_violations(predictions, timestamps, well_ids, rules):
+    """Use the physical limit checker on predicted endpoints, aligned to control months."""
+    from timesoil.aios.operating_constraints import check_observed
+
+    validate_economic_constraints(rules)
+    stamps, wells = _monthly_grid(timestamps, well_ids)
+    values = np.asarray(predictions, dtype=float)
+    _validate_targets(values, len(stamps), len(wells))
+    violations = []
+    for stamp, forecast in zip(stamps, values, strict=True):
+        month = (stamp - timedelta(days=1)).replace(day=1)
+        rows = {well: dict(WOMR=float(row[0]), WLPR=float(row[1]),
+                          WWIR=float(row[2]), WBHP=float(row[4]))
+                for well, row in zip(wells, forecast, strict=True)}
+        try:
+            check_observed(rules, month, rows)
+        except ValueError as error:
+            violations.append(str(error))
+    return violations
+
+
 def verify_roundtrip(canonical, manifest_sha256, output, start, end):
     """Prove the target representation against authenticated physical data, not forecast skill."""
     raw_manifest = (canonical / 'manifest.json').read_bytes()

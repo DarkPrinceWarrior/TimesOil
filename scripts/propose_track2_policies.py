@@ -40,6 +40,10 @@ def agent_candidate_context(candidates):
               'predicted_injection_m3', 'screening_margin_m', 'forecast_chdd_m', 'forecast_eligible',
               'controls_sha256')
     summaries = [{key: row[key] for key in fields if key in row} for row in candidates]
+    for summary, row in zip(summaries, candidates, strict=True):
+        if 'forecast_constraint_violations' in row:
+            summary.update(forecast_constraint_violations=row['forecast_constraint_violations'][:3],
+                           forecast_constraint_violation_count=len(row['forecast_constraint_violations']))
     eligible = [row for row in candidates if row.get('forecast_eligible') is True]
     detailed = max(eligible, key=lambda row: row['forecast_chdd_m']) if eligible else candidates[-1]
     return {'candidates': summaries, 'forecast_detail': {'candidate_id': detailed['id'],
@@ -333,8 +337,9 @@ def main():
         checked_request.context.get('operating_constraints', []), wells=trajectory.well_ids,
         start=min(a.month for a in checked_request.controls),
         end=max(a.month for a in checked_request.controls))
-    if args.economic_selection and any(rule.limits for rule in operating_rules):
-        raise ValueError('economic selection needs forecast validation of every supplied operating limit; nine economic outputs alone do not cover water cut or reservoir volumes')
+    if args.economic_selection:
+        from timesfm_economics import validate_economic_constraints, economic_constraint_violations
+        validate_economic_constraints(operating_rules)
     args.output.mkdir(parents=True, exist_ok=False)
     import torch
     from timesfm3 import ModelConfig, TimesFM3Forecaster
@@ -451,6 +456,9 @@ def main():
         economic_record = {}
         if args.economic_selection:
             timestamps = trajectory.dates[origin + 1:origin + horizon + 1].strftime('%Y-%m-%d')
+            violations = economic_constraint_violations(prediction, timestamps, trajectory.well_ids, operating_rules)
+            if not (prediction[..., 1] <= 500 + 1e-6).all():
+                violations.append('forecast well liquid rate exceeds 500 m3/day')
             predicted_rows = forecast_chdd_rows(economic_history, timestamps, trajectory.well_ids, prediction)
             result = calculator.calculate(opm_management_rows(predicted_rows,
                 (start.date(), trajectory.dates[origin + horizon].date())),
@@ -462,8 +470,9 @@ def main():
                 'economic_targets': list(ECONOMIC_TARGETS),
                 'forecast_economics_manifest_sha256': sha256(result.manifest_path.read_bytes()).hexdigest(),
                 'forecast_economics_directory': str(result.output_dir.relative_to(args.output.resolve())),
-                'forecast_eligible': bool((prediction[..., 1] <= 500 + 1e-6).all()),
-                'eligibility_scope': 'Forecast liquid limit 500 m3/day, exact schedule constraints; physical feasibility and uncertainty require final verification.',
+                'forecast_eligible': not violations,
+                'forecast_constraint_violations': violations,
+                'eligibility_scope': 'Forecast well liquid limit 500 m3/day, supplied liquid/injection/BHP/outage limits and exact schedule constraints; physical feasibility and uncertainty require final verification.',
                 'training_report_sha256': sha256(args.head_report.read_bytes()).hexdigest()}
             forecast_path = args.output / f'forecast-{len(candidates):02d}.npz'
             np.savez_compressed(forecast_path, prediction=prediction, timestamps=timestamps,

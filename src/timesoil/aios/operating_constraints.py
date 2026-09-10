@@ -90,9 +90,18 @@ def check_observed(rules: Sequence[OperatingConstraint], month: date, values: Ma
         if not set(rule.wells) <= values.keys():
             raise ValueError("operating constraint observed scope is incomplete")
         selected = [values[well] for well in rule.wells]
-        if any(not math.isfinite(row[k]) for row in selected for k in ("WOPR", "WLPR", "WWIR", "WBHP")):
+        required = {"WLPR", "WWIR", "WBHP"}
+        if any(key in {"max_oil_m3d", "max_watercut"} for key, _ in rule.limits):
+            required.add("WOPR")
+        if any(not required <= row.keys() or rule.unavailable and not {"WOPR", "WOMR"} & row.keys()
+               for row in selected):
+            raise ValueError("operating constraint observations miss required vectors")
+        if any(not math.isfinite(row[k]) for row in selected
+               for k in ("WOPR", "WOMR", "WLPR", "WWIR", "WBHP") if k in row):
             raise ValueError("non-finite operating constraint observations")
-        if rule.unavailable and any(abs(row[k]) > 1e-6 for row in selected for k in ("WOPR", "WLPR", "WWIR")):
+        # Oil mass can establish nonzero flow, but cannot replace WOPR for volume or water-cut limits.
+        if rule.unavailable and any(abs(row[k]) > 1e-6 for row in selected
+                                    for k in ("WOPR", "WOMR", "WLPR", "WWIR") if k in row):
             raise ValueError(f"unavailable well has physical flow in {month}")
         for key, bound in rule.limits:
             if key in _WATER_LIMITS:
