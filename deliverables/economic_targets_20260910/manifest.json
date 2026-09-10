@@ -3,8 +3,8 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 4150,
-      "sha256": "930253ee7eada95202db7dc8fdd898e7167d7ea50286204b9244f951e88f6af4"
+      "bytes": 4932,
+      "sha256": "3730f3990151a4686f54e68aa98909a13c123a95905e979f3d9ba68fa2e8bcc0"
     },
     {
       "path": "baseline-roundtrip.json",
@@ -17,6 +17,11 @@
       "sha256": "3e59f803bed1306dadacd96f4ccb45d82338c9c8ea4d5114a528acfe84a743ab"
     },
     {
+      "path": "regime-training-protocol.json",
+      "bytes": 2351,
+      "sha256": "5e8a7cb2d4ba53fe01034561989f199e1b69c09346649b348dd5c5668863b9a0"
+    },
+    {
       "path": "training-progress.json",
       "bytes": 456,
       "sha256": "9fd4e75862914e385ccff76f2e75d485c805679bdc102f759602696764bcf914"
@@ -25,6 +30,11 @@
       "path": "training-protocol.json",
       "bytes": 1320,
       "sha256": "1a3260b1fc597ae9a0f24585d0f61883379e985dc1197171b845b826aad26fa2"
+    },
+    {
+      "path": "training-report.json",
+      "bytes": 19042,
+      "sha256": "39452192312e7c44a2b2ae3291fe338d216cd754a8ccd2ab92cd4f8995d10317"
     }
   ]
 }

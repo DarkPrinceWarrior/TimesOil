@@ -1,0 +1,10 @@
+{
+  "source_commit": "00f4739",
+  "search_exit": 1,
+  "root_exit": 1,
+  "failure": "Traceback (most recent call last):\n  File \"/root/projects/TimesOil-audit-final-only-z-20260910/scripts/propose_track2_policies.py\", line 625, in <module>\n    main()\n    ~~~~^^\n  File \"/root/projects/TimesOil-audit-final-only-z-20260910/scripts/propose_track2_policies.py\", line 605, in main\n    asyncio.run(propose_round(index))\n    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.13/asyncio/runners.py\", line 195, in run\n    return runner.run(main)\n           ~~~~~~~~~~^^^^^^\n  File \"/usr/lib/python3.13/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/usr/lib/python3.13/asyncio/base_events.py\", line 725, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/root/projects/TimesOil-audit-final-only-z-20260910/scripts/propose_track2_policies.py\", line 597, in propose_round\n    plan = await plan_with_control_repair(workflow, context_value, candidates, attempted, args.output, index)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/projects/TimesOil-audit-final-only-z-20260910/scripts/propose_track2_policies.py\", line 42, in plan_with_control_repair\n    return await workflow.run_plan(context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/projects/TimesOil-audit-final-only-z-20260910/src/timesoil/aios/agents.py\", line 286, in run_plan\n    raise WorkflowError(\"workflow context exceeds the bounded contract\")\ntimesoil.aios.agents.WorkflowError: workflow context exceeds the bounded contract\n",
+  "completed_forecasts": 8,
+  "agent_plans_completed": 0,
+  "final_opm_attempt_started": false,
+  "selection_sealed": false
+}

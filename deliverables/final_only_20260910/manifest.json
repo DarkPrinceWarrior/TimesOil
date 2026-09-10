@@ -1,0 +1,40 @@
+{
+  "schema": "timesoil.evidence-bundle/v1",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4966,
+      "sha256": "56c6922347eeaa404328bc1277d0594c666fda1bdf14d2030bbb72db4a0da0ef"
+    },
+    {
+      "path": "compact-protocol.json",
+      "bytes": 756,
+      "sha256": "2516073cfdf5dff06536ea24ce9b86b62f2666873586d45b794fc7b590143cad"
+    },
+    {
+      "path": "first-agent-plan.json",
+      "bytes": 243683,
+      "sha256": "dd35647c786b301a2fc73dc324db8c5b283fd945d6102eafac0a3696c604e634"
+    },
+    {
+      "path": "initial-failure.json",
+      "bytes": 1877,
+      "sha256": "cfda802487fb621fff6c7178f307afa0ab8e425d687097aea721dc3064ca94ae"
+    },
+    {
+      "path": "junit.xml",
+      "bytes": 3466,
+      "sha256": "c0a7f4dd3942fa0422b9e3bf6b6c3660b45ece5b4d301e7036d331ae6a663399"
+    },
+    {
+      "path": "launch-protocol.json",
+      "bytes": 418,
+      "sha256": "ca1572938e66da97fbea971f51bd3bdd800ed6610ad1a4512ef248c1130fd1c3"
+    },
+    {
+      "path": "progress.json",
+      "bytes": 1341,
+      "sha256": "9c2ef1d6ba28208db9ea587dc45f109b11562ff16853c06dd408da9b2669e929"
+    }
+  ]
+}
