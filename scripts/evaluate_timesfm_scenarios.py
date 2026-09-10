@@ -91,6 +91,8 @@ def main():
     parser.add_argument('--reference-sha256')
     parser.add_argument('--calibration-only', action='store_true')
     parser.add_argument('--fixed-origin-only', action='store_true')
+    parser.add_argument('--reference-correction', type=Path)
+    parser.add_argument('--reference-correction-sha256')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -102,6 +104,9 @@ def main():
         parser.error('reference correction requires Model Z and a paired export manifest hash')
     if args.fixed_origin_only and args.model_y:
         parser.error('the trained Model Y evaluation requires observed monthly updates')
+    if (bool(args.reference_correction) != bool(args.reference_correction_sha256)
+            or args.reference_correction and not args.reference):
+        parser.error('reference correction requires its hash and a physical reference')
     if digest(args.batch / 'manifest.json') != args.batch_sha256:
         raise ValueError('evaluation batch hash mismatch')
     manifest = json.loads((args.batch / 'manifest.json').read_text())
@@ -125,6 +130,21 @@ def main():
     modes = [trained_mode] if args.fixed_origin_only else [trained_mode, 'pretrained_observed_update_1']
     if args.reference:
         modes += ['trained_reference_delta_224', 'reference_only_224']
+    correction = None
+    if args.reference_correction:
+        from fit_timesfm_reference import bhp_features
+        if digest(args.reference_correction) != args.reference_correction_sha256:
+            raise ValueError('reference correction report hash mismatch')
+        correction = json.loads(args.reference_correction.read_text())
+        coefficients_file = args.reference_correction.parent / 'correction.npz'
+        if (correction.get('complete') is not True or correction['head_sha256'] != training['checkpoint_sha256']
+                or correction['reference_manifest_sha256'] != args.reference_sha256
+                or digest(coefficients_file) != correction['checkpoint_sha256']):
+            raise ValueError('reference correction does not match frozen weights and physical reference')
+        coefficients = np.load(coefficients_file, allow_pickle=False)['coefficients']
+        if coefficients.shape != ((2 if correction['degree'] == 1 else 5), months, len(connectivity.well_ids), 3) or not np.isfinite(coefficients).all():
+            raise ValueError('invalid correction coefficient grid')
+        modes += ['trained_reference_corrected_224']
     args.output.mkdir(parents=True, exist_ok=False)
     report = {'schema': 'timesoil.independent-timesfm-evaluation/v1', 'batch_sha256': args.batch_sha256,
         'model_revision': MODEL_REVISION, 'head_sha256': training['checkpoint_sha256'],
@@ -135,6 +155,7 @@ def main():
         'modes_fixed_before_evaluation': modes, 'calibration_only': args.calibration_only,
         'simulated_reference_future_used': bool(args.reference), 'candidate_future_observations_used_for_fixed_origin': False,
         'reference_manifest_sha256': args.reference_sha256,
+        'reference_correction_sha256': args.reference_correction_sha256,
         'head_validation_loss': training['validation_loss_best'], 'metrics': [], 'source_scenarios': {}}
     (args.output / 'protocol.json').write_text(json.dumps(report, indent=2) + '\n')
     started = time.monotonic()
@@ -197,6 +218,8 @@ def main():
         t = dataset[0]
         if t.content_hash in training['source_scenario_hashes'].values():
             raise ValueError('evaluation trajectory was already used during training/development')
+        if correction and t.content_hash in correction['source_scenarios'].values():
+            raise ValueError('evaluation trajectory was already used to fit the reference correction')
         origin = int(t.dates.get_loc(start))
         context = min(128, origin)
         if t.actions.shape[-1] != 4 or origin < (24 if args.model_y else 128) or len(t.states[origin + 1:origin + months + 1]) != months:
@@ -212,7 +235,12 @@ def main():
         for mode in errors:
             model.output_head = selected_head if mode.startswith('trained') else original_head
             model.transformer_stack.layers[-1] = selected_layer if mode.startswith('trained') else original_layer
-            if mode == 'trained_reference_delta_224':
+            if mode == 'trained_reference_corrected_224':
+                features = bhp_features(t.actions[origin:origin + months],
+                    reference.actions[origin:origin + months], correction['degree'])
+                adjusted = outputs['trained_reference_delta_224'] + np.tensordot(features, coefficients, axes=(0, 0))
+                prediction = _project_physics(adjusted, t.actions[origin:origin + months], zero_injectors=True)[0]
+            elif mode == 'trained_reference_delta_224':
                 prediction = reference_delta(reference_truth, reference_prediction,
                     outputs['trained_fixed_origin_224'], t.actions[origin:origin + months])
             elif mode == 'reference_only_224':

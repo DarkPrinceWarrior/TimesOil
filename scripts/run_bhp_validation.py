@@ -56,6 +56,7 @@ def main():
     parser.add_argument('--request', type=Path)
     parser.add_argument('--reference', type=Path, help='Authenticated export directory with four action channels')
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--local-reference-evaluation', action='store_true')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -74,10 +75,14 @@ def main():
               for j, well in enumerate(t.well_ids)}
     args.output.mkdir(parents=True, exist_ok=False)
     designs = [(5, 1), (15, 1), (30, 1), (0, .95), (0, .9), (0, .85), (15, .95), (30, .9)]
+    if args.local_reference_evaluation:
+        designs = [(2.5, .975), (7.5, .975), (10, .965), (2.5, .94),
+                   (5, .925), (12.5, .96), (10, .98), (2.5, .92)]
     manifest = {'schema': 'timesoil.bhp-only-forecast-evaluation/v1', 'source_sha256': MODEL_Z_SOURCE_SHA256,
         'incumbent_request_sha256': digest(args.request), 'reference_export_sha256': digest(args.reference / 'manifest.json'),
         'calibration_cases': [0, 1, 3, 4, 6], 'test_cases': [2, 5, 7], 'designs': designs,
         'model_selection_allowed_on_test': False, 'rate_status_and_role_controls_fixed': True,
+        'local_reference_evaluation': args.local_reference_evaluation,
         'scenarios': [], 'complete': False, 'script_sha256': digest(Path(__file__))}
     (args.output / 'protocol.json').write_text(json.dumps(manifest, indent=2) + '\n')
     runner = OpmFlowRunner(timeout_seconds=7200, mpi_processes=16, threads_per_process=1, cpu_affinity='14-29')
