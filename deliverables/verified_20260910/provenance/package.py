@@ -56,6 +56,7 @@ for label, root, expected in [('model_y/baseline', Path(audit['baseline_run']), 
         opm = read(root / 'manifest.json')
         schedule = next(a for a in opm['artifacts'] if a['sha256'] == lineage['schedule_overlay']['output_sha256'])
         copy(root / schedule['path'], label + '/full-opm-schedule.inc', schedule['sha256'])
+        copy(root / schedule['path'], label + '/wells_schedule.inc', schedule['sha256'])
         copy(root / 'canonical/chdd.csv', label + '/physical-chdd-input.csv', records['canonical/chdd.csv'])
         copy(R / 'physical-only-monthly-y-20260910/full-audit.json', 'model_y/full-audit.json')
 
@@ -72,6 +73,8 @@ for label, record in [('model_z/baseline', selection['baseline']), ('model_z/sel
         for key, name in [('exact_opm_input_schedule', 'full-opm-schedule.inc'), ('canonical_chdd_csv', 'physical-chdd-input.csv')]:
             a = artifacts[key]
             copy(root / a['path'], label + '/' + name, a['sha256'])
+            if key == 'exact_opm_input_schedule':
+                copy(root / a['path'], label + '/wells_schedule.inc', a['sha256'])
 
 for model in ['model_y', 'model_z']:
     base, selected = (manifest['cases'][model + '/' + kind] for kind in ['baseline', 'selected'])
