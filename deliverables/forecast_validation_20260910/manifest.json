@@ -184,6 +184,18 @@
     "z-pressure-status-diagnostic.json": {
       "sha256": "e71fc05d79f1ea84b7d0072fb9f0e7c1ee4dbcc0112056fcb98bef0330a0136f",
       "source": "/root/projects/TimesOil/results/audit-20260909/z-pressure-status-diagnostic-20260910.json"
+    },
+    "z-transition-physical-manifest.json": {
+      "sha256": "9bffec89541467afaf904819ad77baa4469bd4d726ff55d3e08f2ba92c2fae8d",
+      "source": "/root/projects/TimesOil/results/audit-20260909/transition-coverage-z-20260910/scenarios/manifest.json"
+    },
+    "z-transition-training-launch.json": {
+      "sha256": "9615507b7a3f1888030b4854db3c34fa0e5ebae6f96655e73420943e049b30eb",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-coverage-z-20260910/launch-protocol.json"
+    },
+    "z-transition-physical-completion.json": {
+      "sha256": "027bc7e4e9be8dc8aeb705933516f7f804be050f33aaf38d42aebf5c9ebbfaa4",
+      "source": "/root/projects/TimesOil/results/audit-20260909/transition-coverage-z-20260910/completion.json"
     }
   }
 }
