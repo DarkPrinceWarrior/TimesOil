@@ -92,12 +92,17 @@ def verified_y_batch(batch, expected_hash):
     return trajectories, origin
 
 
-def verified_regime_calibration(batch, expected_hash, baseline, origin):
+def verified_regime_calibration(batch, expected_hash, baseline, origin, *, model_y_source_sha256=None):
     from timesoil.aios.track2 import load_trajectory_dataset
     if sha256((batch / 'manifest.json').read_bytes()).hexdigest() != expected_hash:
         raise ValueError('regime calibration manifest hash mismatch')
     manifest = json.loads((batch / 'manifest.json').read_text())
-    bhp = manifest.get('schema') == 'timesoil.bhp-only-forecast-evaluation/v1'
+    model_y = model_y_source_sha256 is not None
+    allowed = ('timesoil.model-y-forecast-evaluation/v1',) if model_y else (
+        'timesoil.bhp-only-forecast-evaluation/v1', 'timesoil.frozen-forecast-evaluation-cases/v1')
+    if manifest.get('schema') not in allowed:
+        raise ValueError('calibration schema does not match the training reservoir')
+    bhp = model_y or manifest.get('schema') == 'timesoil.bhp-only-forecast-evaluation/v1'
     calibration, test = ([0, 1, 3, 4, 6], [2, 5, 7]) if bhp else ([0, 1, 2, 4, 7], [3, 5, 6])
     if (manifest.get('complete') is not True or manifest['calibration_cases'] != calibration
             or manifest['test_cases'] != test or manifest['model_selection_allowed_on_test'] is not False):
@@ -113,12 +118,14 @@ def verified_regime_calibration(batch, expected_hash, baseline, origin):
             if sha256((root / name).read_bytes()).hexdigest() != record[key]:
                 raise ValueError('regime calibration artifact hash mismatch')
         data = load_trajectory_dataset(root / 'trajectory.csv', manifest=root / 'manifest.json')
-        if len(data) != 1 or not data.model_z_identity:
-            raise ValueError('regime calibration requires authenticated Model Z')
+        if (len(data) != 1 or not model_y and not data.model_z_identity
+                or model_y and json.loads((root / 'manifest.json').read_text())['provenance']['opm_source_sha256'] != model_y_source_sha256):
+            raise ValueError('regime calibration requires the authenticated training reservoir')
         item = data[0]
+        prefix = 'forecast-validation' if model_y else 'bhp-only' if bhp else 'physical-sweep'
         if (item.well_ids != baseline.well_ids or not item.dates.equals(baseline.dates)
                 or item.actions.shape != baseline.actions.shape
-                or item.scenario_id != f"{'bhp-only' if bhp else 'physical-sweep'}-{record['index']:02d}"):
+                or item.scenario_id != f"{prefix}-{record['index']:02d}"):
             raise ValueError('regime calibration grid differs from the training reservoir')
         np.testing.assert_allclose(item.states[:origin + 1], baseline.states[:origin + 1], rtol=0, atol=1e-6)
         np.testing.assert_array_equal(item.actions[:origin], baseline.actions[:origin])
@@ -148,6 +155,9 @@ def main():
     parser.add_argument('--bhp-calibration', type=Path)
     parser.add_argument('--bhp-calibration-sha256')
     parser.add_argument('--monthly-observed-training', action='store_true')
+    parser.add_argument('--intervention-repeats', type=int, default=1, help='Repeat first intervention windows when training the monthly model')
+    parser.add_argument('--model-y-calibration', type=Path)
+    parser.add_argument('--model-y-calibration-sha256')
     parser.add_argument('--reference', type=Path, help='Verified physical reference for additive-response training')
     parser.add_argument('--reference-sha256')
     parser.add_argument('--self-check', action='store_true')
@@ -165,6 +175,11 @@ def main():
         parser.error('static last-layer conditioning requires verified connectivity')
     if args.monthly_observed_training and not args.model_y:
         parser.error('monthly observed training currently requires Model Y')
+    if not 1 <= args.intervention_repeats <= 23 or args.intervention_repeats != 1 and not args.monthly_observed_training:
+        parser.error('intervention repeats must be 1..23 and require monthly observed training')
+    if (bool(args.model_y_calibration) != bool(args.model_y_calibration_sha256)
+            or args.model_y_calibration and not args.model_y):
+        parser.error('Model Y calibration requires its manifest hash and --model-y')
     if args.unfreeze_backbone and not args.condition_last_layer:
         parser.error('full-backbone adaptation requires static last-layer conditioning')
     if (bool(args.reference) != bool(args.reference_sha256)
@@ -185,7 +200,7 @@ def main():
         trajectories, origin = verified_batch(args.batch, args.batch_sha256)
     horizon = 23 if args.model_y else 224
     training_horizon = 1 if args.monthly_observed_training else horizon
-    offsets = list(range(horizon)) if args.monthly_observed_training else [0]
+    offsets = [0] * args.intervention_repeats + list(range(1, horizon)) if args.monthly_observed_training else [0]
     context = min(128, origin)
     count = len(trajectories[0].well_ids)
     targets_count = count * 3
@@ -197,6 +212,10 @@ def main():
         baseline = next(t for t in trajectories if t.scenario_id == 'baseline')
         trajectories = list(trajectories) + verified_regime_calibration(
             args.bhp_calibration, args.bhp_calibration_sha256, baseline, origin)
+    if args.model_y_calibration:
+        trajectories = list(trajectories) + verified_regime_calibration(args.model_y_calibration,
+            args.model_y_calibration_sha256, trajectories[0], origin,
+            model_y_source_sha256=json.loads((args.batch / 'manifest.json').read_text())['official_source_sha256'])
     connectivity = None
     if args.connectivity:
         from timesoil.aios.interwell import WellConnectivity
@@ -220,6 +239,9 @@ def main():
     if args.bhp_calibration:
         train_ids += [f'bhp-only-{i:02d}' for i in (0, 1, 3, 6)]
         validation_ids += ['bhp-only-04']
+    if args.model_y_calibration:
+        train_ids += [f'forecast-validation-{i:02d}' for i in (0, 1, 3, 6)]
+        validation_ids += ['forecast-validation-04']
     assert set(train_ids + validation_ids + test_ids) == set(by_id)
     assert len(train_ids + validation_ids + test_ids) == len(by_id)
     import torch
@@ -285,7 +307,7 @@ def main():
     train_keys = [(name, offset) for name in train_ids for offset in offsets]
     validation_keys = [(name, offset) for name in validation_ids for offset in offsets]
     assert not set(train_keys) & set(validation_keys)
-    for name, offset in train_keys + validation_keys:
+    for name, offset in dict.fromkeys(train_keys + validation_keys):
         t = by_id[name]
         position = origin + offset
         if connectivity is None:
@@ -374,6 +396,8 @@ def main():
         initial_head_sha256=args.initial_head_sha256,
         regime_calibration_manifest_sha256=args.regime_calibration_sha256,
         bhp_calibration_manifest_sha256=args.bhp_calibration_sha256,
+        model_y_calibration_manifest_sha256=args.model_y_calibration_sha256,
+        intervention_window_repeats=args.intervention_repeats,
         reference_manifest_sha256=args.reference_sha256,
         reference_trajectory_sha256=reference.content_hash if reference is not None else None,
         training_prediction='projected OPM(reference) + Google(candidate) - Google(reference)' if args.reference else 'Google absolute response',
