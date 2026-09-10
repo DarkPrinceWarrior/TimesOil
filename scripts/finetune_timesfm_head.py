@@ -23,6 +23,15 @@ def pinball_loss(prediction, target, scale, quantiles):
     return (error * quantiles).maximum(error * (quantiles - 1)).mean()
 
 
+def training_feature_scale(train_truth, retained_scale=None):
+    """Keep frozen checkpoint units when continuing on a new development batch."""
+    scale = (np.maximum(np.abs(train_truth).mean(axis=(0, 1, 2)), 1.0)
+             if retained_scale is None else np.asarray(retained_scale, dtype=float))
+    if scale.shape != (3,) or not np.isfinite(scale).all() or (scale <= 0).any():
+        raise ValueError('three finite positive target scales required')
+    return scale
+
+
 def project_quantiles(prediction, actions):
     """Differentiable version of the inference projection, for every quantile."""
     import torch
@@ -34,6 +43,16 @@ def project_quantiles(prediction, actions):
 
 def self_check():
     import torch
+    truth = np.array([[[[2., 4., 6.]]]])
+    np.testing.assert_array_equal(training_feature_scale(truth), [2., 4., 6.])
+    np.testing.assert_array_equal(training_feature_scale(truth, [1., 3., 5.]), [1., 3., 5.])
+    for invalid in ([1., 0., 3.], [1., float('nan'), 3.], [1., 2.]):
+        try:
+            training_feature_scale(truth, invalid)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('invalid retained normalization accepted')
     predicted = torch.zeros((1, 1, 1, 2), requires_grad=True)
     loss = pinball_loss(predicted, torch.ones((1, 1, 1)), torch.ones((1, 1, 1)),
                         torch.tensor([.25, .75]))
@@ -152,6 +171,8 @@ def main():
     parser.add_argument('--condition-last-layer', action='store_true')
     parser.add_argument('--condition-first-layer', action='store_true')
     parser.add_argument('--cold-start-normalization', action='store_true')
+    parser.add_argument('--retain-initial-scale', action='store_true',
+        help='Keep authenticated initial checkpoint normalization on a new development batch')
     parser.add_argument('--regime-calibration', type=Path)
     parser.add_argument('--regime-calibration-sha256')
     parser.add_argument('--bhp-calibration', type=Path)
@@ -177,6 +198,8 @@ def main():
         parser.error('static last-layer conditioning requires verified connectivity')
     if args.cold_start_normalization and not args.condition_last_layer:
         parser.error('cold-start normalization requires static last-layer conditioning')
+    if args.retain_initial_scale and not (args.cold_start_normalization and args.initial_head):
+        parser.error('retaining normalization requires cold-start normalization and initial weights')
     if args.condition_first_layer and not args.unfreeze_backbone:
         parser.error('first-layer conditioning requires full-backbone adaptation')
     if args.monthly_observed_training and not args.model_y:
@@ -315,7 +338,9 @@ def main():
     optimizer = torch.optim.AdamW(trainable, lr=args.learning_rate, weight_decay=0)
     quantiles = torch.tensor(model.quantiles, device='cuda')
     train_truth = np.stack([by_id[i].states[origin + 1:origin + horizon + 1] for i in train_ids])
-    feature_scale = np.maximum(np.abs(train_truth).mean(axis=(0, 1, 2)), 1.0)
+    if args.retain_initial_scale and 'cold_start_scale' not in initial:
+        raise ValueError('initial checkpoint has no normalization to retain')
+    feature_scale = training_feature_scale(train_truth, initial['cold_start_scale'] if args.retain_initial_scale else None)
     if args.cold_start_normalization:
         from timesfm_geology import enable_cold_start_normalization
         enable_cold_start_normalization(model, feature_scale)
@@ -418,6 +443,7 @@ def main():
         full_backbone_trainable=args.unfreeze_backbone, gradient_checkpointing=args.unfreeze_backbone,
         initial_head_sha256=args.initial_head_sha256,
         cold_start_scale=getattr(model, 'cold_start_scale', None),
+        normalization_scale_source='initial_checkpoint' if args.retain_initial_scale else 'current_training_scenarios',
         cold_start_source_sha256=sha256(Path(inspect.getsourcefile(enable_cold_start_normalization)).read_bytes()).hexdigest()
             if args.cold_start_normalization else None,
         regime_calibration_manifest_sha256=args.regime_calibration_sha256,
