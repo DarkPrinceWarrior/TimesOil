@@ -18,6 +18,9 @@ from timesoil.aios.schedule_overlay import apply_schedule_overlay
 from timesoil.aios.track2 import MODEL_Z_SOURCE_SHA256, load_trajectory_dataset
 from timesoil.aios.workflow import CycleRequest, _source_control_inventory, _validate_source_well_scope, _physical_control_evidence
 
+TRANSITION_DESIGNS = [(0, .92), (30, 1), (22.5, .96), (10, .97),
+                      (20, .94), (12.5, .89), (30, .88), (27.5, .93)]
+
 
 def digest(path):
     return sha256(path.read_bytes()).hexdigest()
@@ -48,6 +51,13 @@ def self_check():
     changed = pressure_controls(controls, {(month, 'P'): 50, (month, 'I'): 300}, 15, .9)
     assert [a.bhp_limit for a in changed] == [65, 270, None]
     assert [a.value for a in changed] == [100, 200, 0]
+    train = [TRANSITION_DESIGNS[i] for i in (0, 1, 3, 6)]
+    held_out = [TRANSITION_DESIGNS[i] for i in (2, 4, 5, 7)]
+    assert TRANSITION_DESIGNS[4][0] > 0  # Validation must exercise producer BHP tightening.
+    for coordinate in (0, 1):
+        assert all(min(d[coordinate] for d in train) <= d[coordinate] <= max(x[coordinate] for x in train)
+                   for d in held_out)
+    assert len(set(TRANSITION_DESIGNS)) == 8
     print('BHP-only intervention, fixed rates and inactive-well preservation passed', flush=True)
 
 
@@ -56,7 +66,10 @@ def main():
     parser.add_argument('--request', type=Path)
     parser.add_argument('--reference', type=Path, help='Authenticated export directory with four action channels')
     parser.add_argument('--output', type=Path)
-    parser.add_argument('--local-reference-evaluation', action='store_true')
+    designs_group = parser.add_mutually_exclusive_group()
+    designs_group.add_argument('--local-reference-evaluation', action='store_true')
+    designs_group.add_argument('--transition-coverage', action='store_true',
+        help='Cover producer BHP transitions in both development training and validation')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -78,11 +91,14 @@ def main():
     if args.local_reference_evaluation:
         designs = [(2.5, .975), (7.5, .975), (10, .965), (2.5, .94),
                    (5, .925), (12.5, .96), (10, .98), (2.5, .92)]
+    elif args.transition_coverage:
+        designs = TRANSITION_DESIGNS
     manifest = {'schema': 'timesoil.bhp-only-forecast-evaluation/v1', 'source_sha256': MODEL_Z_SOURCE_SHA256,
         'incumbent_request_sha256': digest(args.request), 'reference_export_sha256': digest(args.reference / 'manifest.json'),
         'calibration_cases': [0, 1, 3, 4, 6], 'test_cases': [2, 5, 7], 'designs': designs,
         'model_selection_allowed_on_test': False, 'rate_status_and_role_controls_fixed': True,
         'local_reference_evaluation': args.local_reference_evaluation,
+        'transition_coverage': args.transition_coverage,
         'scenarios': [], 'complete': False, 'script_sha256': digest(Path(__file__))}
     (args.output / 'protocol.json').write_text(json.dumps(manifest, indent=2) + '\n')
     runner = OpmFlowRunner(timeout_seconds=7200, mpi_processes=16, threads_per_process=1, cpu_affinity='14-29')
