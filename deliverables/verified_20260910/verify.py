@@ -20,11 +20,15 @@ for name, record in manifest['cases'].items():
     assert [row['month'] for row in rows] == expected, name
     for actual in [sum(r['chddM'] for r in rows), rows[-1]['cumulativeChddM'], result['summary']['totalChddM']]:
         assert math.isclose(actual, record['official_chdd_m'], rel_tol=1e-10, abs_tol=1e-7), name
-for model in ['model_y', 'model_z']:
-    base, selected = [manifest['cases'][model + '/' + label] for label in ['baseline', 'selected']]
+audit = json.loads((root / 'model_y/full-audit.json').read_text())
+assert audit['surrogate_used'] is False
+assert (audit['months'], audit['wells'], audit['actions'], audit['approved_monthly_reviews']) == (23, 49, 1127, 23)
+assert math.isclose(audit['candidate_chdd_m'], manifest['cases']['model_y/selected']['official_chdd_m'])
+for model, label in [('model_y', 'selected'), ('model_z', 'selected'), ('model_z', 'timesfm_candidate')]:
+    base, selected = [manifest['cases'][model + '/' + kind] for kind in ['baseline', label]]
     assert base['assumptions'] == selected['assumptions']
     assert base['months'] == selected['months']
     uplift = 100 * (selected['official_chdd_m'] / base['official_chdd_m'] - 1)
     assert math.isclose(uplift, selected['uplift_percent']) and uplift >= 15
-    print(f'{model}: {selected["months"]} months, CHDD uplift {uplift:.6f}%')
+    print(f'{model}/{label}: {selected["months"]} months, CHDD uplift {uplift:.6f}%')
 print(f'All {len(manifest["files"])} artifact hashes and official monthly totals verified.')
