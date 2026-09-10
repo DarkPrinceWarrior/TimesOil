@@ -1,0 +1,3 @@
+# Preserve the simulator input byte-for-byte, including source whitespace.
+track1/full_input_schedule.inc -text -whitespace
+track1/result.json -diff

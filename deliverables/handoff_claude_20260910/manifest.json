@@ -1,0 +1,140 @@
+{
+  "schema": "timesoil.evidence-bundle/v1",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 149,
+      "sha256": "9961388b6977d3c2463fc8c40bd7bdde3b588c16cec7043c688b1fc5a1b1498d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3232,
+      "sha256": "f1962de2210674263abe1a7de81cf89cda13b5f7ba8f13e2d917c98b17230b19"
+    },
+    {
+      "path": "START_CLAUDE.txt",
+      "bytes": 2203,
+      "sha256": "72b3a49e856e57702ebb3a2a1525c537bc0e3b52ddfaa790fe26876604d52f5c"
+    },
+    {
+      "path": "evaluation/evaluation.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "path": "evaluation/evaluation.log",
+      "bytes": 4769,
+      "sha256": "4633855fea661851b4df052deaed3cdbd308d7062591081257e3c4d3d605e49a"
+    },
+    {
+      "path": "evaluation/exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "path": "evaluation/forecast-protocol.json",
+      "bytes": 1570,
+      "sha256": "830d9f2a9dd2ed76ca4b18454b94d9bea40c7652ae94ea4106a511c462f2cb19"
+    },
+    {
+      "path": "evaluation/protocol.json",
+      "bytes": 1323,
+      "sha256": "8de8cee0f1ea9aafdac75c3a821a08572f7122e64a967ad3dd5eb9061381afbc"
+    },
+    {
+      "path": "remote-sources.json",
+      "bytes": 3059,
+      "sha256": "d12c28464c87b9008540fb9d04e69e4fba591a2fc45c09f1c6637c3408f3a580"
+    },
+    {
+      "path": "state-snapshot.json",
+      "bytes": 7508,
+      "sha256": "fa1ae27dcf2d15397b171d58b3dd3df7a81d105c4ced5be7ee97a597d44ddb55"
+    },
+    {
+      "path": "track1/audit-observation.json",
+      "bytes": 1277,
+      "sha256": "6be1e5a66c1a0ab663b2f3cc08aa184eb5d782ad42c00f46bdfdf9ac9e72f567"
+    },
+    {
+      "path": "track1/audit_track1_lifecycle.py",
+      "bytes": 8429,
+      "sha256": "f066dd05a4d2f9eafba84107a73ccbb8191728d6d05916d57c367345a5a49bc1"
+    },
+    {
+      "path": "track1/baseline-opm-manifest.json",
+      "bytes": 12777,
+      "sha256": "83ca2445c6ccafb76b91d43aeb4f03ab06b06e7fa505d58c48d19614179ace84"
+    },
+    {
+      "path": "track1/controller.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "track1/economics-manifest.json",
+      "bytes": 2381,
+      "sha256": "d8ffa0a74de77124da3de1ad3833e579a36fbbe25675c339699f008b34b737c7"
+    },
+    {
+      "path": "track1/economics-result.json",
+      "bytes": 70971,
+      "sha256": "357b912697e698449ef9548ca2322f1a6a649737be1abdf4f80d0e9ab42d72c3"
+    },
+    {
+      "path": "track1/exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "path": "track1/final-opm-manifest.json",
+      "bytes": 13249,
+      "sha256": "036e061406eae4830d385a1be4e05afd178f915a9882b53d55816c475888c072"
+    },
+    {
+      "path": "track1/full_input_schedule.inc",
+      "bytes": 117244,
+      "sha256": "0658a9bccc3059854cf3230a6e673e15ddf45886ddd223607c6a502a3329e3cf"
+    },
+    {
+      "path": "track1/manifest.json",
+      "bytes": 2380,
+      "sha256": "7286f58e6cbe61a9496d62ac68a178c89bd36268151a05c03eef2141634087eb"
+    },
+    {
+      "path": "track1/protocol.json",
+      "bytes": 1062,
+      "sha256": "ac9eb4db425996dd2c1372726de7761e8f21c0f75c613450ec70c347d57cb78f"
+    },
+    {
+      "path": "track1/result.json",
+      "bytes": 5089362,
+      "sha256": "02259b9090d31501cee206de303946b16b16b884e227c531d275eda8aa5f4b65"
+    },
+    {
+      "path": "track1/run_track1_conversion_search.py",
+      "bytes": 3567,
+      "sha256": "11bde47a4621ca0290b28560e36d72dfcccd87513cbef79f142c643dc8595ba3"
+    },
+    {
+      "path": "track1/wells_schedule.inc",
+      "bytes": 44476,
+      "sha256": "88ff1be38f36291c44b108f1906ea509140d43434877545f07891691aab56c9f"
+    },
+    {
+      "path": "training/exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "training/launch-protocol.json",
+      "bytes": 2427,
+      "sha256": "20c9ab3bf9d6b89ecf25b10d35f4ca441e71ad42fef567e121c8f918b50de621"
+    },
+    {
+      "path": "training/report.json",
+      "bytes": 22769,
+      "sha256": "216c198fa64a7b868995d86e548a517c62bd81bd1272a7d4d913f25f8abbced7"
+    }
+  ]
+}

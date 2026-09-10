@@ -1,0 +1,125 @@
+{
+  "observed_utc": "2026-09-10T19:06:39.732296+00:00",
+  "remote_files": {
+    "training/report.json": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/timesfm-economic-regimes-precise-z-20260910/training/report.json",
+      "bytes": 22769,
+      "sha256": "216c198fa64a7b868995d86e548a517c62bd81bd1272a7d4d913f25f8abbced7"
+    },
+    "training/launch-protocol.json": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/timesfm-economic-regimes-precise-z-20260910/launch-protocol.json",
+      "bytes": 2427,
+      "sha256": "20c9ab3bf9d6b89ecf25b10d35f4ca441e71ad42fef567e121c8f918b50de621"
+    },
+    "training/exit": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/timesfm-economic-regimes-precise-z-20260910/exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "evaluation/protocol.json": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/economic-uncertainty-z-20260910/protocol.json",
+      "bytes": 1323,
+      "sha256": "8de8cee0f1ea9aafdac75c3a821a08572f7122e64a967ad3dd5eb9061381afbc"
+    },
+    "evaluation/forecast-protocol.json": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/economic-uncertainty-z-20260910/evaluation/protocol.json",
+      "bytes": 1570,
+      "sha256": "830d9f2a9dd2ed76ca4b18454b94d9bea40c7652ae94ea4106a511c462f2cb19"
+    },
+    "evaluation/evaluation.log": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/economic-uncertainty-z-20260910/evaluation.log",
+      "bytes": 4769,
+      "sha256": "4633855fea661851b4df052deaed3cdbd308d7062591081257e3c4d3d605e49a"
+    },
+    "evaluation/exit": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/economic-uncertainty-z-20260910/exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "evaluation/evaluation.exit": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/economic-uncertainty-z-20260910/evaluation.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "track1/protocol.json": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/protocol.json",
+      "bytes": 1062,
+      "sha256": "ac9eb4db425996dd2c1372726de7761e8f21c0f75c613450ec70c347d57cb78f"
+    },
+    "track1/controller.exit": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/controller.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "track1/exit": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "track1/result.json": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/runs/track1-0be71f81b96ed854d5ddb227/result.json",
+      "bytes": 5089362,
+      "sha256": "02259b9090d31501cee206de303946b16b16b884e227c531d275eda8aa5f4b65"
+    },
+    "track1/manifest.json": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/runs/track1-0be71f81b96ed854d5ddb227/manifest.json",
+      "bytes": 2380,
+      "sha256": "7286f58e6cbe61a9496d62ac68a178c89bd36268151a05c03eef2141634087eb"
+    },
+    "track1/wells_schedule.inc": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/runs/track1-0be71f81b96ed854d5ddb227/wells_schedule.inc",
+      "bytes": 44476,
+      "sha256": "88ff1be38f36291c44b108f1906ea509140d43434877545f07891691aab56c9f"
+    },
+    "track1/full_input_schedule.inc": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/opm/opm-full-replay-a7b08fb869b4fbbd9dd6ab3e/input/MODEL_Y/INCLUDE/DemoSpe_002_2_sch.inc",
+      "bytes": 117244,
+      "sha256": "0658a9bccc3059854cf3230a6e673e15ddf45886ddd223607c6a502a3329e3cf"
+    },
+    "track1/economics-result.json": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/opm/opm-full-replay-a7b08fb869b4fbbd9dd6ab3e/economics/result.json",
+      "bytes": 70971,
+      "sha256": "357b912697e698449ef9548ca2322f1a6a649737be1abdf4f80d0e9ab42d72c3"
+    },
+    "track1/economics-manifest.json": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/opm/opm-full-replay-a7b08fb869b4fbbd9dd6ab3e/economics/manifest.json",
+      "bytes": 2381,
+      "sha256": "d8ffa0a74de77124da3de1ad3833e579a36fbbe25675c339699f008b34b737c7"
+    },
+    "track1/final-opm-manifest.json": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/opm/opm-full-replay-a7b08fb869b4fbbd9dd6ab3e/manifest.json",
+      "bytes": 13249,
+      "sha256": "036e061406eae4830d385a1be4e05afd178f915a9882b53d55816c475888c072"
+    },
+    "track1/baseline-opm-manifest.json": {
+      "path": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-y-20260909/opm/opm-full-replay-40f2f804257afe12efd408b7/manifest.json",
+      "bytes": 12777,
+      "sha256": "83ca2445c6ccafb76b91d43aeb4f03ab06b06e7fa505d58c48d19614179ace84"
+    },
+    "track1/run_track1_conversion_search.py": {
+      "path": "/root/projects/TimesOil-audit-track1-water-20260910/scripts/run_track1_conversion_search.py",
+      "bytes": 3567,
+      "sha256": "11bde47a4621ca0290b28560e36d72dfcccd87513cbef79f142c643dc8595ba3"
+    },
+    "track1/audit_track1_lifecycle.py": {
+      "path": "/root/projects/TimesOil-audit-track1-water-20260910/scripts/audit_track1_lifecycle.py",
+      "bytes": 8429,
+      "sha256": "f066dd05a4d2f9eafba84107a73ccbb8191728d6d05916d57c367345a5a49bc1"
+    }
+  },
+  "gpu": {
+    "exit_code": 0,
+    "stdout": "0, 34755 MiB, 40960 MiB\n1, 38533 MiB, 40960 MiB\n2, 28861 MiB, 40960 MiB\n3, 39369 MiB, 40960 MiB\n4, 38935 MiB, 40960 MiB\n5, 12239 MiB, 40960 MiB\n",
+    "stderr": ""
+  },
+  "tmux": {
+    "exit_code": 0,
+    "stdout": "gpu_agents_watch: 1 windows (created Tue Jul 28 11:09:14 2026)\ngpu_trial_watch: 1 windows (created Tue Jul 28 10:25:42 2026)\ntimesoil-kt2-opmz-chdd-charge-v4: 1 windows (created Mon Aug 31 02:38:16 2026)\ntimesoil-kt2-opmz-chdd-diag-v4: 1 windows (created Mon Aug 31 02:35:19 2026)\ntimesoil-kt2-opmz-chdd-final: 1 windows (created Mon Aug 31 02:41:09 2026)\ntimesoil-kt2-opmz-economics-adapter: 1 windows (created Mon Aug 31 02:42:00 2026)\ntimesoil-kt2-opmz-export-v3: 1 windows (created Mon Aug 31 01:39:32 2026)\ntimesoil-kt2-opmz-export-v4: 1 windows (created Mon Aug 31 01:42:08 2026)\ntimesoil-kt2-opmz-export-v4-final: 1 windows (created Mon Aug 31 02:39:36 2026)\ntimesoil-kt2-opmz-export-v5: 1 windows (created Mon Aug 31 01:44:25 2026)\ntimesoil-kt2-opmz-export-v6: 1 windows (created Mon Aug 31 01:46:18 2026)\ntimesoil-kt2-opmz-export-v8: 1 windows (created Mon Aug 31 01:50:00 2026)\ntimesoil-kt2-opmz-extract-v4: 1 windows (created Mon Aug 31 02:21:43 2026)\ntimesoil-kt2-opmz-extract-v4b: 1 windows (created Mon Aug 31 02:28:29 2026)\ntimesoil-kt2-opmz-extract-v4c: 1 windows (created Mon Aug 31 02:31:00 2026)\ntimesoil-kt2-opmz-full-v3: 1 windows (created Mon Aug 31 01:59:38 2026)\ntimesoil-kt2-opmz-full-v4: 1 windows (created Mon Aug 31 02:00:58 2026)\n",
+    "stderr": ""
+  },
+  "previous_pids": {
+    "exit_code": 1,
+    "stdout": "    PID COMMAND\n",
+    "stderr": ""
+  }
+}

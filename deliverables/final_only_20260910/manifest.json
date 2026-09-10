@@ -3,8 +3,8 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 14230,
-      "sha256": "fea922828a2afc3ccdf478a61f46a5364810fbac9aa272aea07ccc039a686934"
+      "bytes": 14788,
+      "sha256": "012921033ff72171b08fc8e01da4ac25665173c91bd08ca6d6ff523ffadd09dc"
     },
     {
       "path": "bounded-final-attempt.json",
@@ -100,6 +100,16 @@
       "path": "own-control-audit.json",
       "bytes": 92032,
       "sha256": "77fa2b1088162d6eaf08fa28ec002e9946ff3af58c6e7b6b754841f5aacf21f6"
+    },
+    {
+      "path": "own-control-guard.json",
+      "bytes": 7495,
+      "sha256": "c90e8c725e8bf324e2a4cb18a2edf5e456764503193f316c428dc5ddfe5e5808"
+    },
+    {
+      "path": "own-controls-junit.xml",
+      "bytes": 4289,
+      "sha256": "250aef34a618861ef2fdf91258f5fbcfb5aa900329f247509a27f05c24b26b24"
     },
     {
       "path": "progress.json",

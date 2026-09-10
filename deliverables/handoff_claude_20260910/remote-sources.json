@@ -1,0 +1,23 @@
+{
+  "training/report.json": "/root/projects/TimesOil/results/audit-20260909/timesfm-economic-regimes-precise-z-20260910/training/report.json",
+  "training/launch-protocol.json": "/root/projects/TimesOil/results/audit-20260909/timesfm-economic-regimes-precise-z-20260910/launch-protocol.json",
+  "training/exit": "/root/projects/TimesOil/results/audit-20260909/timesfm-economic-regimes-precise-z-20260910/exit",
+  "evaluation/protocol.json": "/root/projects/TimesOil/results/audit-20260909/economic-uncertainty-z-20260910/protocol.json",
+  "evaluation/forecast-protocol.json": "/root/projects/TimesOil/results/audit-20260909/economic-uncertainty-z-20260910/evaluation/protocol.json",
+  "evaluation/evaluation.log": "/root/projects/TimesOil/results/audit-20260909/economic-uncertainty-z-20260910/evaluation.log",
+  "evaluation/exit": "/root/projects/TimesOil/results/audit-20260909/economic-uncertainty-z-20260910/exit",
+  "evaluation/evaluation.exit": "/root/projects/TimesOil/results/audit-20260909/economic-uncertainty-z-20260910/evaluation.exit",
+  "track1/protocol.json": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/protocol.json",
+  "track1/controller.exit": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/controller.exit",
+  "track1/exit": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/exit",
+  "track1/result.json": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/runs/track1-0be71f81b96ed854d5ddb227/result.json",
+  "track1/manifest.json": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/runs/track1-0be71f81b96ed854d5ddb227/manifest.json",
+  "track1/wells_schedule.inc": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/runs/track1-0be71f81b96ed854d5ddb227/wells_schedule.inc",
+  "track1/full_input_schedule.inc": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/opm/opm-full-replay-a7b08fb869b4fbbd9dd6ab3e/input/MODEL_Y/INCLUDE/DemoSpe_002_2_sch.inc",
+  "track1/economics-result.json": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/opm/opm-full-replay-a7b08fb869b4fbbd9dd6ab3e/economics/result.json",
+  "track1/economics-manifest.json": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/opm/opm-full-replay-a7b08fb869b4fbbd9dd6ab3e/economics/manifest.json",
+  "track1/final-opm-manifest.json": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/opm/opm-full-replay-a7b08fb869b4fbbd9dd6ab3e/manifest.json",
+  "track1/baseline-opm-manifest.json": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-y-20260909/opm/opm-full-replay-40f2f804257afe12efd408b7/manifest.json",
+  "track1/run_track1_conversion_search.py": "/root/projects/TimesOil-audit-track1-water-20260910/scripts/run_track1_conversion_search.py",
+  "track1/audit_track1_lifecycle.py": "/root/projects/TimesOil-audit-track1-water-20260910/scripts/audit_track1_lifecycle.py"
+}
