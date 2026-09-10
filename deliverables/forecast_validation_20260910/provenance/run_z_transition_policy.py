@@ -91,8 +91,8 @@ def run():
         if code:
             raise RuntimeError(f'{name} exited with {code}; see its retained log')
 
-    execute('proposal', [PYTHON, 'scripts/propose_track2_policies.py', '--request', str(request),
-        '--baseline-run', str(baseline), '--output', str(OUT / 'proposals'), '--rounds', '1', '--skip-grid',
+    execute('proposal', [PYTHON, 'scripts/propose_track2_policies.py', str(baseline), str(request),
+        str(OUT / 'proposals'), '--rounds', '1', '--skip-grid',
         '--head', str(model / 'full-model.pt'), '--head-sha256', checkpoint,
         '--connectivity', str(R / 'static-head-geology-20260909/model-z/connectivity.json')])
     receipt = json.loads((OUT / 'proposals/proposal-receipt.json').read_text())
