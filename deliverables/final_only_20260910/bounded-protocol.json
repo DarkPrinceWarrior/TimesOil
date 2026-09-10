@@ -1,0 +1,13 @@
+{
+  "source_commit": "c8590c00408517d813ae5f1b47402d3c832d0bd1",
+  "waiting_for_session": "timesoil-economic-targets-z-20260910",
+  "search": "Original source schedule, deterministic grid and three bounded Qwen proposal rounds; require at least one approved proposal and rank forecast CHDD.",
+  "historical_physical_candidate_bank_used_for_selection": false,
+  "new_search_opm_calls": 0,
+  "maximum_final_opm_calls": 1,
+  "independently_certified_forecast_accuracy": false,
+  "checkpoint_sha256": "9b954acbe64f0c5ff8dc213315a46b9324a948294ac19bc3b087d55fb50844ae",
+  "training_report_sha256": "39452192312e7c44a2b2ae3291fe338d216cd754a8ccd2ab92cd4f8995d10317",
+  "original_controls_sha256": "9c31c2f5db6b35d4ce0a6b39b95d27fd217e4a47017a1d457830dfbb39b81d7f",
+  "started_utc": "2026-09-10T13:33:37.288014+00:00"
+}

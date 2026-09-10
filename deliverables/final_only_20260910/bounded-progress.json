@@ -1,0 +1,32 @@
+{
+  "checked_utc": "2026-09-10T13:35:26.803931+00:00",
+  "jobs": [
+    {
+      "directory": "/root/projects/TimesOil/results/audit-20260909/timesfm-final-only-z-bounded-20260910",
+      "session": "timesoil-final-only-z-bounded-20260910",
+      "pid": "1776962",
+      "ps": "PID     ELAPSED STAT COMMAND\n1776962       02:04 Ssl+ python",
+      "exit": null,
+      "forecasts": 8,
+      "approved_plans": 0,
+      "selection_sealed": false,
+      "final_attempt": false
+    },
+    {
+      "directory": "/root/projects/TimesOil/results/audit-20260909/timesfm-economic-regimes-precise-z-20260910",
+      "session": "timesoil-economic-regimes-precise-z-20260910",
+      "pid": "1777259",
+      "ps": "PID     ELAPSED STAT COMMAND\n1777259       02:02 Ss+  python",
+      "exit": null
+    },
+    {
+      "directory": "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910",
+      "session": "timesoil-conversion-y-20260910",
+      "pid": "1089415",
+      "ps": "PID     ELAPSED STAT COMMAND\n1089415    02:05:43 Ss+  bash",
+      "exit": null,
+      "last_month": "2014-08-01",
+      "last_phase": "terminal_month_review"
+    }
+  ]
+}

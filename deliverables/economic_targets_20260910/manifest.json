@@ -3,8 +3,13 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 6555,
-      "sha256": "33b67a3679728b98aa920f1c38fc0047d53d3bddb1afee40cc8581fb7ef3c243"
+      "bytes": 9867,
+      "sha256": "452eb853f45aaa51a80ab31ec31c65e6e96b43e5f65c0adeb943812d89331987"
+    },
+    {
+      "path": "attention-operations.json",
+      "bytes": 1739,
+      "sha256": "9fb4f680ba87dc35288653ed89965d746bff7b3d99e8c96948dc32c5622bef48"
     },
     {
       "path": "baseline-roundtrip.json",
@@ -17,6 +22,11 @@
       "sha256": "3e59f803bed1306dadacd96f4ccb45d82338c9c8ea4d5114a528acfe84a743ab"
     },
     {
+      "path": "decoder-components.json",
+      "bytes": 7618,
+      "sha256": "1cf71ca5796de52da83dc7bb59e9e0a0bef78fbd4a6c4713a0374d55196d7d87"
+    },
+    {
       "path": "decoder-repeatability.json",
       "bytes": 1005,
       "sha256": "889568f7a5789be26986c29361a8db1ee136e614dd6b225e06ff5c18db4787a2"
@@ -27,9 +37,24 @@
       "sha256": "6659cb793a171d5a476ebee78b792c02c8e0a66cdeec327481f538095b3b34a2"
     },
     {
+      "path": "precise-attention-check.json",
+      "bytes": 860,
+      "sha256": "d6b66a3cb808851636968e7b52ed62f89f6c5b67a92bbd2846443e6b66a1dfdc"
+    },
+    {
+      "path": "precise-regime-training-protocol.json",
+      "bytes": 2427,
+      "sha256": "20c9ab3bf9d6b89ecf25b10d35f4ca441e71ad42fef567e121c8f918b50de621"
+    },
+    {
       "path": "regime-training-protocol.json",
       "bytes": 2351,
       "sha256": "5e8a7cb2d4ba53fe01034561989f199e1b69c09346649b348dd5c5668863b9a0"
+    },
+    {
+      "path": "softmax-precision.json",
+      "bytes": 2160,
+      "sha256": "6491b04a07de37d7c91e7abaedcb09c5ae7a5ee4a87e4157a4659dc5fc79751b"
     },
     {
       "path": "training-progress.json",

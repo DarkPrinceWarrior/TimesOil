@@ -294,16 +294,24 @@
       "source": "committed A100 training driver"
     },
     "provenance/run_z_final_only.py": {
-      "sha256": "3a10be9e2652f24f0040ce667bf9f2838f2fb6f70fd9b4a92f60f9215deedc01",
+      "sha256": "2f93cf66c9bf6fbe47b9d946eb3eb0b1a026b7b76f9a4cea7fdd36948a6ec51a",
       "source": "committed A100 driver"
     },
     "provenance/train_z_economic_regimes.py": {
-      "sha256": "5ddedad3b8dcefc0d09724d57d7025e581ea3a3c93f50c544546cb5da641151b",
+      "sha256": "11d44cde0462a8e269a372e204ba19fbecfe2fc22ae399de1675dc61a853db66",
       "source": "committed A100 driver"
     },
     "provenance/diagnose_decoder_parity.py": {
       "source": "Executed from GitHub frozen source on A100; diagnostic only before optimizer steps.",
       "sha256": "7c4e43614c74a335d74697f22c694de005c3011826eeb344b0e406a19bdc2cc9"
+    },
+    "provenance/diagnose_variate_attention.py": {
+      "source": "WSL-authored source executed on A100 from frozen GitHub commits.",
+      "sha256": "ac0787b5182d66bfa55cf0fe46eb46d7d5e0271d7427131815f8a1b319c577e2"
+    },
+    "provenance/verify_precise_attention.py": {
+      "source": "WSL-authored source executed on A100 from frozen GitHub commits.",
+      "sha256": "c5e1ba208d2f28e5794ff07eae8bad646be902330e5eb98bdd4dc86444f97558"
     }
   }
 }
