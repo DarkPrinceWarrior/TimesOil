@@ -939,12 +939,15 @@ def export_opm_chdd(
     deck_dir: str | Path | None = None,
     density_map: str | Path | None = None,
     unit_system: str | None = None,
+    include_bhp: bool = False,
     _summary_run: Any = None,
 ) -> dict[str, Any]:
     """Validate, convert and write both canonical CSV contracts plus manifest."""
 
     if not scenario_id.strip() or not source_model.strip():
         raise OpmChddError("scenario_id and source_model are required")
+    if type(include_bhp) is not bool:
+        raise OpmChddError("include_bhp must be boolean")
     run_manifest = Path(opm_run_manifest).resolve()
     if not run_manifest.is_file() or run_manifest.is_symlink():
         raise OpmChddError(f"OPM run manifest is not a regular file: {run_manifest}")
@@ -1198,11 +1201,13 @@ def export_opm_chdd(
                     "control_value": _clean_zero(control.value * volume_factor),
                     "control_target": control.target,
                     "status": control.status,
+                    **({"bhp_limit": _clean_zero(control.bhp_limit * pressure_factor)} if include_bhp else {}),
                 }
             )
 
     chdd_bytes = _csv_bytes(CHDD_FIELDS, chdd_rows)
-    trajectory_bytes = _csv_bytes(TRACK2_FIELDS, trajectory_rows)
+    track2_fields = (*TRACK2_FIELDS, "bhp_limit") if include_bhp else TRACK2_FIELDS
+    trajectory_bytes = _csv_bytes(track2_fields, trajectory_rows)
     manifest: dict[str, Any] = {
         "schema_version": 1,
         "generator": "timesoil.aios.opm_chdd",
@@ -1224,7 +1229,7 @@ def export_opm_chdd(
         },
         "contracts": {
             "chdd_fields": list(CHDD_FIELDS),
-            "track2_fields": list(TRACK2_FIELDS),
+            "track2_fields": list(track2_fields),
         },
         "source": {
             "summary_csv": Path(
