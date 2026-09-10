@@ -223,9 +223,8 @@ def main():
             or args.regime_calibration and args.model_y):
         parser.error('Model Z regime calibration requires a paired manifest hash')
     args.unfreeze_last_layer |= args.condition_last_layer
-    if args.economic_targets and (not args.condition_last_layer or args.model_y or args.reference
-            or args.regime_calibration or args.bhp_calibration):
-        parser.error('economic targets require conditioned Model Z and canonical ten-scenario batch')
+    if args.economic_targets and (not args.condition_last_layer or args.model_y or args.reference):
+        parser.error('economic targets require conditioned Model Z and canonical development exports')
     args.output.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
     if args.model_y:
@@ -242,7 +241,6 @@ def main():
     score_metrics = metrics
     if args.economic_targets:
         from timesfm_economics import ECONOMIC_TARGETS, economic_metrics, forecast_economic, load_economic_trajectories
-        trajectories = load_economic_trajectories(args.batch, trajectories, origin)
         score_metrics = economic_metrics
     if args.regime_calibration:
         baseline = next(t for t in trajectories if t.scenario_id == 'baseline')
@@ -256,6 +254,9 @@ def main():
         trajectories = list(trajectories) + verified_regime_calibration(args.model_y_calibration,
             args.model_y_calibration_sha256, trajectories[0], origin,
             model_y_source_sha256=json.loads((args.batch / 'manifest.json').read_text())['official_source_sha256'])
+    if args.economic_targets:
+        trajectories = load_economic_trajectories(args.batch, trajectories, origin,
+            extra_batches=[path for path in (args.regime_calibration, args.bhp_calibration) if path is not None])
     connectivity = None
     if args.connectivity:
         from timesoil.aios.interwell import WellConnectivity
