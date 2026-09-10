@@ -374,10 +374,14 @@ def load_config(path: Path) -> RunConfig:
     forecast = None
     if 'forecast' in root:
         forecast = dict(_object(root['forecast'], 'forecast',
-            {'history', 'history_sha256', 'geology', 'geology_sha256'}, {'head', 'head_sha256'}))
-        if ('head' in forecast) != ('head_sha256' in forecast):
-            raise ValueError('forecast head and SHA-256 must be supplied together')
-        for name in ('history', 'geology', *(('head',) if 'head' in forecast else ())):
+            {'history', 'history_sha256', 'geology', 'geology_sha256'},
+            {'head', 'head_sha256', 'monthly_head', 'monthly_head_sha256', 'monthly_report', 'monthly_report_sha256'}))
+        for name in ('head', 'monthly_head', 'monthly_report'):
+            if (name in forecast) != (name + '_sha256' in forecast):
+                raise ValueError('forecast ' + name + ' and SHA-256 must be supplied together')
+        if ('monthly_head' in forecast) != ('monthly_report' in forecast):
+            raise ValueError('monthly forecast weights require their training report')
+        for name in ('history', 'geology', *(n for n in ('head', 'monthly_head', 'monthly_report') if n in forecast)):
             file = (path.absolute().parent / _string(forecast[name], 'forecast.' + name)).absolute()
             _reject_symlink_components(file)
             if not file.is_file() or _digest(file.read_bytes()) != forecast[name + '_sha256']:

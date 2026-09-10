@@ -95,11 +95,10 @@ class TimesFMPlanning:
         torch.manual_seed(20260909)
         self.forecaster = TimesFM3Forecaster(ModelConfig(checkpoint_path='google/timesfm-3.0-pytorch',
             revision=MODEL_REVISION, per_core_batch_size=1, device='cuda'))
-        self.calibration = self.calibrate()
         self.planning_forecaster = self.forecaster
         self.head_sha256 = settings.get('head_sha256')
         if settings.get('head'):
-            from timesfm_static_head import StaticConditionedHead
+            from timesfm_static_head import load_frozen_model
             path = Path(settings['head'])
             if sha256(path.read_bytes()).hexdigest() != self.head_sha256:
                 raise ValueError('forecast trained head hash mismatch')
@@ -109,13 +108,30 @@ class TimesFMPlanning:
             selected = torch.load(path, map_location='cuda', weights_only=True)
             self.planning_forecaster = TimesFM3Forecaster(ModelConfig(checkpoint_path='google/timesfm-3.0-pytorch',
                 revision=MODEL_REVISION, per_core_batch_size=1, device='cuda'))
-            model = self.planning_forecaster.model
-            model.output_head = StaticConditionedHead(model.output_head, self.geology)
-            weights = selected.get('output_head', selected)
-            torch.testing.assert_close(weights['features'], model.output_head.features, rtol=0, atol=0)
-            model.output_head.load_state_dict(weights)
-            if 'last_layer' in selected:
-                model.transformer_stack.layers[-1].load_state_dict(selected['last_layer'])
+            self.planning_forecaster.model = load_frozen_model(self.planning_forecaster.model, self.geology, selected)
+        self.monthly_head_sha256 = settings.get('monthly_head_sha256')
+        if settings.get('monthly_head'):
+            from timesfm_static_head import load_frozen_model
+            for name in ('monthly_head', 'monthly_report'):
+                path = Path(settings[name])
+                if sha256(path.read_bytes()).hexdigest() != settings[name + '_sha256']:
+                    raise ValueError('monthly forecast input hash mismatch: ' + name)
+                self.files[str(path)] = settings[name + '_sha256']
+            report = json.loads(Path(settings['monthly_report']).read_text())
+            if (not report.get('complete') or not report.get('monthly_observed_training')
+                    or report.get('training_horizon_months') != 1
+                    or report.get('checkpoint_sha256') != self.monthly_head_sha256
+                    or report.get('model_revision') != MODEL_REVISION
+                    or report.get('connectivity_sha256') != settings['geology_sha256']):
+                raise ValueError('monthly checkpoint requires a matching completed one-month training report')
+            if self.planning_forecaster is self.forecaster:
+                self.planning_forecaster = TimesFM3Forecaster(ModelConfig(checkpoint_path='google/timesfm-3.0-pytorch',
+                    revision=MODEL_REVISION, per_core_batch_size=1, device='cuda'))
+            selected = torch.load(settings['monthly_head'], map_location='cuda', weights_only=True)
+            self.forecaster.model = load_frozen_model(self.forecaster.model, self.geology, selected)
+            implementation = Path(__file__).with_name('timesfm_static_head.py')
+            self.files[str(implementation)] = sha256(implementation.read_bytes()).hexdigest()
+        self.calibration = self.calibrate()
         self.provenance = {'model_revision': MODEL_REVISION, 'input_hashes': self.files,
             'source_sha256': source_sha256, 'well_count': len(self.wells),
             'target_units': ['oil tonnes/day', 'liquid tonnes/day', 'reservoir WBP9 bar'],
@@ -123,7 +139,9 @@ class TimesFMPlanning:
             'initial_observation_cutoff': str(state.month), 'future_observations_used': False,
             'uncertainty_calibrated': False, 'static_head_trained': self.head_sha256 is not None,
             'planning_head_sha256': self.head_sha256,
-            'one_month_monitor': 'Official pretrained weights with separate historical calibration',
+            'one_month_monitor': ('Adapted one-month weights with their own historical calibration'
+                if self.monthly_head_sha256 else 'Official pretrained weights with separate historical calibration'),
+            'monthly_head_sha256': self.monthly_head_sha256,
             'one_month_historical_calibration': self.calibration,
             'forecast_authorizes_control_without_opm': False,
             'script_sha256': sha256(Path(__file__).read_bytes()).hexdigest()}
@@ -229,8 +247,7 @@ class TimesFMPlanning:
         self.last_predictions[first_month_key] = one_month.copy()
         self.last_diagnostics[first_month_key] = {
             'model': 'Google TimesFM 3', 'revision': MODEL_REVISION,
-            'training': ('Separate Model Y static head for full-period planning; pretrained one-month monitor.'
-                         if self.head_sha256 else 'Official pretrained weights; no Model Y head adaptation.'),
+            'training': {'planning_head_sha256': self.head_sha256, 'monthly_head_sha256': self.monthly_head_sha256},
             'planning_head_sha256': self.head_sha256,
             'historical_validation_and_one_month_uq': self.calibration,
             'full_remaining_horizon_uq_calibrated': False,
@@ -318,7 +335,8 @@ def self_check():
     from datetime import date
     from timesoil.aios.contracts import ControlAction, ControlTarget, WellRole, WellStatus
     import torch
-    from timesfm_static_head import StaticConditionedHead
+    from copy import deepcopy
+    from timesfm_static_head import StaticConditionedHead, StaticConditionedLayer, load_frozen_model
     base = torch.nn.Linear(4, 9)
     conditioned = StaticConditionedHead(base, Obj(well_ids=('a', 'b'),
         static=[[10, .1, 1], [20, .2, 3]], provenance={}))
@@ -327,6 +345,19 @@ def self_check():
     with torch.no_grad():
         conditioned.conditioner.weight[:, 0] = 1
     assert not torch.equal(conditioned(values)[:, 0], conditioned(values)[:, 3])
+    connection = Obj(well_ids=('a', 'b'), static=[[10, .1, 1], [20, .2, 3]], provenance={})
+    native = torch.nn.Module()
+    native.output_head = torch.nn.Linear(4, 9)
+    native.transformer_stack = torch.nn.Module()
+    native.transformer_stack.layers = torch.nn.ModuleList([torch.nn.Identity()])
+    layer = StaticConditionedLayer(torch.nn.Identity(), conditioned)
+    with torch.no_grad():
+        layer.conditioner.weight.fill_(.01)
+    selected = {'output_head': conditioned.state_dict(), 'last_layer': layer.state_dict(), 'static_last_layer': True}
+    restored = load_frozen_model(deepcopy(native), connection, selected)
+    embeddings = torch.ones((1, 18, 2, 4))
+    torch.testing.assert_close(restored.transformer_stack.layers[-1](embeddings), layer(embeddings), rtol=0, atol=0)
+    assert isinstance(native.transformer_stack.layers[-1], torch.nn.Identity)
     planner = TimesFMPlanning.__new__(TimesFMPlanning)
     planner.wells = ('p', 'i')
     planner.dates = pd.date_range('2014-01-01', periods=5, freq='MS')
@@ -353,6 +384,7 @@ def self_check():
     planner.planning_forecaster = Forecaster()
     planner.planning_forecaster.rate = 2.
     planner.head_sha256 = None
+    planner.monthly_head_sha256 = None
     state = Obj(month=planner.month, wells=tuple(Obj(well=w, oil_rate=values[0], liquid_rate=values[1], bhp=values[2])
         for w, values in zip(planner.wells, planner.controller_state, strict=True)))
     controls = tuple(ControlAction(date(2014, m, 1), w,
