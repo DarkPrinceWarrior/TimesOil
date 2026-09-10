@@ -186,6 +186,8 @@ def main():
     parser.add_argument('--self-check', action='store_true')
     parser.add_argument('--economic-targets', action='store_true',
         help='Train the nine canonical economic outputs on the verified Model Z development batch')
+    parser.add_argument('--precise-variate-softmax', action='store_true',
+        help='Use FP64 softmax in native manual variate attention; persist this inference setting')
     args = parser.parse_args()
     self_check()
     if args.self_check:
@@ -198,6 +200,8 @@ def main():
         parser.error('initial-head and its SHA-256 must be supplied together')
     if args.condition_last_layer and not args.connectivity:
         parser.error('static last-layer conditioning requires verified connectivity')
+    if args.precise_variate_softmax and not args.condition_last_layer:
+        parser.error('precise variate softmax requires a conditioned checkpoint with execution metadata')
     if args.cold_start_normalization and not args.condition_last_layer:
         parser.error('cold-start normalization requires static last-layer conditioning')
     if args.retain_initial_scale and not (args.cold_start_normalization and args.initial_head):
@@ -338,6 +342,11 @@ def main():
     if args.condition_first_layer and not isinstance(model.transformer_stack.layers[0], StaticConditionedLayer):
         model.transformer_stack.layers[0] = StaticConditionedLayer(model.transformer_stack.layers[0], model.output_head)
     model.requires_grad_(args.unfreeze_backbone)
+    if args.initial_head and initial.get('precise_variate_softmax', False) and not args.precise_variate_softmax:
+        raise ValueError('initial weights require precise variate softmax')
+    if args.precise_variate_softmax:
+        from timesfm_geology import enable_precise_variate_softmax
+        enable_precise_variate_softmax(model)
     model.output_head.requires_grad_(True)
     if args.unfreeze_last_layer:
         model.transformer_stack.layers[-1].requires_grad_(True)
@@ -444,6 +453,8 @@ def main():
             weights['cold_start_scale'] = model.cold_start_scale
         if args.economic_targets:
             weights['economic_targets'] = list(ECONOMIC_TARGETS)
+        if args.precise_variate_softmax:
+            weights['precise_variate_softmax'] = True
         return weights
     torch.save(selected_weights(), checkpoint)
     report = dict(schema='timesoil.timesfm-head-adaptation/v1', model_revision=MODEL_REVISION,
@@ -473,7 +484,9 @@ def main():
         regime_calibration_reused_for_development=args.regime_calibration is not None,
         development_test_scenarios_previously_inspected=True,
         trainable_parameters=sum(p.numel() for p in trainable), learning_rate=args.learning_rate,
-        attention_backend='math', decoder_target_quantile_parity_max_abs=parity_error,
+        attention_backend='manual_variate_fp64_softmax_math_sequence' if args.precise_variate_softmax else 'math',
+        precise_variate_softmax=args.precise_variate_softmax,
+        decoder_target_quantile_parity_max_abs=parity_error,
         gradient_policy='stop gradients through iterative CPM-RevIN statistics; unchanged forward calculation',
         decoder_target_quantile_parity_max_scaled=parity_scaled_error,
         decoder_target_quantile_parity_atol_train_scale=.001,

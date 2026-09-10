@@ -5,6 +5,29 @@ import torch
 from torch import nn
 
 
+def enable_precise_variate_softmax(model):
+    """Avoid observed CUDA FP32 softmax repeatability drift on full-field variates."""
+    from unittest.mock import patch
+    from torch.nn import functional as functional
+
+    if getattr(model, 'precise_variate_softmax', False):
+        return
+    layers = [module for name, module in model.named_modules() if name.rsplit('.', 1)[-1] == 'var_attn']
+    if not layers or any(not hasattr(layer, 'use_sdpa') for layer in layers):
+        raise ValueError('native variate attention layers required')
+    def softmax(values, dim=None, _stacklevel=3, dtype=None):
+        return torch.softmax(values, dim=dim, dtype=torch.float64).to(dtype or values.dtype)
+    for layer in layers:
+        layer.use_sdpa = False
+        original = layer.forward
+        def forward(*args, _original=original, **kwargs):
+            # ponytail: process-local patch in single-threaded inference/training; use native precision control when available.
+            with patch.object(functional, 'softmax', softmax):
+                return _original(*args, **kwargs)
+        layer.forward = forward
+    model.precise_variate_softmax = True
+
+
 def geological_inputs(trajectory, origin, context, horizon, connectivity):
     from benchmark_timesfm3 import forecast_inputs
     if tuple(trajectory.well_ids) != tuple(connectivity.well_ids):
@@ -146,11 +169,30 @@ def load_frozen_model(model, connectivity, selected, *, reference_sha256=None):
         model.load_state_dict(full)
     if 'cold_start_scale' in selected:
         enable_cold_start_normalization(model, selected['cold_start_scale'])
+    if type(selected.get('precise_variate_softmax', False)) is not bool:
+        raise ValueError('invalid variate softmax precision metadata')
+    if selected.get('precise_variate_softmax', False):
+        enable_precise_variate_softmax(model)
     return model
 
 
 def self_check():
     from types import SimpleNamespace
+    class Attention(nn.Module):
+        use_sdpa = True
+        def forward(self, values):
+            return torch.nn.functional.softmax(values, dim=-1)
+    probe = nn.Module(); probe.var_attn = Attention()
+    original_softmax = torch.nn.functional.softmax
+    enable_precise_variate_softmax(probe)
+    enable_precise_variate_softmax(probe)
+    values = torch.tensor([[2., -3., 5.]], requires_grad=True)
+    expected = torch.softmax(values.double(), dim=-1).float()
+    actual = probe.var_attn(values)
+    torch.testing.assert_close(actual, expected, rtol=0, atol=0)
+    torch.testing.assert_close(torch.autograd.grad(actual[..., 0].sum(), values)[0],
+                               torch.autograd.grad(expected[..., 0].sum(), values)[0], rtol=0, atol=0)
+    assert not probe.var_attn.use_sdpa and torch.nn.functional.softmax is original_softmax
     connection = SimpleNamespace(well_ids=('a', 'b'), static=[[10, .1, 1], [20, .2, 3]], provenance={})
     base = nn.Linear(4, 9)
     head = StaticConditionedHead(base, connection)
