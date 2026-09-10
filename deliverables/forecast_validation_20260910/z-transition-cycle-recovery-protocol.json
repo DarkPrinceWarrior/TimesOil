@@ -1,0 +1,9 @@
+{
+  "created_utc": "2026-09-10T10:01:15.560788+00:00",
+  "source_commit": "87f1a965b758d7ab4096a5948ae2b5a6f5f3dfde",
+  "reason": "Scientific Python lacked FastAPI; no OPM run was created. Reuse the sealed successful forecast and Qwen proposal.",
+  "cycle_python": "/root/projects/TimesOil/.venv/bin/python",
+  "proposal_receipt_sha256": "eeea71b15c4097f1191d57125be8df9cf05e06f83b126578ec03f1dfbcad7722",
+  "request_sha256": "c4da3ecc0c3121af94351909521314fa48321a11a763d2091c287c125a77d3c7",
+  "checkpoint_sha256": "7a548a77f2acdb50c1dc6e48e2685b96e4305badb45dfb51dbc1eb705568ada3"
+}
