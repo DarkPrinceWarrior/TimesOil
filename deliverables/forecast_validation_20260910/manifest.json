@@ -196,6 +196,14 @@
     "z-transition-physical-completion.json": {
       "sha256": "027bc7e4e9be8dc8aeb705933516f7f804be050f33aaf38d42aebf5c9ebbfaa4",
       "source": "/root/projects/TimesOil/results/audit-20260909/transition-coverage-z-20260910/completion.json"
+    },
+    "z-transition-policy-wait-protocol.json": {
+      "sha256": "f9df1878b4ffc341e747eb02cf97013ae0be75d166451a63befb06141d9d053c",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-z-policy-20260910/wait-protocol.json"
+    },
+    "provenance/run_z_transition_policy.py": {
+      "sha256": "a3d91d687d7ed01bb49433ad21ec8b6e49c0de67ac12e2ccb063301bc6d93b91",
+      "source": "/root/projects/TimesOil-audit-transition-policy-z-20260910/deliverables/forecast_validation_20260910/provenance/run_z_transition_policy.py"
     }
   }
 }
