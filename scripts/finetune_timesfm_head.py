@@ -79,8 +79,10 @@ def verified_regime_calibration(batch, expected_hash, baseline, origin):
     if sha256((batch / 'manifest.json').read_bytes()).hexdigest() != expected_hash:
         raise ValueError('regime calibration manifest hash mismatch')
     manifest = json.loads((batch / 'manifest.json').read_text())
-    if (manifest.get('complete') is not True or manifest['calibration_cases'] != [0, 1, 2, 4, 7]
-            or manifest['test_cases'] != [3, 5, 6] or manifest['model_selection_allowed_on_test'] is not False):
+    bhp = manifest.get('schema') == 'timesoil.bhp-only-forecast-evaluation/v1'
+    calibration, test = ([0, 1, 3, 4, 6], [2, 5, 7]) if bhp else ([0, 1, 2, 4, 7], [3, 5, 6])
+    if (manifest.get('complete') is not True or manifest['calibration_cases'] != calibration
+            or manifest['test_cases'] != test or manifest['model_selection_allowed_on_test'] is not False):
         raise ValueError('only the five previously designated calibration cases may augment training')
     extra = []
     for record in manifest['scenarios']:
@@ -98,7 +100,7 @@ def verified_regime_calibration(batch, expected_hash, baseline, origin):
         item = data[0]
         if (item.well_ids != baseline.well_ids or not item.dates.equals(baseline.dates)
                 or item.actions.shape != baseline.actions.shape
-                or item.scenario_id != f"physical-sweep-{record['index']:02d}"):
+                or item.scenario_id != f"{'bhp-only' if bhp else 'physical-sweep'}-{record['index']:02d}"):
             raise ValueError('regime calibration grid differs from the training reservoir')
         np.testing.assert_allclose(item.states[:origin + 1], baseline.states[:origin + 1], rtol=0, atol=1e-6)
         np.testing.assert_array_equal(item.actions[:origin], baseline.actions[:origin])
@@ -120,10 +122,13 @@ def main():
     parser.add_argument('--initial-head', type=Path)
     parser.add_argument('--initial-head-sha256')
     parser.add_argument('--unfreeze-last-layer', action='store_true')
+    parser.add_argument('--unfreeze-backbone', action='store_true')
     parser.add_argument('--model-y', action='store_true')
     parser.add_argument('--condition-last-layer', action='store_true')
     parser.add_argument('--regime-calibration', type=Path)
     parser.add_argument('--regime-calibration-sha256')
+    parser.add_argument('--bhp-calibration', type=Path)
+    parser.add_argument('--bhp-calibration-sha256')
     parser.add_argument('--monthly-observed-training', action='store_true')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
@@ -140,6 +145,11 @@ def main():
         parser.error('static last-layer conditioning requires verified connectivity')
     if args.monthly_observed_training and not args.model_y:
         parser.error('monthly observed training currently requires Model Y')
+    if args.unfreeze_backbone and not args.condition_last_layer:
+        parser.error('full-backbone adaptation requires static last-layer conditioning')
+    if (bool(args.bhp_calibration) != bool(args.bhp_calibration_sha256)
+            or args.bhp_calibration and args.model_y):
+        parser.error('Model Z BHP calibration requires a paired manifest hash')
     if (bool(args.regime_calibration) != bool(args.regime_calibration_sha256)
             or args.regime_calibration and args.model_y):
         parser.error('Model Z regime calibration requires a paired manifest hash')
@@ -160,6 +170,10 @@ def main():
         baseline = next(t for t in trajectories if t.scenario_id == 'baseline')
         trajectories = list(trajectories) + verified_regime_calibration(
             args.regime_calibration, args.regime_calibration_sha256, baseline, origin)
+    if args.bhp_calibration:
+        baseline = next(t for t in trajectories if t.scenario_id == 'baseline')
+        trajectories = list(trajectories) + verified_regime_calibration(
+            args.bhp_calibration, args.bhp_calibration_sha256, baseline, origin)
     connectivity = None
     if args.connectivity:
         from timesoil.aios.interwell import WellConnectivity
@@ -180,6 +194,9 @@ def main():
     if args.regime_calibration:
         train_ids += [f'physical-sweep-{i:02d}' for i in (0, 1, 2, 7)]
         validation_ids += ['physical-sweep-04']
+    if args.bhp_calibration:
+        train_ids += [f'bhp-only-{i:02d}' for i in (0, 1, 3, 6)]
+        validation_ids += ['bhp-only-04']
     assert set(train_ids + validation_ids + test_ids) == set(by_id)
     assert len(train_ids + validation_ids + test_ids) == len(by_id)
     import torch
@@ -195,7 +212,7 @@ def main():
     torch.backends.cuda.enable_cudnn_sdp(False)
     torch.backends.cuda.enable_math_sdp(True)
     torch.manual_seed(20260909)
-    torch.cuda.set_per_process_memory_fraction(.35)
+    torch.cuda.set_per_process_memory_fraction(.50 if args.unfreeze_backbone else .35)
     forecaster = TimesFM3Forecaster(ModelConfig(checkpoint_path='google/timesfm-3.0-pytorch',
         revision=MODEL_REVISION, per_core_batch_size=1, device='cuda'))
     model = forecaster.model
@@ -205,23 +222,32 @@ def main():
         if sha256(args.initial_head.read_bytes()).hexdigest() != args.initial_head_sha256:
             raise ValueError('initial output-head hash mismatch')
         initial = torch.load(args.initial_head, map_location='cuda', weights_only=True)
-        initial_weights = initial.get('output_head', initial)
+        initial_weights = ({k.removeprefix('output_head.'): v for k, v in initial['full_model'].items()
+                            if k.startswith('output_head.')} if 'full_model' in initial else initial.get('output_head', initial))
         if connectivity is not None:
             torch.testing.assert_close(initial_weights['features'], model.output_head.features, rtol=0, atol=0)
         model.output_head.load_state_dict(initial_weights)
     if args.condition_last_layer:
         from timesfm_geology import StaticConditionedLayer
         model.transformer_stack.layers[-1] = StaticConditionedLayer(model.transformer_stack.layers[-1], model.output_head)
-    if args.initial_head and 'last_layer' in initial:
+    if args.initial_head and ('last_layer' in initial or 'full_model' in initial):
         if bool(initial.get('static_last_layer', False)) != args.condition_last_layer:
             raise ValueError('initial last-layer architecture differs from requested conditioning')
-        if args.condition_last_layer:
+        if 'full_model' in initial:
+            model.load_state_dict(initial['full_model'])
+        elif args.condition_last_layer:
             torch.testing.assert_close(initial['last_layer']['features'], model.transformer_stack.layers[-1].features, rtol=0, atol=0)
-        model.transformer_stack.layers[-1].load_state_dict(initial['last_layer'])
-    model.requires_grad_(False)
+        if 'last_layer' in initial:
+            model.transformer_stack.layers[-1].load_state_dict(initial['last_layer'])
+    model.requires_grad_(args.unfreeze_backbone)
     model.output_head.requires_grad_(True)
     if args.unfreeze_last_layer:
         model.transformer_stack.layers[-1].requires_grad_(True)
+    if args.unfreeze_backbone:
+        from functools import partial
+        from torch.utils.checkpoint import checkpoint as checkpoint_layer
+        for layer in model.transformer_stack.layers:
+            layer.forward = partial(checkpoint_layer, layer.forward, use_reentrant=False)
     model.eval()  # Keep the frozen backbone's inference behavior during head adaptation.
     frozen_versions = {n: p._version for n, p in model.named_parameters() if not p.requires_grad}
     trainable = [p for p in model.parameters() if p.requires_grad]
@@ -270,8 +296,11 @@ def main():
                                    unwrapped[:, :targets_count] / scale[..., None], rtol=0, atol=.001)
         best_loss = float(torch.stack([loss_for(key) for key in validation_keys]).mean())
     del wrapped, unwrapped
-    checkpoint = args.output / ('last-layer-and-head.pt' if args.unfreeze_last_layer else 'output-head.pt')
+    checkpoint = args.output / ('full-model.pt' if args.unfreeze_backbone else
+        'last-layer-and-head.pt' if args.unfreeze_last_layer else 'output-head.pt')
     def selected_weights():
+        if args.unfreeze_backbone:
+            return {'full_model': model.state_dict(), 'static_last_layer': args.condition_last_layer}
         if args.unfreeze_last_layer:
             return {'output_head': model.output_head.state_dict(),
                     'last_layer': model.transformer_stack.layers[-1].state_dict(),
@@ -281,13 +310,16 @@ def main():
     report = dict(schema='timesoil.timesfm-head-adaptation/v1', model_revision=MODEL_REVISION,
         batch_manifest_sha256=args.batch_sha256, source_scenario_hashes={t.scenario_id: t.content_hash for t in trajectories},
         train_scenarios=train_ids, validation_scenarios=validation_ids, test_scenarios=test_ids,
-        trained_component='TimesFM3Torch.output_head' + (' + transformer_stack.layers[-1]' if args.unfreeze_last_layer else ''),
+        trained_component='TimesFM3Torch (complete)' if args.unfreeze_backbone else
+            'TimesFM3Torch.output_head' + (' + transformer_stack.layers[-1]' if args.unfreeze_last_layer else ''),
         backbone_frozen=not args.unfreeze_last_layer,
         last_layer_trainable=args.unfreeze_last_layer,
         static_last_layer=args.condition_last_layer,
-        all_other_backbone_parameters_frozen=True,
+        all_other_backbone_parameters_frozen=not args.unfreeze_backbone,
+        full_backbone_trainable=args.unfreeze_backbone, gradient_checkpointing=args.unfreeze_backbone,
         initial_head_sha256=args.initial_head_sha256,
         regime_calibration_manifest_sha256=args.regime_calibration_sha256,
+        bhp_calibration_manifest_sha256=args.bhp_calibration_sha256,
         regime_calibration_reused_for_development=args.regime_calibration is not None,
         development_test_scenarios_previously_inspected=True,
         trainable_parameters=sum(p.numel() for p in trainable), learning_rate=args.learning_rate,
@@ -337,6 +369,9 @@ def main():
             if not torch.isfinite(loss):
                 raise ValueError('non-finite training loss')
             loss.backward()
+            if args.unfreeze_backbone and epoch == 1:
+                if not any(p.grad is not None and torch.count_nonzero(p.grad) for p in model.transformer_stack.layers[0].parameters()):
+                    raise ValueError('first native transformer layer received no gradient')
             if args.unfreeze_last_layer and epoch == 1:
                 if not any(p.grad is not None and torch.count_nonzero(p.grad) for p in model.transformer_stack.layers[-1].parameters()):
                     raise ValueError('last native transformer layer received no gradient')
@@ -357,8 +392,11 @@ def main():
         print(json.dumps(row), flush=True)
     assert frozen_versions == {n: p._version for n, p in model.named_parameters() if not p.requires_grad}
     selected = torch.load(checkpoint, map_location='cuda', weights_only=True)
-    model.output_head.load_state_dict(selected['output_head'] if args.unfreeze_last_layer else selected)
-    if args.unfreeze_last_layer:
+    if args.unfreeze_backbone:
+        model.load_state_dict(selected['full_model'])
+    else:
+        model.output_head.load_state_dict(selected['output_head'] if args.unfreeze_last_layer else selected)
+    if args.unfreeze_last_layer and not args.unfreeze_backbone:
         model.transformer_stack.layers[-1].load_state_dict(selected['last_layer'])
     for name in test_ids:
         t = by_id[name]
