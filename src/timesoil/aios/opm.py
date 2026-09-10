@@ -58,6 +58,7 @@ _SUMMARY_VECTORS = (
     *_CONNECTION_VECTORS,
 )
 OPM_EXPORT_VECTORS = _SUMMARY_VECTORS[1:]
+OPM_OPTIONAL_WELL_VECTORS = ("WVPT", "WVIT")
 _SUMMARY_ARTIFACT_SUFFIXES = {
     ".SMSPEC",
     ".FSMSPEC",
@@ -312,7 +313,7 @@ def _validated_summary_artifacts(
     return run_manifest, records
 
 
-def _canonical_summary_selection(available: Iterable[str]) -> tuple[str, ...]:
+def _canonical_summary_selection(available: Iterable[str], *, include_optional: bool = False) -> tuple[str, ...]:
     vectors = tuple(available)
     if not vectors or any(
         not vector or any(character.isspace() for character in vector)
@@ -321,10 +322,11 @@ def _canonical_summary_selection(available: Iterable[str]) -> tuple[str, ...]:
         raise OpmSummaryError("summary -l returned invalid vectors")
     temporal = {"DATE", "TIME", "YEARS"}
     required: set[str] = set(OPM_EXPORT_VECTORS)
+    allowed = required | (set(OPM_OPTIONAL_WELL_VECTORS) if include_optional else set())
     selected = tuple(
         vector
         for vector in vectors
-        if vector.upper() in temporal or vector.split(":", 1)[0].upper() in required
+        if vector.upper() in temporal or vector.split(":", 1)[0].upper() in allowed
     )
     if len(set(selected)) != len(selected):
         raise OpmSummaryError("summary -l returned duplicate canonical vectors")
@@ -388,6 +390,7 @@ def verify_summary_extraction(
     if (
         selection.get("mode") != "filtered-summary-list"
         or selection.get("required") != list(OPM_EXPORT_VECTORS)
+        or selection.get("optional", []) not in ([], list(OPM_OPTIONAL_WELL_VECTORS))
         or not isinstance(available, list)
         or any(not isinstance(item, str) for item in available)
         or not isinstance(selected, list)
@@ -396,7 +399,7 @@ def verify_summary_extraction(
         != sha256(
             json.dumps(available, ensure_ascii=False, separators=(",", ":")).encode()
         ).hexdigest()
-        or tuple(selected) != _canonical_summary_selection(available)
+        or tuple(selected) != _canonical_summary_selection(available, include_optional=bool(selection.get("optional")))
     ):
         raise OpmSummaryError("summary extraction vector selection is not canonical")
     if extraction.get("report_steps_only") is not True or extraction.get("shell") is not False:
@@ -601,6 +604,12 @@ def _summary_mapping(unit_system: str) -> dict[str, dict[str, str]]:
             "chdd_field": chdd_field,
             "transform": transform,
         }
+    for vector, quantity in (("WVPT", "production"), ("WVIT", "injection")):
+        mapping[vector] = {
+            "quantity": f"well cumulative reservoir volume {quantity}",
+            "unit": {"METRIC": "RM3", "FIELD": "RB"}.get(unit_system, "SMSPEC reservoir volume unit (unverified)"),
+            "chdd_field": "", "transform": "optional monthly voidage balance; never surface volume or CHDD mass",
+        }
     return mapping
 
 
@@ -730,7 +739,7 @@ def build_summary_overlay(connection_wells: Iterable[str] = ()) -> str:
     ):
         raise OpmError("connection_wells contains an unsafe well name")
     lines = ["-- TIMESOIL AIOS SUMMARY OVERLAY; GENERATED IN RUN SNAPSHOT", "DATE"]
-    for vector in _SUMMARY_VECTORS[1 : -len(_CONNECTION_VECTORS)]:
+    for vector in (*_SUMMARY_VECTORS[1 : -len(_CONNECTION_VECTORS)], *OPM_OPTIONAL_WELL_VECTORS):
         lines.extend((vector, "/"))
     for vector in _CONNECTION_VECTORS:
         lines.append(vector)
@@ -1069,7 +1078,7 @@ class OpmFlowRunner:
             result, ("-l",), (), summary_file
         )
         available = tuple(listing.split())
-        selected = _canonical_summary_selection(available)
+        selected = _canonical_summary_selection(available, include_optional=True)
         stdout, report_summary_path, report_command = self._run_summary_details(
             result, ("-r",), selected, summary_file
         )
@@ -1102,6 +1111,7 @@ class OpmFlowRunner:
                 ).hexdigest(),
                 "selected": list(selected),
                 "required": list(OPM_EXPORT_VECTORS),
+                "optional": list(OPM_OPTIONAL_WELL_VECTORS),
             },
             "output_report": {
                 "path": report.relative_to(run_dir).as_posix(),
