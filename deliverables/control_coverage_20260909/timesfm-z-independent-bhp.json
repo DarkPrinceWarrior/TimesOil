@@ -1,0 +1,272 @@
+{
+  "schema": "timesoil.independent-timesfm-evaluation/v1",
+  "batch_sha256": "e5c7ae9439b4bd0dffe65b42ecaa1c95f2ee5a889d42988760c39a9d2977c4a1",
+  "model_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "head_sha256": "71c4259f3bb59ee9fe95d1ea315c0e2de0db82199047fd28c856251e5f101b74",
+  "training_report_sha256": "493589e336e5c5d888b1481bd467c0cafbb21487e032af38b18085703c4a6efe",
+  "connectivity_sha256": "cff65939ad943dd1df28460306fc433663a22707bd66a087732077135f7992c0",
+  "calibration_cases": [
+    0,
+    1,
+    3,
+    4,
+    6
+  ],
+  "test_cases": [
+    2,
+    5,
+    7
+  ],
+  "model_selection_allowed_on_test": false,
+  "head_retraining_allowed_after_test": false,
+  "modes_fixed_before_evaluation": [
+    "trained_fixed_origin_224",
+    "pretrained_observed_update_1"
+  ],
+  "head_validation_loss": 0.11276546120643616,
+  "metrics": [
+    {
+      "index": 0,
+      "split": "calibration",
+      "mode": "trained_fixed_origin_224",
+      "oil_wape": 0.38066350947701394,
+      "liquid_wape": 0.30330749649982436,
+      "pressure_rmse_bar": 80.61021250019789
+    },
+    {
+      "index": 0,
+      "split": "calibration",
+      "mode": "pretrained_observed_update_1",
+      "oil_wape": 0.013862513260044987,
+      "liquid_wape": 0.005945151726466276,
+      "pressure_rmse_bar": 6.711946683135229
+    },
+    {
+      "index": 0,
+      "mode": "naive_observed_update_1",
+      "oil_wape": 0.01773653450880957,
+      "liquid_wape": 0.007044038030760013,
+      "pressure_rmse_bar": 5.8315158122242625
+    },
+    {
+      "index": 1,
+      "split": "calibration",
+      "mode": "trained_fixed_origin_224",
+      "oil_wape": 0.3938495884776799,
+      "liquid_wape": 0.32059221634951485,
+      "pressure_rmse_bar": 82.12706521167269
+    },
+    {
+      "index": 1,
+      "split": "calibration",
+      "mode": "pretrained_observed_update_1",
+      "oil_wape": 0.01517020338801548,
+      "liquid_wape": 0.00681443248192561,
+      "pressure_rmse_bar": 6.795758432005655
+    },
+    {
+      "index": 1,
+      "mode": "naive_observed_update_1",
+      "oil_wape": 0.01819320552585088,
+      "liquid_wape": 0.0074135620951904,
+      "pressure_rmse_bar": 5.951841333542919
+    },
+    {
+      "index": 2,
+      "split": "test",
+      "mode": "trained_fixed_origin_224",
+      "oil_wape": 0.4413033812603365,
+      "liquid_wape": 0.3729531334453875,
+      "pressure_rmse_bar": 86.14651339102971
+    },
+    {
+      "index": 2,
+      "split": "test",
+      "mode": "pretrained_observed_update_1",
+      "oil_wape": 0.018935872748808338,
+      "liquid_wape": 0.008220606414334811,
+      "pressure_rmse_bar": 6.9217331393811
+    },
+    {
+      "index": 2,
+      "mode": "naive_observed_update_1",
+      "oil_wape": 0.019679319985987334,
+      "liquid_wape": 0.008129149545924069,
+      "pressure_rmse_bar": 6.156887944554144
+    },
+    {
+      "index": 3,
+      "split": "calibration",
+      "mode": "trained_fixed_origin_224",
+      "oil_wape": 0.3519173777391103,
+      "liquid_wape": 0.2832167009751884,
+      "pressure_rmse_bar": 76.30184403028561
+    },
+    {
+      "index": 3,
+      "split": "calibration",
+      "mode": "pretrained_observed_update_1",
+      "oil_wape": 0.013086378757749536,
+      "liquid_wape": 0.005798928162625088,
+      "pressure_rmse_bar": 6.3885416618606525
+    },
+    {
+      "index": 3,
+      "mode": "naive_observed_update_1",
+      "oil_wape": 0.017003148586504563,
+      "liquid_wape": 0.006939470714598184,
+      "pressure_rmse_bar": 5.551262995718465
+    },
+    {
+      "index": 4,
+      "split": "calibration",
+      "mode": "trained_fixed_origin_224",
+      "oil_wape": 0.36124375341995896,
+      "liquid_wape": 0.2998857444960353,
+      "pressure_rmse_bar": 74.18526454385591
+    },
+    {
+      "index": 4,
+      "split": "calibration",
+      "mode": "pretrained_observed_update_1",
+      "oil_wape": 0.012548695598094461,
+      "liquid_wape": 0.0057622982471308365,
+      "pressure_rmse_bar": 5.992268994764049
+    },
+    {
+      "index": 4,
+      "mode": "naive_observed_update_1",
+      "oil_wape": 0.01612855995377473,
+      "liquid_wape": 0.006898782493539522,
+      "pressure_rmse_bar": 5.19483880174244
+    },
+    {
+      "index": 5,
+      "split": "test",
+      "mode": "trained_fixed_origin_224",
+      "oil_wape": 0.3795506419741381,
+      "liquid_wape": 0.33509629588400064,
+      "pressure_rmse_bar": 72.73328637132818
+    },
+    {
+      "index": 5,
+      "split": "test",
+      "mode": "pretrained_observed_update_1",
+      "oil_wape": 0.012151886999743148,
+      "liquid_wape": 0.005852415375144578,
+      "pressure_rmse_bar": 5.763040466022057
+    },
+    {
+      "index": 5,
+      "mode": "naive_observed_update_1",
+      "oil_wape": 0.015214937938820262,
+      "liquid_wape": 0.0068156503313239235,
+      "pressure_rmse_bar": 4.953223904139055
+    },
+    {
+      "index": 6,
+      "split": "calibration",
+      "mode": "trained_fixed_origin_224",
+      "oil_wape": 0.4005888746180545,
+      "liquid_wape": 0.3425699775446779,
+      "pressure_rmse_bar": 79.19317502799088
+    },
+    {
+      "index": 6,
+      "split": "calibration",
+      "mode": "pretrained_observed_update_1",
+      "oil_wape": 0.01533541022722755,
+      "liquid_wape": 0.006712322571321627,
+      "pressure_rmse_bar": 6.544386760646878
+    },
+    {
+      "index": 6,
+      "mode": "naive_observed_update_1",
+      "oil_wape": 0.017443705518850855,
+      "liquid_wape": 0.007307347806369701,
+      "pressure_rmse_bar": 5.731836881645694
+    },
+    {
+      "index": 7,
+      "split": "test",
+      "mode": "trained_fixed_origin_224",
+      "oil_wape": 0.4734339311049207,
+      "liquid_wape": 0.47778918885672383,
+      "pressure_rmse_bar": 80.04451246418115
+    },
+    {
+      "index": 7,
+      "split": "test",
+      "mode": "pretrained_observed_update_1",
+      "oil_wape": 0.01854879683308967,
+      "liquid_wape": 0.008753910564021482,
+      "pressure_rmse_bar": 6.241873875205741
+    },
+    {
+      "index": 7,
+      "mode": "naive_observed_update_1",
+      "oil_wape": 0.01817408958866252,
+      "liquid_wape": 0.008235813035979077,
+      "pressure_rmse_bar": 5.527213046992941
+    }
+  ],
+  "source_scenarios": {
+    "0": "44cfa677b7f6efd926b73faaf4fcc89474fd5486ab9b88188adf296c3233b0df",
+    "1": "e2b45b88f930e5aa3267e12835e77b2162c91789aa2ebc28633d7cff7a65ae71",
+    "2": "97d7e500f83d4272f8eaf956f93b1aafb9b4cb8d11be82bed578fdebdbc2f139",
+    "3": "57da27345de1a7da62c9eadea74907729519720e050f4f226d2b3768369eb74d",
+    "4": "f2a64399a4d4c9bae4bdac4d7450816c561746c1f812f27a1d7d98451e9645c4",
+    "5": "c2bcab5cba370d0f7c0af68806fdafa9b256bbea0430b91dc1629a77afc4289b",
+    "6": "86b2b6b6b14f1901a403fb1f0cee8b0afb7771364778b5ddbf52f8031bda2c86",
+    "7": "43de7ad5ea3825bd2545ae18d2ebacb19f87eaf6b6cb5037a635a85438529d24"
+  },
+  "intervals": {
+    "trained_fixed_origin_224": {
+      "nominal_group_coverage": 0.8,
+      "calibration_groups": 5,
+      "radius_oil_tpd_liquid_tpd_pressure_bar": [
+        59.350842011409455,
+        65.76319930239106,
+        317.66780058593747
+      ],
+      "test_pointwise_coverage": [
+        1.0,
+        1.0,
+        0.9999422098936662
+      ],
+      "test_whole_trajectory_coverage_by_target": [
+        1.0,
+        1.0,
+        0.3333333333333333
+      ],
+      "guaranteed_coverage_claimed": false,
+      "limitation": "Fixed intervention scenarios are not established as exchangeable; only three independent test groups."
+    },
+    "pretrained_observed_update_1": {
+      "nominal_group_coverage": 0.8,
+      "calibration_groups": 5,
+      "radius_oil_tpd_liquid_tpd_pressure_bar": [
+        59.350842011409455,
+        65.76319930239106,
+        258.091553
+      ],
+      "test_pointwise_coverage": [
+        1.0,
+        1.0,
+        0.9999711049468331
+      ],
+      "test_whole_trajectory_coverage_by_target": [
+        1.0,
+        1.0,
+        0.6666666666666666
+      ],
+      "guaranteed_coverage_claimed": false,
+      "limitation": "Fixed intervention scenarios are not established as exchangeable; only three independent test groups."
+    }
+  },
+  "complete": true,
+  "seconds": 983.318531293422,
+  "is_optimization_result": false,
+  "script_sha256": "79317f011e5d7a33fe17ae7091050dea1abb8ec7eadcd71817e845ba0cb39188",
+  "independently_certified_for_surrogate_control": false
+}
