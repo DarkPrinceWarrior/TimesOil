@@ -90,6 +90,7 @@ def main():
     parser.add_argument('--reference', type=Path)
     parser.add_argument('--reference-sha256')
     parser.add_argument('--calibration-only', action='store_true')
+    parser.add_argument('--fixed-origin-only', action='store_true')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -99,6 +100,8 @@ def main():
         parser.error('batch, hash, frozen head/report, connectivity and output required')
     if bool(args.reference) != bool(args.reference_sha256) or args.reference and args.model_y:
         parser.error('reference correction requires Model Z and a paired export manifest hash')
+    if args.fixed_origin_only and args.model_y:
+        parser.error('the trained Model Y evaluation requires observed monthly updates')
     if digest(args.batch / 'manifest.json') != args.batch_sha256:
         raise ValueError('evaluation batch hash mismatch')
     manifest = json.loads((args.batch / 'manifest.json').read_text())
@@ -119,7 +122,7 @@ def main():
     months = 23 if args.model_y else MONTHS
     start = '2014-01-01' if args.model_y else START
     trained_mode = 'trained_observed_update_1' if args.model_y else 'trained_fixed_origin_224'
-    modes = [trained_mode, 'pretrained_observed_update_1']
+    modes = [trained_mode] if args.fixed_origin_only else [trained_mode, 'pretrained_observed_update_1']
     if args.reference:
         modes += ['trained_reference_delta_224', 'reference_only_224']
     args.output.mkdir(parents=True, exist_ok=False)
