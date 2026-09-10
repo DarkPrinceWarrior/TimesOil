@@ -615,7 +615,7 @@ def execute(
         }
         if full_field:
             context.update({
-                "selection_policy": "Optimize official CHDD by proposing rate and OPEN/SHUT updates for ANY well in the complete baseline. Baseline carries forward approved agent controls, except explicit changes in the source calendar. Empty updates means keep these controls. No preselected well subset or percentage bounds. Exactly one propose_controls call. Every month is validated by full OPM and official CHDD. Use the verified inventory; never infer extra wells from gaps in numeric IDs.",
+                "selection_policy": "Optimize official CHDD by proposing rate, BHP and OPEN/SHUT updates for ANY well in the complete baseline. When conversion is permitted, explicitly assess producer-to-injector alternatives across the producer inventory using current state and official conversion costs; explain which alternative merits physical evaluation or why none does. Baseline carries forward approved agent controls, except explicit changes in the source calendar. Empty updates means keep these controls. No preselected well subset or percentage bounds. Exactly one propose_controls call. Every month is validated by full OPM and official CHDD. Use the verified inventory; never infer extra wells from gaps in numeric IDs.",
                 "verified_inventory": {"well_count": len(config.case.producers) + len(config.case.injectors),
                     "producers": [a.well for a in options[0] if a.role is WellRole.PRODUCER],
                     "injectors": [a.well for a in options[0] if a.role is WellRole.INJECTOR]},
