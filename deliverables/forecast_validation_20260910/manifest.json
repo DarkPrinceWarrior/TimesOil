@@ -202,8 +202,8 @@
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-z-policy-20260910/wait-protocol.json"
     },
     "provenance/run_z_transition_policy.py": {
-      "sha256": "19872d01a4bcb1f83a750ca27a626de55678839666c1a4c0be6550f622b6bb18",
-      "source": "/root/projects/TimesOil-audit-transition-policy-pressure-z-20260910/deliverables/forecast_validation_20260910/provenance/run_z_transition_policy.py"
+      "sha256": "94d09c77d508595ca3922aa899fb6faf968baf96f3366c2e8dafee1b18b328b0",
+      "source": "/root/projects/TimesOil-audit-transition-policy-bhp-z-20260910/deliverables/forecast_validation_20260910/provenance/run_z_transition_policy.py"
     },
     "z-transition-policy-pressure-wait-protocol.json": {
       "sha256": "0fc15c7015fc771a57b45f718fba5583229918d27a0a76de5aca4c3e53a834cb",
@@ -212,6 +212,46 @@
     "z-transition-policy-queue-replaced.json": {
       "sha256": "6bf75774f4deb887f79a6ed73775acfdbb20c7e2dc048dda0ec84af13652d6a9",
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-z-policy-20260910/cancelled.json"
+    },
+    "z-transition-training.json": {
+      "sha256": "7ff52f200966bf76843ff583ca38e60dc5586bde893d824b0c9f367d86347ccc",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-coverage-z-20260910/training/report.json"
+    },
+    "z-transition-training-completion.json": {
+      "sha256": "bd3d15a616384456cd11b0b286c302b64cfa54119e20531ae6285fc64c9cab93",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-coverage-z-20260910/completion.json"
+    },
+    "z-transition-independent.json": {
+      "sha256": "f43ecf8dc4e26c331c3b8da3015790c0bfc3350adada54f7ba92e604ae0d4ad3",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-evaluation-z-20260910/selected_transition/report.json"
+    },
+    "z-early-identity-transition-independent.json": {
+      "sha256": "fd0bde708edb4e785952c90900bd46933c7fb9b55198e2a316ff815173ab83f5",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-evaluation-z-20260910/previous_early_identity/report.json"
+    },
+    "z-transition-frozen-models.json": {
+      "sha256": "1425e3259179c52417091120f76c9da74b50a2b15a5955d1406c9ad3b391e27d",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-evaluation-z-20260910/frozen-models-protocol.json"
+    },
+    "z-transition-evaluation-completion.json": {
+      "sha256": "a16d906d4843f7e107de45f9c0c5bec3c7f4ca0167dc661eaa9e6624c61f8c93",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-evaluation-z-20260910/evaluation-completion.json"
+    },
+    "z-transition-policy-launch.json": {
+      "sha256": "5048cf34b8eb48abe8b967612e022da2e5ca840557685e4a1d09c7f247b526b1",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-z-policy-bhp-20260910/protocol.json"
+    },
+    "field-csv-export.json": {
+      "sha256": "a7202fed80b16fb998bb41c95397f3a179d97fb52a5ed60233115bb7b6c4710f",
+      "source": "/root/projects/TimesOil/results/audit-20260909/csv-field-databases-bhp-20260910/manifest.json"
+    },
+    "z-transition-policy-bhp-wait-protocol.json": {
+      "sha256": "e0ca0bec2f6c20efffb338ef6479d858b15016669fefd32890881b4f5da2d242",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-z-policy-bhp-20260910/wait-protocol.json"
+    },
+    "z-transition-policy-bhp-queue-replaced.json": {
+      "sha256": "cec265341f72ad0217487191f05e3a13a502199b9ab24d409c684c97e6836c7d",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-z-policy-pressure-20260910/cancelled.json"
     }
   }
 }

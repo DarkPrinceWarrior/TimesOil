@@ -1,0 +1,9 @@
+{
+  "source_commit": "ba112c1e964fd87fcf629d6a9ca8dd723ef6f8dc",
+  "waiting_for_session": "timesoil-transition-evaluation-z-20260910",
+  "checkpoint_selection": "development validation only",
+  "experiment": "One new Qwen proposal; full 103-well, 224-month OPM and official CHDD",
+  "selected_schedule_metric": "official full-period CHDD, retaining incumbent when better",
+  "forecast_accuracy_certified": false,
+  "test_observations_passed_to_agents": false
+}
