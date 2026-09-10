@@ -6,8 +6,8 @@ import subprocess
 import time
 
 r = Path('/root/projects/TimesOil/results/audit-20260909')
-out = r / 'timesfm-economic-regimes-z-20260910'
-search = r / 'timesfm-final-only-z-compact-20260910'
+out = r / 'timesfm-economic-regimes-precise-z-20260910'
+search = r / 'timesfm-final-only-z-bounded-20260910'
 command = ['/tmp/timesoil-kt3-20260908/venv/bin/python', 'scripts/finetune_timesfm_head.py',
     '--batch', str(r / 'bhp-training-v3-20260909/scenario-runs'),
     '--batch-sha256', '4dbab179f94ca1800b052e1346591a685eb9fa2d8dc900d917fc6ad66d149893',
@@ -20,7 +20,7 @@ command = ['/tmp/timesoil-kt3-20260908/venv/bin/python', 'scripts/finetune_times
     '--bhp-calibration-sha256', '9bffec89541467afaf904819ad77baa4469bd4d726ff55d3e08f2ba92c2fae8d',
     '--output', str(out / 'training'), '--epochs', '60', '--learning-rate', '1e-5',
     '--unfreeze-backbone', '--condition-last-layer', '--condition-first-layer',
-    '--cold-start-normalization', '--retain-initial-scale', '--economic-targets']
+    '--cold-start-normalization', '--retain-initial-scale', '--economic-targets', '--precise-variate-softmax']
 out.mkdir(exist_ok=False)
 protocol = {'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
     'command': command, 'gpu': 5, 'cpu_affinity': '14-29', 'fresh_uncertainty_cases_used': False,
@@ -30,7 +30,8 @@ protocol = {'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'
                            'bhp-only-00','bhp-only-01','bhp-only-03','bhp-only-06'],
     'validation': ['perturbation-009','physical-sweep-04','bhp-only-04'],
     'current_final_only_search_uses_unchanged_initial_checkpoint': True,
-    'waiting_for_session': 'timesoil-final-only-z-compact-20260910'}
+    'precise_variate_softmax': True,
+    'waiting_for_session': 'timesoil-final-only-z-bounded-20260910'}
 (out / 'launch-protocol.json').write_text(json.dumps(protocol, indent=2) + '\n')
 try:
     while not (search / 'search.exit').exists():
@@ -44,6 +45,8 @@ try:
             'PYTHONPATH':'src:scripts','CUDA_VISIBLE_DEVICES':'5','OMP_NUM_THREADS':'1','OPENBLAS_NUM_THREADS':'1'},
             stdout=log, stderr=subprocess.STDOUT).returncode
     (out / 'exit').write_text(str(code) + '\n')
+    if code:
+        raise RuntimeError('training failed; see preserved training.log and exit receipt')
 except BaseException:
     (out / 'exit').write_text('1\n')
     raise
