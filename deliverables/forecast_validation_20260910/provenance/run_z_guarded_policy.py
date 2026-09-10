@@ -7,9 +7,9 @@ from timesoil.aios.opm import OPM_IMAGE
 import run_z_transition_policy as driver
 
 
-def run(*, conversion_search=False):
-    driver.OUT = driver.R / ('timesfm-conversion-z-policy-20260910' if conversion_search
-                            else 'timesfm-guarded-z-policy-20260910')
+def run(*, conversion_search=False, output_name=None):
+    driver.OUT = driver.R / (output_name or ('timesfm-conversion-z-policy-20260910' if conversion_search
+                                           else 'timesfm-guarded-z-policy-20260910'))
     driver.OUT.mkdir(exist_ok=False)
     records = []
     for relative in ('timesfm-bhp-policy-20260909/cycles/baseline',

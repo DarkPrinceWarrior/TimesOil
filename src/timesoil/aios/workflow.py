@@ -771,7 +771,8 @@ def _validate_source_well_scope(
     for action in sorted(actions, key=lambda item: (item.month, item.well)):
         control = source_inventory[action.month][action.well]
         if control.pre_control and (action.status is not WellStatus.SHUT or action.value != 0.0):
-            raise CycleError("controls before a well's first source WCON must be SHUT at zero")
+            raise CycleError("controls before a well's first source WCON must be SHUT at zero: "
+                             f"well={action.well}, month={action.month}, first_source={control.first_control_month}")
         if action.role is not control.role:
             if not (
                 allow_conversion_to_injection and not control.pre_control
