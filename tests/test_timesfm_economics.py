@@ -15,7 +15,7 @@ economics = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(economics)
 
 
-def test_economic_targets_roundtrip_and_reject_incomplete_forecasts():
+def test_economic_targets_roundtrip_and_reject_incomplete_forecasts(tmp_path):
     def row(stamp, well, **updates):
         return {'DATA': stamp, 'well': well, **dict.fromkeys(CHDD_FIELDS[2:], 0.), **updates}
 
@@ -55,3 +55,19 @@ def test_economic_targets_roundtrip_and_reject_incomplete_forecasts():
     assert not projected[0, 1, [0, 1, 6, 7]].any()
     assert not projected[0, 0, [2, 8]].any()
     assert not projected[1, 0, [0, 1, 2, 6, 7, 8]].any()
+    import csv
+    from hashlib import sha256
+    from types import SimpleNamespace
+    import pandas as pd
+
+    path = tmp_path / 'chdd.csv'
+    with path.open('w') as handle:
+        writer = csv.DictWriter(handle, fieldnames=CHDD_FIELDS)
+        writer.writeheader(); writer.writerows(history + future)
+    manifest = {'outputs': {'chdd_csv': {'sha256': sha256(path.read_bytes()).hexdigest()}}}
+    trajectory = SimpleNamespace(states=np.ones((3, 2, 3)), actions=np.ones((3, 2, 4)),
+        dates=pd.date_range('2007-01-01', periods=3, freq='MS'), well_ids=('a', 'b'))
+    observed, inference = economics.observed_economic_history(tmp_path, manifest, trajectory, 0)
+    assert observed == history and np.isnan(inference.states[1:]).all()
+    np.testing.assert_array_equal(inference.states[:1],
+        economics.economic_targets(history, ['2007-01-01'], trajectory.well_ids))

@@ -112,6 +112,23 @@ def load_economic_trajectories(batch, trajectories, origin):
     return result
 
 
+def observed_economic_history(canonical, manifest, trajectory, origin):
+    """Build inference inputs with all post-origin economic observations replaced by NaN."""
+    from types import SimpleNamespace
+
+    raw = (canonical / 'chdd.csv').read_bytes()
+    if sha256(raw).hexdigest() != manifest['outputs']['chdd_csv']['sha256']:
+        raise ValueError('observed economic history hash mismatch')
+    cutoff = trajectory.dates[origin].date().isoformat()
+    history = normalize_chdd_rows(row for row in csv.DictReader(raw.decode('utf-8-sig').splitlines())
+                                   if row['DATA'] <= cutoff)
+    states = np.full((*trajectory.states.shape[:2], len(ECONOMIC_TARGETS)), np.nan)
+    states[:origin + 1] = economic_targets(history, trajectory.dates[:origin + 1].strftime('%Y-%m-%d'),
+                                          trajectory.well_ids)
+    return history, SimpleNamespace(states=states, actions=trajectory.actions, dates=trajectory.dates,
+                                    well_ids=trajectory.well_ids)
+
+
 def project_economic_forecast(prediction, actions):
     """Monthly control roles mask inactive outputs; actual injection remains a model output."""
     values = np.asarray(prediction, dtype=float).copy()
