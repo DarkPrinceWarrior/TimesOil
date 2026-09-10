@@ -1,0 +1,30 @@
+{
+  "date": "2026-09-10",
+  "drawio_mcp": "list_pages + set_page; succeeded",
+  "vertices": 17,
+  "edges": 12,
+  "desktop": {
+    "width": 1440,
+    "height": 1000,
+    "overflow": false
+  },
+  "mobile": {
+    "width": 390,
+    "height": 844,
+    "overflow": false,
+    "details_open_on_click": true,
+    "summary_min_height": 44
+  },
+  "links_checked": 6,
+  "all_links_http_200": true,
+  "visually_reviewed": [
+    "desktop.png",
+    "mobile.png"
+  ],
+  "sha256": {
+    "index.html": "75228392ea6040377b49232aac3fd79b05dec769c54a6a8dc41640e275500ee4",
+    "TimesOil_current.drawio": "97775729c4d4edf47e019ab241bd6b138070df618e42170d25170b75f5b1db80",
+    "desktop.png": "0367434bf9d702709d1c06a0ff4969bebbef864fac64fd7df7a15997a5a6d2f3",
+    "mobile.png": "3be7cc3da4320c94a8e7f73ac26d122725a7ce4bba4a2ad445a4e782a03ad502"
+  }
+}
