@@ -112,6 +112,18 @@
     "z-cold-start-independent-protocol.json": {
       "source": "/root/projects/TimesOil/results/audit-20260909/cold-start-independent-z-20260910/launch-protocol.json",
       "sha256": "6b5e6879f1cd79cfa43c710d70bfd9afeba9605810feaca9c7da62f377d9dd2b"
+    },
+    "z-cold-start-training.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-cold-start-z-20260910/training/report.json",
+      "sha256": "fa6d90698af8e842317304deb9db24e41a7a363fd7c3b8bc06b7da08df925c70"
+    },
+    "z-identity-diagnosis.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-cold-start-z-20260910/identity-diagnosis.json",
+      "sha256": "27babcafb4e7a17b0c55f06a527e7b8d18e45a04fa04b8e35c4d6d51c476c13b"
+    },
+    "z-early-identity-protocol.json": {
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-20260910/launch-protocol.json",
+      "sha256": "42da5c2e6e6d851336533be0fd36b13932fde616e7df82337fb1b14169c38aa0"
     }
   }
 }
