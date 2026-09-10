@@ -7,7 +7,7 @@ import runpy
 import sys
 
 r = Path('/root/projects/TimesOil/results/audit-20260909')
-out = r / 'decoder-parity-layers-z-20260910'
+out = r / 'decoder-parity-components-z-20260910'
 out.mkdir(exist_ok=False)
 source = Path('scripts/finetune_timesfm_head.py').resolve()
 stop_line = next(i for i, line in enumerate(source.read_text().splitlines(), 1)
@@ -33,6 +33,7 @@ def trace(frame, event, arg):
     scale = state['scale'][..., None]
     count, horizon = state['targets_count'], state['training_horizon']
     originals = [target.clone(), cov.clone()]
+    torch.save({'target': target.cpu(), 'covariates': cov.cpu()}, out / 'decoder-inputs.pt')
     report = {'source_sha256': sha256(source.read_bytes()).hexdigest(),
         'checkpoint_sha256': protocol['command'][protocol['command'].index('--initial-head-sha256') + 1],
         'torch': torch.__version__, 'matmul_precision': torch.get_float32_matmul_precision(),
@@ -42,11 +43,27 @@ def trace(frame, event, arg):
         'sdp': {name: getattr(torch.backends.cuda, name + '_sdp_enabled')()
                 for name in ('flash', 'mem_efficient', 'cudnn', 'math')}, 'comparisons': []}
     versions = {name: value._version for name, value in model.state_dict(keep_vars=True).items()}
+    activations = {}
+    component_differences = []
+    calls = 0
+    def hook(name):
+        def compare(module, inputs, output):
+            value = output[0] if isinstance(output, tuple) else output
+            if not isinstance(value, torch.Tensor):
+                return
+            value = value.detach().cpu().clone()
+            if calls == 0:
+                activations[name] = value
+            elif calls == 1:
+                component_differences.append({'module': name, 'dtype': str(value.dtype),
+                    'max_difference': float((value - activations[name]).abs().max())})
+        return compare
+    handles = [module.register_forward_hook(hook(name)) for name, module in model.named_modules()
+               if name.startswith('transformer_stack.layers.0.')
+               or name.startswith('transformer_stack.layers.') and name.count('.') == 2]
     previous = None
     previous_aux = None
-    for name, wrapped, inference in [('wrapped-1', True, False), ('wrapped-2', True, False),
-            ('unwrapped', False, False), ('inference', True, True), ('wrapped-3', True, False),
-            ('without-checkpoint-1', True, False), ('without-checkpoint-2', True, False)]:
+    for name, wrapped, inference in [('wrapped-1', True, False), ('wrapped-2', True, False)]:
         if name == 'without-checkpoint-1':
             for layer in model.transformer_stack.layers:
                 layer.forward = layer.forward.args[0]
@@ -64,6 +81,10 @@ def trace(frame, event, arg):
                                                  for key, tensor in aux.items()}})
         previous = value
         previous_aux = aux
+        calls += 1
+    for handle in handles:
+        handle.remove()
+    report['component_differences'] = component_differences
     report['inputs_unchanged'] = all(torch.equal(a, b) for a, b in zip(originals, (target, cov)))
     report['changed_parameter_buffer_versions'] = [name for name, value in model.state_dict(keep_vars=True).items()
                                                   if value._version != versions[name]]
