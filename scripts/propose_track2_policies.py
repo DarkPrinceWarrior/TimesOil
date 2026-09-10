@@ -201,16 +201,11 @@ def main():
     forecaster = TimesFM3Forecaster(ModelConfig(checkpoint_path="google/timesfm-3.0-pytorch",
         revision=MODEL_REVISION, per_core_batch_size=1, device="cuda"))
     if args.head:
-        from timesfm_geology import StaticConditionedHead, load_selected_layer
+        from timesfm_geology import load_frozen_model
         if sha256(args.head.read_bytes()).hexdigest() != args.head_sha256:
             raise ValueError('trained head hash mismatch')
         selected = torch.load(args.head, map_location='cuda', weights_only=True)
-        head = selected.get('output_head', selected)
-        forecaster.model.output_head = StaticConditionedHead(forecaster.model.output_head, connectivity)
-        torch.testing.assert_close(head['features'], forecaster.model.output_head.features, rtol=0, atol=0)
-        forecaster.model.output_head.load_state_dict(head)
-        forecaster.model.transformer_stack.layers[-1] = load_selected_layer(
-            forecaster.model.transformer_stack.layers[-1], forecaster.model.output_head, selected)
+        forecaster.model = load_frozen_model(forecaster.model, connectivity, selected)
     candidates = []
     days = np.array([d.days_in_month for d in trajectory.dates[origin:origin + horizon]])[:, None]
 
