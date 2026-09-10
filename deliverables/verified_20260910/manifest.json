@@ -12,29 +12,29 @@
       "bytes": 10297
     },
     "model_y/selected/official-result.json": {
-      "sha256": "fcf48e4941be32031abc5a6f79e1821c38f156f230e071624798e031fa0eac48",
-      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-monthly-y-v5-20260909/opm/opm-full-replay-5b12ea50006b3bb1c213439c/economics/result.json",
-      "bytes": 70971
+      "sha256": "d04de67bf012a6e219f264f6c753f164bb49f30daa23a760a1f85a60b6d3a2bc",
+      "source": "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/opm/opm-full-replay-4769989869d96c2be60ba2ff/economics/result.json",
+      "bytes": 71765
     },
     "model_y/selected/official-report.xlsx": {
-      "sha256": "255efd19c10bd0782218774567cacb90f1278b50e5826469234f4bae0cd4c5f6",
-      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-monthly-y-v5-20260909/opm/opm-full-replay-5b12ea50006b3bb1c213439c/economics/report.xlsx",
-      "bytes": 10309
+      "sha256": "fbcd8dc985de0d1b00bf681684cf82a0d0c6ad2103bd37697eed4200a2d814f9",
+      "source": "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/opm/opm-full-replay-4769989869d96c2be60ba2ff/economics/report.xlsx",
+      "bytes": 10318
     },
     "model_y/selected/full-opm-schedule.inc": {
-      "sha256": "0658a9bccc3059854cf3230a6e673e15ddf45886ddd223607c6a502a3329e3cf",
-      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-monthly-y-v5-20260909/opm/opm-full-replay-5b12ea50006b3bb1c213439c/input/MODEL_Y/INCLUDE/DemoSpe_002_2_sch.inc",
-      "bytes": 117244
+      "sha256": "b2f3e19eaeb40c4d07514c71edef1e048656be805068102ca2b60387450196c7",
+      "source": "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/opm/opm-full-replay-4769989869d96c2be60ba2ff/input/MODEL_Y/INCLUDE/DemoSpe_002_2_sch.inc",
+      "bytes": 117250
     },
     "model_y/selected/physical-chdd-input.csv": {
-      "sha256": "672337aabae9ae1b652ba266ae53d190b5ca779f8a5f5a20645150ccf8d20ac0",
-      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-monthly-y-v5-20260909/opm/opm-full-replay-5b12ea50006b3bb1c213439c/canonical/chdd.csv",
-      "bytes": 631507
+      "sha256": "d497e4e9f207c0639cd2458526687ae7eb2aee722633ee53a46a7f6afc9c3afb",
+      "source": "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/opm/opm-full-replay-4769989869d96c2be60ba2ff/canonical/chdd.csv",
+      "bytes": 631763
     },
     "model_y/full-audit.json": {
-      "sha256": "056c6d8275edb7ceec0f6e5b5f62c579597a60a5102f23ed52c5aa035f69d9fe",
-      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-monthly-y-v5-20260909/full-audit.json",
-      "bytes": 1097
+      "sha256": "d837e00edc194276440f60ab0299a120ee3aeea2c04b595893d89280e7506162",
+      "source": "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/full-audit.json",
+      "bytes": 1129
     },
     "model_z/baseline/official-result.json": {
       "sha256": "22878f26610b6983bbca1c806ffb31304a23b43ffc683e8439d711566b07ef8d",
@@ -67,24 +67,34 @@
       "bytes": 4695582
     },
     "model_z/timesfm_candidate/official-result.json": {
-      "sha256": "5a542607eb4112213a90dc742d67a267c40daa1f2bb0fb58d06f77bf5fdf40bf",
-      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-trained-z-policy-20260909/cycles/candidate-v2/economics-2007/result.json",
-      "bytes": 462055
+      "sha256": "42eff641bd3e9999e1b63d7e196d173f831638e55ca4f08e154d9530fdd0e0d2",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-policy-20260910/cycles/candidate/economics-2007/result.json",
+      "bytes": 460815
     },
     "model_z/timesfm_candidate/official-report.xlsx": {
-      "sha256": "1b87c358a341b6ee2dcffb4eda30a3f6bdfcb0bcb746ec1c8f369cc363333e38",
-      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-trained-z-policy-20260909/cycles/candidate-v2/economics-2007/report.xlsx",
-      "bytes": 19085
+      "sha256": "b8d0666bbbd4bcad208bfb944ceb229b4c9e65caf4219a23237decb9fa54f54c",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-policy-20260910/cycles/candidate/economics-2007/report.xlsx",
+      "bytes": 19109
+    },
+    "model_z/timesfm_candidate/full-opm-schedule.inc": {
+      "sha256": "ecf56c8ec8d21b5137c7e1b23339f8b52a94797376d62015e1cde3aaeb09e5b4",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-policy-20260910/cycles/candidate/input/Model_Z/Model_Z_sch.inc",
+      "bytes": 2813502
+    },
+    "model_z/timesfm_candidate/physical-chdd-input.csv": {
+      "sha256": "950a289d29288918f700aff1b19356a9954f641cf2b4c4a7008417cbec958809",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-policy-20260910/cycles/candidate/canonical/chdd.csv",
+      "bytes": 4701032
     },
     "provenance/package.py": {
-      "sha256": "2610d2a266a8eb74d64857a82c69b42789642d2fbfd45045e3053452caa3b380",
-      "source": "/root/projects/TimesOil-audit-package-20260910/deliverables/verified_20260910/provenance/package.py",
-      "bytes": 5391
+      "sha256": "f2ee4b3a14f3b31d188defe7440abad1f49e9551f368725b0526f7d5b83cfe84",
+      "source": "/root/projects/TimesOil-audit-delivery-physical-y-20260910/deliverables/verified_20260910/provenance/package.py",
+      "bytes": 5789
     },
     "model_z/full-comparison.json": {
-      "sha256": "93865d6673dd7e2bdde0250289fe74c814036dba98bc1e724efe016dd649763d",
-      "source": "/root/projects/TimesOil-audit-timesfm-head-20260909/deliverables/control_coverage_20260909/timesfm-trained-z-policy-selection.json",
-      "bytes": 63233
+      "sha256": "610daea21ae828ee3e1ab65ddc74ac434faeb410052d66b6ed538ae61d95d879",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-policy-20260910/selection.json",
+      "bytes": 64032
     }
   },
   "cases": {
@@ -156,7 +166,7 @@
       "months": 23,
       "start": "2014-01-01",
       "last_month": "2015-11-01",
-      "official_chdd_m": 1597.0875715968057,
+      "official_chdd_m": 1596.777934459786,
       "assumptions": {
         "oilPriceRubT": 28000.0,
         "deductionsRubT": 19600.0,
@@ -185,15 +195,15 @@
         "ignoreTechnicalReset": false
       },
       "summary": {
-        "totalOilKt": 356.859145499584,
-        "totalLiquidKt": 3707.2839502326065,
-        "totalInjectionK": 3650.6795,
-        "totalRevenueM": 9992.056073988351,
-        "totalOpexM": 641.523145843244,
+        "totalOilKt": 356.840987148672,
+        "totalLiquidKt": 3707.3425082559265,
+        "totalInjectionK": 3650.735875,
+        "totalRevenueM": 9991.547640162817,
+        "totalOpexM": 641.7799665615395,
         "totalCapexM": 106.60396999999999,
-        "totalFcfM": 1660.466287264946,
-        "totalChddM": 1597.0875715968057,
-        "profitabilityIndex": 1.1988385581541576,
+        "totalFcfM": 1660.159274115479,
+        "totalChddM": 1596.777934459786,
+        "profitabilityIndex": 1.1988051939720017,
         "pumpChanges": 30.0,
         "startStopCount": 1,
         "conversionCount": 0,
@@ -201,21 +211,21 @@
         "years": 2
       },
       "nominal_totals_m": {
-        "oilOpexM": 14.274365819983359,
-        "liquidOpexM": 370.72839502326065,
-        "injectionOpexM": 109.520385,
-        "fundOpexM": 92.0,
+        "oilOpexM": 14.27363948594688,
+        "liquidOpexM": 370.73425082559265,
+        "injectionOpexM": 109.52207625,
+        "fundOpexM": 92.25,
         "pumpOperationM": 53.99999999999999,
         "startStopCostM": 1.0,
         "conversionOpexM": 0,
         "propertyTaxM": 0.0,
-        "deductionsM": 6994.439251791846,
-        "profitTaxM": 589.0234190883153,
+        "deductionsM": 6994.083348113972,
+        "profitTaxM": 588.9210813718264,
         "depreciationM": 0.0,
         "pumpCapexM": 106.60396999999999
       },
       "nominal_totals_are_not_discounted_contributions": true,
-      "uplift_percent": 54.91563132953401
+      "uplift_percent": 54.88559688845667
     },
     "model_z/baseline": {
       "months": 224,
@@ -350,7 +360,7 @@
       "months": 224,
       "start": "2007-01-01",
       "last_month": "2025-08-01",
-      "official_chdd_m": 14128.26820657804,
+      "official_chdd_m": 14092.342998761076,
       "assumptions": {
         "oilPriceRubT": 28000.0,
         "deductionsRubT": 19600.0,
@@ -379,36 +389,37 @@
         "ignoreTechnicalReset": false
       },
       "summary": {
-        "totalOilKt": 4168.611710493407,
-        "totalLiquidKt": 14955.021695299829,
-        "totalInjectionK": 19038.634021482,
-        "totalRevenueM": 116721.12789381541,
-        "totalOpexM": 4259.705658594179,
-        "totalCapexM": 70.2294,
-        "totalFcfM": 22997.245132162832,
-        "totalChddM": 14128.26820657804,
-        "profitabilityIndex": 1.254425455409731,
-        "pumpChanges": 91.0,
+        "totalOilKt": 4157.458957333406,
+        "totalLiquidKt": 14758.545829714047,
+        "totalInjectionK": 18746.730162108997,
+        "totalRevenueM": 116408.85080533539,
+        "totalOpexM": 4225.454846128011,
+        "totalCapexM": 67.82543,
+        "totalFcfM": 22955.074866604453,
+        "totalChddM": 14092.342998761076,
+        "profitabilityIndex": 1.2545523092717672,
+        "pumpChanges": 88.0,
         "startStopCount": 23,
         "conversionCount": 9,
         "totalConversionOpexM": 45.0,
         "years": 19
       },
       "nominal_totals_m": {
-        "oilOpexM": 166.7444684197363,
-        "liquidOpexM": 1495.502169529983,
-        "injectionOpexM": 571.15902064446,
+        "oilOpexM": 166.29835829333626,
+        "liquidOpexM": 1475.8545829714046,
+        "injectionOpexM": 562.40190486327,
         "fundOpexM": 1794.5,
-        "pumpOperationM": 163.8,
+        "pumpOperationM": 158.4,
         "startStopCostM": 23.0,
         "conversionOpexM": 45.0,
         "propertyTaxM": 0.0,
-        "deductionsM": 81704.78952567079,
-        "profitTaxM": 7689.158177387611,
+        "deductionsM": 81486.19556373477,
+        "profitTaxM": 7674.300098868151,
         "depreciationM": 0.0,
-        "pumpCapexM": 70.2294
+        "pumpCapexM": 67.82543
       },
-      "nominal_totals_are_not_discounted_contributions": true
+      "nominal_totals_are_not_discounted_contributions": true,
+      "uplift_percent": 18.686148312195485
     }
   },
   "scope": "Provided training archives; physical results, not universal forecast certification."

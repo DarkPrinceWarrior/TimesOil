@@ -1,0 +1,8 @@
+{
+  "source_commit": "d917906",
+  "checkpoint_sha256": "fdecfb70ecd5fc816ad8d443d0d4e8235e7c2b3ccbb911b280652c81eeacc6b8",
+  "selection": "epoch chosen by old validation before independent test",
+  "surrogate_used": true,
+  "reference_future_used": false,
+  "scope": "103 wells, 224 months; new Qwen proposal then full OPM and official CHDD; preserve incumbent if better"
+}
