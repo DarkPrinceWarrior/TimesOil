@@ -1,0 +1,79 @@
+{
+  "source_commit": "009767118a68d840fec73f6e91512a3a5191f72e",
+  "command": [
+    "/root/projects/TimesOil/.venv/bin/python",
+    "scripts/run_bhp_validation.py",
+    "--request",
+    "/root/projects/TimesOil/results/audit-20260909/transition-coverage-z-20260910/request.json",
+    "--reference",
+    "/root/projects/TimesOil/results/audit-20260909/physical-z-forecast-validation-20260909/candidate-03",
+    "--output",
+    "/root/projects/TimesOil/results/audit-20260909/transition-coverage-z-20260910/scenarios",
+    "--transition-coverage"
+  ],
+  "created_utc": "2026-09-10T08:38:09.806247+00:00",
+  "incumbent_request_sha256": "2ecf8acc3a5f1cf7ea91b09f45ef7795c584c28a9ea41620a9b420ecf827d5c7",
+  "new_request_sha256": "22336725cd1e0ffa51baef8e0a90238b438c7b0828ce035d3f2c81a9c9c26584",
+  "rate_multipliers": {
+    "producer": 1.09,
+    "injector": 0.93
+  },
+  "bhp_designs": [
+    [
+      0,
+      0.92
+    ],
+    [
+      30,
+      1
+    ],
+    [
+      22.5,
+      0.96
+    ],
+    [
+      10,
+      0.97
+    ],
+    [
+      20,
+      0.94
+    ],
+    [
+      12.5,
+      0.89
+    ],
+    [
+      30,
+      0.88
+    ],
+    [
+      27.5,
+      0.93
+    ]
+  ],
+  "calibration_cases": [
+    0,
+    1,
+    3,
+    4,
+    6
+  ],
+  "test_cases": [
+    2,
+    5,
+    7
+  ],
+  "development_train_cases": [
+    0,
+    1,
+    3,
+    6
+  ],
+  "development_validation_cases": [
+    4
+  ],
+  "diagnostic_sha256": "f894bf9443c7c145c9c01dc3e9bd2b0c66ec4311053b91fd5240d65657fbe9b1",
+  "model_selection_allowed_on_test": false,
+  "scope": "Fresh 103-well 224-month physical trajectories with jointly changed rate limits and BHP, original planned roles/statuses retained. Train only on designated development cases; freeze weights before forecasting new tests."
+}

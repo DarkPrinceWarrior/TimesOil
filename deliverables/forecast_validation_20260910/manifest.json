@@ -168,6 +168,14 @@
     "z-development-transition.json": {
       "sha256": "f894bf9443c7c145c9c01dc3e9bd2b0c66ec4311053b91fd5240d65657fbe9b1",
       "source": "/root/projects/TimesOil/results/audit-20260909/z-development-transition-20260910/report.json"
+    },
+    "z-transition-physics-protocol.json": {
+      "sha256": "2e2402bce5b383a441bc2c6e40d196d2f035c4092cd5785552f563f38e9b04e8",
+      "source": "/root/projects/TimesOil/results/audit-20260909/transition-coverage-z-20260910/launch-protocol.json"
+    },
+    "z-transition-training-protocol.json": {
+      "sha256": "c1dfba91bd5ae3e0605e261f7bbed28dc120877de850712c0c69ca6b743112a6",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-coverage-z-20260910/wait-protocol.json"
     }
   }
 }
