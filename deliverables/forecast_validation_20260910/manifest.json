@@ -300,6 +300,10 @@
     "provenance/train_z_economic_regimes.py": {
       "sha256": "5ddedad3b8dcefc0d09724d57d7025e581ea3a3c93f50c544546cb5da641151b",
       "source": "committed A100 driver"
+    },
+    "provenance/diagnose_decoder_parity.py": {
+      "source": "Executed from GitHub frozen source on A100; diagnostic only before optimizer steps.",
+      "sha256": "08c2b91365ba3720d45846fc76e4945bfdb6fe68365717baa37aff4f126d994a"
     }
   }
 }

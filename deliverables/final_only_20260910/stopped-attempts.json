@@ -1,0 +1,21 @@
+{
+  "checked_utc": "2026-09-10T13:05:30.736593+00:00",
+  "cases": [
+    {
+      "directory": "/root/projects/TimesOil/results/audit-20260909/timesfm-final-only-z-compact-20260910",
+      "exit": 1,
+      "log_sha256": "aaa865ad83377bd1e102ec25def6063c2f4cbea2c91274446eb0d67beda56580",
+      "log_tail": "^^^\n  File \"/usr/lib/python3.13/asyncio/base_events.py\", line 725, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/root/projects/TimesOil-audit-final-only-compact-z-20260910/scripts/propose_track2_policies.py\", line 611, in propose_round\n    plan = await plan_with_control_repair(workflow, context_value, candidates, attempted, args.output, index)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/projects/TimesOil-audit-final-only-compact-z-20260910/scripts/propose_track2_policies.py\", line 55, in plan_with_control_repair\n    return await workflow.run_plan(context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/projects/TimesOil-audit-final-only-compact-z-20260910/src/timesoil/aios/agents.py\", line 292, in run_plan\n    decision = await self._run_role(expected_role, state)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/projects/TimesOil-audit-final-only-compact-z-20260910/src/timesoil/aios/agents.py\", line 366, in _run_role\n    await self._registry.execute(call, allowed=allowed, context=state.context)\n  File \"/root/projects/TimesOil-audit-final-only-compact-z-20260910/src/timesoil/aios/agents.py\", line 200, in execute\n    result = definition.handler(call.arguments, context or {})\n  File \"/root/projects/TimesOil-audit-final-only-compact-z-20260910/scripts/propose_track2_policies.py\", line 551, in propose\n    return evaluate(policy)\n  File \"/root/projects/TimesOil-audit-final-only-compact-z-20260910/scripts/propose_track2_policies.py\", line 406, in evaluate\n    reject_duplicate_controls(checked.controls_sha256, candidates)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/projects/TimesOil-audit-final-only-compact-z-20260910/scripts/propose_track2_policies.py\", line 161, in reject_duplicate_controls\n    raise ValueError('policy repeats an already evaluated control schedule; propose different controls')\nValueError: policy repeats an already evaluated control schedule; propose different controls\n",
+      "selection_sealed": false,
+      "final_attempt_present": false
+    },
+    {
+      "directory": "/root/projects/TimesOil/results/audit-20260909/timesfm-economic-regimes-z-20260910",
+      "exit": 1,
+      "log_sha256": "80192ed4c8fd1c89281083ad70eaf658b2b42e2494682534571497e55ff545a8",
+      "log_tail": "normalized quantile loss and gradients verified\nStatic conditioning parity, well identity, ablation and covariate isolation passed\nTraceback (most recent call last):\n  File \"/root/projects/TimesOil-audit-economic-regimes-z-20260910/scripts/finetune_timesfm_head.py\", line 598, in <module>\n    main()\n    ~~~~^^\n  File \"/root/projects/TimesOil-audit-economic-regimes-z-20260910/scripts/finetune_timesfm_head.py\", line 425, in main\n    torch.testing.assert_close(wrapped[:, :targets_count] / scale[..., None],\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                               unwrapped[:, :targets_count] / scale[..., None], rtol=0, atol=.001)\n                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/timesoil-kt3-20260908/venv/lib/python3.13/site-packages/torch/testing/_comparison.py\", line 1589, in assert_close\n    raise error_metas[0].to_error(msg)\nAssertionError: Tensor-likes are not close!\n\nMismatched elements: 115 / 1868832 (0.0%)\nGreatest absolute difference: 0.0013632774353027344 at index (0, 881, 215, 8) (up to 0.001 allowed)\nGreatest relative difference: 0.0008620887529104948 at index (0, 205, 62, 8) (up to 0 allowed)\n",
+      "selection_sealed": false,
+      "final_attempt_present": false
+    }
+  ]
+}
