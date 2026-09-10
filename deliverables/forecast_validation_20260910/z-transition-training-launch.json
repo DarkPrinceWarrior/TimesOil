@@ -1,0 +1,57 @@
+{
+  "source_commit": "71bae5179ea4017bcd04054da83a51b235c863f9",
+  "initial_checkpoint_sha256": "fdecfb70ecd5fc816ad8d443d0d4e8235e7c2b3ccbb911b280652c81eeacc6b8",
+  "development_train_cases": [
+    0,
+    1,
+    3,
+    6
+  ],
+  "development_validation_cases": [
+    4
+  ],
+  "excluded_new_test_cases": [
+    2,
+    5,
+    7
+  ],
+  "epochs": 40,
+  "selection": "Minimum loss on two existing validation scenarios and new BHP validation case 4; no new test predictions.",
+  "normalization": "Retain authenticated initial training scale; unchanged full-horizon quantile loss.",
+  "independent_accuracy_claimed": false,
+  "waiting_for_session": "timesoil-transition-coverage-z-20260910",
+  "command": [
+    "/tmp/timesoil-kt3-20260908/venv/bin/python",
+    "scripts/finetune_timesfm_head.py",
+    "--batch",
+    "/root/projects/TimesOil/results/audit-20260909/bhp-training-v3-20260909/scenario-runs",
+    "--batch-sha256",
+    "4dbab179f94ca1800b052e1346591a685eb9fa2d8dc900d917fc6ad66d149893",
+    "--output",
+    "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-coverage-z-20260910/training",
+    "--epochs",
+    "40",
+    "--learning-rate",
+    "0.00001",
+    "--connectivity",
+    "/root/projects/TimesOil/results/audit-20260909/static-head-geology-20260909/model-z/connectivity.json",
+    "--initial-head",
+    "/root/projects/TimesOil/results/audit-20260909/timesfm-early-identity-z-20260910/training/full-model.pt",
+    "--initial-head-sha256",
+    "fdecfb70ecd5fc816ad8d443d0d4e8235e7c2b3ccbb911b280652c81eeacc6b8",
+    "--condition-last-layer",
+    "--unfreeze-backbone",
+    "--regime-calibration",
+    "/root/projects/TimesOil/results/audit-20260909/physical-z-forecast-validation-20260909",
+    "--regime-calibration-sha256",
+    "69a92d83bc7824b68af1eaddbddd884b589e4009b7d12de4d23be2e0a227277f",
+    "--bhp-calibration",
+    "/root/projects/TimesOil/results/audit-20260909/transition-coverage-z-20260910/scenarios",
+    "--bhp-calibration-sha256",
+    "9bffec89541467afaf904819ad77baa4469bd4d726ff55d3e08f2ba92c2fae8d",
+    "--cold-start-normalization",
+    "--condition-first-layer",
+    "--retain-initial-scale"
+  ],
+  "batch_manifest_sha256": "9bffec89541467afaf904819ad77baa4469bd4d726ff55d3e08f2ba92c2fae8d"
+}
