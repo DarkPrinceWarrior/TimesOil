@@ -1,0 +1,59 @@
+{
+  "schema": "timesoil.new-conversion-result/v1",
+  "full_cycle_receipt_sha256": "8b6057b9106503cfea4501b6abc132488e83ca89ec97f8c1508ba0519b9dbf10",
+  "verified_artifacts": {
+    "canonical_chdd_csv": "4950b1693805c65876a43fe79fc6e7aa8baf3e35b37cd9268ac681bad0de4f9e",
+    "canonical_export_manifest": "43e643bd8531881f80b2cdb6290340830f83053ec7ae640f84429dc1a0eedbcc",
+    "economics_manifest": "4514a90f4b98776af5e2c2339b83ad56dbad52ef8e1d004a031721e4647d85d2",
+    "economics_result": "2db5a97b83cee044ca342aa80264af5fe3dff562698dd03d4b4e69e44876b714",
+    "exact_opm_input_schedule": "b014813860d091dfc3b0030e91be031a91071aacc6a3a44c5f11390635d5dba3"
+  },
+  "baseline_chdd_m": 11873.620636581927,
+  "candidate_chdd_m": 14113.468580527848,
+  "uplift_percent": 18.864068614800455,
+  "new_conversion_event": {
+    "id": "104|2007-01-01|conversion_to_injection",
+    "well": "104",
+    "date": "2007-01-01",
+    "month": "2007-01",
+    "type": "conversion_to_injection",
+    "oldRate": 9.876861,
+    "newRate": 0.0,
+    "newInjectionRate": 32.146538,
+    "deltaRate": -9.876861,
+    "oldPump": 15.0,
+    "newPump": null,
+    "pumpCapexM": 0.0,
+    "conversionPumpCostM": 0.0,
+    "conversionBaseCostM": 5.0,
+    "operationCostM": 5.0,
+    "totalEventCostM": 5.0
+  },
+  "numerical_review_roles": [
+    {
+      "role": "coordinator",
+      "approved": true
+    },
+    {
+      "role": "reservoir_analyst",
+      "approved": true
+    },
+    {
+      "role": "planner",
+      "approved": true
+    },
+    {
+      "role": "critic",
+      "approved": true
+    }
+  ],
+  "numerical_review_all_approved": true,
+  "operational_final_only_selection_proved": false,
+  "better_than_best_physical_bank": false,
+  "exit_files": {
+    "candidate.exit": "0",
+    "selection.exit": "0",
+    "proposal.exit": "0"
+  },
+  "root_exit": 0
+}

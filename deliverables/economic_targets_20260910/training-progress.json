@@ -1,0 +1,13 @@
+{
+  "observed_at": "2026-09-10T12:12:54.669979+00:00",
+  "source_commit": "5392d272b1f8b8d935dad09877398ab05eafecbb",
+  "live_processes": "    PID     ELAPSED STAT\n1301452       05:08 Ss+\n1301454       05:08 Rl+\n",
+  "last_epoch": {
+    "epoch": 5,
+    "train_loss": 0.18838345756133398,
+    "validation_loss": 0.18319009244441986
+  },
+  "training_complete": false,
+  "test_results_are_development_only": true,
+  "fresh_uncertainty_cases_used": false
+}

@@ -288,6 +288,10 @@
     "provenance/run_z_conversion_repair.py": {
       "sha256": "f7be053c5e342210555c02b03dfd666c3b2c2323610c3b341f59a39245eec549",
       "source": "WSL committed source; historical runs retain recorded commits"
+    },
+    "provenance/train_z_economic_targets.py": {
+      "sha256": "2ccc4eda8bcc4618eb9a7ac21f5e2677180bc87913f31e4ffabd13d1c4c1bd7e",
+      "source": "committed A100 training driver"
     }
   }
 }
