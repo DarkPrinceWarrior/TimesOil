@@ -1,0 +1,20 @@
+{
+  "created_utc": "2026-09-10T09:43:35.392281+00:00",
+  "source_commit": "1357ace2ea1976ab09e26041630e2831b3929f80",
+  "batch_sha256": "9bffec89541467afaf904819ad77baa4469bd4d726ff55d3e08f2ba92c2fae8d",
+  "amendment": "Expanded development BHP coverage; only new held-out cases 2/5/7 are evaluated. No intervals from development cases.",
+  "model_selection_allowed_on_test": false,
+  "selected_model": "selected_transition",
+  "selection_basis": "existing train/validation only",
+  "forecast_mode": "direct 224-month Google forecast, no physical reference future or candidate future observations",
+  "models": {
+    "selected_transition": {
+      "report_sha256": "7ff52f200966bf76843ff583ca38e60dc5586bde893d824b0c9f367d86347ccc",
+      "head_sha256": "7a548a77f2acdb50c1dc6e48e2685b96e4305badb45dfb51dbc1eb705568ada3"
+    },
+    "previous_early_identity": {
+      "report_sha256": "e48a015a4b53addeb7e377fb1e962d8ba8da97b458ca79126ab583dd8c2b46c4",
+      "head_sha256": "fdecfb70ecd5fc816ad8d443d0d4e8235e7c2b3ccbb911b280652c81eeacc6b8"
+    }
+  }
+}

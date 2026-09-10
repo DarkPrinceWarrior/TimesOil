@@ -1,0 +1,108 @@
+{
+  "schema": "timesoil.independent-timesfm-evaluation/v1",
+  "batch_sha256": "9bffec89541467afaf904819ad77baa4469bd4d726ff55d3e08f2ba92c2fae8d",
+  "model_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "head_sha256": "7a548a77f2acdb50c1dc6e48e2685b96e4305badb45dfb51dbc1eb705568ada3",
+  "training_report_sha256": "7ff52f200966bf76843ff583ca38e60dc5586bde893d824b0c9f367d86347ccc",
+  "connectivity_sha256": "cff65939ad943dd1df28460306fc433663a22707bd66a087732077135f7992c0",
+  "calibration_cases": [
+    0,
+    1,
+    3,
+    4,
+    6
+  ],
+  "test_cases": [
+    2,
+    5,
+    7
+  ],
+  "model_selection_allowed_on_test": false,
+  "head_retraining_allowed_after_test": false,
+  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+  "horizon_months": 224,
+  "modes_fixed_before_evaluation": [
+    "trained_fixed_origin_224"
+  ],
+  "calibration_only": false,
+  "test_only": true,
+  "simulated_reference_future_used": false,
+  "candidate_future_observations_used_for_fixed_origin": false,
+  "reference_manifest_sha256": null,
+  "reference_correction_sha256": null,
+  "head_validation_loss": 0.03637879341840744,
+  "metrics": [
+    {
+      "index": 2,
+      "split": "test",
+      "mode": "trained_fixed_origin_224",
+      "oil_wape": 0.09729568731084971,
+      "liquid_wape": 0.055833475274671175,
+      "pressure_rmse_bar": 15.498268332843073,
+      "first_month": {
+        "oil_wape": 0.37324464975731797,
+        "liquid_wape": 0.3869583675356323,
+        "pressure_rmse_bar": 28.737207423709716
+      }
+    },
+    {
+      "index": 2,
+      "mode": "naive_observed_update_1",
+      "oil_wape": 0.0183777652701507,
+      "liquid_wape": 0.0077084055469217976,
+      "pressure_rmse_bar": 5.833700584047217
+    },
+    {
+      "index": 5,
+      "split": "test",
+      "mode": "trained_fixed_origin_224",
+      "oil_wape": 0.10500730543396213,
+      "liquid_wape": 0.06702226274760968,
+      "pressure_rmse_bar": 15.210362311100578,
+      "first_month": {
+        "oil_wape": 0.16598240862368008,
+        "liquid_wape": 0.17667413209919486,
+        "pressure_rmse_bar": 22.997176604480593
+      }
+    },
+    {
+      "index": 5,
+      "mode": "naive_observed_update_1",
+      "oil_wape": 0.016271169962931303,
+      "liquid_wape": 0.007140562791125015,
+      "pressure_rmse_bar": 5.273947054336588
+    },
+    {
+      "index": 7,
+      "split": "test",
+      "mode": "trained_fixed_origin_224",
+      "oil_wape": 0.11020051182817867,
+      "liquid_wape": 0.08008286224442868,
+      "pressure_rmse_bar": 15.325277594430855,
+      "first_month": {
+        "oil_wape": 0.549496300361836,
+        "liquid_wape": 0.5618851138670001,
+        "pressure_rmse_bar": 25.289564669672163
+      }
+    },
+    {
+      "index": 7,
+      "mode": "naive_observed_update_1",
+      "oil_wape": 0.018331311199564288,
+      "liquid_wape": 0.008035573365237941,
+      "pressure_rmse_bar": 5.675742931927701
+    }
+  ],
+  "source_scenarios": {
+    "2": "291a63467479688b907c99a90f74e53210084bc02d8fc4e1096b73aaabe4dc0a",
+    "5": "41e2660a130336f211961085747d7c003d5ece00d9e1efcd79004bccd2c85098",
+    "7": "5e6faf8b2605c7ddacd293ee1722a681438d640d42844f6a5466380c50f4fda6"
+  },
+  "checkpoint_requires_physical_reference": false,
+  "intervals": {},
+  "complete": true,
+  "seconds": 37.70839029178023,
+  "is_optimization_result": false,
+  "script_sha256": "6d6607f4f522a1747cb491cdf0c3cf5f440b186a51efb03af02997afd1be60f9",
+  "independently_certified_for_surrogate_control": false
+}

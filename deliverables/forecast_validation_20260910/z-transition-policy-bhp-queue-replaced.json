@@ -1,0 +1,10 @@
+{
+  "cancelled_utc": "2026-09-10T09:42:44.952075+00:00",
+  "reason": "Use the authenticated baseline-view with the BHP control channel required by static attention. Verified equal states and first three actions to the unchanged economic baseline.",
+  "source_commit": "f91143e7e0c0c69151303edde5dd41e25d24a34c",
+  "replacement_source_commit": "ba112c1e964fd87fcf629d6a9ca8dd723ef6f8dc",
+  "replacement_session": "timesoil-transition-policy-bhp-z-20260910",
+  "training_restarted": false,
+  "evaluation_restarted": false,
+  "proposal_started": false
+}
