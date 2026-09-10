@@ -3,6 +3,7 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
+from unittest.mock import patch
 
 os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
 import torch
@@ -12,7 +13,7 @@ from timesfm_geology import load_frozen_model
 from timesoil.aios.interwell import WellConnectivity
 
 r = Path('/root/projects/TimesOil/results/audit-20260909')
-out = r / 'variate-attention-parity-z-20260910'
+out = r / 'attention-operations-parity-z-20260910'
 out.mkdir(exist_ok=False)
 paths = {
     r / 'decoder-parity-components-z-20260910/decoder-inputs.pt': '6ee35fcd634bb28f6695329b11bd24f0172c00e20be4a984e030f3caf032f655',
@@ -75,5 +76,17 @@ with torch.no_grad():
         handle = attention.out_proj.register_forward_pre_hook(lambda module, args: projection_inputs.append(args[0].detach().clone()))
         report['comparisons'].append(row)
 handle.remove()
+report['operations'] = []
+def repeated(operation, name):
+    def call(*args, **kwargs):
+        first, second = operation(*args, **kwargs), operation(*args, **kwargs)
+        report['operations'].append({'operation': name, 'input_shapes': [list(x.shape) for x in args if isinstance(x, torch.Tensor)],
+            'difference': float((first - second).abs().max())})
+        return first
+    return call
+attention.use_sdpa = False
+with torch.no_grad(), patch.object(torch, 'matmul', repeated(torch.matmul, 'matmul')), \
+        patch.object(torch.nn.functional, 'softmax', repeated(torch.nn.functional.softmax, 'softmax')):
+    attention(*captured['args'], **captured['kwargs'])
 (out / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
 print(json.dumps(report), flush=True)
