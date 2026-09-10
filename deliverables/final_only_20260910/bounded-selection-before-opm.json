@@ -1,0 +1,333 @@
+{
+  "schema": "timesoil.forecast-selected-final-opm/v1",
+  "sealed_at_utc": "2026-09-10T13:52:09.778000+00:00",
+  "selected_id": 10,
+  "selected_request": "request-10.json",
+  "selected_request_sha256": "5302c6090d071c5e8746f452a09c56473c56e8f8eaa01aa163a15316fb1bc208",
+  "controls_sha256": "c1931783c285bf05ed04cc42a18eaa9032efac8c6f2ad34b611cfa9961d183ac",
+  "schedule_overlay_sha256": "417d97917a3d48a7a9912fcaa2722b58a36da1668c3316b71b135fde284ba343",
+  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+  "selection_metric": "forecast_chdd_m",
+  "forecast_chdd_m": 15742.620107091003,
+  "baseline_forecast_chdd_m": 11280.392215636655,
+  "forecast_uplift_percent": 39.55738245757887,
+  "search_opm_calls": 0,
+  "maximum_final_opm_calls": 1,
+  "reselection_after_opm_allowed": false,
+  "horizon_months": 224,
+  "head_sha256": "9b954acbe64f0c5ff8dc213315a46b9324a948294ac19bc3b087d55fb50844ae",
+  "normative_profile": {
+    "version": "7.0.2-negative-row-filter",
+    "norms_rows": [
+      [
+        "oilPriceRubT",
+        "Приведенная цена реализации нефти",
+        28000
+      ],
+      [
+        "deductionsRubT",
+        "Отчисления на тонну нефти",
+        19600
+      ],
+      [
+        "oilOpexRubT",
+        "OPEX на добычу нефти",
+        40
+      ],
+      [
+        "liquidOpexRubT",
+        "OPEX на добычу жидкости",
+        100
+      ],
+      [
+        "injectionOpexRubM3",
+        "OPEX на закачку воды",
+        30
+      ],
+      [
+        "fundAnnualRubWell",
+        "Содержание действующего фонда",
+        1000000
+      ],
+      [
+        "pumpOperationCostM",
+        "Операция по смене ЭЦН",
+        1.8
+      ],
+      [
+        "stopStartCostM",
+        "Остановка или запуск скважины",
+        1
+      ],
+      [
+        "conversionBaseCostM",
+        "Перевод добывающей скважины под закачку",
+        5
+      ],
+      [
+        "profitTaxRate",
+        "Ставка налога на прибыль",
+        25
+      ],
+      [
+        "propertyTaxRate",
+        "Ставка налога на имущество",
+        2.2
+      ],
+      [
+        "waccRate",
+        "Ставка дисконтирования WACC",
+        10
+      ],
+      [
+        "annualDepreciationM",
+        "Годовая амортизация",
+        0
+      ],
+      [
+        "residualStartM",
+        "Остаточная стоимость на начало года",
+        0
+      ],
+      [
+        "residualEndM",
+        "Остаточная стоимость на конец года",
+        0
+      ],
+      [
+        "otherIncludedEbitdaM",
+        "Прочие ДиР, включаемые в EBITDA",
+        0
+      ],
+      [
+        "otherExcludedEbitdaM",
+        "Прочие ДиР, не включаемые в EBITDA",
+        0
+      ],
+      [
+        "chargeInitialPump",
+        "Начислять начальный ЭЦН",
+        "НЕТ"
+      ],
+      [
+        "downsizeThreshold",
+        "Порог уменьшения типоразмера ЭЦН",
+        100
+      ]
+    ],
+    "provided_assumptions": {
+      "oilPriceRubT": 28000.0,
+      "deductionsRubT": 19600.0,
+      "oilOpexRubT": 40.0,
+      "liquidOpexRubT": 100.0,
+      "injectionOpexRubM3": 30.0,
+      "fundAnnualRubWell": 1000000.0,
+      "pumpOperationCostM": 1.8,
+      "profitTaxRate": 25.0,
+      "propertyTaxRate": 2.2,
+      "waccRate": 10.0,
+      "annualDepreciationM": 0.0,
+      "existingAssetResidualM": 0.0,
+      "residualStartM": 0.0,
+      "residualEndM": 0.0,
+      "otherIncludedEbitdaM": 0.0,
+      "otherExcludedEbitdaM": 0.0,
+      "stopStartCostM": 1.0,
+      "conversionBaseCostM": 5.0,
+      "regimeThreshold": 10.0,
+      "downsizeThreshold": 100.0,
+      "chargeInitialPump": false,
+      "clampNegativeDiffs": false,
+      "allowTaxShield": false,
+      "capitalizePumpAssets": false,
+      "ignoreTechnicalReset": false
+    },
+    "assumptions": {
+      "oilPriceRubT": 28000.0,
+      "deductionsRubT": 19600.0,
+      "oilOpexRubT": 40.0,
+      "liquidOpexRubT": 100.0,
+      "injectionOpexRubM3": 30.0,
+      "fundAnnualRubWell": 1000000.0,
+      "pumpOperationCostM": 1.8,
+      "profitTaxRate": 25.0,
+      "propertyTaxRate": 2.2,
+      "waccRate": 10.0,
+      "annualDepreciationM": 0.0,
+      "existingAssetResidualM": 0.0,
+      "residualStartM": 0.0,
+      "residualEndM": 0.0,
+      "otherIncludedEbitdaM": 0.0,
+      "otherExcludedEbitdaM": 0.0,
+      "stopStartCostM": 1.0,
+      "conversionBaseCostM": 5.0,
+      "regimeThreshold": 10.0,
+      "downsizeThreshold": 100.0,
+      "chargeInitialPump": false,
+      "clampNegativeDiffs": false,
+      "allowTaxShield": false,
+      "capitalizePumpAssets": false,
+      "ignoreTechnicalReset": false
+    },
+    "methodology_locks": {
+      "allowTaxShield": false,
+      "capitalizePumpAssets": false,
+      "clampNegativeDiffs": false,
+      "ignoreTechnicalReset": false,
+      "downsizeThreshold": 100.0,
+      "stopStartCostM": 1.0,
+      "conversionBaseCostM": 5.0
+    },
+    "pumps": [
+      {
+        "nominal": 15.0,
+        "min": 0.0,
+        "max": 20.0,
+        "costM": 0.55
+      },
+      {
+        "nominal": 20.0,
+        "min": 15.0,
+        "max": 30.0,
+        "costM": 0.65
+      },
+      {
+        "nominal": 30.0,
+        "min": 20.0,
+        "max": 50.0,
+        "costM": 0.75
+      },
+      {
+        "nominal": 50.0,
+        "min": 30.0,
+        "max": 80.0,
+        "costM": 0.90397
+      },
+      {
+        "nominal": 80.0,
+        "min": 50.0,
+        "max": 100.0,
+        "costM": 1.85
+      },
+      {
+        "nominal": 100.0,
+        "min": 80.0,
+        "max": 125.0,
+        "costM": 2.3
+      },
+      {
+        "nominal": 125.0,
+        "min": 100.0,
+        "max": 160.0,
+        "costM": 2.75
+      },
+      {
+        "nominal": 160.0,
+        "min": 125.0,
+        "max": 210.0,
+        "costM": 3.35
+      },
+      {
+        "nominal": 210.0,
+        "min": 160.0,
+        "max": 250.0,
+        "costM": 4.1
+      },
+      {
+        "nominal": 250.0,
+        "min": 210.0,
+        "max": 320.0,
+        "costM": 4.75
+      },
+      {
+        "nominal": 320.0,
+        "min": 250.0,
+        "max": 400.0,
+        "costM": 6.0
+      },
+      {
+        "nominal": 400.0,
+        "min": 320.0,
+        "max": 500.0,
+        "costM": 8.05
+      }
+    ],
+    "source_sha256": {
+      "РАСЧЕТ_ЧДД.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90",
+      "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+      "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+      "Нормативы_ЧДД.xlsx": "4f96a304db486f158994173be6e86b45d63858b8d851470cab8168c86b366358"
+    }
+  },
+  "files": {
+    "proposal-receipt.json": "147f59a0a599241ea2d72610acd6a5c6838069897f345e3d89205c19b15a07ff",
+    "candidates.json": "9ea14f50b31dc3c994f4c311d712141d128dcea6e81f19a6a8eeb032d60e006c",
+    "planning-context-00.json": "3ca1bdb3ab6fe17b99357e6079e760d00004b512dad45d65bddb5ecd4638f2d2",
+    "planning-context-01.json": "ea26d322c1148d41dce27053a4a6a9fa684f745c69dc7ffcf7b3dea1e447eb87",
+    "planning-context-02.json": "574310675ac39af3698e456d07bf268c9fdccfec6a89f5fb0205fa24e7c77883",
+    "policy-attempts-00.json": "1aeb5ebe0c885a6f751d8ca60a70c18765e327b219fe41765740d1afdd834989",
+    "policy-attempts-01.json": "00c267352f06b1c0c960b04c6fe791f295b05ea028f44cb4da433fe530f927f6",
+    "policy-attempts-02.json": "fcdc6dbdec80c324c422f350cea6a14aa7f475618397755e677094b9aa90d27a",
+    "rejected-plan-00-0.json": "a536bbec6441265c8d95675b021007628300dcacbb81169c9295c4793fabcd78",
+    "request-00.json": "6e465f21e3dea55eb05d98707328c3e59e70142e12f2c42b293e8e39d5c8b880",
+    "forecast-00.npz": "7d7266becd1d9777806a748a6fa255d581b5fda878a58a973e10b2b6b555f13e",
+    "economics-00/manifest.json": "8d542e2ee4f70007e9f779d42e01cfd30b7f66a3eeb282a069fb41ed0019add0",
+    "economics-00/input.csv": "ce0d3c4f2e5fb06218a4b2e2148c3284835dce781dd9667963dec3564914128a",
+    "economics-00/result.json": "5c1b8e8fe69c537ba6c866058dac641b4cb9d2f89bd44a40ad9ee2f6095fca5c",
+    "request-01.json": "ced42c3d1410d59450af7f00cdc9c47d06fa1e342cf06d6e30a174d1dc567b00",
+    "forecast-01.npz": "d5bab9881b96bc69315f733fc9fc5370456526a8662d558cfa938c120a670d4a",
+    "economics-01/manifest.json": "541fb1465b0ce4a4782abb7fe9a6595a18972f1241a2930798c3452f7492b779",
+    "economics-01/input.csv": "d222e37efda8bebe8d8492b735f4a7382066bad0e34905e6e7f4705382a82dbd",
+    "economics-01/result.json": "c3276a31b4f93bbb34deb9a0da807c52e3d5d02b6324922cf3927ed54be80c78",
+    "request-02.json": "678ff3d4cc42a7d4ce462515b1f98ca70b90e2fb5ba6275b4748cdac792323bd",
+    "forecast-02.npz": "be72c5e84b1d6a86c91eed2d5608c23e061d07681932cc0242bfc22597f71314",
+    "economics-02/manifest.json": "b812007530431b58dff4c6dc15bac564af415241dcb45350bd7888cc5e0e800a",
+    "economics-02/input.csv": "1823c19a4326969f65875db42b661b40a4be05281fc905b6c65002888a38ef42",
+    "economics-02/result.json": "950d844b89e70600a864fa1952b464b0ab4a9a5943736e0c01d24a0a694384a4",
+    "request-03.json": "c31f50a5378775556900ca9235110a80ed7ed99d6a75baae1992e0ed77db2b89",
+    "forecast-03.npz": "b0816284cc394503a05de24e279d5a6acfa8ce7d51e91bc57b84099dc0b9ef86",
+    "economics-03/manifest.json": "36f27915c0c3ce1967b679ed9de6e7a4254e4540f7a018820d57f7ee059f59a5",
+    "economics-03/input.csv": "d08ca5168f8635a872c65c33f334e03b5b14f7aaa32aea0fc8597133eea80add",
+    "economics-03/result.json": "46d1a224436f79560a1e2e13a099d45dc307d7758f03837f702e96f4f94b94c6",
+    "request-04.json": "4e39b6375839b1931d2a0bb83ce0ffd86eefa9af171d9461410430fc6380c2ea",
+    "forecast-04.npz": "faba0c3b01331cfd276397290361eab2d21b880f1b7872e29eee4d586cffa9d3",
+    "economics-04/manifest.json": "2aff0fdbbd13a31c113968b3f9a902b18fbc19be4ec1c67fc2688d45846e56df",
+    "economics-04/input.csv": "424cd7c4cc2dfee33bd789f903da0366566cfb514decf51c70179a51c6d6cd20",
+    "economics-04/result.json": "7a92ef8a56dc446e2f603692286f36179018876dfa02636542f499e1e97fab87",
+    "request-05.json": "9ebe2ff2ed6b7769f997f783f05c62113cbb58f78d418b0d8c42348d2d1fe9fc",
+    "forecast-05.npz": "e1ae048407ba39ad4ec874a8db1285449716cc26673a0d16cd4ac86a4fc10e67",
+    "economics-05/manifest.json": "8d99464a51e893e809fcf7af3c3b2ea55cd3ad676b6e4fa6698d0ca5b4f25c59",
+    "economics-05/input.csv": "254f8e48e4d0e8934b5aef45c952da5f9dd9125d5175ec62e747600898ded91f",
+    "economics-05/result.json": "82c21e971cf2a029f157151caab2eebe8af9e674db929e37414170fc186693a0",
+    "request-06.json": "2c7c4264e723c5295a50f240fe834baf19c3300d7367b957c06de4a87878838a",
+    "forecast-06.npz": "b252ecf4018db171e4521a5b4a6e9ac472d16fbcf9bb8c2c904fed4ff91c9cad",
+    "economics-06/manifest.json": "550a0f05641b3bc1732c2154af40dcbfa6907eb19d0756fc8b55d1acae2fed6d",
+    "economics-06/input.csv": "50f53ef00943fe749bb040a346bde5418e3652f8cf7cd81fe6403def6d97142d",
+    "economics-06/result.json": "3955dc68ce6396bf387ee5df9401401fb307854f38d8456408d75a36064e9c3c",
+    "request-07.json": "ee36113243894cf12e28451ecd30d3399a41f1b31deca0fad6f29f4b04f82f4a",
+    "forecast-07.npz": "54c534a020d9680edf625f08438a544f20a1c9ffb680d8fd896fa0105f08627d",
+    "economics-07/manifest.json": "b2c84ee60727735f566d448d4872e92c088f2006ad53e3e5fbb12b57333ef0db",
+    "economics-07/input.csv": "386bd5891a054f0c9c53ea9102789ee0a8e64aec09023d3cd339ec8c6f8451b7",
+    "economics-07/result.json": "5e6b5ee5be1208064bfccf88736dc5bdffaa9b9cf1aa37009f31a9e579bbca0b",
+    "request-08.json": "269b52ca15fa5522d618ff6fe8bcb028dc31f45218f8695ac02e843f844098f7",
+    "forecast-08.npz": "2cd6f4272eab2190058cc7aa84079f910ebb905c157e757d12b41e3af33c0d34",
+    "economics-08/manifest.json": "a19f0f1d958da2ce017f3adc5099abf291192862311239749df974161df3e484",
+    "economics-08/input.csv": "86201dcbe41c8c6576782756e7ff6c927cb4f11ca23e6982b4354ba76340b7d3",
+    "economics-08/result.json": "c32e1e8b1a868f1d7fd04fe2033f1c51f58a09851702b663c8b549b0982b7620",
+    "request-09.json": "f57fdc4d1ccf279f71eefaec26513166779453dfba008df63a5d636bb725ed54",
+    "forecast-09.npz": "cef34748467e9b30dc0a8ea39682f1fae36466f37cc7b48193c24bcf15ca41ea",
+    "economics-09/manifest.json": "06ec7cf26a4d54992a8d1193ccd4ef84aae867b3d963c54e4235790dcf01697d",
+    "economics-09/input.csv": "04b92f007ec6d0b9bc35026e191eab6e461199e64f760cb6f913100e72b2e1a8",
+    "economics-09/result.json": "d7efbbb40f24f5eaa6cbe1efe4c380cca4505563aa8cb39d7e494e3409972b77",
+    "request-10.json": "67f6b222040560ad355dee3c1649bcc077d452588547a75e7587b1452b0c96c2",
+    "forecast-10.npz": "a50b193f74774654f4a2781d7626f5fbaf803e9ed03d57a30247bc8ecb29f774",
+    "economics-10/manifest.json": "50572772291ca0deb76f9a7c39e33eb00f3bffe2e10c6ba71d2b4f0c582afaff",
+    "economics-10/input.csv": "dc60bb622b642b520a4e8f7aa2e724300f14c0c832840a8488bfab57f60542a1",
+    "economics-10/result.json": "423f5ab73dcae4336e8c3e24c8984b402e3b1c1e0c3b74745ca4d24c99da4e72",
+    "agent-00.json": "b528ba38db9f84acb30e020d41525eaf51a58682cf2503f5ef1ef9625ee8d12a",
+    "agent-01.json": "c5d38f4d01200202c9bf7391cf3f1dd608951d2f884e55f3fa788e00b9b14c64",
+    "agent-02.json": "44c734e26927af9ac01a125406c88c5cefb577dfea9dc104ea313e0cc4fc404e"
+  },
+  "independently_certified_accuracy": false,
+  "physical_uplift_verified": false
+}

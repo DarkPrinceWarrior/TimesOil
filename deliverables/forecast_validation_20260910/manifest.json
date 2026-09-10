@@ -312,6 +312,10 @@
     "provenance/verify_precise_attention.py": {
       "source": "WSL-authored source executed on A100 from frozen GitHub commits.",
       "sha256": "c5e1ba208d2f28e5794ff07eae8bad646be902330e5eb98bdd4dc86444f97558"
+    },
+    "provenance/audit_forecast_control_bounds.py": {
+      "source": "WSL source delivered through GitHub at a209d65; executed on A100",
+      "sha256": "9a14e96dbc8c3e54dea9f7a0bd70bc0c2c5da48de946614a87fd5b466dd0becd"
     }
   }
 }

@@ -1,0 +1,2853 @@
+{
+  "source_commit": "a209d652b8d792da5d533a93da604c9563fe0aaf",
+  "canonical_manifest_sha256": "b9ee48df3c4023e526597b5a54b47bdaf13dcf20de0c08dbd187a0f4fdc1d52a",
+  "canonical_csv_sha256": "6b4b1ee5ddbbbd40221029ba8778f4fd3549fa01dfa84c37cb8f81ef1618a150",
+  "scope": "Diagnostic only; no candidate selection, model fitting or new OPM.",
+  "tolerance": 0.001,
+  "bhp_requires_flow_above": 1e-06,
+  "forecasts": [
+    {
+      "id": 0,
+      "forecast_sha256": "7d7266becd1d9777806a748a6fa255d581b5fda878a58a973e10b2b6b555f13e",
+      "request_sha256": "6e465f21e3dea55eb05d98707328c3e59e70142e12f2c42b293e8e39d5c8b880",
+      "timestamp_encoding": "legacy_object_array_not_loaded",
+      "controls": {
+        "liquid_above_lrat_m3d": {
+          "checked": 13382,
+          "count": 1740,
+          "maximum_excess": 11.188987731933594,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "103",
+              "excess": 0.1774892807006836,
+              "liquid_m3d": 15.177489280700684,
+              "injection_m3d": 0.0,
+              "bhp_bar": 47.675540924072266,
+              "control": {
+                "month": "2007-01-01",
+                "well": "103",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "111",
+              "excess": 0.09870719909667969,
+              "liquid_m3d": 15.09870719909668,
+              "injection_m3d": 0.0,
+              "bhp_bar": 61.55146026611328,
+              "control": {
+                "month": "2007-01-01",
+                "well": "111",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-02-01",
+              "endpoint": "2007-03-01",
+              "well": "103",
+              "excess": 0.18384265899658203,
+              "liquid_m3d": 15.183842658996582,
+              "injection_m3d": 0.0,
+              "bhp_bar": 45.6541748046875,
+              "control": {
+                "month": "2007-02-01",
+                "well": "103",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "producer_below_bhp_bar": {
+          "checked": 13301,
+          "count": 4113,
+          "maximum_excess": 50.0,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "10",
+              "excess": 0.21548843383789062,
+              "liquid_m3d": 26.37397575378418,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.78451156616211,
+              "control": {
+                "month": "2007-01-01",
+                "well": "10",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 45.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "100",
+              "excess": 0.09830856323242188,
+              "liquid_m3d": 7.159005641937256,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.90169143676758,
+              "control": {
+                "month": "2007-01-01",
+                "well": "100",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "101",
+              "excess": 0.10854339599609375,
+              "liquid_m3d": 8.453269004821777,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.891456604003906,
+              "control": {
+                "month": "2007-01-01",
+                "well": "101",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "injection_above_wrat_m3d": {
+          "checked": 8212,
+          "count": 2298,
+          "maximum_excess": 21.181594848632812,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "18",
+              "excess": 2.942291259765625,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 27.942291259765625,
+              "bhp_bar": 204.13754272460938,
+              "control": {
+                "month": "2007-01-01",
+                "well": "18",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 25.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "25",
+              "excess": 6.93994140625,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 41.93994140625,
+              "bhp_bar": 160.7001495361328,
+              "control": {
+                "month": "2007-01-01",
+                "well": "25",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 35.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "33",
+              "excess": 1.4150123596191406,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 31.41501235961914,
+              "bhp_bar": 176.27584838867188,
+              "control": {
+                "month": "2007-01-01",
+                "well": "33",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 30.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        },
+        "injector_above_bhp_bar": {
+          "checked": 7909,
+          "count": 93,
+          "maximum_excess": 42.2835693359375,
+          "examples": [
+            {
+              "control_month": "2007-07-01",
+              "endpoint": "2007-08-01",
+              "well": "76",
+              "excess": 4.74835205078125,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 182.03472900390625,
+              "bhp_bar": 304.74835205078125,
+              "control": {
+                "month": "2007-07-01",
+                "well": "76",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 180.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-10-01",
+              "endpoint": "2007-11-01",
+              "well": "13",
+              "excess": 0.47625732421875,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 113.20020294189453,
+              "bhp_bar": 300.47625732421875,
+              "control": {
+                "month": "2007-10-01",
+                "well": "13",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 110.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-11-01",
+              "endpoint": "2007-12-01",
+              "well": "13",
+              "excess": 3.413726806640625,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 113.72544860839844,
+              "bhp_bar": 303.4137268066406,
+              "control": {
+                "month": "2007-11-01",
+                "well": "13",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 110.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 1,
+      "forecast_sha256": "d5bab9881b96bc69315f733fc9fc5370456526a8662d558cfa938c120a670d4a",
+      "request_sha256": "ced42c3d1410d59450af7f00cdc9c47d06fa1e342cf06d6e30a174d1dc567b00",
+      "timestamp_encoding": "legacy_object_array_not_loaded",
+      "controls": {
+        "liquid_above_lrat_m3d": {
+          "checked": 13382,
+          "count": 398,
+          "maximum_excess": 12.82522964477539,
+          "examples": [
+            {
+              "control_month": "2007-05-01",
+              "endpoint": "2007-06-01",
+              "well": "11",
+              "excess": 1.0513496398925781,
+              "liquid_m3d": 19.801349639892578,
+              "injection_m3d": 0.0,
+              "bhp_bar": 59.869667053222656,
+              "control": {
+                "month": "2007-05-01",
+                "well": "11",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 18.75,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-05-01",
+              "endpoint": "2007-06-01",
+              "well": "111",
+              "excess": 0.4083290100097656,
+              "liquid_m3d": 19.158329010009766,
+              "injection_m3d": 0.0,
+              "bhp_bar": 60.217288970947266,
+              "control": {
+                "month": "2007-05-01",
+                "well": "111",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 18.75,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-06-01",
+              "endpoint": "2007-07-01",
+              "well": "111",
+              "excess": 1.2847633361816406,
+              "liquid_m3d": 20.03476333618164,
+              "injection_m3d": 0.0,
+              "bhp_bar": 60.37675476074219,
+              "control": {
+                "month": "2007-06-01",
+                "well": "111",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 18.75,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "producer_below_bhp_bar": {
+          "checked": 13295,
+          "count": 4005,
+          "maximum_excess": 50.0,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "10",
+              "excess": 0.20434951782226562,
+              "liquid_m3d": 26.120254516601562,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.795650482177734,
+              "control": {
+                "month": "2007-01-01",
+                "well": "10",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 56.25,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "100",
+              "excess": 0.09172439575195312,
+              "liquid_m3d": 7.265417098999023,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.90827560424805,
+              "control": {
+                "month": "2007-01-01",
+                "well": "100",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 18.75,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "101",
+              "excess": 0.10410690307617188,
+              "liquid_m3d": 8.66745662689209,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.89589309692383,
+              "control": {
+                "month": "2007-01-01",
+                "well": "101",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 18.75,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "injection_above_wrat_m3d": {
+          "checked": 8212,
+          "count": 1989,
+          "maximum_excess": 20.11419677734375,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "18",
+              "excess": 2.8866615295410156,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 27.886661529541016,
+              "bhp_bar": 204.32421875,
+              "control": {
+                "month": "2007-01-01",
+                "well": "18",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 25.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "25",
+              "excess": 6.927452087402344,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 41.927452087402344,
+              "bhp_bar": 160.88870239257812,
+              "control": {
+                "month": "2007-01-01",
+                "well": "25",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 35.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "33",
+              "excess": 1.0555381774902344,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 31.055538177490234,
+              "bhp_bar": 175.9322052001953,
+              "control": {
+                "month": "2007-01-01",
+                "well": "33",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 30.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        },
+        "injector_above_bhp_bar": {
+          "checked": 7960,
+          "count": 218,
+          "maximum_excess": 115.12725830078125,
+          "examples": [
+            {
+              "control_month": "2007-04-01",
+              "endpoint": "2007-05-01",
+              "well": "87",
+              "excess": 1.395263671875,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 24.162099838256836,
+              "bhp_bar": 301.395263671875,
+              "control": {
+                "month": "2007-04-01",
+                "well": "87",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 25.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-07-01",
+              "endpoint": "2007-08-01",
+              "well": "76",
+              "excess": 8.1708984375,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 179.71096801757812,
+              "bhp_bar": 308.1708984375,
+              "control": {
+                "month": "2007-07-01",
+                "well": "76",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 180.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-10-01",
+              "endpoint": "2007-11-01",
+              "well": "13",
+              "excess": 0.406494140625,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 112.86711883544922,
+              "bhp_bar": 300.406494140625,
+              "control": {
+                "month": "2007-10-01",
+                "well": "13",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 110.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "forecast_sha256": "be72c5e84b1d6a86c91eed2d5608c23e061d07681932cc0242bfc22597f71314",
+      "request_sha256": "678ff3d4cc42a7d4ce462515b1f98ca70b90e2fb5ba6275b4748cdac792323bd",
+      "timestamp_encoding": "legacy_object_array_not_loaded",
+      "controls": {
+        "liquid_above_lrat_m3d": {
+          "checked": 13382,
+          "count": 1966,
+          "maximum_excess": 10.746237754821777,
+          "examples": [
+            {
+              "control_month": "2007-03-01",
+              "endpoint": "2007-04-01",
+              "well": "106",
+              "excess": 0.056380271911621094,
+              "liquid_m3d": 5.056380271911621,
+              "injection_m3d": 0.0,
+              "bhp_bar": 60.70112609863281,
+              "control": {
+                "month": "2007-03-01",
+                "well": "106",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 5.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-03-01",
+              "endpoint": "2007-04-01",
+              "well": "11",
+              "excess": 0.2129650115966797,
+              "liquid_m3d": 15.21296501159668,
+              "injection_m3d": 0.0,
+              "bhp_bar": 60.72782897949219,
+              "control": {
+                "month": "2007-03-01",
+                "well": "11",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-03-01",
+              "endpoint": "2007-04-01",
+              "well": "111",
+              "excess": 0.1696615219116211,
+              "liquid_m3d": 15.169661521911621,
+              "injection_m3d": 0.0,
+              "bhp_bar": 61.81431579589844,
+              "control": {
+                "month": "2007-03-01",
+                "well": "111",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "producer_below_bhp_bar": {
+          "checked": 13303,
+          "count": 4060,
+          "maximum_excess": 50.0,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "10",
+              "excess": 0.0861663818359375,
+              "liquid_m3d": 24.76506805419922,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.91383361816406,
+              "control": {
+                "month": "2007-01-01",
+                "well": "10",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 45.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "100",
+              "excess": 0.106170654296875,
+              "liquid_m3d": 7.227664947509766,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.893829345703125,
+              "control": {
+                "month": "2007-01-01",
+                "well": "100",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "101",
+              "excess": 0.11919021606445312,
+              "liquid_m3d": 8.477804183959961,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.88080978393555,
+              "control": {
+                "month": "2007-01-01",
+                "well": "101",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "injection_above_wrat_m3d": {
+          "checked": 8212,
+          "count": 4350,
+          "maximum_excess": 48.390625,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "13",
+              "excess": 10.006874084472656,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 98.00687408447266,
+              "bhp_bar": 261.14886474609375,
+              "control": {
+                "month": "2007-01-01",
+                "well": "13",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 88.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "18",
+              "excess": 5.259578704833984,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 25.259578704833984,
+              "bhp_bar": 197.492431640625,
+              "control": {
+                "month": "2007-01-01",
+                "well": "18",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 20.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "20",
+              "excess": 1.9221725463867188,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 21.92217254638672,
+              "bhp_bar": 190.69296264648438,
+              "control": {
+                "month": "2007-01-01",
+                "well": "20",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 20.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        },
+        "injector_above_bhp_bar": {
+          "checked": 7874,
+          "count": 130,
+          "maximum_excess": 69.08734130859375,
+          "examples": [
+            {
+              "control_month": "2007-07-01",
+              "endpoint": "2007-08-01",
+              "well": "76",
+              "excess": 2.63934326171875,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 175.1000518798828,
+              "bhp_bar": 302.63934326171875,
+              "control": {
+                "month": "2007-07-01",
+                "well": "76",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 144.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-12-01",
+              "endpoint": "2008-01-01",
+              "well": "76",
+              "excess": 9.09503173828125,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 179.7079315185547,
+              "bhp_bar": 309.09503173828125,
+              "control": {
+                "month": "2007-12-01",
+                "well": "76",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 160.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2009-01-01",
+              "endpoint": "2009-02-01",
+              "well": "13",
+              "excess": 1.381103515625,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 117.623779296875,
+              "bhp_bar": 301.381103515625,
+              "control": {
+                "month": "2009-01-01",
+                "well": "13",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 100.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 3,
+      "forecast_sha256": "b0816284cc394503a05de24e279d5a6acfa8ce7d51e91bc57b84099dc0b9ef86",
+      "request_sha256": "c31f50a5378775556900ca9235110a80ed7ed99d6a75baae1992e0ed77db2b89",
+      "timestamp_encoding": "legacy_object_array_not_loaded",
+      "controls": {
+        "liquid_above_lrat_m3d": {
+          "checked": 13382,
+          "count": 2040,
+          "maximum_excess": 12.381080627441406,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "103",
+              "excess": 0.42781925201416016,
+              "liquid_m3d": 15.42781925201416,
+              "injection_m3d": 0.0,
+              "bhp_bar": 50.577762603759766,
+              "control": {
+                "month": "2007-01-01",
+                "well": "103",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "106",
+              "excess": 0.007000446319580078,
+              "liquid_m3d": 5.00700044631958,
+              "injection_m3d": 0.0,
+              "bhp_bar": 60.932861328125,
+              "control": {
+                "month": "2007-01-01",
+                "well": "106",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 5.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "11",
+              "excess": 0.2664642333984375,
+              "liquid_m3d": 15.266464233398438,
+              "injection_m3d": 0.0,
+              "bhp_bar": 61.66039276123047,
+              "control": {
+                "month": "2007-01-01",
+                "well": "11",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "producer_below_bhp_bar": {
+          "checked": 13317,
+          "count": 4013,
+          "maximum_excess": 50.0,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "10",
+              "excess": 0.46601104736328125,
+              "liquid_m3d": 26.737289428710938,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.53398895263672,
+              "control": {
+                "month": "2007-01-01",
+                "well": "10",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 45.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "100",
+              "excess": 0.09291839599609375,
+              "liquid_m3d": 7.172004222869873,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.907081604003906,
+              "control": {
+                "month": "2007-01-01",
+                "well": "100",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "101",
+              "excess": 0.10512161254882812,
+              "liquid_m3d": 8.528770446777344,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.89487838745117,
+              "control": {
+                "month": "2007-01-01",
+                "well": "101",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "injection_above_wrat_m3d": {
+          "checked": 8212,
+          "count": 485,
+          "maximum_excess": 3.6467018127441406,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "25",
+              "excess": 1.3592147827148438,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 43.359214782714844,
+              "bhp_bar": 162.43556213378906,
+              "control": {
+                "month": "2007-01-01",
+                "well": "25",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 42.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "70",
+              "excess": 1.4923439025878906,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 19.49234390258789,
+              "bhp_bar": 233.08267211914062,
+              "control": {
+                "month": "2007-01-01",
+                "well": "70",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 18.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-02-01",
+              "endpoint": "2007-03-01",
+              "well": "25",
+              "excess": 0.9007720947265625,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 42.90077209472656,
+              "bhp_bar": 159.962646484375,
+              "control": {
+                "month": "2007-02-01",
+                "well": "25",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 42.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        },
+        "injector_above_bhp_bar": {
+          "checked": 7960,
+          "count": 482,
+          "maximum_excess": 105.78253173828125,
+          "examples": [
+            {
+              "control_month": "2007-02-01",
+              "endpoint": "2007-03-01",
+              "well": "87",
+              "excess": 23.212677001953125,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 28.40311050415039,
+              "bhp_bar": 323.2126770019531,
+              "control": {
+                "month": "2007-02-01",
+                "well": "87",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 30.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-03-01",
+              "endpoint": "2007-04-01",
+              "well": "87",
+              "excess": 1.91943359375,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 28.435720443725586,
+              "bhp_bar": 301.91943359375,
+              "control": {
+                "month": "2007-03-01",
+                "well": "87",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 30.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-04-01",
+              "endpoint": "2007-05-01",
+              "well": "87",
+              "excess": 22.399993896484375,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 28.00806427001953,
+              "bhp_bar": 322.3999938964844,
+              "control": {
+                "month": "2007-04-01",
+                "well": "87",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 30.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 4,
+      "forecast_sha256": "faba0c3b01331cfd276397290361eab2d21b880f1b7872e29eee4d586cffa9d3",
+      "request_sha256": "4e39b6375839b1931d2a0bb83ce0ffd86eefa9af171d9461410430fc6380c2ea",
+      "timestamp_encoding": "legacy_object_array_not_loaded",
+      "controls": {
+        "liquid_above_lrat_m3d": {
+          "checked": 13382,
+          "count": 4177,
+          "maximum_excess": 18.94103240966797,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "103",
+              "excess": 2.1299362182617188,
+              "liquid_m3d": 14.129936218261719,
+              "injection_m3d": 0.0,
+              "bhp_bar": 47.49504470825195,
+              "control": {
+                "month": "2007-01-01",
+                "well": "103",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 12.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "106",
+              "excess": 0.8931035995483398,
+              "liquid_m3d": 4.89310359954834,
+              "injection_m3d": 0.0,
+              "bhp_bar": 59.109619140625,
+              "control": {
+                "month": "2007-01-01",
+                "well": "106",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 4.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "108",
+              "excess": 0.7516493797302246,
+              "liquid_m3d": 4.751649379730225,
+              "injection_m3d": 0.0,
+              "bhp_bar": 53.01428985595703,
+              "control": {
+                "month": "2007-01-01",
+                "well": "108",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 4.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "producer_below_bhp_bar": {
+          "checked": 13300,
+          "count": 3913,
+          "maximum_excess": 50.0,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "10",
+              "excess": 0.605804443359375,
+              "liquid_m3d": 25.537433624267578,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.394195556640625,
+              "control": {
+                "month": "2007-01-01",
+                "well": "10",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 36.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "100",
+              "excess": 0.10454559326171875,
+              "liquid_m3d": 7.148622989654541,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.89545440673828,
+              "control": {
+                "month": "2007-01-01",
+                "well": "100",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 12.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "101",
+              "excess": 0.11658477783203125,
+              "liquid_m3d": 8.359818458557129,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.88341522216797,
+              "control": {
+                "month": "2007-01-01",
+                "well": "101",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 12.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "injection_above_wrat_m3d": {
+          "checked": 8212,
+          "count": 2219,
+          "maximum_excess": 19.103790283203125,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "18",
+              "excess": 3.041536331176758,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 28.041536331176758,
+              "bhp_bar": 203.0859375,
+              "control": {
+                "month": "2007-01-01",
+                "well": "18",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 25.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "25",
+              "excess": 6.888698577880859,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 41.88869857788086,
+              "bhp_bar": 160.2725830078125,
+              "control": {
+                "month": "2007-01-01",
+                "well": "25",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 35.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "33",
+              "excess": 1.0160274505615234,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 31.016027450561523,
+              "bhp_bar": 175.4459228515625,
+              "control": {
+                "month": "2007-01-01",
+                "well": "33",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 30.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        },
+        "injector_above_bhp_bar": {
+          "checked": 7870,
+          "count": 118,
+          "maximum_excess": 40.616485595703125,
+          "examples": [
+            {
+              "control_month": "2007-04-01",
+              "endpoint": "2007-05-01",
+              "well": "87",
+              "excess": 15.738739013671875,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 24.160425186157227,
+              "bhp_bar": 315.7387390136719,
+              "control": {
+                "month": "2007-04-01",
+                "well": "87",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 25.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-10-01",
+              "endpoint": "2007-11-01",
+              "well": "13",
+              "excess": 0.4599609375,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 108.82414245605469,
+              "bhp_bar": 300.4599609375,
+              "control": {
+                "month": "2007-10-01",
+                "well": "13",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 110.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-11-01",
+              "endpoint": "2007-12-01",
+              "well": "13",
+              "excess": 4.486785888671875,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 109.73373413085938,
+              "bhp_bar": 304.4867858886719,
+              "control": {
+                "month": "2007-11-01",
+                "well": "13",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 110.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 5,
+      "forecast_sha256": "e1ae048407ba39ad4ec874a8db1285449716cc26673a0d16cd4ac86a4fc10e67",
+      "request_sha256": "9ebe2ff2ed6b7769f997f783f05c62113cbb58f78d418b0d8c42348d2d1fe9fc",
+      "timestamp_encoding": "legacy_object_array_not_loaded",
+      "controls": {
+        "liquid_above_lrat_m3d": {
+          "checked": 13382,
+          "count": 126,
+          "maximum_excess": 10.093673706054688,
+          "examples": [
+            {
+              "control_month": "2010-12-01",
+              "endpoint": "2011-01-01",
+              "well": "96",
+              "excess": 0.088287353515625,
+              "liquid_m3d": 22.588287353515625,
+              "injection_m3d": 0.0,
+              "bhp_bar": 66.06990051269531,
+              "control": {
+                "month": "2010-12-01",
+                "well": "96",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 22.5,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2011-01-01",
+              "endpoint": "2011-02-01",
+              "well": "96",
+              "excess": 0.05060005187988281,
+              "liquid_m3d": 22.550600051879883,
+              "injection_m3d": 0.0,
+              "bhp_bar": 65.81198120117188,
+              "control": {
+                "month": "2011-01-01",
+                "well": "96",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 22.5,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2011-03-01",
+              "endpoint": "2011-04-01",
+              "well": "96",
+              "excess": 0.030170440673828125,
+              "liquid_m3d": 22.530170440673828,
+              "injection_m3d": 0.0,
+              "bhp_bar": 65.3826904296875,
+              "control": {
+                "month": "2011-03-01",
+                "well": "96",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 22.5,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "producer_below_bhp_bar": {
+          "checked": 13293,
+          "count": 3983,
+          "maximum_excess": 50.0,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "10",
+              "excess": 0.6970481872558594,
+              "liquid_m3d": 26.06482696533203,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.30295181274414,
+              "control": {
+                "month": "2007-01-01",
+                "well": "10",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 67.5,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "100",
+              "excess": 0.08458709716796875,
+              "liquid_m3d": 7.341045379638672,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.91541290283203,
+              "control": {
+                "month": "2007-01-01",
+                "well": "100",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 22.5,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "101",
+              "excess": 0.09874725341796875,
+              "liquid_m3d": 8.744966506958008,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.90125274658203,
+              "control": {
+                "month": "2007-01-01",
+                "well": "101",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 22.5,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "injection_above_wrat_m3d": {
+          "checked": 8212,
+          "count": 1912,
+          "maximum_excess": 18.352996826171875,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "18",
+              "excess": 2.9170970916748047,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 27.917097091674805,
+              "bhp_bar": 204.40673828125,
+              "control": {
+                "month": "2007-01-01",
+                "well": "18",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 25.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "25",
+              "excess": 6.922492980957031,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 41.92249298095703,
+              "bhp_bar": 160.91571044921875,
+              "control": {
+                "month": "2007-01-01",
+                "well": "25",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 35.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "33",
+              "excess": 1.012990951538086,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 31.012990951538086,
+              "bhp_bar": 175.87646484375,
+              "control": {
+                "month": "2007-01-01",
+                "well": "33",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 30.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        },
+        "injector_above_bhp_bar": {
+          "checked": 7975,
+          "count": 255,
+          "maximum_excess": 148.4580078125,
+          "examples": [
+            {
+              "control_month": "2007-04-01",
+              "endpoint": "2007-05-01",
+              "well": "87",
+              "excess": 5.64862060546875,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 24.192237854003906,
+              "bhp_bar": 305.64862060546875,
+              "control": {
+                "month": "2007-04-01",
+                "well": "87",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 25.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-07-01",
+              "endpoint": "2007-08-01",
+              "well": "76",
+              "excess": 9.2579345703125,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 178.60987854003906,
+              "bhp_bar": 309.2579345703125,
+              "control": {
+                "month": "2007-07-01",
+                "well": "76",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 180.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-10-01",
+              "endpoint": "2007-11-01",
+              "well": "13",
+              "excess": 0.14013671875,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 111.2422866821289,
+              "bhp_bar": 300.14013671875,
+              "control": {
+                "month": "2007-10-01",
+                "well": "13",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 110.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 6,
+      "forecast_sha256": "b252ecf4018db171e4521a5b4a6e9ac472d16fbcf9bb8c2c904fed4ff91c9cad",
+      "request_sha256": "2c7c4264e723c5295a50f240fe834baf19c3300d7367b957c06de4a87878838a",
+      "timestamp_encoding": "legacy_object_array_not_loaded",
+      "controls": {
+        "liquid_above_lrat_m3d": {
+          "checked": 13382,
+          "count": 98,
+          "maximum_excess": 6.347803115844727,
+          "examples": [
+            {
+              "control_month": "2012-08-01",
+              "endpoint": "2012-09-01",
+              "well": "96",
+              "excess": 0.5425148010253906,
+              "liquid_m3d": 30.54251480102539,
+              "injection_m3d": 0.0,
+              "bhp_bar": 62.94042205810547,
+              "control": {
+                "month": "2012-08-01",
+                "well": "96",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 30.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2016-11-01",
+              "endpoint": "2016-12-01",
+              "well": "34",
+              "excess": 1.3998746871948242,
+              "liquid_m3d": 11.399874687194824,
+              "injection_m3d": 0.0,
+              "bhp_bar": 12.849817276000977,
+              "control": {
+                "month": "2016-11-01",
+                "well": "34",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 10.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2016-12-01",
+              "endpoint": "2017-01-01",
+              "well": "34",
+              "excess": 1.3981647491455078,
+              "liquid_m3d": 11.398164749145508,
+              "injection_m3d": 0.0,
+              "bhp_bar": 11.385525703430176,
+              "control": {
+                "month": "2016-12-01",
+                "well": "34",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 10.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "producer_below_bhp_bar": {
+          "checked": 13307,
+          "count": 3974,
+          "maximum_excess": 50.0,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "10",
+              "excess": 1.0338516235351562,
+              "liquid_m3d": 26.043960571289062,
+              "injection_m3d": 0.0,
+              "bhp_bar": 48.966148376464844,
+              "control": {
+                "month": "2007-01-01",
+                "well": "10",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 90.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "100",
+              "excess": 0.079193115234375,
+              "liquid_m3d": 7.429327487945557,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.920806884765625,
+              "control": {
+                "month": "2007-01-01",
+                "well": "100",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 30.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "101",
+              "excess": 0.09103775024414062,
+              "liquid_m3d": 8.753217697143555,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.90896224975586,
+              "control": {
+                "month": "2007-01-01",
+                "well": "101",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 30.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "injection_above_wrat_m3d": {
+          "checked": 8212,
+          "count": 1895,
+          "maximum_excess": 24.5484619140625,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "18",
+              "excess": 2.942808151245117,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 27.942808151245117,
+              "bhp_bar": 204.49476623535156,
+              "control": {
+                "month": "2007-01-01",
+                "well": "18",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 25.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "25",
+              "excess": 6.856781005859375,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 41.856781005859375,
+              "bhp_bar": 160.81887817382812,
+              "control": {
+                "month": "2007-01-01",
+                "well": "25",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 35.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "33",
+              "excess": 1.099039077758789,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 31.09903907775879,
+              "bhp_bar": 175.72442626953125,
+              "control": {
+                "month": "2007-01-01",
+                "well": "33",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 30.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        },
+        "injector_above_bhp_bar": {
+          "checked": 7992,
+          "count": 313,
+          "maximum_excess": 136.33786010742188,
+          "examples": [
+            {
+              "control_month": "2007-04-01",
+              "endpoint": "2007-05-01",
+              "well": "87",
+              "excess": 9.198944091796875,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 24.20680046081543,
+              "bhp_bar": 309.1989440917969,
+              "control": {
+                "month": "2007-04-01",
+                "well": "87",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 25.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-07-01",
+              "endpoint": "2007-08-01",
+              "well": "76",
+              "excess": 8.85699462890625,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 177.7579803466797,
+              "bhp_bar": 308.85699462890625,
+              "control": {
+                "month": "2007-07-01",
+                "well": "76",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 180.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-11-01",
+              "endpoint": "2007-12-01",
+              "well": "13",
+              "excess": 2.90252685546875,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 110.1434555053711,
+              "bhp_bar": 302.90252685546875,
+              "control": {
+                "month": "2007-11-01",
+                "well": "13",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 110.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 7,
+      "forecast_sha256": "54c534a020d9680edf625f08438a544f20a1c9ffb680d8fd896fa0105f08627d",
+      "request_sha256": "ee36113243894cf12e28451ecd30d3399a41f1b31deca0fad6f29f4b04f82f4a",
+      "timestamp_encoding": "legacy_object_array_not_loaded",
+      "controls": {
+        "liquid_above_lrat_m3d": {
+          "checked": 13382,
+          "count": 21,
+          "maximum_excess": 1.8009166717529297,
+          "examples": [
+            {
+              "control_month": "2020-01-01",
+              "endpoint": "2020-02-01",
+              "well": "34",
+              "excess": 0.051666259765625,
+              "liquid_m3d": 15.051666259765625,
+              "injection_m3d": 0.0,
+              "bhp_bar": 40.6536865234375,
+              "control": {
+                "month": "2020-01-01",
+                "well": "34",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2020-03-01",
+              "endpoint": "2020-04-01",
+              "well": "34",
+              "excess": 0.6065807342529297,
+              "liquid_m3d": 15.60658073425293,
+              "injection_m3d": 0.0,
+              "bhp_bar": 31.9687442779541,
+              "control": {
+                "month": "2020-03-01",
+                "well": "34",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2020-04-01",
+              "endpoint": "2020-05-01",
+              "well": "34",
+              "excess": 0.9908342361450195,
+              "liquid_m3d": 15.99083423614502,
+              "injection_m3d": 0.0,
+              "bhp_bar": 31.419004440307617,
+              "control": {
+                "month": "2020-04-01",
+                "well": "34",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "producer_below_bhp_bar": {
+          "checked": 13310,
+          "count": 3918,
+          "maximum_excess": 50.0,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "10",
+              "excess": 1.063812255859375,
+              "liquid_m3d": 26.116657257080078,
+              "injection_m3d": 0.0,
+              "bhp_bar": 48.936187744140625,
+              "control": {
+                "month": "2007-01-01",
+                "well": "10",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 135.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "100",
+              "excess": 0.07532501220703125,
+              "liquid_m3d": 7.452343463897705,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.92467498779297,
+              "control": {
+                "month": "2007-01-01",
+                "well": "100",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 45.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "101",
+              "excess": 0.08387374877929688,
+              "liquid_m3d": 8.68451976776123,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.9161262512207,
+              "control": {
+                "month": "2007-01-01",
+                "well": "101",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 45.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "injection_above_wrat_m3d": {
+          "checked": 8212,
+          "count": 1898,
+          "maximum_excess": 21.151763916015625,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "18",
+              "excess": 2.9311370849609375,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 27.931137084960938,
+              "bhp_bar": 204.49014282226562,
+              "control": {
+                "month": "2007-01-01",
+                "well": "18",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 25.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "25",
+              "excess": 6.717853546142578,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 41.71785354614258,
+              "bhp_bar": 160.5809326171875,
+              "control": {
+                "month": "2007-01-01",
+                "well": "25",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 35.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "33",
+              "excess": 1.002401351928711,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 31.00240135192871,
+              "bhp_bar": 175.39569091796875,
+              "control": {
+                "month": "2007-01-01",
+                "well": "33",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 30.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        },
+        "injector_above_bhp_bar": {
+          "checked": 8001,
+          "count": 305,
+          "maximum_excess": 142.48043823242188,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "27",
+              "excess": 0.07330322265625,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 18.898542404174805,
+              "bhp_bar": 300.07330322265625,
+              "control": {
+                "month": "2007-01-01",
+                "well": "27",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 80.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-04-01",
+              "endpoint": "2007-05-01",
+              "well": "87",
+              "excess": 8.25726318359375,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 24.215734481811523,
+              "bhp_bar": 308.25726318359375,
+              "control": {
+                "month": "2007-04-01",
+                "well": "87",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 25.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-07-01",
+              "endpoint": "2007-08-01",
+              "well": "76",
+              "excess": 7.95489501953125,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 177.68577575683594,
+              "bhp_bar": 307.95489501953125,
+              "control": {
+                "month": "2007-07-01",
+                "well": "76",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 180.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 8,
+      "forecast_sha256": "2cd6f4272eab2190058cc7aa84079f910ebb905c157e757d12b41e3af33c0d34",
+      "request_sha256": "269b52ca15fa5522d618ff6fe8bcb028dc31f45218f8695ac02e843f844098f7",
+      "timestamp_encoding": "legacy_object_array_not_loaded",
+      "controls": {
+        "liquid_above_lrat_m3d": {
+          "checked": 13382,
+          "count": 2882,
+          "maximum_excess": 15.760929107666016,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "103",
+              "excess": 0.4281120300292969,
+              "liquid_m3d": 15.428112030029297,
+              "injection_m3d": 0.0,
+              "bhp_bar": 54.196311950683594,
+              "control": {
+                "month": "2007-01-01",
+                "well": "103",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "106",
+              "excess": 0.10292959213256836,
+              "liquid_m3d": 5.102929592132568,
+              "injection_m3d": 0.0,
+              "bhp_bar": 60.591651916503906,
+              "control": {
+                "month": "2007-01-01",
+                "well": "106",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 5.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "11",
+              "excess": 0.4564323425292969,
+              "liquid_m3d": 15.456432342529297,
+              "injection_m3d": 0.0,
+              "bhp_bar": 61.554527282714844,
+              "control": {
+                "month": "2007-01-01",
+                "well": "11",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "producer_below_bhp_bar": {
+          "checked": 13322,
+          "count": 3804,
+          "maximum_excess": 50.0,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "10",
+              "excess": 0.9735298156738281,
+              "liquid_m3d": 26.61505126953125,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.02647018432617,
+              "control": {
+                "month": "2007-01-01",
+                "well": "10",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 45.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "100",
+              "excess": 0.08865737915039062,
+              "liquid_m3d": 7.265368461608887,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.91134262084961,
+              "control": {
+                "month": "2007-01-01",
+                "well": "100",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "101",
+              "excess": 0.09987640380859375,
+              "liquid_m3d": 8.684335708618164,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.900123596191406,
+              "control": {
+                "month": "2007-01-01",
+                "well": "101",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "injection_above_wrat_m3d": {
+          "checked": 8212,
+          "count": 288,
+          "maximum_excess": 7.997951507568359,
+          "examples": [
+            {
+              "control_month": "2008-01-01",
+              "endpoint": "2008-02-01",
+              "well": "22",
+              "excess": 6.079998016357422,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 36.07999801635742,
+              "bhp_bar": 265.28753662109375,
+              "control": {
+                "month": "2008-01-01",
+                "well": "22",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 30.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2008-01-01",
+              "endpoint": "2008-02-01",
+              "well": "87",
+              "excess": 1.1052398681640625,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 38.60523986816406,
+              "bhp_bar": 362.98443603515625,
+              "control": {
+                "month": "2008-01-01",
+                "well": "87",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 37.5,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2008-02-01",
+              "endpoint": "2008-03-01",
+              "well": "22",
+              "excess": 5.407722473144531,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 35.40772247314453,
+              "bhp_bar": 261.31402587890625,
+              "control": {
+                "month": "2008-02-01",
+                "well": "22",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 30.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        },
+        "injector_above_bhp_bar": {
+          "checked": 8003,
+          "count": 642,
+          "maximum_excess": 203.21405029296875,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "87",
+              "excess": 55.271240234375,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 31.009538650512695,
+              "bhp_bar": 355.271240234375,
+              "control": {
+                "month": "2007-01-01",
+                "well": "87",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 37.5,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-02-01",
+              "endpoint": "2007-03-01",
+              "well": "61",
+              "excess": 9.967498779296875,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 33.428585052490234,
+              "bhp_bar": 309.9674987792969,
+              "control": {
+                "month": "2007-02-01",
+                "well": "61",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 45.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-02-01",
+              "endpoint": "2007-03-01",
+              "well": "87",
+              "excess": 95.27914428710938,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 34.808441162109375,
+              "bhp_bar": 395.2791442871094,
+              "control": {
+                "month": "2007-02-01",
+                "well": "87",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 37.5,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 9,
+      "forecast_sha256": "cef34748467e9b30dc0a8ea39682f1fae36466f37cc7b48193c24bcf15ca41ea",
+      "request_sha256": "f57fdc4d1ccf279f71eefaec26513166779453dfba008df63a5d636bb725ed54",
+      "timestamp_encoding": "legacy_object_array_not_loaded",
+      "controls": {
+        "liquid_above_lrat_m3d": {
+          "checked": 13338,
+          "count": 1713,
+          "maximum_excess": 10.583549499511719,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "103",
+              "excess": 0.23343181610107422,
+              "liquid_m3d": 15.233431816101074,
+              "injection_m3d": 0.0,
+              "bhp_bar": 48.30788040161133,
+              "control": {
+                "month": "2007-01-01",
+                "well": "103",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "11",
+              "excess": 0.09423065185546875,
+              "liquid_m3d": 15.094230651855469,
+              "injection_m3d": 0.0,
+              "bhp_bar": 61.55189514160156,
+              "control": {
+                "month": "2007-01-01",
+                "well": "11",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "111",
+              "excess": 0.19661712646484375,
+              "liquid_m3d": 15.196617126464844,
+              "injection_m3d": 0.0,
+              "bhp_bar": 61.52195739746094,
+              "control": {
+                "month": "2007-01-01",
+                "well": "111",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "producer_below_bhp_bar": {
+          "checked": 13262,
+          "count": 4062,
+          "maximum_excess": 50.0,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "10",
+              "excess": 0.3717803955078125,
+              "liquid_m3d": 26.358257293701172,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.62821960449219,
+              "control": {
+                "month": "2007-01-01",
+                "well": "10",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 45.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "100",
+              "excess": 0.09970855712890625,
+              "liquid_m3d": 7.173478603363037,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.900291442871094,
+              "control": {
+                "month": "2007-01-01",
+                "well": "100",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "101",
+              "excess": 0.10856246948242188,
+              "liquid_m3d": 8.480828285217285,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.89143753051758,
+              "control": {
+                "month": "2007-01-01",
+                "well": "101",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "injection_above_wrat_m3d": {
+          "checked": 8256,
+          "count": 2288,
+          "maximum_excess": 20.401321411132812,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "18",
+              "excess": 3.0032424926757812,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 28.00324249267578,
+              "bhp_bar": 204.110595703125,
+              "control": {
+                "month": "2007-01-01",
+                "well": "18",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 25.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "25",
+              "excess": 6.9690399169921875,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 41.96903991699219,
+              "bhp_bar": 160.75669860839844,
+              "control": {
+                "month": "2007-01-01",
+                "well": "25",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 35.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "33",
+              "excess": 1.46502685546875,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 31.46502685546875,
+              "bhp_bar": 176.53526306152344,
+              "control": {
+                "month": "2007-01-01",
+                "well": "33",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 30.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        },
+        "injector_above_bhp_bar": {
+          "checked": 7953,
+          "count": 81,
+          "maximum_excess": 35.077545166015625,
+          "examples": [
+            {
+              "control_month": "2007-04-01",
+              "endpoint": "2007-05-01",
+              "well": "87",
+              "excess": 2.986602783203125,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 24.159442901611328,
+              "bhp_bar": 302.9866027832031,
+              "control": {
+                "month": "2007-04-01",
+                "well": "87",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 25.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-07-01",
+              "endpoint": "2007-08-01",
+              "well": "76",
+              "excess": 4.57708740234375,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 181.9837646484375,
+              "bhp_bar": 304.57708740234375,
+              "control": {
+                "month": "2007-07-01",
+                "well": "76",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 180.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-10-01",
+              "endpoint": "2007-11-01",
+              "well": "13",
+              "excess": 0.31207275390625,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 112.83678436279297,
+              "bhp_bar": 300.31207275390625,
+              "control": {
+                "month": "2007-10-01",
+                "well": "13",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 110.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 10,
+      "forecast_sha256": "a50b193f74774654f4a2781d7626f5fbaf803e9ed03d57a30247bc8ecb29f774",
+      "request_sha256": "67f6b222040560ad355dee3c1649bcc077d452588547a75e7587b1452b0c96c2",
+      "timestamp_encoding": "legacy_object_array_not_loaded",
+      "controls": {
+        "liquid_above_lrat_m3d": {
+          "checked": 13382,
+          "count": 3210,
+          "maximum_excess": 20.44438934326172,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "103",
+              "excess": 0.37813472747802734,
+              "liquid_m3d": 15.378134727478027,
+              "injection_m3d": 0.0,
+              "bhp_bar": 55.34624099731445,
+              "control": {
+                "month": "2007-01-01",
+                "well": "103",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "106",
+              "excess": 0.03985118865966797,
+              "liquid_m3d": 5.039851188659668,
+              "injection_m3d": 0.0,
+              "bhp_bar": 60.71710205078125,
+              "control": {
+                "month": "2007-01-01",
+                "well": "106",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 5.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "11",
+              "excess": 0.5394229888916016,
+              "liquid_m3d": 15.539422988891602,
+              "injection_m3d": 0.0,
+              "bhp_bar": 61.47224426269531,
+              "control": {
+                "month": "2007-01-01",
+                "well": "11",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "producer_below_bhp_bar": {
+          "checked": 13320,
+          "count": 3775,
+          "maximum_excess": 50.0,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "10",
+              "excess": 1.0181198120117188,
+              "liquid_m3d": 26.623825073242188,
+              "injection_m3d": 0.0,
+              "bhp_bar": 48.98188018798828,
+              "control": {
+                "month": "2007-01-01",
+                "well": "10",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 45.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "100",
+              "excess": 0.08583831787109375,
+              "liquid_m3d": 7.326897621154785,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.914161682128906,
+              "control": {
+                "month": "2007-01-01",
+                "well": "100",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "101",
+              "excess": 0.09845733642578125,
+              "liquid_m3d": 8.709117889404297,
+              "injection_m3d": 0.0,
+              "bhp_bar": 49.90154266357422,
+              "control": {
+                "month": "2007-01-01",
+                "well": "101",
+                "role": "producer",
+                "status": "OPEN",
+                "target": "LRAT",
+                "value": 15.0,
+                "bhp_limit": 50.0
+              }
+            }
+          ]
+        },
+        "injection_above_wrat_m3d": {
+          "checked": 8212,
+          "count": 125,
+          "maximum_excess": 9.156349182128906,
+          "examples": [
+            {
+              "control_month": "2008-01-01",
+              "endpoint": "2008-02-01",
+              "well": "22",
+              "excess": 3.6613922119140625,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 39.66139221191406,
+              "bhp_bar": 278.22247314453125,
+              "control": {
+                "month": "2008-01-01",
+                "well": "22",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 36.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2008-02-01",
+              "endpoint": "2008-03-01",
+              "well": "22",
+              "excess": 3.0031051635742188,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 39.00310516357422,
+              "bhp_bar": 274.99810791015625,
+              "control": {
+                "month": "2008-02-01",
+                "well": "22",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 36.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2008-03-01",
+              "endpoint": "2008-04-01",
+              "well": "22",
+              "excess": 2.7445411682128906,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 38.74454116821289,
+              "bhp_bar": 273.22479248046875,
+              "control": {
+                "month": "2008-03-01",
+                "well": "22",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 36.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        },
+        "injector_above_bhp_bar": {
+          "checked": 7991,
+          "count": 745,
+          "maximum_excess": 225.4188232421875,
+          "examples": [
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "13",
+              "excess": 1.27081298828125,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 102.90789031982422,
+              "bhp_bar": 301.27081298828125,
+              "control": {
+                "month": "2007-01-01",
+                "well": "13",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 198.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "61",
+              "excess": 22.2506103515625,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 34.16429901123047,
+              "bhp_bar": 322.2506103515625,
+              "control": {
+                "month": "2007-01-01",
+                "well": "61",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 54.0,
+                "bhp_limit": 300.0
+              }
+            },
+            {
+              "control_month": "2007-01-01",
+              "endpoint": "2007-02-01",
+              "well": "87",
+              "excess": 122.13760375976562,
+              "liquid_m3d": 0.0,
+              "injection_m3d": 33.55040740966797,
+              "bhp_bar": 422.1376037597656,
+              "control": {
+                "month": "2007-01-01",
+                "well": "87",
+                "role": "injector",
+                "status": "OPEN",
+                "target": "WRAT",
+                "value": 45.0,
+                "bhp_limit": 300.0
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "original_physics": {
+    "liquid_above_lrat_m3d": {
+      "checked": 13382,
+      "count": 0,
+      "maximum_excess": 0.0,
+      "examples": []
+    },
+    "producer_below_bhp_bar": {
+      "checked": 13322,
+      "count": 1,
+      "maximum_excess": 11.024890999999997,
+      "examples": [
+        {
+          "control_month": "2008-02-01",
+          "endpoint": "2008-03-01",
+          "well": "97",
+          "excess": 11.024890999999997,
+          "liquid_m3d": 25.0,
+          "injection_m3d": 0.0,
+          "bhp_bar": 38.975109,
+          "control": {
+            "month": "2008-02-01",
+            "well": "97",
+            "role": "producer",
+            "status": "OPEN",
+            "target": "LRAT",
+            "value": 25.0,
+            "bhp_limit": 50.0
+          }
+        }
+      ]
+    },
+    "injection_above_wrat_m3d": {
+      "checked": 8212,
+      "count": 0,
+      "maximum_excess": 0.0,
+      "examples": []
+    },
+    "injector_above_bhp_bar": {
+      "checked": 8212,
+      "count": 1,
+      "maximum_excess": 88.203735,
+      "examples": [
+        {
+          "control_month": "2011-09-01",
+          "endpoint": "2011-10-01",
+          "well": "94",
+          "excess": 88.203735,
+          "liquid_m3d": 0.0,
+          "injection_m3d": 95.0,
+          "bhp_bar": 388.203735,
+          "control": {
+            "month": "2011-09-01",
+            "well": "94",
+            "role": "injector",
+            "status": "OPEN",
+            "target": "WRAT",
+            "value": 95.0,
+            "bhp_limit": 300.0
+          }
+        }
+      ]
+    }
+  },
+  "serialization_check": {
+    "passed": true,
+    "producer_sha256": "f7ff235605a620b4f1794cd1eb3becca277165f44682a4505a0b3b871c56811b",
+    "archive_sha256": "0ddf4952628247802dd981025ca130da5e62adb5c2143e27ca0607ec1e017643",
+    "predictions_unchanged": true,
+    "allow_pickle": false
+  }
+}
