@@ -3,8 +3,8 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 9867,
-      "sha256": "452eb853f45aaa51a80ab31ec31c65e6e96b43e5f65c0adeb943812d89331987"
+      "bytes": 10192,
+      "sha256": "bd5bb067b3d01a266acbc3b6e638ca35e02ee7aa061a4ac857c8b52dedd7cf1f"
     },
     {
       "path": "attention-operations.json",
@@ -40,6 +40,11 @@
       "path": "precise-attention-check.json",
       "bytes": 860,
       "sha256": "d6b66a3cb808851636968e7b52ed62f89f6c5b67a92bbd2846443e6b66a1dfdc"
+    },
+    {
+      "path": "precise-regime-progress.json",
+      "bytes": 981,
+      "sha256": "7335d9c34f26be6579cb711f47ea3519a471a6fa12ee350c70dde71f2a667faf"
     },
     {
       "path": "precise-regime-training-protocol.json",

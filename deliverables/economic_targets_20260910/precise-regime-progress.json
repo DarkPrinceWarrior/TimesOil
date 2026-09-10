@@ -1,0 +1,30 @@
+{
+  "checked_at_utc": "2026-09-10T14:03:02.052101+00:00",
+  "processes": "    PID     ELAPSED COMMAND\n1777259       29:37 python\n1881498       10:37 python\n",
+  "epochs_observed": [
+    {
+      "epoch": 1,
+      "train_loss": 0.17047901451587677,
+      "validation_loss": 0.16154657304286957
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.14737043636185782,
+      "validation_loss": 0.14699730277061462
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.13655167764851026,
+      "validation_loss": 0.13636308908462524
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.1297622253852231,
+      "validation_loss": 0.13259360194206238
+    }
+  ],
+  "complete": false,
+  "launch_protocol_sha256": "20c9ab3bf9d6b89ecf25b10d35f4ca441e71ad42fef567e121c8f918b50de621",
+  "training_log_sha256_at_snapshot": "8745afb26854f12f0e0e051fc5a5e6d36cc85cbdeec902038d218196a08514cb",
+  "scope": "Live training snapshot, not a completed checkpoint or independent accuracy certificate."
+}
