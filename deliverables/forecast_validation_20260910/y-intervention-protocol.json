@@ -1,0 +1,50 @@
+{
+  "created_utc": "2026-09-10T04:08:15.663378+00:00",
+  "source_commit": "446b968",
+  "command": [
+    "/tmp/timesoil-kt3-20260908/venv/bin/python",
+    "scripts/finetune_timesfm_head.py",
+    "--batch",
+    "/root/projects/TimesOil/results/audit-20260909/physical-y-head-data-20260909",
+    "--batch-sha256",
+    "14c5bde07b0223d43900bcbfc25b61d03cce6c01d29ab55f3f41ff5ed0af9ba5",
+    "--output",
+    "/root/projects/TimesOil/results/audit-20260909/timesfm-intervention-y-20260910/training",
+    "--epochs",
+    "16",
+    "--learning-rate",
+    "0.00001",
+    "--connectivity",
+    "/root/projects/TimesOil/results/audit-20260909/static-head-geology-20260909/model-y/connectivity.json",
+    "--initial-head",
+    "/root/projects/TimesOil/results/audit-20260909/timesfm-monthly-head-y-20260909/training/last-layer-and-head.pt",
+    "--initial-head-sha256",
+    "75ed5fd8ccd4d2d9aa56c81f6cfbd3b5edffa85ec4e09c35cbddfad3eb7d24a0",
+    "--model-y",
+    "--condition-last-layer",
+    "--monthly-observed-training",
+    "--intervention-repeats",
+    "6",
+    "--model-y-calibration",
+    "/root/projects/TimesOil/results/audit-20260909/forecast-validation-y-v2-20260910",
+    "--model-y-calibration-sha256",
+    "c7116664124d1d07c58697f6466212e4aa7e760d95fa0a80fa69aead269d3d3b"
+  ],
+  "fresh_designs_sha256": "573dc6d2b558724e1c41a302a2d938013eb863328748a5f2f6575943c693a531",
+  "fresh_scenarios_used_for_training_or_selection": false,
+  "selection": "validation loss including initial checkpoint; intervention repeated six times for train and validation",
+  "old_calibration_train": [
+    0,
+    1,
+    3,
+    6
+  ],
+  "old_calibration_validation": [
+    4
+  ],
+  "old_test_cases_not_trained": [
+    2,
+    5,
+    7
+  ]
+}

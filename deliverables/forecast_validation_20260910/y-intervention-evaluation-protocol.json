@@ -1,0 +1,8 @@
+{
+  "source_commit": "446b968",
+  "training_protocol_sha256": "9376d2a163e3eef24d01d024fee97556640025188421832014bda60913bb94bb",
+  "physics_protocol_sha256": "08559056cbe633b73b26fce06caf80cd4374f9a97fee5fd29cdc0c5a79689add",
+  "model_selection_on_test": false,
+  "retry_reason": "Relocated export manifests now reference ORIGINAL physical runs and pinned extraction commands. Only three source path fields changed; all trajectory bytes, split, model weights and source physics unchanged.",
+  "relocated_batch_manifest_sha256": "aafd788cdf96497574c576dd2fa32c8042fb4fe9bb8becde2ca7f61352c1ab2c"
+}

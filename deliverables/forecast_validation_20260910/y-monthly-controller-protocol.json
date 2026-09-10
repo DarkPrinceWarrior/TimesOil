@@ -1,0 +1,8 @@
+{
+  "source_commit": "66c09fb",
+  "checkpoint_sha256": "b0d4d1c5e75eedea24b1dccd206679ec53e71a5673269a1e1efa40f82dd8c672",
+  "weight_selection": "fixed training validation; epoch 16 of predetermined 16; fresh evaluation did not select alternative weights",
+  "independent_evaluation_sha256": "8d6af5f9222a1ef61052705e50a5aedf0c565b86bcc96edd301c09615c6ef56b",
+  "scope": "New complete physical controller trial with adapted monthly monitor; previous verified 23-month result remains retained; no improvement claimed before full audit.",
+  "case_sha256": "fd0e65c632488544b046f3642aaf8f752b4f01af59be6dc867952fc311c5f5cf"
+}
