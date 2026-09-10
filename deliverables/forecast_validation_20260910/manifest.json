@@ -164,6 +164,10 @@
     "y-physical-only-full-audit.json": {
       "sha256": "d837e00edc194276440f60ab0299a120ee3aeea2c04b595893d89280e7506162",
       "source": "/root/projects/TimesOil/results/audit-20260909/physical-only-monthly-y-20260910/full-audit.json"
+    },
+    "z-development-transition.json": {
+      "sha256": "f894bf9443c7c145c9c01dc3e9bd2b0c66ec4311053b91fd5240d65657fbe9b1",
+      "source": "/root/projects/TimesOil/results/audit-20260909/z-development-transition-20260910/report.json"
     }
   }
 }
