@@ -1,0 +1,32 @@
+{
+  "source_sha256": "5d46c89fce3c2ae7ed343afc23ef18c861d1fe58afacf95de283e7168aba931a",
+  "checkpoint_sha256": "9b954acbe64f0c5ff8dc213315a46b9324a948294ac19bc3b087d55fb50844ae",
+  "torch": "2.9.1+cu128",
+  "matmul_precision": "highest",
+  "tf32": false,
+  "cublas_workspace_config": ":4096:8",
+  "deterministic": true,
+  "comparisons": [
+    {
+      "call": "wrapped-2",
+      "maximum_scaled_difference_from_previous": 0.0017442703247070312,
+      "elements_above_original_tolerance": 92
+    },
+    {
+      "call": "unwrapped",
+      "maximum_scaled_difference_from_previous": 0.00122833251953125,
+      "elements_above_original_tolerance": 110
+    },
+    {
+      "call": "inference",
+      "maximum_scaled_difference_from_previous": 0.0012917518615722656,
+      "elements_above_original_tolerance": 97
+    },
+    {
+      "call": "wrapped-3",
+      "maximum_scaled_difference_from_previous": 0.0013608932495117188,
+      "elements_above_original_tolerance": 182
+    }
+  ],
+  "inputs_unchanged": true
+}

@@ -3,8 +3,8 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 5853,
-      "sha256": "99533e19dc247c1c122eb3b06ca272183b0b6c0100b940b9068b6a2d6e6f1306"
+      "bytes": 6908,
+      "sha256": "393fa1e5f343fffcea4ac4baa6c2430336ab62efa4d3928924129dd517bfcba0"
     },
     {
       "path": "compact-protocol.json",
@@ -20,6 +20,11 @@
       "path": "first-agent-plan.json",
       "bytes": 243683,
       "sha256": "dd35647c786b301a2fc73dc324db8c5b283fd945d6102eafac0a3696c604e634"
+    },
+    {
+      "path": "forecast-limits-junit.xml",
+      "bytes": 4159,
+      "sha256": "0f48fad50a03301b974ab79f311897d6a9c256ad46da6560b2528d1a88f1fdb8"
     },
     {
       "path": "initial-failure.json",
