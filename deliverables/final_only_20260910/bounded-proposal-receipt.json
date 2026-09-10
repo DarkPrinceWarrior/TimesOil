@@ -1,0 +1,266 @@
+{
+  "source_trajectory_sha256": "1c5730d99b40403551c591845cf0e3d291ac7ee42fa9e3cb1de9e0ee1574f2ca",
+  "request_sha256": "b94e31dcea21271d95e650ac978216be1f1f759fd02256bcc9791588e9838951",
+  "timesfm_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "agent_proposal_ids": [
+    8,
+    9,
+    10
+  ],
+  "attempted_agent_rounds": 3,
+  "skipped_invalid_rounds": [],
+  "horizon_months": 224,
+  "head_sha256": "9b954acbe64f0c5ff8dc213315a46b9324a948294ac19bc3b087d55fb50844ae",
+  "reference_manifest_sha256": null,
+  "reference_correction_sha256": null,
+  "connectivity_sha256": "cff65939ad943dd1df28460306fc433663a22707bd66a087732077135f7992c0",
+  "script_sha256": "0afc78ce4536184ee5a6e769c4f9e65d9c7c78d50cbaa32ce35d9fc509f84c2f",
+  "requires_full_period_opm": true,
+  "economic_selection": true,
+  "head_report_sha256": "39452192312e7c44a2b2ae3291fe338d216cd754a8ccd2ab92cd4f8995d10317",
+  "normative_profile": {
+    "version": "7.0.2-negative-row-filter",
+    "norms_rows": [
+      [
+        "oilPriceRubT",
+        "\u041f\u0440\u0438\u0432\u0435\u0434\u0435\u043d\u043d\u0430\u044f \u0446\u0435\u043d\u0430 \u0440\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u0438 \u043d\u0435\u0444\u0442\u0438",
+        28000
+      ],
+      [
+        "deductionsRubT",
+        "\u041e\u0442\u0447\u0438\u0441\u043b\u0435\u043d\u0438\u044f \u043d\u0430 \u0442\u043e\u043d\u043d\u0443 \u043d\u0435\u0444\u0442\u0438",
+        19600
+      ],
+      [
+        "oilOpexRubT",
+        "OPEX \u043d\u0430 \u0434\u043e\u0431\u044b\u0447\u0443 \u043d\u0435\u0444\u0442\u0438",
+        40
+      ],
+      [
+        "liquidOpexRubT",
+        "OPEX \u043d\u0430 \u0434\u043e\u0431\u044b\u0447\u0443 \u0436\u0438\u0434\u043a\u043e\u0441\u0442\u0438",
+        100
+      ],
+      [
+        "injectionOpexRubM3",
+        "OPEX \u043d\u0430 \u0437\u0430\u043a\u0430\u0447\u043a\u0443 \u0432\u043e\u0434\u044b",
+        30
+      ],
+      [
+        "fundAnnualRubWell",
+        "\u0421\u043e\u0434\u0435\u0440\u0436\u0430\u043d\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u0444\u043e\u043d\u0434\u0430",
+        1000000
+      ],
+      [
+        "pumpOperationCostM",
+        "\u041e\u043f\u0435\u0440\u0430\u0446\u0438\u044f \u043f\u043e \u0441\u043c\u0435\u043d\u0435 \u042d\u0426\u041d",
+        1.8
+      ],
+      [
+        "stopStartCostM",
+        "\u041e\u0441\u0442\u0430\u043d\u043e\u0432\u043a\u0430 \u0438\u043b\u0438 \u0437\u0430\u043f\u0443\u0441\u043a \u0441\u043a\u0432\u0430\u0436\u0438\u043d\u044b",
+        1
+      ],
+      [
+        "conversionBaseCostM",
+        "\u041f\u0435\u0440\u0435\u0432\u043e\u0434 \u0434\u043e\u0431\u044b\u0432\u0430\u044e\u0449\u0435\u0439 \u0441\u043a\u0432\u0430\u0436\u0438\u043d\u044b \u043f\u043e\u0434 \u0437\u0430\u043a\u0430\u0447\u043a\u0443",
+        5
+      ],
+      [
+        "profitTaxRate",
+        "\u0421\u0442\u0430\u0432\u043a\u0430 \u043d\u0430\u043b\u043e\u0433\u0430 \u043d\u0430 \u043f\u0440\u0438\u0431\u044b\u043b\u044c",
+        25
+      ],
+      [
+        "propertyTaxRate",
+        "\u0421\u0442\u0430\u0432\u043a\u0430 \u043d\u0430\u043b\u043e\u0433\u0430 \u043d\u0430 \u0438\u043c\u0443\u0449\u0435\u0441\u0442\u0432\u043e",
+        2.2
+      ],
+      [
+        "waccRate",
+        "\u0421\u0442\u0430\u0432\u043a\u0430 \u0434\u0438\u0441\u043a\u043e\u043d\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f WACC",
+        10
+      ],
+      [
+        "annualDepreciationM",
+        "\u0413\u043e\u0434\u043e\u0432\u0430\u044f \u0430\u043c\u043e\u0440\u0442\u0438\u0437\u0430\u0446\u0438\u044f",
+        0
+      ],
+      [
+        "residualStartM",
+        "\u041e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u0430\u044f \u0441\u0442\u043e\u0438\u043c\u043e\u0441\u0442\u044c \u043d\u0430 \u043d\u0430\u0447\u0430\u043b\u043e \u0433\u043e\u0434\u0430",
+        0
+      ],
+      [
+        "residualEndM",
+        "\u041e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u0430\u044f \u0441\u0442\u043e\u0438\u043c\u043e\u0441\u0442\u044c \u043d\u0430 \u043a\u043e\u043d\u0435\u0446 \u0433\u043e\u0434\u0430",
+        0
+      ],
+      [
+        "otherIncludedEbitdaM",
+        "\u041f\u0440\u043e\u0447\u0438\u0435 \u0414\u0438\u0420, \u0432\u043a\u043b\u044e\u0447\u0430\u0435\u043c\u044b\u0435 \u0432 EBITDA",
+        0
+      ],
+      [
+        "otherExcludedEbitdaM",
+        "\u041f\u0440\u043e\u0447\u0438\u0435 \u0414\u0438\u0420, \u043d\u0435 \u0432\u043a\u043b\u044e\u0447\u0430\u0435\u043c\u044b\u0435 \u0432 EBITDA",
+        0
+      ],
+      [
+        "chargeInitialPump",
+        "\u041d\u0430\u0447\u0438\u0441\u043b\u044f\u0442\u044c \u043d\u0430\u0447\u0430\u043b\u044c\u043d\u044b\u0439 \u042d\u0426\u041d",
+        "\u041d\u0415\u0422"
+      ],
+      [
+        "downsizeThreshold",
+        "\u041f\u043e\u0440\u043e\u0433 \u0443\u043c\u0435\u043d\u044c\u0448\u0435\u043d\u0438\u044f \u0442\u0438\u043f\u043e\u0440\u0430\u0437\u043c\u0435\u0440\u0430 \u042d\u0426\u041d",
+        100
+      ]
+    ],
+    "provided_assumptions": {
+      "oilPriceRubT": 28000.0,
+      "deductionsRubT": 19600.0,
+      "oilOpexRubT": 40.0,
+      "liquidOpexRubT": 100.0,
+      "injectionOpexRubM3": 30.0,
+      "fundAnnualRubWell": 1000000.0,
+      "pumpOperationCostM": 1.8,
+      "profitTaxRate": 25.0,
+      "propertyTaxRate": 2.2,
+      "waccRate": 10.0,
+      "annualDepreciationM": 0.0,
+      "existingAssetResidualM": 0.0,
+      "residualStartM": 0.0,
+      "residualEndM": 0.0,
+      "otherIncludedEbitdaM": 0.0,
+      "otherExcludedEbitdaM": 0.0,
+      "stopStartCostM": 1.0,
+      "conversionBaseCostM": 5.0,
+      "regimeThreshold": 10.0,
+      "downsizeThreshold": 100.0,
+      "chargeInitialPump": false,
+      "clampNegativeDiffs": false,
+      "allowTaxShield": false,
+      "capitalizePumpAssets": false,
+      "ignoreTechnicalReset": false
+    },
+    "assumptions": {
+      "oilPriceRubT": 28000.0,
+      "deductionsRubT": 19600.0,
+      "oilOpexRubT": 40.0,
+      "liquidOpexRubT": 100.0,
+      "injectionOpexRubM3": 30.0,
+      "fundAnnualRubWell": 1000000.0,
+      "pumpOperationCostM": 1.8,
+      "profitTaxRate": 25.0,
+      "propertyTaxRate": 2.2,
+      "waccRate": 10.0,
+      "annualDepreciationM": 0.0,
+      "existingAssetResidualM": 0.0,
+      "residualStartM": 0.0,
+      "residualEndM": 0.0,
+      "otherIncludedEbitdaM": 0.0,
+      "otherExcludedEbitdaM": 0.0,
+      "stopStartCostM": 1.0,
+      "conversionBaseCostM": 5.0,
+      "regimeThreshold": 10.0,
+      "downsizeThreshold": 100.0,
+      "chargeInitialPump": false,
+      "clampNegativeDiffs": false,
+      "allowTaxShield": false,
+      "capitalizePumpAssets": false,
+      "ignoreTechnicalReset": false
+    },
+    "methodology_locks": {
+      "allowTaxShield": false,
+      "capitalizePumpAssets": false,
+      "clampNegativeDiffs": false,
+      "ignoreTechnicalReset": false,
+      "downsizeThreshold": 100.0,
+      "stopStartCostM": 1.0,
+      "conversionBaseCostM": 5.0
+    },
+    "pumps": [
+      {
+        "nominal": 15.0,
+        "min": 0.0,
+        "max": 20.0,
+        "costM": 0.55
+      },
+      {
+        "nominal": 20.0,
+        "min": 15.0,
+        "max": 30.0,
+        "costM": 0.65
+      },
+      {
+        "nominal": 30.0,
+        "min": 20.0,
+        "max": 50.0,
+        "costM": 0.75
+      },
+      {
+        "nominal": 50.0,
+        "min": 30.0,
+        "max": 80.0,
+        "costM": 0.90397
+      },
+      {
+        "nominal": 80.0,
+        "min": 50.0,
+        "max": 100.0,
+        "costM": 1.85
+      },
+      {
+        "nominal": 100.0,
+        "min": 80.0,
+        "max": 125.0,
+        "costM": 2.3
+      },
+      {
+        "nominal": 125.0,
+        "min": 100.0,
+        "max": 160.0,
+        "costM": 2.75
+      },
+      {
+        "nominal": 160.0,
+        "min": 125.0,
+        "max": 210.0,
+        "costM": 3.35
+      },
+      {
+        "nominal": 210.0,
+        "min": 160.0,
+        "max": 250.0,
+        "costM": 4.1
+      },
+      {
+        "nominal": 250.0,
+        "min": 210.0,
+        "max": 320.0,
+        "costM": 4.75
+      },
+      {
+        "nominal": 320.0,
+        "min": 250.0,
+        "max": 400.0,
+        "costM": 6.0
+      },
+      {
+        "nominal": 400.0,
+        "min": 320.0,
+        "max": 500.0,
+        "costM": 8.05
+      }
+    ],
+    "source_sha256": {
+      "\u0420\u0410\u0421\u0427\u0415\u0422_\u0427\u0414\u0414.py": "deee78e33921f741443db76d3391b24c18219a0f4efbf671621c130174f88b90",
+      "chdd_model.py": "7d52f292e61b4821d00e3e0a34acf43ad9dac6817680001f3ebaea70f45ed61e",
+      "excel_io.py": "51f522ccf3bbd3c2e6c71a0a3881aa3a8f284d2d171c39eeb4fca6b3b7ccb1d5",
+      "\u041d\u043e\u0440\u043c\u0430\u0442\u0438\u0432\u044b_\u0427\u0414\u0414.xlsx": "4f96a304db486f158994173be6e86b45d63858b8d851470cab8168c86b366358"
+    }
+  },
+  "search_opm_calls": 0,
+  "final_chdd_computed": false
+}

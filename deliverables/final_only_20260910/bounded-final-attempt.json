@@ -1,0 +1,18 @@
+{
+  "seal_sha256": "364ff0002341e1a965e7fb38a5b204df99514025a69d7ddf262eeea0cb5c9d8f",
+  "started_at_utc": "2026-09-10T13:52:13.682675+00:00",
+  "command": [
+    "/root/projects/TimesOil/.venv/bin/python",
+    "-m",
+    "timesoil.aios.cli",
+    "full-cycle",
+    "/root/projects/TimesOil/results/audit-20260909/timesfm-final-only-z-bounded-20260910/search/request-10.json",
+    "--runs-dir",
+    "/root/projects/TimesOil/results/audit-20260909/timesfm-final-only-z-bounded-20260910/final",
+    "--run-id",
+    "selected",
+    "--timeout",
+    "7200"
+  ],
+  "maximum_opm_calls": 1
+}

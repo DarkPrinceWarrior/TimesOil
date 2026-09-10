@@ -3,13 +3,23 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 8270,
-      "sha256": "f9acf3f7e0ed23277a74c1f3e6be11dd2374d559f4d60289095e0e39dde2e6a2"
+      "bytes": 11915,
+      "sha256": "c0333b6bb46633f7eb7ba05f70f9a58f7808828abdf37a5f345b05b90049e906"
+    },
+    {
+      "path": "bounded-final-attempt.json",
+      "bytes": 582,
+      "sha256": "6a11cc5b2a41f0fba4b31c371d750f0f05b1be74201a8eaa6b7f1b0f673c70eb"
     },
     {
       "path": "bounded-progress.json",
       "bytes": 1154,
       "sha256": "e197b8c234d1bda2ffeccb4df363e70fa514504954116781d3e516067e0bb8a1"
+    },
+    {
+      "path": "bounded-proposal-receipt.json",
+      "bytes": 8824,
+      "sha256": "147f59a0a599241ea2d72610acd6a5c6838069897f345e3d89205c19b15a07ff"
     },
     {
       "path": "bounded-protocol.json",
@@ -20,6 +30,11 @@
       "path": "bounded-rounds-junit.xml",
       "bytes": 4159,
       "sha256": "d098dc9400aef090cebe8a6da3787dffeb979ab6318630a1e39f1e45fb3ad780"
+    },
+    {
+      "path": "bounded-selection-before-opm.json",
+      "bytes": 13520,
+      "sha256": "364ff0002341e1a965e7fb38a5b204df99514025a69d7ddf262eeea0cb5c9d8f"
     },
     {
       "path": "compact-protocol.json",
@@ -55,6 +70,11 @@
       "path": "launch-protocol.json",
       "bytes": 418,
       "sha256": "ca1572938e66da97fbea971f51bd3bdd800ed6610ad1a4512ef248c1130fd1c3"
+    },
+    {
+      "path": "own-control-audit.json",
+      "bytes": 92032,
+      "sha256": "77fa2b1088162d6eaf08fa28ec002e9946ff3af58c6e7b6b754841f5aacf21f6"
     },
     {
       "path": "progress.json",
