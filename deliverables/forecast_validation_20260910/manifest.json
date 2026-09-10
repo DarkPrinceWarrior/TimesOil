@@ -316,6 +316,10 @@
     "provenance/audit_forecast_control_bounds.py": {
       "source": "WSL source delivered through GitHub at a209d65; executed on A100",
       "sha256": "9a14e96dbc8c3e54dea9f7a0bd70bc0c2c5da48de946614a87fd5b466dd0becd"
+    },
+    "provenance/check_final_forecast.py": {
+      "source": "WSL source delivered through GitHub at 89c398c; passed full final-graph diagnostic on A100",
+      "sha256": "753ec1aa5f16030432c9238e7ede9ac7c4f3eb71bb20610de3ab8eeda13892d0"
     }
   }
 }

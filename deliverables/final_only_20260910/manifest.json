@@ -3,13 +3,38 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 11915,
-      "sha256": "c0333b6bb46633f7eb7ba05f70f9a58f7808828abdf37a5f345b05b90049e906"
+      "bytes": 14230,
+      "sha256": "fea922828a2afc3ccdf478a61f46a5364810fbac9aa272aea07ccc039a686934"
     },
     {
       "path": "bounded-final-attempt.json",
       "bytes": 582,
       "sha256": "6a11cc5b2a41f0fba4b31c371d750f0f05b1be74201a8eaa6b7f1b0f673c70eb"
+    },
+    {
+      "path": "bounded-final-audit.json",
+      "bytes": 3974,
+      "sha256": "71cffab28c6bf9e1383ad1039945a978dbbc1829dd54cd15b9c93fd86e3d4042"
+    },
+    {
+      "path": "bounded-forecast-diagnostics.json",
+      "bytes": 10089,
+      "sha256": "b00020ab7c02741f0a41f2b6e2ba00276b6df4001565d953ffc88c245da48482"
+    },
+    {
+      "path": "bounded-full-cycle-receipt.json",
+      "bytes": 46219,
+      "sha256": "a71c7f87e5d32d48f55e406b8559d59310311d527435cc5427fd119352f74541"
+    },
+    {
+      "path": "bounded-official-report.xlsx",
+      "bytes": 19006,
+      "sha256": "bcbb6424b133c65a85201b3b3d489c89db50ecf3c14eecedc9611c808e84446d"
+    },
+    {
+      "path": "bounded-official-result.json",
+      "bytes": 449575,
+      "sha256": "d9689964fee6991655c4a31391baacac8544351d1cd5bc2e8ee29e52793014ac"
     },
     {
       "path": "bounded-progress.json",
