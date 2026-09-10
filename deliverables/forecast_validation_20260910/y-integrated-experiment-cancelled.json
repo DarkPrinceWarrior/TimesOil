@@ -1,0 +1,6 @@
+{
+  "time_utc": "2026-09-10T06:10:17.006179+00:00",
+  "status": "cancelled",
+  "reason": "Track 1 corrected to hydrodynamic-only decisions after user clarification; historical surrogate-assisted outputs retained, no new success claim.",
+  "stopped_own_containers": []
+}
