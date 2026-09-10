@@ -292,6 +292,14 @@
     "provenance/train_z_economic_targets.py": {
       "sha256": "2ccc4eda8bcc4618eb9a7ac21f5e2677180bc87913f31e4ffabd13d1c4c1bd7e",
       "source": "committed A100 training driver"
+    },
+    "provenance/run_z_final_only.py": {
+      "sha256": "6f365ee9656b458958883ca214abfac004d187b7e6878b70458fdb525cf0ad27",
+      "source": "committed A100 driver"
+    },
+    "provenance/train_z_economic_regimes.py": {
+      "sha256": "5ddedad3b8dcefc0d09724d57d7025e581ea3a3c93f50c544546cb5da641151b",
+      "source": "committed A100 driver"
     }
   }
 }

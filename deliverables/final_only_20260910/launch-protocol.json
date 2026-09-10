@@ -1,0 +1,9 @@
+{
+  "source_commit": "00f47394d6328a158b13ddc7184bcbb0e7c14f16",
+  "waiting_for_session": "timesoil-economic-targets-z-20260910",
+  "search": "Original source schedule, deterministic grid and three Qwen proposals; rank forecast CHDD.",
+  "historical_physical_candidate_bank_used_for_selection": false,
+  "new_search_opm_calls": 0,
+  "maximum_final_opm_calls": 1,
+  "independently_certified_forecast_accuracy": false
+}

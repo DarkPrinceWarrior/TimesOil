@@ -1,0 +1,68 @@
+{
+  "observed_at": "2026-09-10T12:48:58.563108+00:00",
+  "source_commit": "a86add7",
+  "context_chars": 101146,
+  "context_limit_chars": 128000,
+  "all_wells_in_forecast_detail": 103,
+  "candidates": [
+    {
+      "id": 0,
+      "forecast_chdd_m": 11280.370760115062
+    },
+    {
+      "id": 1,
+      "forecast_chdd_m": 11944.773221420237
+    },
+    {
+      "id": 2,
+      "forecast_chdd_m": 10659.389147225262
+    },
+    {
+      "id": 3,
+      "forecast_chdd_m": 12505.327234681818
+    },
+    {
+      "id": 4,
+      "forecast_chdd_m": 10539.736728993686
+    },
+    {
+      "id": 5,
+      "forecast_chdd_m": 12148.099447792252
+    },
+    {
+      "id": 6,
+      "forecast_chdd_m": 12076.89116221953
+    },
+    {
+      "id": 7,
+      "forecast_chdd_m": 11811.301344219246
+    },
+    {
+      "id": 8,
+      "forecast_chdd_m": 13747.729959080583
+    }
+  ],
+  "agent_plan_files": [
+    "agent-00.json"
+  ],
+  "selection_sealed": false,
+  "final_opm_attempt_started": false,
+  "terminal_files": {
+    "search.exit": "1"
+  },
+  "processes": "    PID     ELAPSED STAT\n1089418    01:19:14 Sl+\n1488004       07:34 Ss+\n",
+  "first_agent_roles": [
+    {
+      "role": "coordinator",
+      "approved": true
+    },
+    {
+      "role": "reservoir_analyst",
+      "approved": true
+    },
+    {
+      "role": "planner",
+      "approved": true
+    }
+  ]
+}
