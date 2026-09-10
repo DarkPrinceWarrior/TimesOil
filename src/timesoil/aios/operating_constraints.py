@@ -1,4 +1,4 @@
-"""Explicit monthly organizer limits; rates are surface m³/day, pressures are bar."""
+"""Explicit case limits: surface rates, BHP and monthly water/voidage volumes."""
 
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -7,7 +7,9 @@ from typing import Mapping, Sequence
 
 
 _LIMITS = {"max_oil_m3d", "max_liquid_m3d", "max_injection_m3d", "min_injection_m3d",
-           "max_watercut", "min_bhp_bar", "max_bhp_bar"}
+           "max_watercut", "min_bhp_bar", "max_bhp_bar",
+           "max_monthly_water_deficit_m3", "min_monthly_voidage_replacement", "max_monthly_voidage_replacement"}
+_WATER_LIMITS = {"max_monthly_water_deficit_m3", "min_monthly_voidage_replacement", "max_monthly_voidage_replacement"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,7 +38,8 @@ class OperatingConstraint:
             if key == "max_watercut" and value > 1:
                 raise ValueError("max_watercut must be a fraction in [0, 1]")
         limits = dict(self.limits)
-        for low, high in (("min_bhp_bar", "max_bhp_bar"), ("min_injection_m3d", "max_injection_m3d")):
+        for low, high in (("min_bhp_bar", "max_bhp_bar"), ("min_injection_m3d", "max_injection_m3d"),
+                          ("min_monthly_voidage_replacement", "max_monthly_voidage_replacement")):
             if low in limits and high in limits and limits[low] > limits[high]:
                 raise ValueError("minimum operating limit exceeds maximum")
 
@@ -92,6 +95,21 @@ def check_observed(rules: Sequence[OperatingConstraint], month: date, values: Ma
         if rule.unavailable and any(abs(row[k]) > 1e-6 for row in selected for k in ("WOPR", "WLPR", "WWIR")):
             raise ValueError(f"unavailable well has physical flow in {month}")
         for key, bound in rule.limits:
+            if key in _WATER_LIMITS:
+                vectors = ("WWPT", "WWIT") if key == "max_monthly_water_deficit_m3" else ("WVPT", "WVIT")
+                if any(f"{v}_DELTA" not in row or not math.isfinite(row[f"{v}_DELTA"])
+                       or row[f"{v}_DELTA"] < 0 for row in selected for v in vectors):
+                    raise ValueError("monthly water balance requires nonnegative cumulative increments")
+                produced, injected = (sum(row[f"{v}_DELTA"] for row in selected) for v in vectors)
+                if key == "max_monthly_water_deficit_m3":
+                    observed, limit = max(0.0, injected - produced), bound
+                else:
+                    # Cross-multiplication avoids an undefined 0/0 in idle groups.
+                    observed, limit = injected, bound * produced
+                violates = observed < limit - 1e-6 if key.startswith("min_") else observed > limit + 1e-6
+                if violates:
+                    raise ValueError(f"observed {key} violates organizer limit in {month}")
+                continue
             vector = {"max_oil_m3d": "WOPR", "max_liquid_m3d": "WLPR",
                       "max_injection_m3d": "WWIR", "min_injection_m3d": "WWIR"}.get(key)
             if vector:
@@ -120,11 +138,34 @@ def check_summary(rules, report, *, deck_dir, months, unit_system):
         summary, _ = _read_summary(report, start_date=_eclipse_date(_single_record(expanded, "START"), "START"))
     expected = {(month.replace(day=28) + timedelta(days=4)).replace(day=1): month for month in months}
     seen = set()
+    previous = None
     for stamp, values, _ in summary:
         if stamp in expected:
             if stamp in seen:
                 raise ValueError("duplicate operating constraint report month")
-            check_observed(rules, expected[stamp], values)
+            month = expected[stamp]
+            water_rules = [r for r in rules if r.start <= month <= r.end and set(dict(r.limits)) & _WATER_LIMITS]
+            if water_rules:
+                if previous is None or previous[0] != month:
+                    raise ValueError("monthly water balance misses the start-of-month report")
+                values = {well: dict(row) for well, row in values.items()}
+                for rule in water_rules:
+                    vectors = set()
+                    for key, _ in rule.limits:
+                        if key == "max_monthly_water_deficit_m3":
+                            vectors.update(("WWPT", "WWIT"))
+                        elif key in _WATER_LIMITS:
+                            vectors.update(("WVPT", "WVIT"))
+                    for well in rule.wells:
+                        for vector in vectors:
+                            if vector not in values[well] or vector not in previous[1][well]:
+                                raise ValueError(f"monthly water balance misses {vector} for {well}")
+                            delta = values[well][vector] - previous[1][well][vector]
+                            if not math.isfinite(delta) or delta < -1e-6:
+                                raise ValueError("monthly water balance cumulative volume decreased")
+                            values[well][f"{vector}_DELTA"] = max(0.0, delta)
+            check_observed(rules, month, values)
             seen.add(stamp)
+        previous = stamp, values
     if seen != expected.keys():
         raise ValueError("operating constraint report misses management months")
