@@ -1,0 +1,338 @@
+{
+  "schema": "timesoil.timesfm-head-adaptation/v1",
+  "model_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "batch_manifest_sha256": "4dbab179f94ca1800b052e1346591a685eb9fa2d8dc900d917fc6ad66d149893",
+  "source_scenario_hashes": {
+    "baseline": "5a08096649d7c39d0c150625f7eb0fef49eb8612f88b6bb14779393a32371d49",
+    "perturbation-001": "e3cfeec1ffc3526c469c72016ef5e878f4e697eed97f72d8359093ba8592f8ac",
+    "perturbation-002": "f8fa295807486191f5cb18531d840916c89dccd0d1b54f41b91419dbe7f41baa",
+    "perturbation-003": "8fa8fa7deff8dddebed53d8a9435ce1f06d1b3ccb47ab9bd20fc877a23edea1a",
+    "perturbation-004": "eb36c7245ed8d0405ba9acb8ec758963045d49aac65dc90f5f0ec46234229854",
+    "perturbation-005": "59ed4476ef089df0744ebab64727844b47191a16a43f26e145b4f8a4e85a819e",
+    "perturbation-006": "a9df1094c2911d16e02a7baae91f517a6fc1d4be3d01911edbebb7f155956036",
+    "perturbation-007": "d8fa6f88878e774c5e1528443c9fef794af958b297fa2e1c89fb79964b810567",
+    "perturbation-008": "6c26dd346c43dd243dca90f7083b9771ca710ac082a5c6f95d0827befcfc0214",
+    "perturbation-009": "211b1c47759046ebe544c4d8ee47d74ab8106348f39f2957befcb6f47f60b8a8",
+    "physical-sweep-00": "d933ed94f8bc8dd989d1df6204dd01e9211429395b3a6420e062cc09906beadb",
+    "physical-sweep-01": "de6d2461d6619efaa00a890e1e045e578cd9e3217a2ac91dc915787e54b67caf",
+    "physical-sweep-02": "da8b1473efe2d3884b2309440901600ad7d568571d860abef04326e855245193",
+    "physical-sweep-04": "b9f5de8326d3d96884600c0b95dc3f3a6f453e668d5c72f6a490f9f1e2ec98e3",
+    "physical-sweep-07": "cb415eb8f09f3e9b944f0428f0752c67ba9083116541e7cc79a1bf2bcedc2852",
+    "bhp-only-00": "44cfa677b7f6efd926b73faaf4fcc89474fd5486ab9b88188adf296c3233b0df",
+    "bhp-only-01": "e2b45b88f930e5aa3267e12835e77b2162c91789aa2ebc28633d7cff7a65ae71",
+    "bhp-only-03": "57da27345de1a7da62c9eadea74907729519720e050f4f226d2b3768369eb74d",
+    "bhp-only-04": "f2a64399a4d4c9bae4bdac4d7450816c561746c1f812f27a1d7d98451e9645c4",
+    "bhp-only-06": "86b2b6b6b14f1901a403fb1f0cee8b0afb7771364778b5ddbf52f8031bda2c86"
+  },
+  "train_scenarios": [
+    "baseline",
+    "perturbation-001",
+    "perturbation-002",
+    "perturbation-003",
+    "perturbation-005",
+    "perturbation-006",
+    "physical-sweep-00",
+    "physical-sweep-01",
+    "physical-sweep-02",
+    "physical-sweep-07",
+    "bhp-only-00",
+    "bhp-only-01",
+    "bhp-only-03",
+    "bhp-only-06"
+  ],
+  "validation_scenarios": [
+    "perturbation-009",
+    "physical-sweep-04",
+    "bhp-only-04"
+  ],
+  "test_scenarios": [
+    "perturbation-004",
+    "perturbation-007",
+    "perturbation-008"
+  ],
+  "trained_component": "TimesFM3Torch (complete)",
+  "backbone_frozen": false,
+  "last_layer_trainable": true,
+  "static_last_layer": true,
+  "all_other_backbone_parameters_frozen": false,
+  "full_backbone_trainable": true,
+  "gradient_checkpointing": true,
+  "initial_head_sha256": "71c4259f3bb59ee9fe95d1ea315c0e2de0db82199047fd28c856251e5f101b74",
+  "regime_calibration_manifest_sha256": "69a92d83bc7824b68af1eaddbddd884b589e4009b7d12de4d23be2e0a227277f",
+  "bhp_calibration_manifest_sha256": "e5c7ae9439b4bd0dffe65b42ecaa1c95f2ee5a889d42988760c39a9d2977c4a1",
+  "regime_calibration_reused_for_development": true,
+  "development_test_scenarios_previously_inspected": true,
+  "trainable_parameters": 330785472,
+  "learning_rate": 3e-05,
+  "attention_backend": "math",
+  "decoder_target_quantile_parity_max_abs": 0.006927490234375,
+  "gradient_policy": "stop gradients through iterative CPM-RevIN statistics; unchanged forward calculation",
+  "decoder_target_quantile_parity_max_scaled": 0.00032269020448438823,
+  "decoder_target_quantile_parity_atol_train_scale": 0.001,
+  "epochs_requested": 20,
+  "horizon_months": 224,
+  "context_months": 128,
+  "control_channels": 618,
+  "training_horizon_months": 224,
+  "training_origin_offsets": [
+    0
+  ],
+  "monthly_observed_training": false,
+  "train_example_count": 14,
+  "validation_example_count": 3,
+  "connectivity_sha256": "cff65939ad943dd1df28460306fc433663a22707bd66a087732077135f7992c0",
+  "static_conditioning": true,
+  "static_feature_names": [
+    "PERMX_net_weighted_mean",
+    "PERMY_net_weighted_mean",
+    "PERMZ_net_weighted_mean",
+    "PORO_net_weighted_mean",
+    "NTG_net_weighted_mean",
+    "DEPTH_net_weighted_mean",
+    "DX_net_weighted_mean",
+    "DY_net_weighted_mean",
+    "DZ_net_weighted_mean",
+    "PORV_net_weighted_mean",
+    "completed_net_thickness_m",
+    "completed_pore_volume_m3",
+    "completion_cell_count",
+    "completion_i_mean",
+    "completion_j_mean",
+    "completion_k_mean",
+    "FIPNUM_fraction_1",
+    "FIP_ZONE_fraction_1",
+    "FIP_ZONE_fraction_2",
+    "FIP_ZONE_fraction_3",
+    "FIP_ZONE_fraction_4",
+    "FIP_ZONE_fraction_5",
+    "FIP_C1_fraction_1",
+    "FIP_C1_fraction_2",
+    "EQLNUM_fraction_1",
+    "EQLNUM_fraction_4",
+    "EQLNUM_fraction_13",
+    "EQLNUM_fraction_14",
+    "EQLNUM_fraction_15",
+    "PVTNUM_fraction_1",
+    "PVTNUM_fraction_2",
+    "SATNUM_fraction_1",
+    "SATNUM_fraction_2"
+  ],
+  "training_scale": [
+    5.37880378029533,
+    15.58223633676836,
+    144.32491670921934
+  ],
+  "best_epoch": 20,
+  "validation_loss_before": 0.12829259037971497,
+  "script_sha256": "8020141217cd89c227901c71e7db75eee9ffc134307b53679ab81e1a0f791381",
+  "decoder_source_sha256": "474b8035db514d852e6358c73ebd1ba90dcd25f17d1ecf4e5bb884ca788e7dbf",
+  "independent_uncertainty_calibrated": false,
+  "is_new_optimization_result": false,
+  "epochs": [
+    {
+      "epoch": 1,
+      "train_loss": 0.13748255797794887,
+      "validation_loss": 0.13501080870628357
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.12366244250110217,
+      "validation_loss": 0.12523815035820007
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.11758542114070483,
+      "validation_loss": 0.1188611388206482
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.11412046583635467,
+      "validation_loss": 0.11800473928451538
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.11124942983899798,
+      "validation_loss": 0.11457425355911255
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.11050453249897275,
+      "validation_loss": 0.12179862707853317
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.10986846791846412,
+      "validation_loss": 0.11345258355140686
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.11073459897722517,
+      "validation_loss": 0.11289094388484955
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.10524605321032661,
+      "validation_loss": 0.10962121933698654
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.10933851397463254,
+      "validation_loss": 0.11927907168865204
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.10797638446092606,
+      "validation_loss": 0.11316230893135071
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.10921781563333102,
+      "validation_loss": 0.11314558982849121
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.10897394322923251,
+      "validation_loss": 0.11139039695262909
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.10526029712387494,
+      "validation_loss": 0.10908108204603195
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.10603178984352521,
+      "validation_loss": 0.1090814396739006
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.11053017846175603,
+      "validation_loss": 0.12041549384593964
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.10829188355377742,
+      "validation_loss": 0.11366971582174301
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.1046271196433476,
+      "validation_loss": 0.10699200630187988
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.10258358397654124,
+      "validation_loss": 0.10876427590847015
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.10487151624900955,
+      "validation_loss": 0.10650046914815903
+    }
+  ],
+  "test_results": [
+    {
+      "scenario_id": "perturbation-004",
+      "stage": "initial_head",
+      "name": "fixed_origin_direct",
+      "oil_wape": 0.19407425396453248,
+      "liquid_wape": 0.19898307203843937,
+      "pressure_rmse_bar": 62.771669303353576
+    },
+    {
+      "scenario_id": "perturbation-007",
+      "stage": "initial_head",
+      "name": "fixed_origin_direct",
+      "oil_wape": 0.1929876327129677,
+      "liquid_wape": 0.1985313428132013,
+      "pressure_rmse_bar": 62.873513752769725
+    },
+    {
+      "scenario_id": "perturbation-008",
+      "stage": "initial_head",
+      "name": "fixed_origin_direct",
+      "oil_wape": 0.19538086579504094,
+      "liquid_wape": 0.19944680856513586,
+      "pressure_rmse_bar": 62.86967858756293
+    },
+    {
+      "scenario_id": "perturbation-004",
+      "stage": "selected_head",
+      "name": "fixed_origin_direct",
+      "oil_wape": 0.20316884677470345,
+      "liquid_wape": 0.20108598711116066,
+      "pressure_rmse_bar": 62.60173439534695
+    },
+    {
+      "scenario_id": "perturbation-004",
+      "stage": "selected_head",
+      "name": "observed_update_block_6",
+      "oil_wape": 0.08942207701201,
+      "liquid_wape": 0.0421650624917653,
+      "pressure_rmse_bar": 78.23259470995873
+    },
+    {
+      "scenario_id": "perturbation-004",
+      "stage": "static_conditioning_disabled",
+      "name": "fixed_origin_direct",
+      "oil_wape": 0.4992465209228217,
+      "liquid_wape": 0.3440043378035224,
+      "pressure_rmse_bar": 66.06099076327527,
+      "prediction_max_abs_change": 140.7410888671875
+    },
+    {
+      "scenario_id": "perturbation-007",
+      "stage": "selected_head",
+      "name": "fixed_origin_direct",
+      "oil_wape": 0.2093167400816945,
+      "liquid_wape": 0.20177275899218475,
+      "pressure_rmse_bar": 62.69030982817012
+    },
+    {
+      "scenario_id": "perturbation-007",
+      "stage": "selected_head",
+      "name": "observed_update_block_6",
+      "oil_wape": 0.08773583957244274,
+      "liquid_wape": 0.04289550676613324,
+      "pressure_rmse_bar": 40.53896835076491
+    },
+    {
+      "scenario_id": "perturbation-007",
+      "stage": "static_conditioning_disabled",
+      "name": "fixed_origin_direct",
+      "oil_wape": 0.48487097883624214,
+      "liquid_wape": 0.3468833050572915,
+      "pressure_rmse_bar": 66.02686842041915,
+      "prediction_max_abs_change": 147.02670288085938
+    },
+    {
+      "scenario_id": "perturbation-008",
+      "stage": "selected_head",
+      "name": "fixed_origin_direct",
+      "oil_wape": 0.20405418715746967,
+      "liquid_wape": 0.20210673930981896,
+      "pressure_rmse_bar": 62.677902824852566
+    },
+    {
+      "scenario_id": "perturbation-008",
+      "stage": "selected_head",
+      "name": "observed_update_block_6",
+      "oil_wape": 0.08845475216736884,
+      "liquid_wape": 0.0412750251330347,
+      "pressure_rmse_bar": 61.17867267738701
+    },
+    {
+      "scenario_id": "perturbation-008",
+      "stage": "static_conditioning_disabled",
+      "name": "fixed_origin_direct",
+      "oil_wape": 0.4958829686834188,
+      "liquid_wape": 0.3447802693769648,
+      "pressure_rmse_bar": 66.07393907365474,
+      "prediction_max_abs_change": 137.79571533203125
+    }
+  ],
+  "complete": true,
+  "validation_loss_best": 0.10650046914815903,
+  "checkpoint_sha256": "fe4edafb051138ebeded512630d088fbebe75e7d8f5b372022ab1c33f885b08b",
+  "seconds_total": 1133.9393578842282
+}

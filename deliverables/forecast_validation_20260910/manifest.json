@@ -1,0 +1,53 @@
+{
+  "schema": "timesoil.forecast-evidence-bundle/v1",
+  "files": {
+    "y-monthly-independent-v2.json": {
+      "sha256": "faa8f9a641d8cb950ff01c5d71cc5805a27ff43ed31bb6c6fde6fddd3265f12d",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-independent-y-v2-20260910/evaluation/report.json"
+    },
+    "z-local-corrected-independent.json": {
+      "sha256": "731114e3c02ccdfb1016e91768c391bf7d06c0f38c8a42980727d9e0a2061620",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-local-independent-z-20260910/corrected_reference/report.json"
+    },
+    "z-full20-independent.json": {
+      "sha256": "cb296ebe7a299b2085bea1cb1980e79997b6d983301275b1229fe63f8c665bfa",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-local-independent-z-20260910/full_backbone/report.json"
+    },
+    "z-full80-independent.json": {
+      "sha256": "50f7665911c0798932d279d0ebd017611307b118ed9be49f00bfc7ee3167c3b4",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-local-independent-z-v2-20260910/evaluation/report.json"
+    },
+    "z-without-google-ablation.json": {
+      "sha256": "e3324398c3e1f25cb61e3c2a2cbc1a64f6a1b30a2e4fce7fbd37e0324d6fee9e",
+      "source": "/root/projects/TimesOil/results/audit-20260909/local-reference-ablation-z-20260910/report.json"
+    },
+    "z-local-correction-training.json": {
+      "sha256": "db899fa1d3682c6ee24948ba91b5d0a2847351623c0fa89f4255a3cf06756e0c",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-local-correction-z-20260910/report.json"
+    },
+    "z-full20-training.json": {
+      "sha256": "bfd706476dc8bb533c79045106fb728f2e94baee167bbb4027993530052162e1",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-full-backbone-z-20260910/training/report.json"
+    },
+    "z-full80-training.json": {
+      "sha256": "76bde19368201d5d74f8455c09098c86a963e3e2c05f170310fab07cf67623c3",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-full-backbone-z-v2-20260910/training/report.json"
+    },
+    "z-full20-protocol.json": {
+      "sha256": "d41952abe6c76ff9e767ce58e2bcbe84f8cd585a3ce6fb773cc28370dd1c5954",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-full-backbone-z-20260910/launch-protocol.json"
+    },
+    "z-full80-protocol.json": {
+      "sha256": "470aa49957d3ef9c0e2a6939ebebfe6e4ec36f6399db0af226828f37a18de938",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-full-backbone-z-v2-20260910/launch-protocol.json"
+    },
+    "y-monthly-independent-v2-protocol.json": {
+      "sha256": "ee49cfe23514fc780e8d0adaffcf00f3f0387b452416c5df6db3cbc1a72d0f01",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-independent-y-v2-20260910/launch-protocol.json"
+    },
+    "z-local-independent-protocol.json": {
+      "sha256": "2e6f9cc9dc2d23b05d655e127fcbccb0206fb9cb92ca58e9cb3207bf1b9d1b3e",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-local-independent-z-20260910/launch-protocol.json"
+    }
+  }
+}
