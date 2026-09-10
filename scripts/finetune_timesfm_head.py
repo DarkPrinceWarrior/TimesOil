@@ -150,6 +150,7 @@ def main():
     parser.add_argument('--unfreeze-backbone', action='store_true')
     parser.add_argument('--model-y', action='store_true')
     parser.add_argument('--condition-last-layer', action='store_true')
+    parser.add_argument('--condition-first-layer', action='store_true')
     parser.add_argument('--cold-start-normalization', action='store_true')
     parser.add_argument('--regime-calibration', type=Path)
     parser.add_argument('--regime-calibration-sha256')
@@ -176,6 +177,8 @@ def main():
         parser.error('static last-layer conditioning requires verified connectivity')
     if args.cold_start_normalization and not args.condition_last_layer:
         parser.error('cold-start normalization requires static last-layer conditioning')
+    if args.condition_first_layer and not args.unfreeze_backbone:
+        parser.error('first-layer conditioning requires full-backbone adaptation')
     if args.monthly_observed_training and not args.model_y:
         parser.error('monthly observed training currently requires Model Y')
     if not 1 <= args.intervention_repeats <= 23 or args.intervention_repeats != 1 and not args.monthly_observed_training:
@@ -282,6 +285,10 @@ def main():
     if args.condition_last_layer:
         from timesfm_geology import StaticConditionedLayer
         model.transformer_stack.layers[-1] = StaticConditionedLayer(model.transformer_stack.layers[-1], model.output_head)
+    if args.initial_head and initial.get('static_first_layer', False):
+        if not args.condition_first_layer:
+            raise ValueError('initial weights require first-layer conditioning')
+        model.transformer_stack.layers[0] = StaticConditionedLayer(model.transformer_stack.layers[0], model.output_head)
     if args.initial_head and ('last_layer' in initial or 'full_model' in initial):
         if bool(initial.get('static_last_layer', False)) != args.condition_last_layer:
             raise ValueError('initial last-layer architecture differs from requested conditioning')
@@ -291,6 +298,8 @@ def main():
             torch.testing.assert_close(initial['last_layer']['features'], model.transformer_stack.layers[-1].features, rtol=0, atol=0)
         if 'last_layer' in initial:
             model.transformer_stack.layers[-1].load_state_dict(initial['last_layer'])
+    if args.condition_first_layer and not isinstance(model.transformer_stack.layers[0], StaticConditionedLayer):
+        model.transformer_stack.layers[0] = StaticConditionedLayer(model.transformer_stack.layers[0], model.output_head)
     model.requires_grad_(args.unfreeze_backbone)
     model.output_head.requires_grad_(True)
     if args.unfreeze_last_layer:
@@ -382,7 +391,8 @@ def main():
         'last-layer-and-head.pt' if args.unfreeze_last_layer else 'output-head.pt')
     def selected_weights():
         if args.unfreeze_backbone:
-            weights = {'full_model': model.state_dict(), 'static_last_layer': args.condition_last_layer}
+            weights = {'full_model': model.state_dict(), 'static_last_layer': args.condition_last_layer,
+                       'static_first_layer': args.condition_first_layer}
         elif args.unfreeze_last_layer:
             weights = {'output_head': model.output_head.state_dict(),
                     'last_layer': model.transformer_stack.layers[-1].state_dict(),
@@ -403,6 +413,7 @@ def main():
         backbone_frozen=not args.unfreeze_last_layer,
         last_layer_trainable=args.unfreeze_last_layer,
         static_last_layer=args.condition_last_layer,
+        static_first_layer=args.condition_first_layer,
         all_other_backbone_parameters_frozen=not args.unfreeze_backbone,
         full_backbone_trainable=args.unfreeze_backbone, gradient_checkpointing=args.unfreeze_backbone,
         initial_head_sha256=args.initial_head_sha256,
@@ -517,10 +528,14 @@ def main():
             model.output_head.disabled = True
             if args.condition_last_layer:
                 model.transformer_stack.layers[-1].disabled = True
+            if args.condition_first_layer:
+                model.transformer_stack.layers[0].disabled = True
             ablated = forecast(t, block, observe)
             model.output_head.disabled = False
             if args.condition_last_layer:
                 model.transformer_stack.layers[-1].disabled = False
+            if args.condition_first_layer:
+                model.transformer_stack.layers[0].disabled = False
             report['test_results'].append(dict(scenario_id=name, stage='static_conditioning_disabled',
                 name=mode, **metrics(t.states[origin + 1:origin + horizon + 1], ablated),
                 prediction_max_abs_change=float(np.abs(full - ablated).max())))

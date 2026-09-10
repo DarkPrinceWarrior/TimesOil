@@ -121,6 +121,12 @@ def load_frozen_model(model, connectivity, selected, *, reference_sha256=None):
             'last_layer': {k.removeprefix(prefix): v for k, v in full.items() if k.startswith(prefix)}}
     model.transformer_stack.layers[-1] = load_selected_layer(
         model.transformer_stack.layers[-1], model.output_head, layer_selected)
+    if selected.get('static_first_layer', False):
+        if full is None:
+            raise ValueError('first-layer conditioning requires complete model weights')
+        model.transformer_stack.layers[0] = StaticConditionedLayer(model.transformer_stack.layers[0], model.output_head)
+        torch.testing.assert_close(full['transformer_stack.layers.0.features'],
+                                   model.transformer_stack.layers[0].features, rtol=0, atol=0)
     if full is not None:
         model.load_state_dict(full)
     if 'cold_start_scale' in selected:
@@ -188,6 +194,24 @@ def self_check():
     for key, value in adapted.state_dict().items():
         torch.testing.assert_close(restored.state_dict()[key], value, rtol=0, atol=0)
     assert not torch.equal(native.transformer_stack.layers[0].weight, restored.transformer_stack.layers[0].weight)
+    early = load_frozen_model(deepcopy(native), connection, full)
+    first = early.transformer_stack.layers[0]
+    early.transformer_stack.layers[0] = StaticConditionedLayer(first, early.output_head)
+    torch.testing.assert_close(early.transformer_stack.layers[0](embeddings), first(embeddings), rtol=0, atol=0)
+    with torch.no_grad():
+        early.transformer_stack.layers[0].conditioner.weight[:, 0] = .1
+    early_output = early.transformer_stack.layers[0](embeddings)
+    assert not torch.equal(early_output[:, 0], early_output[:, 3])
+    early_bundle = {'full_model': deepcopy(early.state_dict()), 'static_first_layer': True, 'static_last_layer': True}
+    restored_early = load_frozen_model(deepcopy(native), connection, early_bundle)
+    torch.testing.assert_close(restored_early.transformer_stack.layers[0](embeddings), early_output, rtol=0, atol=0)
+    early_bundle['full_model']['transformer_stack.layers.0.features'][0, 0] += 1
+    try:
+        load_frozen_model(deepcopy(native), connection, early_bundle)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError('mismatched first-layer geological identity accepted')
     from timesfm3.torch import util
     sigma = torch.tensor([[[0.], [2.], [0.], [0.], [3.], [0.], [0.], [2.]]])
     mean = torch.zeros_like(sigma)
