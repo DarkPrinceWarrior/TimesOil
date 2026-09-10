@@ -34,6 +34,19 @@ from timesoil.aios.economics import CHDDEconomicsAdapter, opm_management_rows
 from timesoil.aios.schedule import ScheduleError
 
 
+def agent_candidate_context(candidates):
+    """Keep all policy scores and one full-well forecast without repeating model metadata."""
+    fields = ('id', 'policy', 'estimated_oil_t', 'estimated_liquid_t', 'planned_injection_m3',
+              'predicted_injection_m3', 'screening_margin_m', 'forecast_chdd_m', 'forecast_eligible',
+              'controls_sha256')
+    summaries = [{key: row[key] for key in fields if key in row} for row in candidates]
+    eligible = [row for row in candidates if row.get('forecast_eligible') is True]
+    detailed = max(eligible, key=lambda row: row['forecast_chdd_m']) if eligible else candidates[-1]
+    return {'candidates': summaries, 'forecast_detail': {'candidate_id': detailed['id'],
+        'by_well': detailed['forecast_by_well'],
+        'scope': 'Forecast detail for analysis; every complete candidate forecast remains in its persisted artifact.'}}
+
+
 async def plan_with_control_repair(workflow, context, candidates, attempted, output, index):
     """Retry one rejected control proposal; never retry a partially accepted round."""
     before = len(candidates)
@@ -552,7 +565,7 @@ def main():
                 "local_correction_loaded": correction is not None,
                 "interpretation": "Checkpoint loading and forecast execution are verified. Accuracy certification is a separate, unresolved property; it does not mean the model is untrained. The unchanged baseline is already evaluated."},
             "objective": f"Propose a new policy for maximum official CHDD over the request's {checked_request.horizon_months} management months. " + ("Use only uniform BHP changes inside forecast_reference.domain. " if correction else "Use per-well multipliers when useful; all wells are controllable. ") + "Call propose_policy exactly once. Propose an unexplored hypothesis for physical verification, even when its improvement is uncertain. Existing controls, including the unchanged baseline, are rejected as duplicates. Do not return an existing best policy as a new experiment.",
-            "candidates": candidates,
+            **agent_candidate_context(candidates),
             "verified_well_count": len(well_index),
             "forecast_reference": {'manifest_sha256': args.reference_sha256,
                 'future_is_prior_physical_planning_information': reference is not None,
@@ -591,6 +604,7 @@ def main():
         if args.economic_selection:
             context_value['objective'] = f"Improve forecast CHDD over all {horizon} months using permitted rates, BHP, statuses and producer-to-injector conversions. Call propose_policy exactly once with an unexplored policy. The official calculator scores forecasts, including pumps, conversions, water costs, taxes and discounting. All search evaluations use TimesFM; only the graph with maximum eligible forecast CHDD is sealed for one final OPM check. Never ask for OPM to compare search alternatives."
             context_value['claim_limits'] = 'Forecast CHDD uses nine predicted economic outputs and observed history only. It includes all official economic terms, but it is not physically verified CHDD. No independently certified uncertainty, deployment approval or guaranteed uplift. Supplied schedule restrictions remain mandatory; unsupported forecast operating limits stop this mode.'
+        (args.output / f'planning-context-{index:02d}.json').write_text(json.dumps(context_value, ensure_ascii=False, indent=2))
         async with ExternalQwenClient(LLMConfig.from_env()) as client:
             workflow = AgentWorkflow(client, ToolRegistry((tool,)),
                 role_tools={AgentRole.PLANNER: (tool.name,)}, required_tools={AgentRole.PLANNER: (tool.name,)})
