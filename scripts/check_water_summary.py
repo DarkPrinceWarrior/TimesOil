@@ -19,12 +19,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for key in ('source', 'prior', 'output'):
         parser.add_argument('--' + key, type=Path, required=True)
+    parser.add_argument('--normalize-model-y', action='store_true')
+    parser.add_argument('--cpu-affinity', default='30-45')
     args = parser.parse_args()
     prior = json.loads((args.prior / 'manifest.json').read_text())
     assert prior['status'] == 'success' and prior['image_reference'] == OPM_IMAGE
     assert prior['source_sha256'] == digest(args.source)
-    runner = OpmFlowRunner(timeout_seconds=7200, mpi_processes=16, threads_per_process=1, cpu_affinity='30-45')
-    prepared = runner.prepare(args.source, args.output, deck=prior['deck'])
+    runner = OpmFlowRunner(timeout_seconds=7200, mpi_processes=16, threads_per_process=1, cpu_affinity=args.cpu_affinity)
+    options = {'normalize_model_y': True} if args.normalize_model_y else {}
+    prepared = runner.prepare(args.source, args.output, deck=prior['deck'], **options)
     inputs = {a['path'][6:]: a for a in prior['artifacts'] if a['path'].startswith('input/')}
     assert set(inputs) == {p.relative_to(prepared.input_dir).as_posix() for p in prepared.input_dir.rglob('*') if p.is_file()}
     for rel, item in inputs.items():
