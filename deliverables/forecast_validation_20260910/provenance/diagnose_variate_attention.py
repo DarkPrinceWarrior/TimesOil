@@ -13,7 +13,7 @@ from timesfm_geology import load_frozen_model
 from timesoil.aios.interwell import WellConnectivity
 
 r = Path('/root/projects/TimesOil/results/audit-20260909')
-out = r / 'attention-operations-parity-z-20260910'
+out = r / 'attention-softmax-parity-z-20260910'
 out.mkdir(exist_ok=False)
 paths = {
     r / 'decoder-parity-components-z-20260910/decoder-inputs.pt': '6ee35fcd634bb28f6695329b11bd24f0172c00e20be4a984e030f3caf032f655',
@@ -82,6 +82,16 @@ def repeated(operation, name):
         first, second = operation(*args, **kwargs), operation(*args, **kwargs)
         report['operations'].append({'operation': name, 'input_shapes': [list(x.shape) for x in args if isinstance(x, torch.Tensor)],
             'difference': float((first - second).abs().max())})
+        if name == 'softmax':
+            x, dim = args[0], kwargs['dim']
+            def explicit():
+                exponent = (x - x.amax(dim=dim, keepdim=True)).exp()
+                return exponent / exponent.sum(dim=dim, keepdim=True)
+            for label, alternate in [('log_softmax_exp', lambda: torch.nn.functional.log_softmax(x, dim=dim).exp()),
+                                     ('explicit_exp_sum', explicit)]:
+                a, b = alternate(), alternate()
+                report['operations'].append({'operation': label, 'difference': float((a - b).abs().max()),
+                    'difference_from_native': float((a - first).abs().max())})
         return first
     return call
 attention.use_sdpa = False
