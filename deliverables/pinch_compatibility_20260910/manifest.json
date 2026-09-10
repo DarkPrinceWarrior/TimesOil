@@ -3,8 +3,8 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 8757,
-      "sha256": "4ab3434275cf84a79432788013863d69ed74e1b8ab7277e9bef5b81680038dd0"
+      "bytes": 9375,
+      "sha256": "3d4969a6f9d0a2774c53f56d89ba328b1ee30f9d3b316c186af65a94b67bf38b"
     },
     {
       "path": "build-completion.json",
@@ -50,6 +50,11 @@
       "path": "provenance/verify_pair.py",
       "bytes": 3576,
       "sha256": "9a775819f3ca27a6d5704cce9571688e089ea1dbaa894b40dba26903e706fb69"
+    },
+    {
+      "path": "source-nnc-audit.json",
+      "bytes": 2702,
+      "sha256": "e92791e8b765fc545d16e8af2494ff9b9b791fbd66f845a755d59830211cb494"
     },
     {
       "path": "stock-failure.json",

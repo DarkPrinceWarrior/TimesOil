@@ -1,0 +1,16 @@
+{
+  "source_trajectory_sha256": "1c5730d99b40403551c591845cf0e3d291ac7ee42fa9e3cb1de9e0ee1574f2ca",
+  "request_sha256": "2ecf8acc3a5f1cf7ea91b09f45ef7795c584c28a9ea41620a9b420ecf827d5c7",
+  "timesfm_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "agent_proposal_ids": [
+    1
+  ],
+  "horizon_months": 224,
+  "head_sha256": "7a548a77f2acdb50c1dc6e48e2685b96e4305badb45dfb51dbc1eb705568ada3",
+  "reference_manifest_sha256": null,
+  "reference_correction_sha256": null,
+  "connectivity_sha256": "cff65939ad943dd1df28460306fc433663a22707bd66a087732077135f7992c0",
+  "script_sha256": "92c43de67459538ed235660ee771a1a9554e42d6454a5babc6696fcaf2f0fcca",
+  "requires_full_period_opm": true,
+  "final_chdd_computed": false
+}

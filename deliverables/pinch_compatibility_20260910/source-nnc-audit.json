@@ -1,0 +1,96 @@
+{
+  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+  "explicit_nnc_keywords_found": false,
+  "records": [
+    {
+      "path": "Model_Z/Model_Z_summary.inc",
+      "sha256": "58917b8af663e11f0894aec87ada823efb2783b6c475d025c7d69d17e86f15cc",
+      "raw_token_counts": {
+        "NNC": 0,
+        "EDITNNC": 0,
+        "EDITNNCR": 0,
+        "PINCHNUM": 0,
+        "PINCHREG": 0
+      }
+    },
+    {
+      "path": "Model_Z/Model_Z_regs.inc",
+      "sha256": "2b215d0625820b8e4c1b691d19f3ffe0cd95268fd62bfc7609206a00302d29fd",
+      "raw_token_counts": {
+        "NNC": 0,
+        "EDITNNC": 0,
+        "EDITNNCR": 0,
+        "PINCHNUM": 0,
+        "PINCHREG": 0
+      }
+    },
+    {
+      "path": "Model_Z/Model_Z_edit.inc",
+      "sha256": "a91cbb873c9973b0b261cc494de1b37b34bba499162f70f6b2316949de3a1e1f",
+      "raw_token_counts": {
+        "NNC": 0,
+        "EDITNNC": 0,
+        "EDITNNCR": 0,
+        "PINCHNUM": 0,
+        "PINCHREG": 0
+      }
+    },
+    {
+      "path": "Model_Z/Model_Z.data",
+      "sha256": "550fc9b4c2103de76a2f38a9658427eb08071ae777488971bc144c9b1feadf00",
+      "raw_token_counts": {
+        "NNC": 0,
+        "EDITNNC": 0,
+        "EDITNNCR": 0,
+        "PINCHNUM": 0,
+        "PINCHREG": 0
+      }
+    },
+    {
+      "path": "Model_Z/Model_Z_grid.inc",
+      "sha256": "c2bc700bd6cba9ea6dceba3349618a1d7098cd91abc96bed0d57d84c6d3fb708",
+      "raw_token_counts": {
+        "NNC": 0,
+        "EDITNNC": 0,
+        "EDITNNCR": 0,
+        "PINCHNUM": 0,
+        "PINCHREG": 1
+      }
+    },
+    {
+      "path": "Model_Z/Model_Z_init.inc",
+      "sha256": "b3c7704dfdc646765a9606ff6fba68bf94871be2f5456fb4274834677e1b204b",
+      "raw_token_counts": {
+        "NNC": 0,
+        "EDITNNC": 0,
+        "EDITNNCR": 0,
+        "PINCHNUM": 0,
+        "PINCHREG": 0
+      }
+    },
+    {
+      "path": "Model_Z/Model_Z_props.inc",
+      "sha256": "933b79d58e5e4d2eed91ce4319d9dadbd6c6a0dc9f09f551f95088f918a9f8f3",
+      "raw_token_counts": {
+        "NNC": 0,
+        "EDITNNC": 0,
+        "EDITNNCR": 0,
+        "PINCHNUM": 0,
+        "PINCHREG": 0
+      }
+    },
+    {
+      "path": "Model_Z/Model_Z_sch.inc",
+      "sha256": "ec5f51a61bced93be0fa83a621a814f5ccd612c25f770bd084d9f83626404d87",
+      "raw_token_counts": {
+        "NNC": 0,
+        "EDITNNC": 0,
+        "EDITNNCR": 0,
+        "PINCHNUM": 0,
+        "PINCHREG": 0
+      }
+    }
+  ],
+  "finding": "No NNC/EDITNNC/EDITNNCR token anywhere in archived DATA/INC files, including comments. The PINCH change does not duplicate explicit NNC records in these inputs.",
+  "limitation": "Does not prove PINCH equivalence or rule out differences in simulator-generated connectivity."
+}

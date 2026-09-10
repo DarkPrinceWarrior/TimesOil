@@ -1,0 +1,20 @@
+{
+  "source_commit": "f47e042",
+  "host": "A100",
+  "evidence_source": "Observed command output from the pre-launch verification",
+  "commands": [
+    {
+      "command": "PYTHONPATH=src:scripts /root/projects/TimesOil/.venv/bin/python -m pytest -q tests/test_aios_schedule_overlay.py tests/test_aios_workflow.py",
+      "passed": 34
+    },
+    {
+      "command": "propose_track2_policies.self_check()",
+      "passed": true
+    },
+    {
+      "command": "run_z_guarded_policy.py --self-check",
+      "passed": true
+    }
+  ],
+  "limitations": "Checks source schedule guards and the launcher contract, not scientific accuracy or final CHDD."
+}
