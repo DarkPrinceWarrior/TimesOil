@@ -1,0 +1,36 @@
+{
+  "source_commit": "287343a84f7f6c1fc6843cc5c8f23b731be68a5a",
+  "checks": [
+    {
+      "request": "/root/projects/TimesOil/results/audit-20260909/physical-sweep-z-20260909/request-03.json",
+      "sha256": "2ecf8acc3a5f1cf7ea91b09f45ef7795c584c28a9ea41620a9b420ecf827d5c7",
+      "accepted": true,
+      "error": null,
+      "premature_actions": 0,
+      "premature_wells": []
+    },
+    {
+      "request": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-z-policy-bhp-20260910/proposals/request-01.json",
+      "sha256": "c4da3ecc0c3121af94351909521314fa48321a11a763d2091c287c125a77d3c7",
+      "accepted": false,
+      "error": "controls before a well's first source WCON must be SHUT at zero",
+      "premature_actions": 1062,
+      "premature_wells": [
+        "105",
+        "16",
+        "19",
+        "21",
+        "30",
+        "31",
+        "32",
+        "34",
+        "35",
+        "37",
+        "39",
+        "4",
+        "44",
+        "72"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "manifest_path": "/root/projects/TimesOil/results/audit-20260909/pinch-z-20260910/baseline/manifest.json",
+  "manifest_sha256": "d2ad488faf7ce15dbd496991a0818d0e4a6df24883317b62558386553927a2f0",
+  "image_reference": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+  "status": "failed",
+  "returncode": 134,
+  "pinch_connections": 27696,
+  "assertion": "EntityRep<codim>::setValue: index_arg >= 0",
+  "stderr_sha256": "a809f54e44efc7039adba0364ad1152d1a26645c9459b4ad59266d70089109a7",
+  "upstream_fix": "https://github.com/OPM/opm-grid/pull/935",
+  "economic_result_available": false
+}

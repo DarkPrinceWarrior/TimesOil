@@ -260,6 +260,14 @@
     "z-transition-cycle-recovery-protocol.json": {
       "sha256": "77d101de292fa23d8c13d895104f02035e35028d245b75bc624e4e0ae8ec46b5",
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-z-policy-bhp-20260910/recovery-protocol.json"
+    },
+    "z-bhp-baseline-bounds-verification.json": {
+      "sha256": "bc96d858226c625a3271442bf40a32736e3c2c39e09905a1680d8602b2e57ae5",
+      "source": "/root/projects/TimesOil/results/audit-20260909/bhp-baseline-bounds-verification-20260910.json"
+    },
+    "z-premature-opening-rejection.json": {
+      "sha256": "7dfc3fa84f407521b85aeedae43c12dd4b04f0c0a5d96f0be02e2ffe58188b19",
+      "source": "A100 read-only source control inventory check at 287343a"
     }
   }
 }

@@ -1,0 +1,24 @@
+{
+  "schema": "timesoil.model-z-pinch-sensitivity/v1",
+  "complete": false,
+  "source_commit": "5045df50033955c53552c4ba95b1b81d2034c68d",
+  "script_sha256": "e7c172ccddb660aab3a9556d611ede654a8d28d72cdaf20c35b0ee2bbc61e85b",
+  "source_sha256": "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa",
+  "hypothesis": "Absent PINCHNUM defaults to region 1; replace its 2m criteria with global PINCH.",
+  "tnavigator_equivalence_proven": false,
+  "scenarios": [
+    {
+      "label": "baseline",
+      "prior_run": "/root/projects/TimesOil/results/audit-20260909/timesfm-bhp-policy-20260909/cycles/baseline",
+      "prior_manifest_sha256": "7eed58ebd275491b58b48cf2d5d6bcf717d74c73788a307d999ba8fa907f3cfb",
+      "changed_files": [
+        "Model_Z/Model_Z_grid.inc"
+      ],
+      "original_grid_sha256": "c2bc700bd6cba9ea6dceba3349618a1d7098cd91abc96bed0d57d84c6d3fb708",
+      "transformed_grid_sha256": "d04b664d289d997169e76d2cde0f6045bf4ee3a1872ff41061294b2c543959a1",
+      "input_file_count": 12,
+      "run": "/root/projects/TimesOil/results/audit-20260909/pinch-z-20260910/baseline",
+      "complete": false
+    }
+  ]
+}

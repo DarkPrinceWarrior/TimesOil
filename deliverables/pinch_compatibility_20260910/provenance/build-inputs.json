@@ -1,0 +1,11 @@
+{
+  "base_image": "openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9",
+  "opm_grid_release_commit": "d6a1a35c3d770fe50073b9ed866bbec740c8faac",
+  "upstream_patch_commit": "f8ebec3d2dce73f5de8deb32129ef47e9e4eb3d9",
+  "patch_sha256": "18cd3244e4782ad65848386c56393d9d927ebcb72a6e26134d888ed88fba03a7",
+  "dockerfile_sha256": "bd83f4e5923a07af41b3076070efa08a09b4d1f7239a89e1b7c1b4e98231271e",
+  "study_source_commit": "5045df5",
+  "production_image_changed": false,
+  "test_case": "PINCH 2 GAP 1.0E20 TOPBOT TOP",
+  "interpretation": "Upstream collapsed-cell fix only. No tNavigator equivalence certification."
+}

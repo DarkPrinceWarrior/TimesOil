@@ -1,0 +1,8 @@
+{
+  "source_commit": "4b7f093",
+  "source_request_sha256": "2ecf8acc3a5f1cf7ea91b09f45ef7795c584c28a9ea41620a9b420ecf827d5c7",
+  "open_bounds_filled": 21594,
+  "all_actions": 23072,
+  "request_unchanged": true,
+  "only_planned_actions_used": true
+}
