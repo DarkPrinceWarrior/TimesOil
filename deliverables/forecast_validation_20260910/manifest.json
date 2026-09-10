@@ -180,6 +180,10 @@
     "z-transition-evaluation-protocol.json": {
       "sha256": "04f4b0320e21cf7326de530e330536fd1b970114b6b8885b4510dc9d0cfb27ad",
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-evaluation-z-20260910/wait-protocol.json"
+    },
+    "z-pressure-status-diagnostic.json": {
+      "sha256": "e71fc05d79f1ea84b7d0072fb9f0e7c1ee4dbcc0112056fcb98bef0330a0136f",
+      "source": "/root/projects/TimesOil/results/audit-20260909/z-pressure-status-diagnostic-20260910.json"
     }
   }
 }
