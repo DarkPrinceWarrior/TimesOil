@@ -101,7 +101,19 @@ def policy_controls(controls, policy):
     return output
 
 
+def reject_duplicate_controls(controls_sha256, candidates):
+    if any(row['controls_sha256'] == controls_sha256 for row in candidates):
+        raise ValueError('policy repeats an already evaluated control schedule; propose different controls')
+
+
 def self_check():
+    reject_duplicate_controls('new', [{'controls_sha256': 'old'}])
+    try:
+        reject_duplicate_controls('same', [{'controls_sha256': 'same'}])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('duplicate physical controls accepted as a new hypothesis')
     controls = [dict(month="2007-01-01", well="P", role="producer", status="OPEN", target="LRAT", value=300),
                 dict(month="2007-01-01", well="I", role="injector", status="OPEN", target="WRAT", value=100),
                 dict(month="2007-01-01", well="F", role="producer", status="SHUT", target="LRAT", value=0)]
@@ -282,6 +294,7 @@ def main():
             "policy": policy,
         }}
         checked = CycleRequest.from_mapping(proposed)
+        reject_duplicate_controls(checked.controls_sha256, candidates)
         original_roles = {(a['month'], a['well']): a['role'] for a in request['controls']}
         if (not checked.context.get('constraints', {}).get('allow_conversion_to_injection', False)
                 and any(a['role'] != original_roles[a['month'], a['well']] for a in controls)):
@@ -382,7 +395,7 @@ def main():
         tool = ToolDefinition("propose_policy", "Propose a full-field policy. Optional producer_bhp_add (bar) and injector_bhp_factor tighten open-well BHP limits uniformly before individual updates. well_updates changes a well over inclusive monthly start/end dates after rate scaling: rate, status, target, role, BHP limit. Conversion requires explicit WRAT, value and BHP, must be permitted by the case, and cannot be reversed; extend its role to the end. Omitted scales default to 1, arrays to empty. Respect the explicit forecast_reference domain when present. Full-period TimesFM hypothesis forecast; every retained candidate requires full-period OPM, and official CHDD selects the winner.", schema,
             lambda policy, _: evaluate(policy))
         context_value = {"track": 2, "round": index,
-            "objective": f"Propose a new policy for maximum official CHDD over the request's {checked_request.horizon_months} management months. " + ("Use only uniform BHP changes inside forecast_reference.domain. " if correction else "Use per-well multipliers when useful; all wells are controllable. ") + "Call propose_policy exactly once. Avoid duplicate policies.",
+            "objective": f"Propose a new policy for maximum official CHDD over the request's {checked_request.horizon_months} management months. " + ("Use only uniform BHP changes inside forecast_reference.domain. " if correction else "Use per-well multipliers when useful; all wells are controllable. ") + "Call propose_policy exactly once. Propose an unexplored hypothesis for physical verification, even when its improvement is uncertain. Existing controls, including the unchanged baseline, are rejected as duplicates. Do not return an existing best policy as a new experiment.",
             "candidates": candidates,
             "verified_well_count": len(well_index),
             "forecast_reference": {'manifest_sha256': args.reference_sha256,
