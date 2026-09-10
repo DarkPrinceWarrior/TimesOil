@@ -62,6 +62,17 @@ def compare_physical_inputs(roots, inputs, wells):
                  allowed_difference='Canonical all-well WVPT/WVIT SUMMARY requests only; no physics/control input change')]
 
 
+def agent_review_result(state):
+    """Keep unanimous numerical review distinct from the final critic decision."""
+    from dataclasses import asdict
+    return {
+        "agent_review": asdict(state),
+        "agent_review_scope": "completed_paired_numerical_audit",
+        "agent_review_critic_approved": state.critic_approved,
+        "agent_review_approved": state.complete and all(d.approved for d in state.decisions),
+    }
+
+
 def compare(baseline, candidate, expected_months=None):
     left, right = load(baseline), load(candidate)
     a, b = left[0], right[0]
@@ -142,7 +153,6 @@ if __name__ == "__main__":
                   "claim": "Model-based training experiment; selection runs are not an untouched test set."}
     if args.agent_review:
         import asyncio
-        from dataclasses import asdict
         from timesoil.aios.agents import AgentRole, AgentWorkflow, ToolDefinition, ToolRegistry
         from timesoil.aios.llm import ExternalQwenClient, LLMConfig
 
@@ -156,6 +166,7 @@ if __name__ == "__main__":
                     role_tools={role: (tool.name,) for role in AgentRole},
                     required_tools={role: (tool.name,) for role in AgentRole},
                 ).run({"track": 2, "phase": "completed_paired_numerical_audit",
+                    "approval_scope": "completed_paired_numerical_audit",
                     "objective": "Audit the completed full-period OPM and official CHDD comparison. Read the tool. No new simulator run is requested. State actual delta and percentage; distinguish numeric validity from deployment readiness. Proposal provenance is outside this numerical audit: do not assert that a surrogate proposed or selected a candidate without explicit evidence.",
                     "facts": {"paired_opm_and_economics_verified": True,
                               "surrogate_uncertainty_independently_calibrated": False,
@@ -163,8 +174,7 @@ if __name__ == "__main__":
                               "competition_result_claimed": False}})
 
         reviewed = asyncio.run(review())
-        result = {**result, "agent_review": asdict(reviewed),
-                  "agent_review_approved": reviewed.critic_approved}
+        result = {**result, **agent_review_result(reviewed)}
     with args.output.open("x") as stream:
         json.dump(result, stream, indent=2)
     print(json.dumps(result))
