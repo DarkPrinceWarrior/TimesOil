@@ -37,10 +37,10 @@ def past_inputs(observations, origin, context_length):
     return observations[origin + 1 - context_length:origin + 1].transpose(1, 2, 0).astype(np.float32)
 
 
-def forecast_inputs(states, actions, origin, context_length, horizon=HORIZON):
+def forecast_inputs(states, actions, origin, context_length, horizon=HORIZON, *, target_count=3):
     """Align action[t] with state[t+1]; retain BHP when present and exclude future targets."""
     states, actions = np.asarray(states), np.asarray(actions)
-    if (states.ndim != 3 or states.shape[-1] != 3 or actions.ndim != 3
+    if (target_count not in (3, 9) or states.ndim != 3 or states.shape[-1] != target_count or actions.ndim != 3
             or actions.shape[:2] != states.shape[:2] or actions.shape[-1] not in (3, 4)):
         raise ValueError("forecast requires aligned states and three/four-feature actions")
     if context_length < 1 or horizon < 1 or origin < 1 or origin + horizon >= len(states):

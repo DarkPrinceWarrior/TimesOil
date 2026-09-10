@@ -27,8 +27,8 @@ def training_feature_scale(train_truth, retained_scale=None):
     """Keep frozen checkpoint units when continuing on a new development batch."""
     scale = (np.maximum(np.abs(train_truth).mean(axis=(0, 1, 2)), 1.0)
              if retained_scale is None else np.asarray(retained_scale, dtype=float))
-    if scale.shape != (3,) or not np.isfinite(scale).all() or (scale <= 0).any():
-        raise ValueError('three finite positive target scales required')
+    if scale.shape != (train_truth.shape[-1],) or not np.isfinite(scale).all() or (scale <= 0).any():
+        raise ValueError('finite positive scales matching the training targets required')
     return scale
 
 
@@ -184,6 +184,8 @@ def main():
     parser.add_argument('--reference', type=Path, help='Verified physical reference for additive-response training')
     parser.add_argument('--reference-sha256')
     parser.add_argument('--self-check', action='store_true')
+    parser.add_argument('--economic-targets', action='store_true',
+        help='Train the nine canonical economic outputs on the verified Model Z development batch')
     args = parser.parse_args()
     self_check()
     if args.self_check:
@@ -221,6 +223,9 @@ def main():
             or args.regime_calibration and args.model_y):
         parser.error('Model Z regime calibration requires a paired manifest hash')
     args.unfreeze_last_layer |= args.condition_last_layer
+    if args.economic_targets and (not args.condition_last_layer or args.model_y or args.reference
+            or args.regime_calibration or args.bhp_calibration):
+        parser.error('economic targets require conditioned Model Z and canonical ten-scenario batch')
     args.output.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
     if args.model_y:
@@ -232,7 +237,13 @@ def main():
     offsets = [0] * args.intervention_repeats + list(range(1, horizon)) if args.monthly_observed_training else [0]
     context = min(128, origin)
     count = len(trajectories[0].well_ids)
-    targets_count = count * 3
+    target_count = 9 if args.economic_targets else 3
+    targets_count = count * target_count
+    score_metrics = metrics
+    if args.economic_targets:
+        from timesfm_economics import ECONOMIC_TARGETS, economic_metrics, forecast_economic, load_economic_trajectories
+        trajectories = load_economic_trajectories(args.batch, trajectories, origin)
+        score_metrics = economic_metrics
     if args.regime_calibration:
         baseline = next(t for t in trajectories if t.scenario_id == 'baseline')
         trajectories = list(trajectories) + verified_regime_calibration(
@@ -291,11 +302,13 @@ def main():
         revision=MODEL_REVISION, per_core_batch_size=1, device='cuda'))
     model = forecaster.model
     if connectivity is not None:
-        model.output_head = StaticConditionedHead(model.output_head, connectivity)
+        model.output_head = StaticConditionedHead(model.output_head, connectivity, target_count=target_count)
     if args.initial_head:
         if sha256(args.initial_head.read_bytes()).hexdigest() != args.initial_head_sha256:
             raise ValueError('initial output-head hash mismatch')
         initial = torch.load(args.initial_head, map_location='cuda', weights_only=True)
+        if initial.get('economic_targets') != (list(ECONOMIC_TARGETS) if args.economic_targets else None):
+            raise ValueError('initial checkpoint target schema differs')
         if 'cold_start_scale' in initial and not args.cold_start_normalization:
             raise ValueError('initial weights require cold-start normalization')
         if initial.get('reference_manifest_sha256') not in (None, args.reference_sha256):
@@ -428,9 +441,12 @@ def main():
             weights['reference_manifest_sha256'] = args.reference_sha256
         if args.cold_start_normalization:
             weights['cold_start_scale'] = model.cold_start_scale
+        if args.economic_targets:
+            weights['economic_targets'] = list(ECONOMIC_TARGETS)
         return weights
     torch.save(selected_weights(), checkpoint)
     report = dict(schema='timesoil.timesfm-head-adaptation/v1', model_revision=MODEL_REVISION,
+        economic_targets=list(ECONOMIC_TARGETS) if args.economic_targets else None,
         batch_manifest_sha256=args.batch_sha256, source_scenario_hashes={t.scenario_id: t.content_hash for t in trajectories},
         train_scenarios=train_ids, validation_scenarios=validation_ids, test_scenarios=test_ids,
         trained_component='TimesFM3Torch (complete)' if args.unfreeze_backbone else
@@ -474,6 +490,10 @@ def main():
         epochs=[], test_results=[])
 
     def forecast(t, block=horizon, observe=False):
+        if args.economic_targets:
+            if block != horizon or observe:
+                raise ValueError('economic forecasts must use the fixed origin and complete horizon')
+            return forecast_economic(forecaster, t, origin, horizon, context, connectivity)
         if connectivity is None:
             return forecast_blocks(forecaster, t, origin, horizon, context, block, observe=observe)
         from benchmark_timesfm_layouts import forecast_layout
@@ -495,14 +515,16 @@ def main():
 
     evaluation_modes = [('observed_update_block_1', 1, True)] if args.monthly_observed_training else [
         ('fixed_origin_direct', horizon, False), ('observed_update_block_6', 6, True)]
-    if reference is not None:
+    if args.economic_targets:
+        evaluation_modes = [('economic_direct', horizon, False)]
+    elif reference is not None:
         evaluation_modes = [('reference_delta_direct', horizon, False)]
     for name in test_ids:
         t = by_id[name]
         initial_mode, block, observe = evaluation_modes[0]
         pred = forecast(t, block, observe)
         report['test_results'].append(dict(scenario_id=name, stage='initial_head' if args.initial_head else 'pretrained',
-            name=initial_mode, **metrics(t.states[origin + 1:origin + horizon + 1], pred)))
+            name=initial_mode, **score_metrics(t.states[origin + 1:origin + horizon + 1], pred)))
     for epoch in range(1, args.epochs + 1):
         losses = []
         for index in np.random.default_rng(20260909 + epoch).permutation(len(train_keys)):
@@ -545,7 +567,7 @@ def main():
         for mode, block, observe in evaluation_modes:
             pred = forecast(t, block, observe)
             row = dict(scenario_id=name, stage='selected_head', name=mode,
-                **metrics(t.states[origin + 1:origin + horizon + 1], pred))
+                **score_metrics(t.states[origin + 1:origin + horizon + 1], pred))
             report['test_results'].append(row)
             print(json.dumps(row), flush=True)
         if connectivity is not None:
@@ -563,7 +585,7 @@ def main():
             if args.condition_first_layer:
                 model.transformer_stack.layers[0].disabled = False
             report['test_results'].append(dict(scenario_id=name, stage='static_conditioning_disabled',
-                name=mode, **metrics(t.states[origin + 1:origin + horizon + 1], ablated),
+                name=mode, **score_metrics(t.states[origin + 1:origin + horizon + 1], ablated),
                 prediction_max_abs_change=float(np.abs(full - ablated).max())))
     report.update(complete=True, validation_loss_best=best_loss,
                   checkpoint_sha256=sha256(checkpoint.read_bytes()).hexdigest(),
