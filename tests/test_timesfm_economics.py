@@ -71,3 +71,25 @@ def test_economic_targets_roundtrip_and_reject_incomplete_forecasts(tmp_path):
     assert observed == history and np.isnan(inference.states[1:]).all()
     np.testing.assert_array_equal(inference.states[:1],
         economics.economic_targets(history, ['2007-01-01'], trajectory.well_ids))
+    import json
+    extra = tmp_path / 'development'; extra.mkdir()
+    exported = extra / 'candidate-00'; exported.mkdir()
+    (exported / 'chdd.csv').write_bytes(path.read_bytes())
+    (exported / 'manifest.json').write_text(json.dumps({'outputs': {'chdd_csv': {
+        'name':'chdd.csv', 'sha256':sha256(path.read_bytes()).hexdigest()}}}))
+    (extra / 'manifest.json').write_text(json.dumps({
+        'schema':'timesoil.frozen-forecast-evaluation-cases/v1', 'calibration_cases':[0],
+        'scenarios':[{'index':0, 'directory':str(exported),
+            'export_manifest_sha256':sha256((exported / 'manifest.json').read_bytes()).hexdigest()},
+            {'index':1, 'directory':'unread-held-out-case'}]}))
+    (tmp_path / 'manifest.json').write_text(json.dumps({'scenarios':[{
+        'scenario_id':'baseline', 'canonical_chdd':'chdd.csv',
+        'canonical_chdd_sha256':sha256(path.read_bytes()).hexdigest()}]}))
+    physical = [SimpleNamespace(**vars(trajectory), scenario_id=name)
+                for name in ('baseline', 'physical-sweep-00')]
+    loaded = economics.load_economic_trajectories(tmp_path, physical, 0, extra_batches=[extra])
+    assert len(loaded) == 2 and loaded[0].states.shape == (3, 2, 9)
+    np.testing.assert_array_equal(loaded[0].states, loaded[1].states)
+    (exported / 'chdd.csv').write_bytes(path.read_bytes() + b'\n')
+    with pytest.raises(ValueError, match='CSV hash'):
+        economics.load_economic_trajectories(tmp_path, physical, 0, extra_batches=[extra])

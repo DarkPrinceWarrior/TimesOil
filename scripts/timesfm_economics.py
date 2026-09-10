@@ -87,25 +87,40 @@ def forecast_chdd_rows(history, timestamps, well_ids, predictions):
     return normalize_chdd_rows(rows)
 
 
-def load_economic_trajectories(batch, trajectories, origin):
+def load_economic_trajectories(batch, trajectories, origin, *, extra_batches=()):
     """Use canonical CSVs from the already verified development batch, retaining its split."""
     from types import SimpleNamespace
 
     records = {row['scenario_id']: row for row in json.loads((batch / 'manifest.json').read_text())['scenarios']}
+    paths = {name: ((batch / row['canonical_chdd']).resolve(), row['canonical_chdd_sha256'], batch)
+             for name, row in records.items()}
+    for extra in extra_batches:
+        manifest = json.loads((extra / 'manifest.json').read_text())
+        prefix = 'bhp-only' if manifest['schema'] == 'timesoil.bhp-only-forecast-evaluation/v1' else 'physical-sweep'
+        for record in manifest['scenarios']:
+            if record['index'] not in manifest['calibration_cases']:
+                continue
+            root = (extra / f"candidate-{record['index']:02d}").resolve()
+            if root != Path(record['directory']).resolve() or sha256((root / 'manifest.json').read_bytes()).hexdigest() != record['export_manifest_sha256']:
+                raise ValueError('economic development export identity changed')
+            exported = json.loads((root / 'manifest.json').read_text())['outputs']['chdd_csv']
+            name = f"{prefix}-{record['index']:02d}"
+            if name in paths:
+                raise ValueError('duplicate economic development scenario')
+            paths[name] = ((root / exported['name']).resolve(), exported['sha256'], root)
     result = []
     for trajectory in trajectories:
-        record = records[trajectory.scenario_id]
-        path = (batch / record['canonical_chdd']).resolve()
-        if not path.is_relative_to(batch.resolve()):
+        path, expected_hash, root = paths[trajectory.scenario_id]
+        if not path.is_relative_to(root.resolve()):
             raise ValueError('economic target CSV escapes verified batch')
         raw = path.read_bytes()
-        if sha256(raw).hexdigest() != record['canonical_chdd_sha256']:
+        if sha256(raw).hexdigest() != expected_hash:
             raise ValueError('economic target CSV hash mismatch')
         states = economic_targets(csv.DictReader(raw.decode('utf-8-sig').splitlines()),
                                   trajectory.dates.strftime('%Y-%m-%d'), trajectory.well_ids)
         result.append(SimpleNamespace(scenario_id=trajectory.scenario_id, dates=trajectory.dates,
             well_ids=trajectory.well_ids, actions=trajectory.actions, states=states,
-            content_hash=record['canonical_chdd_sha256']))
+            content_hash=expected_hash))
     baseline = next(t for t in result if t.scenario_id == 'baseline')
     for trajectory in result:
         np.testing.assert_allclose(trajectory.states[:origin + 1], baseline.states[:origin + 1], rtol=0, atol=1e-6)
