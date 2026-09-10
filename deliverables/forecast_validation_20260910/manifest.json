@@ -202,8 +202,8 @@
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-z-policy-20260910/wait-protocol.json"
     },
     "provenance/run_z_transition_policy.py": {
-      "sha256": "0cd4ad3167c1e21292a5ea6966ea38be8d440342787e776192a1499b6c96d98a",
-      "source": "/root/projects/TimesOil-audit-transition-cycle-recovery-z-20260910/deliverables/forecast_validation_20260910/provenance/run_z_transition_policy.py"
+      "sha256": "832edf28523e5ff2e08c1d8e9257145f2f7fb50b309472997c3340d66ae9deb5",
+      "source": "WSL committed source; historical runs retain their recorded commit"
     },
     "z-transition-policy-pressure-wait-protocol.json": {
       "sha256": "0fc15c7015fc771a57b45f718fba5583229918d27a0a76de5aca4c3e53a834cb",
@@ -270,16 +270,20 @@
       "source": "A100 read-only source control inventory check at 287343a"
     },
     "README.md": {
-      "source": "WSL committed source",
-      "sha256": "fb7549c1ea3924bfd0b87dce1af578c01854e19bf319057989194ce504d1f6eb"
+      "sha256": "e622aef18ab54131f4a52a0bdc75f30f2339e05b532221df05458585ac7652a8",
+      "source": "WSL committed source; historical runs retain their recorded commit"
     },
     "provenance/run_z_guarded_policy.py": {
-      "source": "WSL committed source",
-      "sha256": "3d55b7f87d344c77ab3b50da5dd2175c9a3a899d7ef2e597531e2a1f91735e22"
+      "sha256": "62a29dda97b003398c30c4cfe171d15bdf7c815a8f4b9fd697deb3237a90fcbf",
+      "source": "WSL committed source; historical runs retain their recorded commit"
     },
     "provenance/run_z_fresh_uncertainty.py": {
       "source": "WSL committed source",
       "sha256": "ca40e45649c09b3e787a885a8c2bd6b75f5755eb5a31997f87309517da12c9e8"
+    },
+    "provenance/resume_z_guarded_selection.py": {
+      "sha256": "18a2455f4c440d0e52cd7304539426a6a1299b11cc3976489ebfed6175f70066",
+      "source": "WSL committed source; historical runs retain their recorded commit"
     }
   }
 }

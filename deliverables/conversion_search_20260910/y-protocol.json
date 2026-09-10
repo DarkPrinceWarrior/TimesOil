@@ -1,0 +1,22 @@
+{
+  "started_utc": "2026-09-10T11:29:43.900241+00:00",
+  "source_commit": "8e3b2ae6c518c6b674315210e433aa88a3479f1b",
+  "original_case_sha256": "2fa90146a479017efdd40bac65aa82b3936edb10bdc8c072841040e55fcdb4a4",
+  "case_sha256": "0d38b7ad7ff12ae4bb1f689739831e538b3e503cec489cb4c1d7572bd1326399",
+  "script_sha256": "11bde47a4621ca0290b28560e36d72dfcccd87513cbef79f142c643dc8595ba3",
+  "command": [
+    "/tmp/timesoil-kt3-20260908/venv/bin/python",
+    "scripts/run_track1_mpc.py",
+    "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/case.json",
+    "--runs-dir",
+    "/root/projects/TimesOil/results/audit-20260909/conversion-monthly-y-20260910/runs",
+    "--agent",
+    "--full-field",
+    "--lifecycle"
+  ],
+  "surrogate_used": false,
+  "new_conversion_permission": true,
+  "scope": "49 wells, 23 monthly decisions, full remaining OPM and official CHDD; assess new conversions",
+  "permission_source": "Organizer conversion economic methodology; 5 million RUB once per conversion",
+  "conversion_selected_or_profitable": false
+}

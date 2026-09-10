@@ -1,0 +1,16 @@
+{
+  "source_commit": "05d1a72374b84277d85fca3437ff52d191b95ea3",
+  "waiting_for_session": "timesoil-transition-evaluation-z-20260910",
+  "checkpoint_selection": "development validation only",
+  "experiment": "One new Qwen proposal; full 103-well, 224-month OPM and official CHDD",
+  "selected_schedule_metric": "official full-period CHDD, retaining incumbent when better",
+  "forecast_accuracy_certified": false,
+  "test_observations_passed_to_agents": false,
+  "checkpoint_sha256": "7a548a77f2acdb50c1dc6e48e2685b96e4305badb45dfb51dbc1eb705568ada3",
+  "started_utc": "2026-09-10T11:29:42.006424+00:00",
+  "conversion_search": true,
+  "request_sha256": "055d50ecbc2a93e82ee8f15762cf7ac0f3199ed42ead9d60b8cc626796577841",
+  "forecast_baseline": "/root/projects/TimesOil/results/audit-20260909/timesfm-bhp-policy-20260909/baseline-view",
+  "economic_baseline": "/root/projects/TimesOil/results/audit-20260909/timesfm-bhp-policy-20260909/cycles/baseline",
+  "evaluation_protocol_sha256": "1425e3259179c52417091120f76c9da74b50a2b15a5955d1406c9ad3b391e27d"
+}
