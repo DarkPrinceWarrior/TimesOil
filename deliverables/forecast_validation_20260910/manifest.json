@@ -202,8 +202,16 @@
       "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-z-policy-20260910/wait-protocol.json"
     },
     "provenance/run_z_transition_policy.py": {
-      "sha256": "a3d91d687d7ed01bb49433ad21ec8b6e49c0de67ac12e2ccb063301bc6d93b91",
-      "source": "/root/projects/TimesOil-audit-transition-policy-z-20260910/deliverables/forecast_validation_20260910/provenance/run_z_transition_policy.py"
+      "sha256": "19872d01a4bcb1f83a750ca27a626de55678839666c1a4c0be6550f622b6bb18",
+      "source": "/root/projects/TimesOil-audit-transition-policy-pressure-z-20260910/deliverables/forecast_validation_20260910/provenance/run_z_transition_policy.py"
+    },
+    "z-transition-policy-pressure-wait-protocol.json": {
+      "sha256": "0fc15c7015fc771a57b45f718fba5583229918d27a0a76de5aca4c3e53a834cb",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-z-policy-pressure-20260910/wait-protocol.json"
+    },
+    "z-transition-policy-queue-replaced.json": {
+      "sha256": "6bf75774f4deb887f79a6ed73775acfdbb20c7e2dc048dda0ec84af13652d6a9",
+      "source": "/root/projects/TimesOil/results/audit-20260909/timesfm-transition-z-policy-20260910/cancelled.json"
     }
   }
 }
