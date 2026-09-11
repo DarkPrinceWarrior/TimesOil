@@ -1,13 +1,48 @@
-# Инструкция оператора
+# Инструкция оператора · Трек 2, Model Z
+
+Рабочая цепочка выполняется строго в этом порядке: банк сценариев OPM →
+связность → обучение Google TimesFM → оценка на закреплённом наборе → поиск
+графика по прогнозу и фиксация выбора → **одна** финальная проверка OPM →
+парный аудит. Прогнозный ЧДД никогда не является официальным: официальным
+считается только результат калькулятора организаторов на выходе OPM при
+сопоставимой парной базе.
+
+Разделы 2–7 — вычислительные, они выполняются на A100. Разделы 1, 8, 9
+выполняются и в WSL.
 
 ## 1. Окружение
 
+### WSL: код, документация, доставка
+
 ```bash
 uv sync --locked
+uv run python -m compileall -q src scripts
 uv run pytest tests -q
+uv run timesoil-aios doctor
 ```
 
-Крупные входы хранить вне Git. Для каждого входа заранее зафиксировать SHA-256.
+`pythonpath = ["src", "scripts"]` задан в `pyproject.toml`, отдельный
+`PYTHONPATH` для локального прогона тестов не нужен.
+
+Код доставляется только через Git: коммит в WSL, push, затем на A100
+`git pull --ff-only` либо `git worktree add --detach <SHA>`. Копирование
+исходников и правка на сервере не используются.
+
+### A100: все расчёты
+
+```text
+репозиторий        /root/projects/TimesOil
+результаты         R=/root/projects/TimesOil/results/audit-20260909
+venv проекта       /root/projects/TimesOil/.venv/bin/python
+venv Torch/TimesFM /tmp/timesoil-kt3-20260908/venv/bin/python   (tmpfs, теряется при перезагрузке)
+GPU                физический GPU 5 → CUDA_VISIBLE_DEVICES=5 (cuda:0 внутри процесса)
+закреплённые деки  /tmp/timesoil-kt2/model_z/Model_Z_final_OPM.zip
+```
+
+Доступ: `ssh -o BatchMode=yes -o ConnectTimeout=10 a100-remote`. Карта и хост
+общие с другими проектами: до запуска проверить `nvidia-smi`, чужие процессы и
+tmux-сессии не останавливать. Длительные задания запускать в `tmux` с
+уникальным именем, зафиксировав PID, каталог и время.
 
 Закреплённый симулятор:
 
@@ -15,176 +50,284 @@ uv run pytest tests -q
 openporousmedia/opmreleases:2026.04_amd64@sha256:db8865d7c80440513c8c73df7ed385a3b7d2e055a0ef95f7662ec06ef6a6b3a9
 ```
 
-## 2. Сценарии OPM
+Крупные входы хранятся вне Git, для каждого заранее фиксируется SHA-256.
+Исходная модель организаторов:
+`Model_Z_final_OPM.zip`, SHA-256
+`4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa`;
+deck `Model_Z/Model_Z.data`, include расписания `Model_Z/Model_Z_sch.inc`.
 
-Эти команды выполняются на операторском хосте с Docker. API-контейнер не
-получает доступ к Docker socket.
+### Размещение OPM по ядрам
 
-Подготовить вне Git:
+Общий `OpmFlowRunner` читает переменные окружения:
 
-- `inputs/Model_Z_final_OPM.zip` — исходная модель организаторов;
-- `inputs/Model_Z/Model_Z_sch.inc` — исходный файл расписания из архива;
+- `OPM_MPI_PROCESSES` — число MPI-процессов, 1–64, по умолчанию 1;
+- `OPM_THREADS_PER_PROCESS` — потоки OpenMP на процесс;
+- `OPM_CPU_AFFINITY` — список CPU для `taskset` внутри контейнера;
+- `OPM_WORKER_CPU_AFFINITIES` — наборы через `;` для `run_track2_scenarios.py`,
+  по одному набору на каждого `--workers`.
 
-Канонические базовые управления уже входят в поставку:
-`examples/model_z_baseline_controls_v4.csv`. Файл содержит 38 213 записей для
-103 скважин за каждый месяц 1994-11-01..2025-09-01 с полями
-`date,well,control_value,control_target,status`.
+Доступные контейнеру наборы физических ядер — **14-29** и **32-47**, по одному
+NUMA-узлу на сценарий. Ядра 48-63 контейнеру полностью не доступны; перед
+использованием новых наборов проверять фактический `cpuset.cpus.effective`.
+Измерения и точность MPI: [A100: производительность](A100_PERFORMANCE_20260909.md).
+
+Каждый эксперимент пишет в **новый** каталог. Драйверы используют
+`mkdir(exist_ok=False)` и `open('x')` намеренно: повторный запуск поверх
+существующего результата запрещён, а не «чинится».
+
+## 2. Банк сценариев OPM
+
+Базовый прогон, канонический экспорт и десять полных 224-месячных сценариев
+готовит один драйвер; он сам вызывает `scripts/generate_track2_scenarios.py`
+и `scripts/run_track2_scenarios.py`.
 
 ```bash
-RUN_ROOT=artifacts/track2-model-z-kt3
-BUNDLE="$RUN_ROOT/scenario-bundle"
-BATCH="$RUN_ROOT/scenario-runs"
-MODEL_Z_SOURCE=inputs/Model_Z_final_OPM.zip
-BASELINE_SCHEDULE=inputs/Model_Z/Model_Z_sch.inc
-BASELINE_CONTROLS=examples/model_z_baseline_controls_v4.csv
+export OPM_MPI_PROCESSES=16 OPM_THREADS_PER_PROCESS=1
+export OPM_CPU_AFFINITY=32-47
+export OPM_WORKER_CPU_AFFINITIES='14-29;32-47'
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
+PYTHONPATH=src:scripts /root/projects/TimesOil/.venv/bin/python \
+  scripts/benchmark_bhp_surrogate.py \
+  --source /tmp/timesoil-kt2/model_z/Model_Z_final_OPM.zip \
+  --output "$R/<новый-каталог>" --workers 2
+```
 
-SOURCE_SHA256="$(sha256sum "$MODEL_Z_SOURCE" | awk '{print $1}')"
-test "$SOURCE_SHA256" = \
-  4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa
-BASELINE_CONTROLS_SHA256="$(sha256sum "$BASELINE_CONTROLS" | awk '{print $1}')"
-test "$BASELINE_CONTROLS_SHA256" = \
-  1a92c1e031ab7dca843f3f8824070f7fe85a2955fa270d45eb66b0638e88752f
+Драйвер проверяет SHA-256 архива, выполняет базовый OPM (либо переиспользует
+готовый через `--reference-run <каталог>`), экспортирует канонический baseline,
+требует ровно 224 месяца × 103 скважины, затем генерирует bundle сценариев
+(`--scenario-count 10 --seed 20260909 --perturbation-fraction 0.15
+--bhp-perturbation-fraction 0.15`) и считает их с `--include-bhp`.
+Раскладка результата: `scenario-bundle/index.json`, `scenario-runs/dataset/*.csv`,
+`scenario-runs/manifests/*.json`, общий `scenario-runs/manifest.json`, `plan.json`.
+Несовпадение любого хеша завершает команду ошибкой. `--self-check` выполняет
+только встроенные проверки выравнивания периода без расчёта.
 
+Отдельные генерация и прогон, если bundle нужен вне драйвера:
+
+```bash
 uv run python scripts/generate_track2_scenarios.py \
-  "$BASELINE_CONTROLS" "$BASELINE_SCHEDULE" "$BUNDLE" \
-  --scenario-count 10 --seed 20260831 \
-  --perturbation-fraction 0.15 --liquid-rate-scale 1.0
-
-SCENARIO_INDEX_SHA256="$(sha256sum "$BUNDLE/index.json" | awk '{print $1}')"
-test "$SCENARIO_INDEX_SHA256" = \
-  69697fede3bafe9fd50f7ba568a7aaec3d2f98a9726fde94595feea82f10e317
-BASELINE_CHDD_SHA256=446c24eaa063710422835a745be157abdce66d602c75f33de50a8e75881d3884
+  <baseline-controls.csv> <Model_Z_sch.inc> <bundle> \
+  --scenario-count 10 --seed 20260909 \
+  --perturbation-fraction 0.15 --bhp-perturbation-fraction 0.15
 
 uv run python scripts/run_track2_scenarios.py \
-  "$MODEL_Z_SOURCE" "$BUNDLE" "$BATCH" \
-  --source-sha256 "$SOURCE_SHA256" \
-  --scenario-index-sha256 "$SCENARIO_INDEX_SHA256" \
-  --baseline-chdd-sha256 "$BASELINE_CHDD_SHA256" \
+  <Model_Z_final_OPM.zip> <bundle> <scenario-runs> \
+  --source-sha256 <sha> --scenario-index-sha256 <sha> \
+  --baseline-chdd-sha256 <sha> \
   --schedule-relative-path Model_Z/Model_Z_sch.inc \
-  --deck Model_Z/Model_Z.data \
-  --timeout-seconds 7200 --parsing-strictness low
+  --deck Model_Z/Model_Z.data --parsing-strictness low \
+  --timeout-seconds 7200 --include-bhp --workers 2
 ```
 
-Прогоны выполняются строго последовательно. Ожидаемая раскладка:
-`$BATCH/dataset/{baseline,perturbation-001..009}.csv`,
-`$BATCH/manifests/{baseline,perturbation-001..009}.json` и общий
-`$BATCH/manifest.json`. Несовпадение любого хеша завершает команду ошибкой.
+Два дополнительных набора расширяют покрытие режимов.
 
-## 3. Суррогат
+Расходные режимы `physical-sweep-NN` — восемь пар множителей добычи/закачки
+относительно переданного incumbent-запроса, каждый прогоняется полным циклом:
 
 ```bash
-uv run python scripts/train_track2_surrogate.py \
-  --dataset "$BATCH/dataset" --manifest "$BATCH/manifests" \
-  --batch-manifest "$BATCH/manifest.json" \
-  --scenario-index-sha256 "$SCENARIO_INDEX_SHA256" \
-  --output "$RUN_ROOT/training" --test-fraction 0.25 \
-  --ensemble-size 5 --n-estimators 160 --horizon 6 \
-  --seed 20260831 --conformal-level 0.90 \
-  --interwell-source "$MODEL_Z_SOURCE"
+PYTHONPATH=src:scripts /root/projects/TimesOil/.venv/bin/python \
+  scripts/run_full_period_sweep.py <incumbent-request.json> <baseline-run> <output>
 ```
 
-## 4. Поиск и финальный повторный расчёт
+Режимы давления `bhp-only-NN` — фиксированные расходы, роли и статусы,
+изменяется только граница BHP:
 
 ```bash
-uv run python scripts/search_track2_schedule.py search \
-  "$RUN_ROOT/training/model" "$BATCH/dataset/baseline.csv" \
-  "$BATCH/manifests/baseline.json" "$RUN_ROOT/training/metrics.json" \
-  "$MODEL_Z_SOURCE" "$BASELINE_SCHEDULE" "$RUN_ROOT/search" \
-  --scenario-id baseline --start-date 2007-01-01 \
-  --candidate-count 500 --seed 20260831 --perturbation-fraction 0.05 \
-  --perturb-injection --candidate-rank 0 \
-  --uncertainty-weight 1 --injection-cost-equivalent 0.01 \
-  --deck Model_Z/Model_Z.data \
-  --schedule-relative-path Model_Z/Model_Z_sch.inc \
-  --timeout-seconds 3600 --parsing-strictness low
-
-uv run python scripts/search_track2_schedule.py replay \
-  "$MODEL_Z_SOURCE" "$RUN_ROOT/search" "$RUN_ROOT/search-final-opm" \
-  --deck Model_Z/Model_Z.data \
-  --schedule-relative-path Model_Z/Model_Z_sch.inc \
-  --timeout-seconds 3600 --parsing-strictness low
-
-sha256sum \
-  "$RUN_ROOT/training/metrics.json" \
-  "$RUN_ROOT/training/model/manifest.json" \
-  "$RUN_ROOT/search/manifest.json" \
-  "$RUN_ROOT/search/lineage.json" \
-  "$RUN_ROOT/search-final-opm/final-replay-receipt.json"
+PYTHONPATH=src:scripts /root/projects/TimesOil/.venv/bin/python \
+  scripts/run_bhp_validation.py \
+  --request <request.json> --reference <канонический-экспорт> \
+  --output <output> --transition-coverage
 ```
 
-Итогом являются `wells_schedule.inc`, изменённый include Model Z, квитанция
-повторного расчёта и результат ЧДД. `--perturb-injection` включает перераспределение
-при неизменной месячной сумме заданных WRAT, ролях и статусах, с покважинной границей
-`--perturbation-fraction`. Флаг требует модели, обученной с `--interwell-source`.
-Без него закачка остаётся базовой. Для сравнения следующих кандидатов повторить
-поиск с теми же параметрами, `--candidate-rank 1`, затем `2`, в новых каталогах;
-каждый replay запускается по `final_replay_argv` его манифеста.
-`--injection-only` сохраняет добывающие управления и требует `--perturb-injection`
-при `--liquid-rate-scale 1`. Для проверки зависимости от широких интервалов
-можно отдельно отобрать кандидата с `--uncertainty-weight 0`; OPM остаётся воротами. Прогоны OPM
-выполнять последовательно. Улучшение подтверждается сравнением официального ЧДД
-кандидата и baseline за один период с одинаковыми нормативами.
+Взаимоисключающие наборы плана: `--transition-coverage` (режимы разработки),
+`--uncertainty-validation` (закреплённые калибровочные/тестовые случаи, никогда
+не входящие в разработку), `--local-reference-evaluation`; без флага
+используется набор по умолчанию. `--self-check` считает только проверки плана.
+Разбиение случаев зафиксировано: calibration `[0, 1, 3, 4, 6]`,
+test `[2, 5, 7]`; отбор модели на тестовых случаях запрещён.
 
-Экономика replay использует его шестимесячное окно; full-cycle использует
-явный `horizon_months` и полный календарь управлений запроса. Шесть месяцев
-текущей репетиции не задают конкурсный горизонт. Проверенные результаты и
-ограничения приведены в [аудите 9 сентября](AUDIT_20260909.md).
-OPM хранит конец отчётного интервала: продукция январского управления берётся
-из отчёта 1 февраля. Для калькулятора даты сдвигаются на месяц назад; отчёты
-после конца управления исключаются. История сохраняет состояние насосов и
-официальное распределение годового налога; её денежные потоки в итог не входят.
-`result.json` и Excel остаются исходными результатами официального калькулятора;
-сдаваемый итог находится в `manifest.json.management_period.total_chdd_m`
-и терминальной квитанции. Суммарный исторический `summary.totalChddM` подменять
-этим итогом нельзя.
+## 3. Связность
 
-## 5. Единый внешний Qwen → OPM → export → ЧДД
+```bash
+PYTHONPATH=src:scripts /root/projects/TimesOil/.venv/bin/python \
+  scripts/export_opm_connectivity.py <проверенный-OPM-run> <output>
+```
 
-Команду выполнять на операторском хосте из чистого зафиксированного Git checkout:
-она проверяет HEAD и хеши исполняемых файлов до и после расчёта. Нужны Docker с
-закреплённым выше образом OPM Flow, внешний HTTPS endpoint `/v1` и секретный файл
-ключа; Docker socket в API-контейнер не передаётся.
+Скрипт сжимает экспортированные проводимости INIT/EGRID, включая параллельные
+и несоседние соединения (3865 NNC), в `connectivity.json`. Используемый файл Z:
+`R/static-head-geology-20260909/model-z/connectivity.json`, SHA-256
+`cff65939ad943dd1df28460306fc433663a22707bd66a087732077135f7992c0`.
+Тот же файл передаётся в обучение, оценку и поиск.
 
-Обязательное окружение и один запуск без перезаписи:
+## 4. Обучение TimesFM
+
+Обучаются девять экономических выходов (`WOMR`, `WLPR`, `WWIR`, `THP`=WBP9,
+`BHP`, `WEFF`, `WOMT_Diff`, `WLPT_Diff`, `WWIT_Diff`). Обучение идёт по
+**всей** сети: `--unfreeze-backbone`; слово `head` в именах CLI и файлов не
+означает обучение только последнего слоя.
+
+```bash
+CUDA_VISIBLE_DEVICES=5 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+PYTHONPATH=src:scripts taskset -c 14-29 \
+  /tmp/timesoil-kt3-20260908/venv/bin/python scripts/finetune_timesfm_head.py \
+  --batch "$R/bhp-training-v3-20260909/scenario-runs" \
+  --batch-sha256 4dbab179f94ca1800b052e1346591a685eb9fa2d8dc900d917fc6ad66d149893 \
+  --connectivity "$R/static-head-geology-20260909/model-z/connectivity.json" \
+  --initial-head "$R/timesfm-economic-targets-z-20260910/training/full-model.pt" \
+  --initial-head-sha256 9b954acbe64f0c5ff8dc213315a46b9324a948294ac19bc3b087d55fb50844ae \
+  --regime-calibration "$R/physical-z-forecast-validation-20260909" \
+  --regime-calibration-sha256 69a92d83bc7824b68af1eaddbddd884b589e4009b7d12de4d23be2e0a227277f \
+  --bhp-calibration "$R/transition-coverage-z-20260910/scenarios" \
+  --bhp-calibration-sha256 9bffec89541467afaf904819ad77baa4469bd4d726ff55d3e08f2ba92c2fae8d \
+  --output "$OUT/training" --epochs 60 --learning-rate 1e-5 \
+  --unfreeze-backbone --condition-last-layer --condition-first-layer \
+  --cold-start-normalization --retain-initial-scale \
+  --economic-targets --precise-variate-softmax
+```
+
+Выход: `training/full-model.pt` и `training/report.json`. В отчёте проверяются
+`complete`, `checkpoint_sha256` и девять `economic_targets`. Первый прогон без
+`--initial-head`/`--regime-calibration`/`--bhp-calibration` даёт стартовый
+40-эпоховый checkpoint; приведённая команда продолжает обучение с него.
+
+`--precise-variate-softmax` считает variate softmax в FP64 и возвращает FP32:
+это устраняет неповторяемость CUDA, метаданные восстанавливают режим при
+загрузке. Допуск проверки decoder и FP64 не ослаблять ради прохождения теста
+или обхода OOM.
+
+Измерено 10 сентября: 60 эпох, лучшая 60, около **5486,7 с**; validation loss
+0,1740743965 → 0,06936201453.
+
+Разбиение зафиксировано и не меняется: train — `baseline`,
+`perturbation-001/002/003/005/006`, `physical-sweep-00/01/02/07`,
+`bhp-only-00/01/03/06`; validation — `perturbation-009`, `physical-sweep-04`,
+`bhp-only-04`; development test — `perturbation-004/007/008`. Обучение или
+отбор модели на тестовых сценариях запрещены.
+
+## 5. Оценка на закреплённом наборе
+
+```bash
+OUT="$R/economic-uncertainty-z-<метка>"
+test ! -e "$OUT" && mkdir "$OUT"
+CUDA_VISIBLE_DEVICES=5 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+PYTHONPATH=src:scripts taskset -c 14-29 \
+  /tmp/timesoil-kt3-20260908/venv/bin/python scripts/evaluate_timesfm_scenarios.py \
+  --batch "$R/fresh-uncertainty-z-20260910/scenarios" \
+  --batch-sha256 4a9a8e53f8a44813fae8211d3a902f43f3c251b747d623c5dc47e78697a8eeef \
+  --head-report "$MODEL/report.json" --head "$MODEL/full-model.pt" \
+  --connectivity "$R/static-head-geology-20260909/model-z/connectivity.json" \
+  --fixed-origin-only --output "$OUT/evaluation" >"$OUT/evaluation.log" 2>&1
+printf '%s\n' "$?" >"$OUT/evaluation.exit"
+```
+
+Режим: фиксированная точка прогноза, 103 скважины, 224 месяца, девять целей;
+неизвестные будущие наблюдения маскируются `NaN`. Физическая reference-траектория
+из будущего в прогноз не подаётся. После прогона проверить `complete`, SHA
+модели и отчёта, все восемь исходных сценариев, девять `radius_by_target`,
+исключение обучающих случаев и фактические ошибки/покрытие.
+
+**Открытая проблема.** Последний запуск завершился CUDA OOM на
+`torch.softmax(..., dtype=float64)`: запрошено 3,13 GiB при лимите процесса
+13,82 GiB (доля памяти GPU `0.35`, жёстко задана в
+`scripts/evaluate_timesfm_scenarios.py`); обучение в том же режиме помещалось
+с долей 0,60. Это ресурсная ошибка запуска, метрик она не дала. Минимальный
+следующий шаг — согласовать лимит evaluator с доступной памятью после проверки
+загрузки GPU 5. Не уменьшать фонд и горизонт, не отключать FP64 и не менять
+разбиение ради прохождения. Подробности — §11 передачи
+[10 сентября](HANDOFF_CLAUDE_CODE_20260910.md).
+
+## 6. Поиск графика и фиксация выбора
+
+Внутри поиска **нет ни одного вызова OPM**: варианты ранжируются официальным
+калькулятором по прогнозным экономическим рядам. Недопустимые по собственным
+заданиям скважин варианты отбрасываются **до** ранжирования.
+
+Окружение поиска:
 
 ```bash
 export LLM_BASE_URL=https://litellm.tatneft.guru/v1
 export LLM_MODEL=qwen3.8-27b
-export LLM_TIMEOUT_SECONDS=120
-export LLM_MAX_OUTPUT_TOKENS=4096
-# При запущенном обратном SSH-туннеле на A100:
-# export LLM_PROXY_URL=http://127.0.0.1:18889
-test -s secrets/qwen_api_key
-export LLM_API_KEY="$(<secrets/qwen_api_key)"
-
-uv run timesoil-aios full-cycle inputs/full-cycle-request.json \
-  --runs-dir artifacts/full-cycle \
-  --run-id model-z-full-cycle-v1 \
-  --timeout 7200
+export LLM_TIMEOUT_SECONDS=600
+export LLM_MAX_OUTPUT_TOKENS=8192
+test -s /dev/shm/timesoil-tatneft-20260909-key
+export LLM_API_KEY="$(</dev/shm/timesoil-tatneft-20260909-key)"
+export CUDA_VISIBLE_DEVICES=5 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
+export OPM_MPI_PROCESSES=16 OPM_THREADS_PER_PROCESS=1 OPM_CPU_AFFINITY=30-45
 ```
 
-`inputs/full-cycle-request.json` — JSON-объект только со следующими корневыми
-ключами:
+Ключ читается из runtime-файла в переменную окружения процесса. Проверка
+наличия — `test -s`, не `cat`. Ключ не печатать, не коммитить, не включать в
+логи и бандлы.
+
+```bash
+PYTHONPATH=src:scripts \
+  /tmp/timesoil-kt3-20260908/venv/bin/python scripts/propose_track2_policies.py \
+  <baseline-view> <request.json> "$OUT/search" \
+  --rounds 3 --economic-selection \
+  --head "$MODEL/full-model.pt" --head-sha256 <sha> \
+  --head-report "$MODEL/report.json" \
+  --connectivity "$R/static-head-geology-20260909/model-z/connectivity.json"
+```
+
+`<request.json>` — полный запрос управления на 224 месяца (контракт — раздел 7),
+`<baseline-view>` — аутентифицированный канонический экспорт исходного графика.
+Протокол агентных раундов: до 3 ограниченных раундов, одна попытка исправления
+невалидного предложения; после двух невалидных ответов раунд отклоняется;
+для успешного поиска нужен минимум один согласованный агентный вариант.
+
+Фиксация выполняется внутри поиска через
+`track2_final_selection.seal_forecast_selection`: результат —
+`search/selection-before-opm.json`. Его SHA-256 и есть печать выбора:
+
+```bash
+sha256sum "$OUT/search/selection-before-opm.json"
+```
+
+После вычисления печати выбор изменить нельзя.
+
+## 7. Единственная финальная проверка
+
+```bash
+PYTHONPATH=src:scripts /root/projects/TimesOil/.venv/bin/python \
+  scripts/track2_final_selection.py \
+  "$OUT/search" "$R/timesfm-bhp-policy-20260909/cycles/baseline" "$OUT/final" \
+  --seal-sha256 <sha печати>
+```
+
+Аргументы позиционные: каталог поиска, каталог парного baseline-прогона, новый
+каталог результата; `--seal-sha256` обязателен. Скрипт сверяет печать,
+записывает `search/final-verification-attempt.json`, запускает **ровно один**
+`timesoil-aios full-cycle` для зафиксированного графика и формирует
+`final/final-audit.json` и `final/selected/full-cycle-receipt.json`.
+
+Выбор другого графика после получения физического результата запрещён.
+Sealed-запуск неизменяем: не перезапускать, не переназначать, не использовать
+его физику для перевыбора. Попытку не стирать даже при неудаче.
+
+### Контракт запроса full-cycle
+
+`request.json` — JSON-объект только со следующими корневыми ключами:
 
 - обязательные `context`, `controls`, `source`, `deck`,
   `schedule_relative_path`, `scenario_id`, `source_model`, `start_year`;
-- необязательные `parsing_strictness`, `density_map`, `charge_initial_pump`;
+- необязательные `parsing_strictness`, `density_map`, `charge_initial_pump`,
+  `horizon_months` (по умолчанию 6; для полного периода Z — 224);
 - `context` — объект без ключей секретов, для этого контура `track` равен `2`;
 - `source` — ZIP, каталог или DATA-файл Model Z относительно каталога request;
   `deck` и `schedule_relative_path` — безопасные относительные POSIX-пути;
 - `source_model` имеет точное значение `model_z_opm`; `start_year` равен году
   первого месяца управления;
 - `controls` содержит ровно один объект на каждую управляющую скважину и каждый
-  из шести последовательных месяцев. Для текущего подготовленного schedule это
-  **618 объектов = 6 × 103 скважины**. Набор 103 имён извлекается из WCON-записей
-  фактического snapshot schedule, а не доверяется request;
-- каждый control имеет ровно поля `month`, `well`, `role`, `status`, `target`,
-  `value`: месяц `YYYY-MM-01`; роли `producer`/`injector`; статусы `OPEN`/`SHUT`;
-  цель производителя `ORAT` или `LRAT`, нагнетателя — `WRAT`; значение — конечное
-  неотрицательное число, для `SHUT` только `0`.
+  из `horizon_months` последовательных месяцев. Для полного периода Z это
+  **23 072 объекта = 224 × 103 скважины**. Набор имён скважин извлекается из
+  WCON-записей фактического snapshot расписания, а не доверяется request;
+- каждый control имеет поля `month`, `well`, `role`, `status`, `target`,
+  `value` и необязательный `bhp_limit`: месяц `YYYY-MM-01`; роли
+  `producer`/`injector`; статусы `OPEN`/`SHUT`; цель производителя `ORAT` или
+  `LRAT`, нагнетателя — `WRAT`; значение — конечное неотрицательное число, для
+  `SHUT` только `0`; `bhp_limit` — конечное положительное число.
 
-Минимальная форма request, где `controls` необходимо заполнить всеми 618
-объектами по указанному контракту:
+Минимальная форма, где `controls` заполняется по указанному контракту:
 
 ```json
 {
@@ -193,42 +336,86 @@ uv run timesoil-aios full-cycle inputs/full-cycle-request.json \
   "source": "Model_Z_final_OPM.zip",
   "deck": "Model_Z/Model_Z.data",
   "schedule_relative_path": "Model_Z/Model_Z_sch.inc",
-  "scenario_id": "model-z-full-cycle-v1",
+  "scenario_id": "model-z-final",
   "source_model": "model_z_opm",
   "start_year": 2007,
-  "parsing_strictness": "strict",
-  "charge_initial_pump": false
+  "parsing_strictness": "low",
+  "charge_initial_pump": false,
+  "horizon_months": 224
 }
 ```
 
-При успехе CLI печатает JSON с путём
-`artifacts/full-cycle/model-z-full-cycle-v1/full-cycle-receipt.json` и его
-SHA-256. Квитанция имеет схему `timesoil.aios.track2-full-cycle/v1`, режим `0444`,
-содержит привязку Git/source map, хеш полного набора controls и source inventory,
-закреплённый OPM, аутентифицированные SUMMARY/export, официальный ЧДД и честное
-решение критика; `organizer_certified=false`.
+Отдельный запуск полного цикла вне финальной проверки:
+
+```bash
+uv run timesoil-aios full-cycle <request.json> \
+  --runs-dir <runs> --run-id <идентификатор> --timeout 7200
+```
+
+При успехе CLI печатает JSON с путём `<runs>/<run-id>/full-cycle-receipt.json`
+и его SHA-256. Квитанция имеет схему `timesoil.aios.track2-full-cycle/v1`,
+режим `0444`, содержит привязку Git/source map, хеш полного набора controls и
+source inventory, закреплённый OPM, аутентифицированные SUMMARY/export,
+официальный ЧДД и честное решение критика; `organizer_certified=false`.
 
 Коды завершения: `0` — терминальные ворота пройдены и критик одобрил; `2` —
-терминальные артефакты и квитанция получены, но критик отклонил; `1` — fail-closed
-ошибка без подтверждённой успешной квитанции. Команда отказывает до Qwen/OPM
-execution при неполных 6×103 controls, пропущенной или неизвестной скважине,
-секрете в context, грязных исполняемых файлах либо существующем run-id. Ошибка
-Qwen, OPM, SUMMARY/export, ЧДД, изменение source/commit или хеша артефакта также
-не создаёт `complete=true` receipt. Автоматического retry и локальной LLM нет.
-При отклонении плана до OPM сохраняется отдельный
+терминальные артефакты и квитанция получены, но критик отклонил; `1` —
+fail-closed ошибка без подтверждённой успешной квитанции. Команда отказывает
+до вызова Qwen и OPM при неполном наборе controls, пропущенной или неизвестной
+скважине, секрете в `context`, грязных исполняемых файлах либо существующем
+`run-id`. Ошибка Qwen, OPM, SUMMARY/export, ЧДД, изменение source/commit или
+хеша артефакта также не создаёт `complete=true` receipt. Автоматического retry
+и локальной LLM нет. При отклонении плана до OPM сохраняется отдельный
 `<run-id>.planning-rejected.json` с решениями ролей; подготовленный каталог
 удаляется. Одобрение планирования разрешает расчёт, финальное решение остаётся
 за критиком после получения терминальных доказательств.
 
-Файлы `deliverables/track2_model_z/*.json` являются публичными сводками, не
-самостоятельными receipts; для проверки запуска нужны `full-cycle-receipt.json`
+### Парный аудит результата
+
+Сравнение двух завершённых прогонов официальным ЧДД полного периода:
+
+```bash
+PYTHONPATH=src:scripts /root/projects/TimesOil/.venv/bin/python \
+  scripts/compare_track2_cycles.py \
+  <baseline-run> <candidate-run> <output.json> --expected-months 224
+```
+
+Скрипт проверяет уже существующие результаты, не запускает OPM и отказывается
+перезаписывать итог. `--expected-months` отбраковывает укороченное окно.
+Воспроизведение самой симуляции требует оригинальных архивов и закреплённого
+Docker-образа.
+
+### Экономические соглашения
+
+OPM хранит конец отчётного интервала: продукция январского управления берётся
+из отчёта 1 февраля. Для калькулятора даты сдвигаются на месяц назад; отчёты
+после конца управления исключаются. История сохраняет состояние насосов и
+официальное распределение годового налога; её денежные потоки в итог не входят.
+`result.json` и Excel остаются исходными результатами официального
+калькулятора; сдаваемый итог находится в
+`manifest.json.management_period.total_chdd_m` и терминальной квитанции.
+Суммарный исторический `summary.totalChddM` подменять этим итогом нельзя.
+
+Файлы `deliverables/track2_model_z/*.json` — публичные сводки, не
+самостоятельные receipts; для проверки запуска нужны `full-cycle-receipt.json`
 и перечисленные в нём хешированные манифесты.
 
-## 6. AIOS API
+### Измеренная длительность, 10 сентября
+
+| Этап | Время |
+|---|---:|
+| Поиск целиком | 18 мин 33 с |
+| — 8 вариантов сетки | 1 мин 49 с |
+| — 3 раунда Qwen | ≈5,5 мин на раунд |
+| Фиксация выбора | 3 с |
+| Финальный full-cycle | 7 мин 36 с |
+| — OPM внутри него | 3 мин 37 с |
+| **Итого** | **26 мин 13 с** |
+
+## 8. Веб-интерфейс и API
 
 ```bash
 cp config/aios.example.env config/aios.env
-# заменить LLM_BASE_URL в config/aios.env на выданный внешний HTTPS endpoint
 mkdir -p secrets
 chmod 700 secrets
 printf '%s' "$QWEN_API_KEY" > secrets/qwen_api_key
@@ -238,11 +425,49 @@ curl --noproxy '*' --fail http://127.0.0.1:8000/health
 curl --noproxy '*' --fail http://127.0.0.1:8000/v1/capabilities
 ```
 
-Ключ не передавать аргументом командной строки и не добавлять в Git.
-`docker compose --env-file .env.example down` останавливает сервис и сохраняет
-том расчётов. Удалять том можно только после отдельного копирования результатов.
+Сервис — `uvicorn timesoil.aios.api:app`. Эндпоинты: `GET /` (операторская
+страница), `GET /health`, `GET /v1/capabilities`, `POST /v1/experiments/agents`,
+`POST /v1/economics/chdd`.
 
-Проверка четырёх ролей на операторском хосте:
+Compose использует минимальный bootstrap с правами только на чтение секрета и
+смену UID/GID: перед запуском API он сбрасывает capabilities и переходит на
+UID/GID `10001`; сам API от root не работает. Docker socket в API-контейнер не
+передаётся, поэтому OPM из контейнера API не запускается. Ключ не передавать
+аргументом командной строки и не добавлять в Git.
+`docker compose --env-file .env.example down` останавливает сервис и сохраняет
+том расчётов; удалять том можно только после отдельного копирования результатов.
+
+Профиль A100 — отдельное имя проекта и непересекающийся порт:
+
+```bash
+AIOS_PORT=18082 docker compose --env-file .env.example \
+  -p scorp-timesoil-kt3 -f compose.yaml -f compose.a100.yaml \
+  up -d --build --wait --wait-timeout 180
+curl --noproxy '*' --fail http://127.0.0.1:18082/health
+curl --noproxy '*' --fail http://127.0.0.1:18082/v1/capabilities
+```
+
+`compose.a100.yaml` подключает контейнер к сетевому пространству хоста,
+сохраняя bind API на `127.0.0.1`. Профиль предназначен для Linux.
+
+`connectivity_verified=false` в `/v1/capabilities` означает отсутствие сетевой
+пробы внутри этого GET; доступность провайдера проверяется отдельным
+`/v1/experiments/agents` или CLI.
+
+### LLM-маршрут
+
+Рабочий маршрут — прямой HTTPS к Татнефти: `LLM_BASE_URL`
+`https://litellm.tatneft.guru/v1`, `LLM_MODEL` `qwen3.8-27b`. Клиент проверяет
+соответствие модели и endpoint.
+
+`LLM_PROXY_URL` — необязательный явный CONNECT-прокси на случай, когда прямой
+выход недоступен (например `http://127.0.0.1:10809`). Пустое значение означает
+прямое соединение. Системные `HTTP_PROXY`/`HTTPS_PROXY` клиент не читает. TLS
+проверяется клиентом, ключ не передаётся прокси открытым текстом. Внутри
+API-контейнера без host network `127.0.0.1` обозначает сам контейнер и не
+ведёт к прокси хоста.
+
+### Проверка четырёх ролей
 
 ```bash
 set -a
@@ -255,98 +480,37 @@ uv run timesoil-aios agent-experiment examples/agent_context.json
 Контекст намеренно незавершён: корректный критик должен потребовать численные
 доказательства, а не объявить готовность по текстовой рекомендации.
 
-### Выход A100 через существующий прокси
+Подкоманды CLI: `doctor` (готовность компонентов без секретов),
+`agent-experiment`, `full-cycle`.
 
-Проверено 9 сентября: на A100 работает `nci-egress-proxy.service` (Xray,
-VLESS/REALITY). Для CLI на хосте и Compose с host network использовать:
+## 9. Проверки
 
-```bash
-export LLM_PROXY_URL=http://127.0.0.1:10809
-```
-
-Авторизованный запрос к Cerebras `qwen-3.8-27b` прошёл за 0,51 с.
-Этот маршрут не зависит от WSL. `agent_rag` в своей Docker bridge-сети
-обращается к тому же прокси через `172.23.0.1:10809`; этот адрес относится
-к его сети, для TimesOil с host network используется loopback.
-Проверять нужно авторизованный запрос модели: запрос `/models` без ключа
-возвращает 403 даже при исправном маршруте.
-
-### Резервный выход A100 через WSL
-
-Проверенный маршрут: A100 `127.0.0.1:18889` → обратный SSH-туннель →
-WSL `127.0.0.1:10809` → Cerebras. В WSL должен быть доступен HTTP CONNECT-прокси
-на порту 10809. Из WSL держать отдельную сессию:
+Локально, в WSL:
 
 ```bash
-ssh -N -o ControlPath=none -o ExitOnForwardFailure=yes \
-  -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
-  -R 127.0.0.1:18889:127.0.0.1:10809 a100-remote
+uv run python -m compileall -q src scripts
+uv run pytest tests -q
+git diff --check
 ```
 
-На хосте A100 добавить `LLM_PROXY_URL=http://127.0.0.1:18889` в окружение
-CLI. `LLM_BASE_URL` остаётся `https://litellm.tatneft.guru/v1`; TLS проверяется
-клиентом, ключ не передаётся прокси открытым текстом. Системные `HTTP_PROXY`
-и `HTTPS_PROXY` клиент не читает. Остановка SSH-сессии закрывает маршрут.
-Эта команда предназначена для CLI на хосте: `127.0.0.1` внутри API-контейнера
-обозначает сам контейнер и не ведёт к туннелю хоста.
-
-## 6. Docker на A100 через существующий прокси
-
-В серверном `config/aios.env` указать
-`LLM_PROXY_URL=http://127.0.0.1:10809` для `nci-egress-proxy` из раздела 5.
-Остальные значения взять из текущего `config/aios.example.env`, включая каталог
-модели v5. Ключ остаётся в отдельном secret-файле.
+После численного или модельного изменения дополнительно выполнить профильные
+проверки на A100 с venv проекта, например:
 
 ```bash
-# Linux/A100: отдельное имя проекта; порт не конфликтует с другими API.
-AIOS_PORT=18082 docker compose --env-file .env.example \
-  -p scorp-timesoil-kt3 -f compose.yaml -f compose.a100.yaml \
-  up -d --build --wait --wait-timeout 180
-curl --noproxy '*' --fail http://127.0.0.1:18082/health
-curl --noproxy '*' --fail http://127.0.0.1:18082/v1/capabilities
+PYTHONPATH=src:scripts /root/projects/TimesOil/.venv/bin/python -m pytest -q \
+  tests/test_timesfm_scenario_economics.py \
+  tests/test_aios_operating_constraints.py \
+  tests/test_policy_control_repair.py \
+  tests/test_track2_final_selection.py
 ```
 
-`compose.a100.yaml` подключает контейнер к сетевому пространству хоста для
-доступа к loopback-прокси, сохраняя bind API на `127.0.0.1`. Этот профиль
-предназначен для Linux. Доступ к Cerebras зависит от работающего SSH-туннеля
-и прокси WSL; автоматического переключения маршрута нет.
+Метрики и хеши квитанций записывать в соответствующую запись `docs/` или
+`deliverables/`. Локальная проверка не заменяет серверный прогон: если
+выполнена только она, так и указывать.
 
-Проверенная репетиция использовала API `127.0.0.1:18082`; модель v5 и ЧДД готовы,
-живой агентный эксперимент завершён. `connectivity_verified=false` в
-`/v1/capabilities` означает отсутствие сетевой пробы внутри этого GET;
-доступность провайдера проверяется отдельным `/v1/experiments/agents`.
-
-
-Снимки реально исполненных исходников репетиции находятся в
-`results/kt3-model-z-v5/source-snapshots/`: обучение — 6 файлов, поиск/replay —
-10, полный цикл — 16. `index.json` хранит исходные абсолютные пути и SHA-256;
-содержимое каждого файла проверено перед копированием. Ссылки старых квитанций
-остаются привязаны к исходным путям: при восстановлении архива нужны эти пути
-либо новый воспроизводимый запуск с новыми квитанциями.
-
-
-Итог репетиции 8 сентября: из трёх проверенных кандидатов выбран №290,
-ЧДД 800,2466164462826 млн руб. за январь–июнь 2007 года, прирост
-4,325833983137045 млн руб. к сопоставимому baseline. Сдаваемый файл репетиции:
-`deliverables/track2_model_z/kt3/wells_schedule.inc`; подробная сводка —
-`deliverables/track2_model_z/kt3_completion_summary.json`.
-Значение не переносится на будущую историю или другой период управления.
-
-## Проверенное переключение на Татнефть · 09.09.2026
-
-Оба трека используют `qwen3.8-27b` через `https://litellm.tatneft.guru/v1`
-напрямую с A100, без CONNECT-прокси. Идентификатор отличается от прежнего
-Cerebras `qwen-3.8-27b`; клиент проверяет соответствие модели и endpoint.
-
-Проверены координатор, аналитик пласта, планировщик и критик: по 8 реальных
-запросов на трек, включая вызовы инструментов и структурированные решения.
-[Трек 1](../deliverables/control_coverage_20260909/track1-protocol.json),
-[Трек 2](../deliverables/control_coverage_20260909/track2-protocol.json).
-Проверка протокола не является расчётом месторождения или подтверждением ЧДД.
-
-Оба API-контейнера пересобраны из Git-кода; health, capabilities и реальный
-вызов Qwen из каждого контейнера прошли. Тома результатов сохранены.
-[Проверка работающих контейнеров](../deliverables/control_coverage_20260909/tatneft-qwen38-containers.json).
-Флаг `connectivity_verified` в статическом capabilities остаётся `false`: живое
-соединение подтверждает отдельная датированная проверка, не постоянная гарантия.
-Серверные проверки клиента/API/CLI: Трек 1 — 30 passed; Трек 2 — 36 passed.
+**Связанные материалы:**
+[передача 10 сентября](HANDOFF_CLAUDE_CODE_20260910.md) ·
+[приёмочная матрица](BOTH_TRACKS_ACCEPTANCE_20260909.md) ·
+[алгоритм обоих треков](ALGORITHM_TRACKS_1_2.md) ·
+[управления, расходы и пробелы](CONTROL_COST_GAPS_20260909.md) ·
+[A100: производительность](A100_PERFORMANCE_20260909.md).

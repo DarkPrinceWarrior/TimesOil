@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import csv
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from hashlib import sha256
 import json
 import os
@@ -1019,32 +1018,6 @@ class OpmFlowRunner:
             else f"cleanup-exit-{completed.returncode}"
         )
 
-    def list_summary_vectors(
-        self, result: OpmRunResult, summary_file: str | Path | None = None
-    ) -> tuple[str, ...]:
-        stdout = self._run_summary(result, ("-l",), (), summary_file)
-        vectors = tuple(stdout.split())
-        if not vectors:
-            raise OpmSummaryError("summary -l returned no vectors")
-        return vectors
-
-    def extract_summary(
-        self,
-        result: OpmRunResult,
-        vectors: Iterable[str],
-        *,
-        summary_file: str | Path | None = None,
-        report_steps_only: bool = True,
-    ) -> str:
-        selected = tuple(vectors)
-        if not selected or any(
-            not vector.strip() or any(c.isspace() for c in vector)
-            for vector in selected
-        ):
-            raise ValueError("at least one whitespace-free summary vector is required")
-        options = ("-r",) if report_steps_only else ()
-        return self._run_summary(result, options, selected, summary_file)
-
     def extract_summary_report(
         self,
         result: OpmRunResult,
@@ -1142,16 +1115,6 @@ class OpmFlowRunner:
             extraction.unlink(missing_ok=True)
             raise
         return report, extraction
-
-    def _run_summary(
-        self,
-        result: OpmRunResult,
-        options: tuple[str, ...],
-        vectors: tuple[str, ...],
-        summary_file: str | Path | None,
-    ) -> str:
-        stdout, _, _ = self._run_summary_details(result, options, vectors, summary_file)
-        return stdout
 
     def _run_summary_details(
         self,

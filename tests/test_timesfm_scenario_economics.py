@@ -44,7 +44,7 @@ def test_nine_target_intervals_preserve_units_and_group_coverage():
     calibration[4, 1, 1, 8] = 2.
     held_out = np.ones((3, 2, 2, 9))
     held_out[2, 1, 1, 8] = 3.
-    report = interval_check(calibration, held_out, economic=True)
+    report = interval_check(calibration, held_out)
     assert list(report['radius_by_target']) == list(ECONOMIC_TARGETS)
     assert report['radius_by_target']['WWIT_Diff'] == 2.
     assert report['units_by_target'] == dict(zip(ECONOMIC_TARGETS, ECONOMIC_UNITS))
@@ -52,8 +52,9 @@ def test_nine_target_intervals_preserve_units_and_group_coverage():
     assert report['test_whole_trajectory_joint_coverage'] == 2 / 3
     assert not report['guaranteed_coverage_claimed']
     assert 'radius_oil_tpd_liquid_tpd_pressure_bar' not in report
-    legacy = interval_check(calibration[..., :3], held_out[..., :3])
-    assert legacy['radius_oil_tpd_liquid_tpd_pressure_bar'] == [1.] * 3
+    # Three physical channels are no longer a supported forecast shape.
     for invalid in [held_out[..., :3], held_out * np.nan, -held_out, held_out[:2]]:
         with pytest.raises(ValueError, match='trajectory groups'):
-            interval_check(calibration, invalid, economic=True)
+            interval_check(calibration, invalid)
+    with pytest.raises(ValueError, match='trajectory groups'):
+        interval_check(calibration[..., :3], held_out[..., :3])

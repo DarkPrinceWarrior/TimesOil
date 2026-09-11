@@ -123,7 +123,8 @@ Qwen и полный OPM/ЧДД завершены: **14 135,013999 млн ру�
 
 **Как читать:** оглавление ведёт к этапам; блоки ▸ раскрывают технические детали.
 Прогнозный модуль **трека 2** — **Google TimesFM 3.0**. CRM +
-LightGBM сохранён как сравнительный контур в раскрываемом приложении.
+LightGBM остаётся историческим сравнением в раскрываемом приложении; его код
+удалён из рабочей ветки.
 **ЧДД ≥15% подтверждён для новых полных циклов обоих учебных кейсов.**
 Точность автономного прогноза Z и UQ/OOD остаются незакрытыми:
 последний прямой прогноз даёт **9,730–11,020% WAPE нефти**,
@@ -349,6 +350,7 @@ $$
 ## 5. Трек 1: подробный цикл одного месяца
 
 Действующий полный режим: `run_track1_mpc.py --agent --full-field --lifecycle`.
+Код Трека 1 находится в ветке `track-1-model-y`, не в этой ветке.
 
 ```mermaid
 sequenceDiagram
@@ -443,14 +445,15 @@ $$
 
 ### 5.2. Расчёт отклика без суррогата
 
-`run_track1_mpc.py` не загружает TimesFM, веса или калибровку прогноза.
-Контекст планировщика и критика содержит `surrogate_used=false`; это проверяет
-`audit_track1_lifecycle.py`. Геология, разломы, флюиды и межскважинное влияние
+`run_track1_mpc.py` (ветка `track-1-model-y`) не загружает TimesFM, веса или
+калибровку прогноза. Контекст планировщика и критика содержит
+`surrogate_used=false`; это проверяет
+`audit_track1_lifecycle.py` там же. Геология, разломы, флюиды и межскважинное влияние
 учитываются исходной гидродинамической моделью в каждом OPM-расчёте.
 После принятия месяца передаётся только его проверенное физическое состояние.
 
-Прежний модуль `timesfm_planning.py` сохранён для воспроизводимости старых
-экспериментов и не подключён к рабочему контроллеру. Новый полный цикл
+Прежний модуль `timesfm_planning.py` удалён при чистке и остаётся только в
+истории Git; к рабочему контроллеру он не был подключён. Новый полный цикл
 начинается с исходной истории, без продолжения журнала опыта с TimesFM.
 
 <a id="training"></a>
@@ -752,8 +755,9 @@ Qwen видит числа и предыдущие кандидаты, може�
 Адаптер BHP подключён именно к Google TimesFM 3.0; обучающие сценарии
 содержат проверенные изменения этой границы. Подключения нового входа
 недостаточно для подтверждения точности и причинного отклика.
-Исторический эксперимент исходных весов `benchmark_timesfm_controls.py`
-сравнивает одни и те же десять полных OPM-траекторий с BHP и без этого
+Исторический эксперимент исходных весов (`benchmark_timesfm_controls.py`,
+удалён при чистке; живая часть перенесена в `finetune_timesfm_head.py`)
+сравнивал одни и те же десять полных OPM-траекторий с BHP и без этого
 канала, раздельно для автономного и наблюдаемого режимов.
 Результат CRM + LightGBM остаётся отдельным сравнением.
 
@@ -814,7 +818,8 @@ RMSE давления достиг примерно $6.36\cdot10^{18}$ бар. �
 с совместными управлениями WAPE нефти **3,989%**, жидкости **2,401%**,
 RMSE давления **10,526 бар**. Эти значения нельзя подставлять вместо
 ошибки автономного прогноза 224 месяцев.
-[Подробный аудит короткого прогноза](AUDIT_20260909.md).
+[Приёмочная матрица](BOTH_TRACKS_ACCEPTANCE_20260909.md) и
+[передача 10 сентября](HANDOFF_CLAUDE_CODE_20260910.md).
 
 **Практический вывод:** TimesFM уже полезен как быстрый предварительный
 оценщик коротких гипотез. Текущий прямой или автономный длинный прогноз Z
@@ -884,15 +889,16 @@ $$
 
 | Маршрут | Что предлагает варианты | Что оценивает предварительно | Горизонт предварительной оценки | Итоговый критерий |
 |---|---|---|---|---|
-| A. `search_track2_schedule.py` | Генератор численных возмущений | Обученный CRM + LightGBM, UQ/OOD | **6 месяцев** в текущей функции поиска | OPM + ЧДД проверяемого периода |
+| A. `search_track2_schedule.py` — **удалён при чистке, остаётся в истории Git** | Генератор численных возмущений | Обученный CRM + LightGBM, UQ/OOD | **6 месяцев** в прежней функции поиска | OPM + ЧДД проверяемого периода |
 | B. `propose_track2_policies.py` | Начальный банк + планировщик Qwen через `propose_policy` | Обученный TimesFM с геологией и плановыми ковариатами | **Полный горизонт запроса: 224 месяца** | Полный OPM + ЧДД графика |
 | C. Физический поиск 09.09 | Прямые предложения Qwen и заданные численные возмущения с учётом выполненных OPM-сравнений | Анализ фактических результатов | Политика разворачивается на **224 месяца** | Полный OPM + официальный ЧДД |
 
-**A: что делает численный поиск.** Генерирует заданное число допустимых
-управлений, собирает их в массивы, вызывает `model.rollout`, исключает OOD
-и ранжирует оставшиеся варианты. При включённом перераспределении закачки
-сохраняются месячная сумма заданных WRAT, роли, статусы и покважинные пределы.
-Без межскважинного слоя этот режим запрещён.
+**A: что делал численный поиск.** Маршрут исторический: скрипт и суррогатный
+контур удалены, рабочим остаётся маршрут B. Скрипт генерировал заданное число
+допустимых управлений, собирал их в массивы, вызывал `model.rollout`, исключал
+OOD и ранжировал оставшиеся варианты. При включённом перераспределении закачки
+сохранялись месячная сумма заданных WRAT, роли, статусы и покважинные пределы;
+без межскважинного слоя этот режим был запрещён.
 
 Его предварительный критерий имеет размерность условного нефтяного эквивалента:
 
@@ -1231,23 +1237,31 @@ $$
 | Этап | Трек 1 | Трек 2 |
 |---|---|---|
 | Подготовка | Проверенный `case.json`, начальное состояние, полный календарь | Проверенный ZIP, baseline, сценарии |
-| Основной запуск | `run_track1_mpc.py` с `--agent --full-field --lifecycle` | Проверка TimesFM → `propose_track2_policies.py` → полный OPM → сравнение |
+| Основной запуск | `run_track1_mpc.py` с `--agent --full-field --lifecycle` (ветка `track-1-model-y`) | Проверка TimesFM → `propose_track2_policies.py` → фиксация → один OPM → сравнение |
 | Физическое подтверждение | Внутри каждого месячного шага | Для выбранных графиков, на всём периоде |
-| Полнота | `audit_track1_lifecycle.py` | `compare_track2_cycles.py --expected-months 224` с проверенными входами |
+| Полнота | `audit_track1_lifecycle.py` (ветка `track-1-model-y`) | `compare_track2_cycles.py --expected-months 224` с проверенными входами |
 | Выход | Полный принятый график и последнее накопленное ЧДД | Лучший полный график среди кандидатов и базы |
 
 Команды требуют конфигурацию конкретного запуска. Примеры интерфейсов:
 
 ```bash
-# Ветка Трека 1; case.json содержит полный фонд и период.
+# Ветка track-1-model-y; case.json содержит полный фонд и период.
 uv run python scripts/run_track1_mpc.py /absolute/path/case.json \
   --runs-dir /absolute/path/new-delivery --agent --full-field --lifecycle
 
-# Ветка Трека 2; прогноз TimesFM на полном горизонте Model Z.
+# Ветка track-2-model-z; поиск по прогнозу TimesFM и фиксация выбора.
 # Используется подготовленное A100-окружение с timesfm3 и PyTorch.
-python scripts/benchmark_horizons.py \
-  --run /absolute/path/verified-baseline-run --start 2007-01-01 \
-  --horizons 224 --blocks 1 6 --output /absolute/path/new-timesfm-check
+python scripts/propose_track2_policies.py \
+  /absolute/path/baseline-view /absolute/path/request.json \
+  /absolute/path/new-search --rounds 3 --economic-selection \
+  --head /absolute/path/full-model.pt --head-sha256 <sha> \
+  --head-report /absolute/path/report.json \
+  --connectivity /absolute/path/connectivity.json
+
+# Единственная финальная проверка зафиксированного графика.
+python scripts/track2_final_selection.py \
+  /absolute/path/new-search /absolute/path/baseline-run \
+  /absolute/path/new-final --seal-sha256 <sha печати>
 ```
 
 Запуски используют отдельные каталоги, не перезаписывают ранее полученные
@@ -1296,11 +1310,12 @@ MPI не побитово совпадает с последовательным
 проверка фонда, периода, режимов, нормативов и применимости модели.
 
 <a id="comparison"></a>
-## Приложение A. CRM + LightGBM: сохранённый сравнительный контур
+## Приложение A. CRM + LightGBM: исторический сравнительный контур
 
 **Это отдельная реализация, не внутренний компонент TimesFM 3.0.**
 Её деревья, CRM-формулы, обучающие сценарии и conformal-калибровка не описывают
-устройство Google-модели. Сохранена для сравнения и проверки уже существующего кода.
+устройство Google-модели. Код контура удалён при чистке и остаётся в истории
+Git; приложение описывает уже полученные результаты сравнения, а не рабочий путь.
 
 <details>
 <summary><strong>▸ Раскрыть устройство CRM + LightGBM и протокол BHP-эксперимента</strong></summary>
@@ -1596,16 +1611,15 @@ $$
 | OPM и извлечение SUMMARY | [opm.py](../src/timesoil/aios/opm.py): `OpmFlowRunner` |
 | Сценарии | [scenario_generation.py](../src/timesoil/aios/scenario_generation.py), [run_track2_scenarios.py](../scripts/run_track2_scenarios.py) |
 | Межскважинный слой | [interwell.py](../src/timesoil/aios/interwell.py): `WellConnectivity.features` |
-| Сравнительный CRM + LightGBM | [surrogate.py](../src/timesoil/aios/surrogate.py): `PhysicalBaseline`, `Track2Surrogate.step`, `rollout`, `_diagnose` |
-| Обучение и оценка CRM + LightGBM | [track2.py](../src/timesoil/aios/track2.py): `fit_track2_surrogate`, `evaluate_rollouts` |
-| Сравнительный BHP: 224 месяца | [benchmark_bhp_surrogate.py](../scripts/benchmark_bhp_surrogate.py): `prepare`, `management_window`, `train` |
-| Шестимесячный поиск | [search_track2_schedule.py](../scripts/search_track2_schedule.py), `track2.search_track2_schedule` |
-| Основной TimesFM-прогноз | [benchmark_timesfm3.py](../scripts/benchmark_timesfm3.py): `forecast_inputs`, `recursive_forecast` |
-| Архивный эксперимент TimesFM в Y; отключён от рабочего контроллера | [timesfm_planning.py @ ca8e376](https://github.com/DarkPrinceWarrior/TimesOil/blob/ca8e376/scripts/timesfm_planning.py): `TimesFMPlanning.predict`, `observe`, `committed_model_state` |
+| Банк сценариев: базовый OPM, экспорт, 224 месяца | [benchmark_bhp_surrogate.py](../scripts/benchmark_bhp_surrogate.py): `prepare`, `management_window` |
+| Расходные режимы `physical-sweep-*` | [run_full_period_sweep.py](../scripts/run_full_period_sweep.py): `scaled_request` |
+| Режимы давления `bhp-only-*` | [run_bhp_validation.py](../scripts/run_bhp_validation.py): `pressure_controls`, `TRANSITION_DESIGNS`, `UNCERTAINTY_DESIGNS` |
+| Связность из INIT/EGRID | [export_opm_connectivity.py](../scripts/export_opm_connectivity.py): `resistance_graph` |
 | Дообучение Google и геология | [finetune_timesfm_head.py](../scripts/finetune_timesfm_head.py), [timesfm_geology.py](../scripts/timesfm_geology.py): `load_frozen_model`, `StaticConditionedHead`, `StaticConditionedLayer` |
-| Независимая оценка прогноза | [evaluate_timesfm_scenarios.py](../scripts/evaluate_timesfm_scenarios.py): проверенные сценарные разбиения, месячный и полный режимы, интервалы |
-| Полные горизонты TimesFM | [benchmark_horizons.py](../scripts/benchmark_horizons.py): `forecast_blocks` |
+| Девять прогнозных выходов → официальная экономика | [timesfm_economics.py](../scripts/timesfm_economics.py) |
+| Независимая оценка прогноза | [evaluate_timesfm_scenarios.py](../scripts/evaluate_timesfm_scenarios.py): проверенные сценарные разбиения, фиксированная точка прогноза, интервалы |
 | Предложения с TimesFM | [propose_track2_policies.py](../scripts/propose_track2_policies.py): `propose_round` |
+| Фиксация выбора и единственная финальная проверка | [track2_final_selection.py](../scripts/track2_final_selection.py): `seal_forecast_selection` |
 | Полный агентный OPM-цикл Z | [workflow.py](../src/timesoil/aios/workflow.py): `FullCycleWorkflow.run` |
 | Полное сравнение Z | [compare_track2_cycles.py](../scripts/compare_track2_cycles.py) |
 | Канонический экспорт | [opm_chdd.py](../src/timesoil/aios/opm_chdd.py): `export_opm_chdd` |
@@ -1631,7 +1645,8 @@ $$
 
 ---
 
-**Связанные материалы:** [протокол полного периода](PERIOD_PROTOCOL_20260909.md)
+**Связанные материалы:** [передача 10 сентября](HANDOFF_CLAUDE_CODE_20260910.md)
+· [приёмочная матрица](BOTH_TRACKS_ACCEPTANCE_20260909.md)
 · [техническая схема Трека 1, 12 страниц](../deliverables/track1_technical_diagram_20260909/README.md)
 · [покрытие управлений и расходов](CONTROL_COST_GAPS_20260909.md)
 · [A100: производительность](A100_PERFORMANCE_20260909.md)

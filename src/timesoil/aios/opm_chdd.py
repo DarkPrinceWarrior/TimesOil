@@ -454,23 +454,6 @@ def _read_deck_densities_and_start(
     )
 
 
-def read_deck_densities(
-    deck_dir: str | Path,
-) -> tuple[
-    str,
-    dict[str, SurfaceDensity],
-    dict[str, tuple[int, ...]],
-    str,
-    dict[str, dict[str, SurfaceDensity]],
-]:
-    """Return strict well/connection surface densities and deck digest."""
-
-    unit, resolved, ambiguous, digest, connections, _, _ = (
-        _read_deck_densities_and_start(deck_dir)
-    )
-    return unit, resolved, ambiguous, digest, connections
-
-
 def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     value: dict[str, Any] = {}
     for key, item in pairs:
@@ -985,32 +968,24 @@ def export_opm_chdd(
     if requested_unit is not None and requested_unit not in {"METRIC", "FIELD"}:
         raise OpmChddError("unit_system must be METRIC or FIELD")
 
-    densities: dict[str, SurfaceDensity] = {}
-    density_provenance: dict[str, str] = {}
-    deck_connections: dict[str, dict[str, SurfaceDensity]] = {}
-    deck_digest: str | None = None
-    deck_start: date | None = None
-    deck_text: str | None = None
-    ambiguous: dict[str, tuple[int, ...]] = {}
-    if deck_dir is not None:
-        (
-            deck_unit,
-            deck_densities,
-            ambiguous,
-            deck_digest,
-            deck_connections,
-            deck_start,
-            deck_text,
-        ) = _read_deck_densities_and_start(deck_dir)
-        if requested_unit is not None and requested_unit != deck_unit:
-            raise OpmChddError(
-                f"explicit unit_system {requested_unit} disagrees with deck {deck_unit}"
-            )
-        requested_unit = deck_unit
-        densities.update(deck_densities)
-        density_provenance.update(
-            {well: "deck:DENSITY/PVTNUM/ACTNUM/WELSPECS/COMPDAT" for well in deck_densities}
+    (
+        deck_unit,
+        deck_densities,
+        ambiguous,
+        deck_digest,
+        deck_connections,
+        deck_start,
+        deck_text,
+    ) = _read_deck_densities_and_start(deck_dir)
+    if requested_unit is not None and requested_unit != deck_unit:
+        raise OpmChddError(
+            f"explicit unit_system {requested_unit} disagrees with deck {deck_unit}"
         )
+    requested_unit = deck_unit
+    densities: dict[str, SurfaceDensity] = dict(deck_densities)
+    density_provenance: dict[str, str] = {
+        well: "deck:DENSITY/PVTNUM/ACTNUM/WELSPECS/COMPDAT" for well in deck_densities
+    }
 
     source = Path(summary_csv)
     summary, ignored_columns = _read_summary(source, start_date=deck_start)
@@ -1023,14 +998,10 @@ def export_opm_chdd(
         densities.update(explicit)
         density_provenance.update({well: "explicit_density_mapping" for well in explicit})
         mapping_digest = _sha256_file(mapping_path)
-    if requested_unit is None:
-        raise OpmChddError("unit_system is required when no deck is provided")
 
     summary_connections = summary[0][2]
     connection_wells: set[str] = set()
     for well, connection_values in summary_connections.items():
-        if deck_dir is None:
-            raise OpmChddError("connection SUMMARY vectors require deck_dir")
         actual = set(connection_values)
         expected = set(deck_connections.get(well, {}))
         if actual != expected:
@@ -1079,7 +1050,6 @@ def export_opm_chdd(
 
     volume_factor = 1.0 if requested_unit == "METRIC" else _STB_TO_M3
     pressure_factor = 1.0 if requested_unit == "METRIC" else _PSI_TO_BAR
-    assert deck_text is not None
     controls = _scheduled_controls(deck_text, deck_start, summary, wells)
     chdd_rows: list[dict[str, str | float]] = []
     trajectory_rows: list[dict[str, str | float | int]] = []

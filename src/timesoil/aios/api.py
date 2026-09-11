@@ -14,15 +14,8 @@ from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt
 from .agents import AgentState, AgentWorkflow, WorkflowError
 from .economics import CHDDEconomicsAdapter, EconomicResult
 from .llm import APPROVED_MODEL, ExternalQwenClient, LLMConfig
-from .surrogate import Track2Surrogate
 from .tools import GROUNDED_ROLE_TOOLS, build_grounded_tool_registry
 from .ui import OPERATOR_PAGE, UI_HEADERS
-
-
-MODEL_Z_SURROGATE_MANIFEST_SHA256 = (
-    "964fd6117f251f7274b10dfa8831022f449acf1f2163f3627873585313cf0f6b"
-)
-_MODEL_Z_SURROGATE_DIR = "/app/model-z-surrogate-v5"
 
 
 class APIModel(BaseModel):
@@ -44,10 +37,6 @@ class TrackCapability(APIModel):
     certified: bool
 
 
-class Track2Capability(TrackCapability):
-    model_z_trained: bool
-
-
 class CHDDCapability(APIModel):
     component_available: bool
     ready: bool
@@ -55,7 +44,7 @@ class CHDDCapability(APIModel):
 
 class CapabilitiesResponse(APIModel):
     qwen: QwenCapability
-    track2: Track2Capability
+    track2: TrackCapability
     chdd: CHDDCapability
 
 
@@ -171,29 +160,6 @@ def _chdd_ready() -> bool:
     return True
 
 
-def _model_z_trained() -> bool:
-    if len(MODEL_Z_SURROGATE_MANIFEST_SHA256) != 64:
-        return False
-    directory = Path(
-        os.environ.get("MODEL_Z_SURROGATE_DIR", _MODEL_Z_SURROGATE_DIR)
-    )
-    try:
-        model = Track2Surrogate.load(
-            directory,
-            expected_manifest_sha256=MODEL_Z_SURROGATE_MANIFEST_SHA256,
-        )
-    except Exception:
-        # Readiness must fail closed for every corrupt or incompatible artifact.
-        return False
-    metadata = model.training_metadata
-    return (
-        isinstance(metadata, dict)
-        and metadata.get("model_z_ready") is True
-        and metadata.get("pipeline_proof_only") is False
-        and metadata.get("source_models") == ["model_z_opm"]
-    )
-
-
 app = FastAPI(title="Track 2 AIOS", version="1")
 
 
@@ -216,11 +182,7 @@ def capabilities() -> CapabilitiesResponse:
             configured=configured,
             connectivity_verified=False,
         ),
-        track2=Track2Capability(
-            component_available=True,
-            certified=False,
-            model_z_trained=_model_z_trained(),
-        ),
+        track2=TrackCapability(component_available=True, certified=False),
         chdd=CHDDCapability(component_available=True, ready=_chdd_ready()),
     )
 

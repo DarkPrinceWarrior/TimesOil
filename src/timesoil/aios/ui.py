@@ -136,9 +136,7 @@ addCapability(
       "Трек 2",
       track2.certified
         ? "сертифицирован"
-        : (track2.component_available
-          ? `доступен, не сертифицирован; сравнительный CRM + LightGBM / Model Z ${track2.model_z_trained ? "обучен" : "не обучен"}`
-          : "недоступен"),
+        : (track2.component_available ? "доступен, не сертифицирован" : "недоступен"),
       Boolean(track2.certified)
     );
     const chddReady = Boolean(chdd.component_available && chdd.ready);

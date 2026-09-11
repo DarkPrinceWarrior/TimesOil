@@ -7,19 +7,12 @@ import os
 import pandas as pd
 from pathlib import Path
 import subprocess
-import sys
 from tempfile import TemporaryDirectory
 import unittest
-from unittest.mock import patch
 
-import timesoil.aios.surrogate as surrogate_module
 from timesoil.aios.opm import OPM_EXPORT_VECTORS, OPM_IMAGE, OPM_IMAGE_DIGEST
-from timesoil.aios.surrogate import ScenarioTrajectory, StatefulSurrogate, Track2Surrogate
-from timesoil.aios.track2 import (
-    fit_track2_surrogate,
-    load_trajectory_dataset,
-    trajectory_from_frame,
-)
+from timesoil.aios.surrogate import ScenarioTrajectory
+from timesoil.aios.track2 import load_trajectory_dataset, trajectory_from_frame
 
 
 _CONNECTION_VECTORS = {
@@ -250,290 +243,6 @@ def _write_provenance(
 
 
 class Track2Tests(unittest.TestCase):
-    def test_strict_scenario_conformal_requires_ten_groups(self) -> None:
-        with self.assertRaisesRegex(ValueError, "at least 10 whole scenarios"):
-            fit_track2_surrogate(
-                _scenarios(),
-                ensemble_size=2,
-                n_estimators=1,
-                horizon=3,
-                seed=7,
-                conformal_level=0.9,
-            )
-
-    def test_loso_conformal_calibration_reports_coverage_and_widths(self) -> None:
-        run = fit_track2_surrogate(
-            _scenarios(10),
-            ensemble_size=2,
-            n_estimators=1,
-            horizon=3,
-            seed=7,
-            conformal_level=0.9,
-        )
-        calibration = run.calibration_metrics
-        self.assertIsNotNone(calibration)
-        assert calibration is not None
-        self.assertEqual(calibration["scenario_count"], 10)
-        self.assertEqual(calibration["quantile_rank"], 10)
-        self.assertFalse(calibration["independent_validation"])
-        self.assertEqual(
-            set(calibration["mean_interval_width_by_target"]),
-            {"oil_tpd", "liquid_tpd", "pressure_bar"},
-        )
-        prediction = run.model.rollout(
-            _scenarios(10)[0].states[0], _scenarios(10)[0].actions[:3]
-        )
-        self.assertTrue(np.all(prediction.interval_half_width > 0))
-
-    def test_scenario_split_rollout_and_ood_gate(self) -> None:
-        run = fit_track2_surrogate(_scenarios(), ensemble_size=3, n_estimators=20, horizon=4, seed=7)
-        self.assertTrue(set(run.train_ids).isdisjoint(run.test_ids))
-        self.assertFalse(run.model_z_ready)
-        self.assertIsInstance(run.model, StatefulSurrogate)
-        self.assertLess(run.test_metrics["liquid_wape"], 0.2)
-
-        item = _scenarios()[0]
-        prediction = run.model.rollout(item.states[0], item.actions[:4])
-        self.assertEqual(prediction.mean.shape, (4, 3, 3))
-        self.assertTrue(np.all(prediction.mean[..., 1] >= prediction.mean[..., 0]))
-        self.assertTrue(np.all(prediction.mean >= 0))
-
-        candidates = np.stack([
-            item.actions[:4], item.actions[:4] * np.array([1000.0, 1.0, 1.0])
-        ])
-        result = run.model.predict(item.states[0], candidates)
-        self.assertEqual(result.accepted.shape, (2,))
-        self.assertFalse(result.accepted[1])
-
-    def test_ood_disagreement_uses_training_scale_floor(self) -> None:
-        model = fit_track2_surrogate(
-            _scenarios(), ensemble_size=3, n_estimators=12, horizon=3, seed=7
-        ).model
-        features = (model.feature_min + model.feature_max) / 2
-        mean = np.zeros(3)
-        scale_floor = np.maximum(model.state_scale, model.feature_scale[:3])
-
-        score, ood, reasons = model._diagnose(
-            features, mean, 0.49 * scale_floor, 0.0
-        )
-        self.assertFalse(ood)
-        self.assertLess(score, 1.0)
-        self.assertNotIn("ensemble_disagreement", reasons)
-
-        score, ood, reasons = model._diagnose(
-            features, mean, 0.51 * scale_floor, 0.0
-        )
-        self.assertTrue(ood)
-        self.assertGreater(score, 1.0)
-        self.assertIn("ensemble_disagreement", reasons)
-
-        _, ood, reasons = model._diagnose(features, mean, np.zeros(3), 0.201)
-        self.assertTrue(ood)
-        self.assertIn("physical_projection_excess", reasons)
-
-    def test_model_artifact_roundtrip_and_hash_check(self) -> None:
-        run = fit_track2_surrogate(_scenarios(), ensemble_size=2, n_estimators=12, horizon=3)
-        with TemporaryDirectory() as directory:
-            model_dir = Path(directory) / "model"
-            manifest = run.model.save(model_dir)
-            manifest_sha256 = _file_hash(model_dir / "manifest.json")
-            loaded = Track2Surrogate.load(
-                model_dir,
-                expected_manifest_sha256=manifest_sha256,
-            )
-            item = _scenarios()[0]
-            np.testing.assert_allclose(
-                loaded.rollout(item.states[0], item.actions[:3]).mean,
-                run.model.rollout(item.states[0], item.actions[:3]).mean,
-            )
-            self.assertEqual(len(manifest["artifact_hash"]), 64)
-            with self.assertRaisesRegex(ValueError, "pinned hash"):
-                Track2Surrogate.load(
-                    model_dir,
-                    expected_manifest_sha256="0" * 64,
-                )
-
-            target = model_dir / "member_00_oil_tpd.txt"
-            original_target_bytes = target.read_bytes()
-            replacement_bytes = (model_dir / "member_00_liquid_tpd.txt").read_bytes()
-            self.assertNotEqual(original_target_bytes, replacement_bytes)
-            original_read = surrogate_module._read_regular_bytes
-            swapped = False
-
-            def swapping_read(path: Path, label: str) -> bytes:
-                nonlocal swapped
-                data = original_read(path, label)
-                if path == target and not swapped:
-                    replacement = target.with_suffix(".swap")
-                    replacement.write_bytes(replacement_bytes)
-                    replacement.replace(target)
-                    swapped = True
-                return data
-
-            with patch.object(surrogate_module, "_read_regular_bytes", swapping_read):
-                stable = Track2Surrogate.load(model_dir)
-            self.assertTrue(swapped)
-            self.assertEqual(
-                stable.boosters[0][0].model_to_string(),
-                run.model.boosters[0][0].model_to_string(),
-            )
-            np.testing.assert_allclose(
-                stable.rollout(item.states[0], item.actions[:3]).mean,
-                run.model.rollout(item.states[0], item.actions[:3]).mean,
-            )
-            target.write_bytes(original_target_bytes)
-
-            manifest_path = model_dir / "manifest.json"
-            original_files = dict(manifest["files"])
-            dummy = model_dir / "dummy.bin"
-            dummy.write_bytes(b"dummy")
-            nested = model_dir / "nested"
-            nested.mkdir()
-            (nested / "dummy.bin").write_bytes(b"nested")
-            member = next(name for name in original_files if name.startswith("member_"))
-
-            def write_manifest(files: dict[str, str]) -> None:
-                forged = {
-                    **manifest,
-                    "files": files,
-                    "artifact_hash": sha256(
-                        json.dumps(
-                            files,
-                            ensure_ascii=False,
-                            sort_keys=True,
-                            separators=(",", ":"),
-                        ).encode()
-                    ).hexdigest(),
-                }
-                manifest_path.write_text(json.dumps(forged), encoding="utf-8")
-
-            cases = {
-                "dummy_unlisted_model": {"dummy.bin": _file_hash(dummy)},
-                "nested": {
-                    **original_files,
-                    "nested/dummy.bin": _file_hash(nested / "dummy.bin"),
-                },
-                "omission": {
-                    name: digest for name, digest in original_files.items() if name != member
-                },
-                "extra": {**original_files, "dummy.bin": _file_hash(dummy)},
-            }
-            for label, files in cases.items():
-                with self.subTest(label=label):
-                    write_manifest(files)
-                    with self.assertRaisesRegex(ValueError, "artifact file set|basename|model.json"):
-                        Track2Surrogate.load(model_dir)
-
-            target.write_bytes(b"\xff")
-            invalid_text_files = {**original_files, target.name: _file_hash(target)}
-            write_manifest(invalid_text_files)
-            with self.assertRaisesRegex(ValueError, "UTF-8"):
-                Track2Surrogate.load(model_dir)
-            target.write_bytes(original_target_bytes)
-
-            model_path = model_dir / "model.json"
-            original_model_bytes = model_path.read_bytes()
-            one_member_metadata = json.loads(original_model_bytes)
-            one_member_metadata["ensemble_size"] = 1
-            model_path.write_text(
-                json.dumps(
-                    one_member_metadata,
-                    ensure_ascii=False,
-                    sort_keys=True,
-                    separators=(",", ":"),
-                ),
-                encoding="utf-8",
-            )
-            one_member_files = {
-                name: digest
-                for name, digest in original_files.items()
-                if name == "model.json" or name.startswith("member_00_")
-            }
-            one_member_files["model.json"] = _file_hash(model_path)
-            write_manifest(one_member_files)
-            with self.assertRaisesRegex(ValueError, "ensemble_size"):
-                Track2Surrogate.load(model_dir)
-            model_path.write_bytes(original_model_bytes)
-            write_manifest(original_files)
-
-            with model_path.open("a", encoding="utf-8") as stream:
-                stream.write(" ")
-            with self.assertRaisesRegex(ValueError, "hash check"):
-                Track2Surrogate.load(model_dir)
-
-            invalid_metadata = {
-                "nonfinite_state_scale": {"state_scale": [float("nan")] * 3},
-                "nonpositive_feature_scale": {
-                    "feature_scale": [0.0] * len(surrogate_module.RESIDUAL_FEATURES)
-                },
-                "nonfinite_ood_threshold": {"ood_disagreement": float("nan")},
-            }
-            for label, replacement in invalid_metadata.items():
-                with self.subTest(label=label):
-                    metadata = json.loads(original_model_bytes)
-                    metadata.update(replacement)
-                    model_path.write_text(
-                        json.dumps(
-                            metadata,
-                            ensure_ascii=False,
-                            sort_keys=True,
-                            separators=(",", ":"),
-                        ),
-                        encoding="utf-8",
-                    )
-                    forged_files = {
-                        **original_files,
-                        "model.json": _file_hash(model_path),
-                    }
-                    write_manifest(forged_files)
-                    with self.assertRaisesRegex(ValueError, "finite|invalid"):
-                        Track2Surrogate.load(model_dir)
-
-    def test_train_cli_refuses_existing_output_without_mutation(self) -> None:
-        with TemporaryDirectory() as directory:
-            root = Path(directory)
-            script = Path(__file__).resolve().parents[1] / "scripts/train_track2_surrogate.py"
-
-            def invoke(output: Path) -> subprocess.CompletedProcess[str]:
-                return subprocess.run(
-                    [
-                        sys.executable,
-                        str(script),
-                        "--dataset",
-                        str(root / "missing-data"),
-                        "--manifest",
-                        str(root / "missing-manifest"),
-                        "--batch-manifest",
-                        str(root / "missing-batch-manifest"),
-                        "--scenario-index-sha256",
-                        "69697fede3bafe9fd50f7ba568a7aaec3d2f98a9726fde94595feea82f10e317",
-                        "--output",
-                        str(output),
-                    ],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-
-            output = root / "existing-output"
-            output.mkdir()
-            marker = output / "keep.txt"
-            marker.write_bytes(b"unchanged")
-            result = invoke(output)
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("refusing to overwrite output", result.stderr)
-            self.assertEqual(marker.read_bytes(), b"unchanged")
-            self.assertEqual(list(output.iterdir()), [marker])
-
-            symlink = root / "broken-output-link"
-            target = root / "missing-target"
-            symlink.symlink_to(target, target_is_directory=True)
-            result = invoke(symlink)
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("refusing to overwrite output", result.stderr)
-            self.assertTrue(symlink.is_symlink())
-            self.assertFalse(target.exists())
-
     def test_canonical_long_frame_contract(self) -> None:
         item = _scenarios(1)[0]
         rows = []
@@ -584,7 +293,7 @@ class Track2Tests(unittest.TestCase):
                     ),
                 )
 
-    def test_verified_opm_hash_chain_marks_model_z_ready(self) -> None:
+    def test_verified_opm_hash_chain_marks_model_z_identity(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)
             data = _write_csvs(root)
@@ -595,10 +304,11 @@ class Track2Tests(unittest.TestCase):
                     (root / "run" / "summary.txt").read_bytes()
                 ),
             )
-            run = fit_track2_surrogate(
-                trajectories, ensemble_size=2, n_estimators=8, horizon=3
-            )
-        self.assertTrue(run.model_z_ready)
+        self.assertTrue(trajectories.model_z_identity)
+        self.assertEqual(
+            trajectories.scenario_hashes,
+            tuple(item.content_hash for item in trajectories),
+        )
 
     def test_forged_extraction_chain_is_rejected(self) -> None:
         with TemporaryDirectory() as directory:
@@ -669,10 +379,7 @@ class Track2Tests(unittest.TestCase):
                             (root / "run" / "summary.txt").read_bytes()
                         ),
                     )
-                    run = fit_track2_surrogate(
-                        trajectories, ensemble_size=2, n_estimators=8, horizon=3
-                    )
-                self.assertFalse(run.model_z_ready)
+                self.assertFalse(trajectories.model_z_identity)
 
 
 if __name__ == "__main__":

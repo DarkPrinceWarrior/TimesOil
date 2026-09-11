@@ -10,7 +10,7 @@ import re
 from typing import Literal
 
 from .contracts import ControlAction, ControlTarget, WellRole
-from .schedule import ScheduleArtifact, ScheduleCompiler
+from .schedule import injector_line, producer_line
 
 
 _MONTHS = ("JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
@@ -76,7 +76,7 @@ class _ControlTemplate:
 
 def apply_schedule_overlay(
     source: str,
-    controls: ScheduleArtifact | Iterable[ControlAction],
+    controls: Iterable[ControlAction],
     *,
     known_wells: Iterable[str],
     replay_month: date | None = None,
@@ -200,17 +200,12 @@ def _validate_wells(values: Iterable[str]) -> frozenset[str]:
 
 
 def _validated_controls(
-    controls: ScheduleArtifact | Iterable[ControlAction], wells: frozenset[str]
+    controls: Iterable[ControlAction], wells: frozenset[str]
 ) -> tuple[tuple[ControlAction, ...], str]:
-    if isinstance(controls, ScheduleArtifact):
-        artifact = controls
-        actions = artifact.actions
-    else:
-        artifact = None
-        try:
-            actions = tuple(controls)
-        except TypeError as exc:
-            raise ScheduleOverlayError("controls must be iterable") from exc
+    try:
+        actions = tuple(controls)
+    except TypeError as exc:
+        raise ScheduleOverlayError("controls must be iterable") from exc
     if not actions or any(not isinstance(action, ControlAction) for action in actions):
         raise ScheduleOverlayError("controls must contain ControlAction values")
 
@@ -221,14 +216,7 @@ def _validated_controls(
     if unknown:
         raise ScheduleOverlayError(f"unknown controlled wells: {unknown}")
 
-    canonical = _canonical_schedule(ordered)
-    digest = sha256(canonical.encode()).hexdigest()
-    if artifact is not None and (
-        artifact.actions != ordered
-        or artifact.text != canonical
-        or artifact.sha256 != digest
-    ):
-        raise ScheduleOverlayError("ScheduleArtifact failed canonical hash validation")
+    digest = sha256(_canonical_schedule(ordered).encode()).hexdigest()
     return ordered, digest
 
 
@@ -253,11 +241,11 @@ def _canonical_schedule(actions: tuple[ControlAction, ...]) -> str:
         injectors = [action for action in monthly if action.role is WellRole.INJECTOR]
         if producers:
             lines.extend(("", "WCONPROD"))
-            lines.extend(ScheduleCompiler._producer_line(action) for action in producers)
+            lines.extend(producer_line(action) for action in producers)
             lines.append("/")
         if injectors:
             lines.extend(("", "WCONINJE"))
-            lines.extend(ScheduleCompiler._injector_line(action) for action in injectors)
+            lines.extend(injector_line(action) for action in injectors)
             lines.append("/")
     return "\n".join(lines) + "\n"
 
@@ -426,11 +414,7 @@ def _render_action(action: ControlAction, template: _ControlTemplate | None) -> 
     if template is None or (
         action.role is WellRole.INJECTOR and template.fluid != "WATER"
     ):
-        renderer = (
-            ScheduleCompiler._producer_line
-            if action.role is WellRole.PRODUCER
-            else ScheduleCompiler._injector_line
-        )
+        renderer = producer_line if action.role is WellRole.PRODUCER else injector_line
         return renderer(action)
 
     fields = list(template.fields)

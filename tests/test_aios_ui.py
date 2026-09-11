@@ -31,7 +31,6 @@ def test_operator_page_renders_remote_data_as_text_and_states_certification_limi
     assert ".textContent" in page
     assert ".replaceChildren()" in page
     assert "не сертифицирован" in page
-    assert "Model Z" in page
     assert "это не сертификат результата" in page
     assert "LLM_API_KEY" not in page
     assert response.headers["cache-control"] == "no-store"

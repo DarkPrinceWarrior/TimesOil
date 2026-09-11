@@ -30,7 +30,6 @@ _EXPECTED_SCENARIO_SETS = {
     4: ("baseline", *(f"perturbation-{index:03d}" for index in range(1, 4))),
     10: ("baseline", *(f"perturbation-{index:03d}" for index in range(1, 10))),
 }
-_EXPECTED_SCENARIO_IDS = _EXPECTED_SCENARIO_SETS[4]
 
 
 @dataclass(frozen=True, slots=True)
@@ -562,41 +561,6 @@ def _run_batch(args: argparse.Namespace) -> Path:
             "sequential": workers == 1,
             **({"parallel_workers": workers} if workers > 1 else {}),
             "scenarios": records,
-            "training": {
-                "dataset": "dataset",
-                "manifests": "manifests",
-                "argv": [
-                    "uv",
-                    "run",
-                    "python",
-                    "scripts/train_track2_surrogate.py",
-                    "--dataset",
-                    str(output / "dataset"),
-                    "--manifest",
-                    str(output / "manifests"),
-                    "--batch-manifest",
-                    str(batch_manifest),
-                    "--scenario-index-sha256",
-                    index_sha,
-                    "--output",
-                    str(output / "surrogate"),
-                    "--test-fraction",
-                    "0.25",
-                    "--ensemble-size",
-                    "5",
-                    "--n-estimators",
-                    "160",
-                    "--horizon",
-                    "6",
-                    "--seed",
-                    "20260831",
-                    *(
-                        ["--conformal-level", "0.9"]
-                        if conformal_batch
-                        else []
-                    ),
-                ],
-            },
         },
     )
     return batch_manifest

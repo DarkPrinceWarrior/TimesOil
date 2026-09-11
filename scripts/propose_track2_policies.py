@@ -1,8 +1,8 @@
-"""Qwen field policies with full-period TimesFM forecasts and OPM requests.
+"""Qwen field policies ranked by nine-target TimesFM forecast CHDD, sealed before one final OPM.
 
-Forecast margins are screening estimates, never submitted CHDD. Every emitted
-request retains source completions and is evaluated
-by the production full-cycle command over the complete management period.
+Forecast CHDD is a screening estimate, never submitted CHDD. Every emitted request
+retains source completions and is verified by the production full-cycle command
+over the complete management period.
 """
 
 from __future__ import annotations
@@ -20,10 +20,8 @@ import time
 import numpy as np
 import pandas as pd
 
-from benchmark_timesfm3 import MODEL_REVISION, forecast_inputs
 from timesoil.aios.agents import AgentRole, AgentWorkflow, ToolDefinition, ToolRegistry
 from timesoil.aios.llm import ExternalQwenClient, LLMConfig
-from timesoil.aios.surrogate import _project_physics
 from timesoil.aios.track2 import load_trajectory_dataset
 from timesoil.aios.workflow import (CycleError, CycleRequest, _controls,
     _source_control_inventory, _validate_source_well_scope)
@@ -31,14 +29,12 @@ from timesoil.aios.opm import OpmFlowRunner
 from timesoil.aios.schedule_overlay import apply_schedule_overlay
 from timesoil.aios.operating_constraints import check_controls, parse_constraints, own_control_constraints
 from timesoil.aios.economics import CHDDEconomicsAdapter, opm_management_rows
-from timesoil.aios.schedule import ScheduleError
 
 
 def agent_candidate_context(candidates):
     """Keep all policy scores and one full-well forecast without repeating model metadata."""
     fields = ('id', 'policy', 'estimated_oil_t', 'estimated_liquid_t', 'planned_injection_m3',
-              'predicted_injection_m3', 'screening_margin_m', 'forecast_chdd_m', 'forecast_eligible',
-              'controls_sha256')
+              'predicted_injection_m3', 'forecast_chdd_m', 'forecast_eligible', 'controls_sha256')
     summaries = [{key: row[key] for key in fields if key in row} for row in candidates]
     for summary, row in zip(summaries, candidates, strict=True):
         if 'forecast_constraint_violations' in row:
@@ -57,7 +53,7 @@ async def plan_with_control_repair(workflow, context, candidates, attempted, out
     for attempt in range(2):
         try:
             return await workflow.run_plan(context)
-        except (CycleError, ScheduleError) as error:
+        except CycleError as error:
             rejected = {"error": str(error), "attempt": attempt,
                         "policy": attempted[-1] if attempted else None,
                         "accepted_candidates_added": len(candidates) - before}
@@ -247,24 +243,16 @@ def main():
         help='Rank nine-target forecasts with official economics and seal one choice before OPM')
     parser.add_argument('--head-report', type=Path)
     parser.add_argument('--skip-grid', action='store_true')
-    parser.add_argument('--reference', type=Path)
-    parser.add_argument('--reference-sha256')
-    parser.add_argument('--reference-correction', type=Path)
-    parser.add_argument('--reference-correction-sha256')
     args = parser.parse_args()
     os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
     self_check()
     if not 1 <= args.rounds <= 12:
         parser.error("rounds must be in [1, 12]")
-    if bool(args.head) != bool(args.head_sha256) or (args.head and not args.connectivity):
-        parser.error('trained head requires its SHA-256 and connectivity')
-    if args.economic_selection and (not args.head or not args.head_report or args.reference):
-        parser.error('economic selection requires trained weights/report, without a physical future reference')
-    if bool(args.reference) != bool(args.reference_sha256) or args.reference and not args.head:
-        parser.error('physical reference requires its manifest hash and trained weights')
-    if (bool(args.reference_correction) != bool(args.reference_correction_sha256)
-            or args.reference_correction and (not args.reference or not args.skip_grid)):
-        parser.error('local correction requires reference, correction hash and --skip-grid')
+    if not args.economic_selection:
+        parser.error('only sealed nine-target economic selection is supported; pass --economic-selection')
+    if not (args.head and args.head_sha256 and args.head_report and args.connectivity):
+        parser.error('economic selection requires trained weights, their SHA-256, the training report and connectivity')
+    from timesfm_geology import MODEL_REVISION, load_frozen_model
     request = json.loads(args.request.read_text())
     checked_request = CycleRequest.from_mapping(request)
     with TemporaryDirectory(prefix='timesoil-policy-source-') as temporary:
@@ -280,7 +268,6 @@ def main():
     normative_profile = calculator.normative_profile(
         charge_initial_pump=checked_request.charge_initial_pump
     )
-    econ = normative_profile["assumptions"]
     raw = (args.baseline_run / "canonical/trajectory.csv").read_bytes()
     manifest = json.loads((args.baseline_run / "canonical/manifest.json").read_text())
     if sha256(raw).hexdigest() != manifest["outputs"]["track2_csv"]["sha256"]:
@@ -301,37 +288,17 @@ def main():
     horizon, context = checked_request.horizon_months, 128
     if origin < context or origin + horizon >= len(trajectory.dates):
         raise ValueError('verified history and complete forecast horizon required')
-    reference = None
-    if args.reference:
-        reference_manifest = args.reference / 'manifest.json'
-        if sha256(reference_manifest.read_bytes()).hexdigest() != args.reference_sha256:
-            raise ValueError('physical reference manifest hash mismatch')
-        data = load_trajectory_dataset(args.reference / 'trajectory.csv', manifest=reference_manifest)
-        if (len(data) != 1 or not data.model_z_identity or data[0].well_ids != trajectory.well_ids
-                or not data[0].dates.equals(trajectory.dates) or data[0].actions.shape[-1] != 4
-                or json.loads(reference_manifest.read_text())['provenance']['opm_source_sha256']
-                != manifest['provenance']['opm_source_sha256']):
-            raise ValueError('physical reference reservoir, BHP controls or temporal grid differs')
-        reference = data[0]
-        np.testing.assert_allclose(reference.states[:origin + 1], trajectory.states[:origin + 1], rtol=0, atol=1e-6)
-        np.testing.assert_array_equal(reference.actions[:origin, :, :trajectory.actions.shape[-1]], trajectory.actions[:origin])
-        trajectory = reference
-        raw = (args.reference / 'trajectory.csv').read_bytes()
     has_bhp = trajectory.actions.shape[-1] == 4
     if has_bhp:
         request['controls'] = baseline_bhp_controls(request['controls'], trajectory)
         checked_request = CycleRequest.from_mapping(request)
     if not has_bhp and any(a.bhp_limit is not None for a in checked_request.controls):
         raise ValueError('BHP screening requires an authenticated baseline with the BHP action channel')
-    connectivity = None
-    if args.connectivity:
-        from timesoil.aios.interwell import WellConnectivity
-        connectivity = WellConnectivity.from_dict(json.loads(args.connectivity.read_text()))
-        if (connectivity.well_ids != trajectory.well_ids or connectivity.provenance['source_sha256']
-                != manifest['provenance']['opm_source_sha256']):
-            raise ValueError('geology does not match the verified reservoir and well order')
-    targets, _ = forecast_inputs(trajectory.states, trajectory.actions, origin, context, horizon)
-    target = targets.reshape(-1, context)
+    from timesoil.aios.interwell import WellConnectivity
+    connectivity = WellConnectivity.from_dict(json.loads(args.connectivity.read_text()))
+    if (connectivity.well_ids != trajectory.well_ids or connectivity.provenance['source_sha256']
+            != manifest['provenance']['opm_source_sha256']):
+        raise ValueError('geology does not match the verified reservoir and well order')
     well_index = {w: i for i, w in enumerate(trajectory.well_ids)}
     initial_controls = {a["well"]: a for a in request["controls"] if a["month"] == start.date().isoformat()}
     date_index = {d.date().isoformat(): i for i, d in enumerate(trajectory.dates)}
@@ -339,9 +306,8 @@ def main():
         checked_request.context.get('operating_constraints', []), wells=trajectory.well_ids,
         start=min(a.month for a in checked_request.controls),
         end=max(a.month for a in checked_request.controls))
-    if args.economic_selection:
-        from timesfm_economics import validate_economic_constraints, economic_constraint_violations
-        validate_economic_constraints(operating_rules)
+    from timesfm_economics import validate_economic_constraints, economic_constraint_violations
+    validate_economic_constraints(operating_rules)
     args.output.mkdir(parents=True, exist_ok=False)
     import torch
     from timesfm3 import ModelConfig, TimesFM3Forecaster
@@ -357,38 +323,21 @@ def main():
     torch.manual_seed(20260909)
     forecaster = TimesFM3Forecaster(ModelConfig(checkpoint_path="google/timesfm-3.0-pytorch",
         revision=MODEL_REVISION, per_core_batch_size=1, device="cuda"))
-    if args.head:
-        from timesfm_geology import load_frozen_model
-        if sha256(args.head.read_bytes()).hexdigest() != args.head_sha256:
-            raise ValueError('trained head hash mismatch')
-        selected = torch.load(args.head, map_location='cuda', weights_only=True)
-        if bool(selected.get('economic_targets')) != args.economic_selection:
-            raise ValueError('economic checkpoint and requested selection mode differ')
-        forecaster.model = load_frozen_model(forecaster.model, connectivity, selected,
-                                             reference_sha256=args.reference_sha256)
-    economic_history = economic_trajectory = None
-    if args.economic_selection:
-        from timesfm_economics import ECONOMIC_TARGETS, forecast_chdd_rows, forecast_economic, observed_economic_history
-        training = json.loads(args.head_report.read_text())
-        if (training.get('complete') is not True or training.get('checkpoint_sha256') != args.head_sha256
-                or training.get('model_revision') != MODEL_REVISION
-                or training.get('economic_targets') != list(ECONOMIC_TARGETS)
-                or training.get('connectivity_sha256') != sha256(args.connectivity.read_bytes()).hexdigest()):
-            raise ValueError('completed training report, economic checkpoint and geology must match')
-        economic_history, economic_trajectory = observed_economic_history(
-            args.baseline_run / 'canonical', manifest, trajectory, origin)
-    correction = None
-    if reference is not None:
-        from benchmark_timesfm_layouts import forecast_layout
-        from evaluate_timesfm_scenarios import reference_delta
-        reference_prediction = forecast_layout(forecaster, reference, origin, horizon, context,
-                                               'joint', connectivity=connectivity)
-        reference_truth = reference.states[origin + 1:origin + horizon + 1]
-    if args.reference_correction:
-        from fit_timesfm_reference import bhp_features, load_reference_correction
-        correction, coefficients = load_reference_correction(args.reference_correction,
-            args.reference_correction_sha256, args.head_sha256, args.reference_sha256,
-            horizon, len(well_index))
+    if sha256(args.head.read_bytes()).hexdigest() != args.head_sha256:
+        raise ValueError('trained head hash mismatch')
+    selected = torch.load(args.head, map_location='cuda', weights_only=True)
+    if not selected.get('economic_targets'):
+        raise ValueError('a nine-target economic checkpoint is required')
+    forecaster.model = load_frozen_model(forecaster.model, connectivity, selected)
+    from timesfm_economics import ECONOMIC_TARGETS, forecast_chdd_rows, forecast_economic, observed_economic_history
+    training = json.loads(args.head_report.read_text())
+    if (training.get('complete') is not True or training.get('checkpoint_sha256') != args.head_sha256
+            or training.get('model_revision') != MODEL_REVISION
+            or training.get('economic_targets') != list(ECONOMIC_TARGETS)
+            or training.get('connectivity_sha256') != sha256(args.connectivity.read_bytes()).hexdigest()):
+        raise ValueError('completed training report, economic checkpoint and geology must match')
+    economic_history, economic_trajectory = observed_economic_history(
+        args.baseline_run / 'canonical', manifest, trajectory, origin)
     candidates = []
     days = np.array([d.days_in_month for d in trajectory.dates[origin:origin + horizon]])[:, None]
 
@@ -398,13 +347,14 @@ def main():
         controls = policy_controls(request["controls"], policy)
         proposed = {**request, "scenario_id": f"timesfm-policy-{len(candidates):02d}", "controls": controls, "context": {
             **request.get("context", {}),
-            "objective": "Verify this experimental TimesFM-screened field policy with full OPM and official CHDD. Improvement is unknown until paired comparison on the same period.",
+            "objective": "Verify the graph selected and sealed by TimesFM forecast CHDD. Run OPM once; report physical CHDD even if it is worse than predicted. Do not select another graph using the result.",
             "facts": {"schedule_kind": "timesfm_policy_candidate", "is_baseline": False,
-                      "surrogate_used_for_candidate_selection": False,
-                      "surrogate_used_only_to_propose_hypotheses": True,
-                      "simulated_reference_future_used": reference is not None,
+                      "surrogate_used_for_candidate_selection": True,
+                      "surrogate_used_only_to_propose_hypotheses": False,
+                      "simulated_reference_future_used": False,
                       "independent_surrogate_uq_calibrated": False,
-                      "optimization_improvement_claimed": False},
+                      "optimization_improvement_claimed": False,
+                      "selected_before_final_opm": True},
             "policy": policy,
         }}
         checked = CycleRequest.from_mapping(proposed)
@@ -416,12 +366,11 @@ def main():
                 and any(a['role'] != original_roles[a['month'], a['well']] for a in controls)):
             raise ValueError('new role changes are not permitted by this case')
         check_controls(operating_rules, checked.controls)
-        if args.economic_selection:
-            candidate_rules = (*operating_rules, *own_control_constraints(checked.controls))
-            try:
-                validate_economic_constraints(candidate_rules)
-            except ValueError as error:
-                raise CycleError(str(error)) from error
+        candidate_rules = (*operating_rules, *own_control_constraints(checked.controls))
+        try:
+            validate_economic_constraints(candidate_rules)
+        except ValueError as error:
+            raise CycleError(str(error)) from error
         overlay = apply_schedule_overlay(source_schedule, checked.controls,
             known_wells=trajectory.well_ids, end_exclusive=trajectory.dates[origin + horizon].date())
         actions = trajectory.actions.copy()
@@ -434,92 +383,53 @@ def main():
                 raise ValueError('BHP policy requires the BHP action channel')
             actions[position] = value
         future = actions[origin:origin + horizon]
-        if correction:
-            local_features = bhp_features(future, reference.actions[origin:origin + horizon], correction['degree'])
-        _, cov = forecast_inputs(trajectory.states, actions, origin, context, horizon)
-        cov = cov[:, :-1].reshape(-1, context + horizon)
-        if connectivity is not None:
-            planned = actions[origin - context:origin + horizon]
-            allocated = connectivity.features(np.zeros((len(planned) * len(well_index), 3)),
-                planned.reshape(-1, planned.shape[-1]))[:, 0].reshape(len(planned), len(well_index)).T
-            cov = np.concatenate([cov, allocated])
         begin = time.monotonic()
-        if args.economic_selection:
-            economic_trajectory.actions = actions
-            prediction = forecast_economic(forecaster, economic_trajectory, origin, horizon, context, connectivity)
-        else:
-            forecast = next(forecaster.predict_batch([target], horizon=horizon,
-                past_future_covariates=[cov],
-                use_symmetric_averaging=False, make_positive=True, return_quantiles=False))
-            prediction = forecast.forecast.reshape(len(well_index), 3, horizon).transpose(2, 0, 1)
-            prediction = _project_physics(prediction, future, zero_injectors=True)[0]
-        if reference is not None:
-            prediction = reference_delta(reference_truth, reference_prediction, prediction, future)
-        if correction:
-            prediction = _project_physics(prediction + np.tensordot(local_features, coefficients, axes=(0, 0)),
-                                          future, zero_injectors=True)[0]
+        economic_trajectory.actions = actions
+        prediction = forecast_economic(forecaster, economic_trajectory, origin, horizon, context, connectivity)
         if not np.isfinite(prediction).all():
             raise ValueError("non-finite TimesFM forecast")
         inference_seconds = time.monotonic() - begin
-        economic_record = {}
-        if args.economic_selection:
-            timestamps = trajectory.dates[origin + 1:origin + horizon + 1].strftime('%Y-%m-%d')
-            violations = economic_constraint_violations(prediction, timestamps, trajectory.well_ids, candidate_rules)
-            if not (prediction[..., 1] <= 500 + 1e-6).all():
-                violations.append('forecast well liquid rate exceeds 500 m3/day')
-            predicted_rows = forecast_chdd_rows(economic_history, timestamps, trajectory.well_ids, prediction)
-            result = calculator.calculate(opm_management_rows(predicted_rows,
-                (start.date(), trajectory.dates[origin + horizon].date())),
-                start_year=checked.start_year, output_dir=args.output / f'economics-{len(candidates):02d}',
-                charge_initial_pump=checked.charge_initial_pump,
-                management_period=(start.date(), trajectory.dates[origin + horizon].date()))
-            economic_record = {'forecast_chdd_m': result.total_chdd_m,
-                'predicted_injection_m3': float(prediction[..., 8].sum()),
-                'economic_targets': list(ECONOMIC_TARGETS),
-                'forecast_economics_manifest_sha256': sha256(result.manifest_path.read_bytes()).hexdigest(),
-                'forecast_economics_directory': str(result.output_dir.relative_to(args.output.resolve())),
-                'forecast_eligible': not violations,
-                'forecast_constraint_violations': violations,
-                'eligibility_scope': 'Forecast well liquid limit 500 m3/day, own LRAT/WRAT/BHP/role/status bounds, supplied operating limits and exact schedule constraints; physical feasibility and uncertainty require final verification.',
-                'training_report_sha256': sha256(args.head_report.read_bytes()).hexdigest()}
-            forecast_path = args.output / f'forecast-{len(candidates):02d}.npz'
-            np.savez_compressed(forecast_path, prediction=prediction, timestamps=np.asarray(timestamps, dtype=str),
-                                well_ids=np.asarray(trajectory.well_ids), targets=np.asarray(ECONOMIC_TARGETS))
-            economic_record['forecast_sha256'] = sha256(forecast_path.read_bytes()).hexdigest()
-            proposed['context']['objective'] = 'Verify the graph selected and sealed by TimesFM forecast CHDD. Run OPM once; report physical CHDD even if it is worse than predicted. Do not select another graph using the result.'
-            proposed['context']['facts'].update(surrogate_used_for_candidate_selection=True,
-                surrogate_used_only_to_propose_hypotheses=False, selected_before_final_opm=True)
-        oil = float((prediction[..., 0] * days).sum())
-        liquid = float((prediction[..., 1] * days).sum())
+        timestamps = trajectory.dates[origin + 1:origin + horizon + 1].strftime('%Y-%m-%d')
+        violations = economic_constraint_violations(prediction, timestamps, trajectory.well_ids, candidate_rules)
+        if not (prediction[..., 1] <= 500 + 1e-6).all():
+            violations.append('forecast well liquid rate exceeds 500 m3/day')
+        predicted_rows = forecast_chdd_rows(economic_history, timestamps, trajectory.well_ids, prediction)
+        result = calculator.calculate(opm_management_rows(predicted_rows,
+            (start.date(), trajectory.dates[origin + horizon].date())),
+            start_year=checked.start_year, output_dir=args.output / f'economics-{len(candidates):02d}',
+            charge_initial_pump=checked.charge_initial_pump,
+            management_period=(start.date(), trajectory.dates[origin + horizon].date()))
+        forecast_path = args.output / f'forecast-{len(candidates):02d}.npz'
+        np.savez_compressed(forecast_path, prediction=prediction, timestamps=np.asarray(timestamps, dtype=str),
+                            well_ids=np.asarray(trajectory.well_ids), targets=np.asarray(ECONOMIC_TARGETS))
         injection = float((np.where(future[..., 1] == 2, future[..., 0] * future[..., 2], 0) * days).sum())
         record = {"id": len(candidates), "policy": policy, "lookahead_months": horizon,
-            "estimated_oil_t": oil, "estimated_liquid_t": liquid, "planned_injection_m3": injection,
-            "screening_margin_m": (oil * (econ["oilPriceRubT"] - econ["deductionsRubT"] - econ["oilOpexRubT"])
-                                   - liquid * econ["liquidOpexRubT"] - injection * econ["injectionOpexRubM3"]) / 1e6,
+            "estimated_oil_t": float(prediction[..., 6].sum()),
+            "estimated_liquid_t": float(prediction[..., 7].sum()),
+            "planned_injection_m3": injection,
             "full_period_months": checked.horizon_months, "full_period_actions": len(controls),
             "bhp_channel": has_bhp,
             "pressure_semantics": pressure_semantics,
             "trained_head_sha256": args.head_sha256,
-            "physical_reference_manifest_sha256": args.reference_sha256,
-            "reference_correction_sha256": args.reference_correction_sha256,
-            "forecast_by_well": [{"well": w,
-                "oil_tonnes": float((prediction[:, i, 0] * days[:, 0]).sum()),
-                "liquid_tonnes": float((prediction[:, i, 1] * days[:, 0]).sum()),
-                "terminal_reservoir_pressure_bar": float(prediction[-1, i, 2])}
-                for i, w in enumerate(trajectory.well_ids)],
-            "controls_sha256": checked.controls_sha256, "schedule_overlay_sha256": overlay.sha256,
-            "source_schedule_constraints_checked_before_forecast": True,
-            "inference_seconds": inference_seconds,
-            "is_official_chdd": False, **economic_record}
-        if args.economic_selection:
-            record.pop('screening_margin_m')
-            record['estimated_oil_t'] = float(prediction[..., 6].sum())
-            record['estimated_liquid_t'] = float(prediction[..., 7].sum())
-            record['forecast_by_well'] = [{'well': well,
+            "forecast_by_well": [{'well': well,
                 'oil_tonnes': float(prediction[:, i, 6].sum()),
                 'liquid_tonnes': float(prediction[:, i, 7].sum()),
                 'terminal_reservoir_pressure_bar': float(prediction[-1, i, 3])}
-                for i, well in enumerate(trajectory.well_ids)]
+                for i, well in enumerate(trajectory.well_ids)],
+            "controls_sha256": checked.controls_sha256, "schedule_overlay_sha256": overlay.sha256,
+            "source_schedule_constraints_checked_before_forecast": True,
+            "inference_seconds": inference_seconds,
+            "is_official_chdd": False,
+            'forecast_chdd_m': result.total_chdd_m,
+            'predicted_injection_m3': float(prediction[..., 8].sum()),
+            'economic_targets': list(ECONOMIC_TARGETS),
+            'forecast_economics_manifest_sha256': sha256(result.manifest_path.read_bytes()).hexdigest(),
+            'forecast_economics_directory': str(result.output_dir.relative_to(args.output.resolve())),
+            'forecast_eligible': not violations,
+            'forecast_constraint_violations': violations,
+            'eligibility_scope': 'Forecast well liquid limit 500 m3/day, own LRAT/WRAT/BHP/role/status bounds, supplied operating limits and exact schedule constraints; physical feasibility and uncertainty require final verification.',
+            'training_report_sha256': sha256(args.head_report.read_bytes()).hexdigest(),
+            'forecast_sha256': sha256(forecast_path.read_bytes()).hexdigest()}
         candidates.append(record)
         proposed["context"]["screening"] = record
         (args.output / f"request-{record['id']:02d}.json").write_text(json.dumps(proposed, ensure_ascii=False, indent=2))
@@ -549,14 +459,6 @@ def main():
     if has_bhp:
         schema['properties'].update(producer_bhp_add={'type': 'number', 'minimum': 0},
                                     injector_bhp_factor={'type': 'number', 'exclusiveMinimum': 0, 'maximum': 1})
-    if correction:
-        schema['properties'].pop('well_updates')
-        for key in ('producer_scale', 'injector_scale'):
-            schema['properties'][key] = {'type': 'number', 'const': 1}
-        for key in ('shut_wells', 'well_scales'):
-            schema['properties'][key]['maxItems'] = 0
-        schema['properties']['producer_bhp_add']['maximum'] = 15
-        schema['properties']['injector_bhp_factor']['minimum'] = .9
     proposed_ids = []
 
     async def propose_round(index):
@@ -566,7 +468,7 @@ def main():
             attempted.append(policy)
             (args.output / f"policy-attempts-{index:02d}.json").write_text(json.dumps(attempted, indent=2))
             return evaluate(policy)
-        tool = ToolDefinition("propose_policy", "Propose a full-field policy. Optional producer_bhp_add (bar) and injector_bhp_factor tighten open-well BHP limits uniformly before individual updates. well_updates changes a well over inclusive monthly start/end dates after rate scaling: rate, status, target, role, BHP limit. Conversion requires explicit WRAT, value and BHP, must be permitted by the case, and cannot be reversed; extend its role to the end. Omitted scales default to 1, arrays to empty. Respect the explicit forecast_reference domain when present. " + ('Official calculator ranks nine-target forecasts; only the sealed winning graph gets final OPM verification.' if args.economic_selection else 'Full-period TimesFM hypothesis forecast; every retained candidate requires full-period OPM, and official CHDD selects the winner.'), schema,
+        tool = ToolDefinition("propose_policy", "Propose a full-field policy. Optional producer_bhp_add (bar) and injector_bhp_factor tighten open-well BHP limits uniformly before individual updates. well_updates changes a well over inclusive monthly start/end dates after rate scaling: rate, status, target, role, BHP limit. Conversion requires explicit WRAT, value and BHP, must be permitted by the case, and cannot be reversed; extend its role to the end. Omitted scales default to 1, arrays to empty. Official calculator ranks nine-target forecasts; only the sealed winning graph gets final OPM verification.", schema,
             propose)
         context_value = {"track": 2, "round": index,
             "search_focus": checked_request.context.get('search_focus'),
@@ -576,19 +478,13 @@ def main():
             } if allow_conversion else {"permitted": False},
             "pressure_semantics": pressure_semantics,
             "surrogate_evidence": {"model": "Google TimesFM 3.0", "revision": MODEL_REVISION,
-                "adapted_checkpoint_loaded": args.head is not None, "verified_checkpoint_sha256": args.head_sha256,
+                "adapted_checkpoint_loaded": True, "verified_checkpoint_sha256": args.head_sha256,
                 "full_period_forecast_already_completed": True, "accuracy_certified": False,
-                "physical_reference_used": reference is not None,
-                "local_correction_loaded": correction is not None,
                 "interpretation": "Checkpoint loading and forecast execution are verified. Accuracy certification is a separate, unresolved property; it does not mean the model is untrained. The unchanged baseline is already evaluated."},
-            "objective": f"Propose a new policy for maximum official CHDD over the request's {checked_request.horizon_months} management months. " + ("Use only uniform BHP changes inside forecast_reference.domain. " if correction else "Use per-well multipliers when useful; all wells are controllable. ") + "Call propose_policy exactly once. Propose an unexplored hypothesis for physical verification, even when its improvement is uncertain. Existing controls, including the unchanged baseline, are rejected as duplicates. Do not return an existing best policy as a new experiment.",
+            "objective": f"Improve forecast CHDD over all {horizon} months using permitted rates, BHP, statuses and producer-to-injector conversions. Call propose_policy exactly once with an unexplored policy. The official calculator scores forecasts, including pumps, conversions, water costs, taxes and discounting. All search evaluations use TimesFM; only the graph with maximum eligible forecast CHDD is sealed for one final OPM check. Never ask for OPM to compare search alternatives.",
             **agent_candidate_context(candidates),
             "verified_well_count": len(well_index),
-            "forecast_reference": {'manifest_sha256': args.reference_sha256,
-                'future_is_prior_physical_planning_information': reference is not None,
-                'domain': correction['domain'] if correction else None,
-                'local_policy_parameters': 'producer_bhp_add in bar, injector_bhp_factor; x=add/15, y=(1-factor)/0.1; 0<=x<=1, 0<=y<=1-x/2. Rates, roles and statuses stay fixed.' if correction else None},
-            "geology": None if connectivity is None else {
+            "geology": {
                 "static_feature_names": connectivity.provenance.get('static_feature_names', []),
                 "static_by_well": [[well, values] for well, values in zip(connectivity.well_ids,
                     connectivity.provenance.get('static_features', connectivity.static.tolist()), strict=True)],
@@ -617,10 +513,7 @@ def main():
                     "min_monthly_voidage_replacement": "Lower bound on monthly injected/produced reservoir volumes for the explicit well group.",
                     "max_monthly_voidage_replacement": "Upper bound on monthly injected/produced reservoir volumes; positive injection with zero withdrawal violates this bound.",
                     "verification": "Requires actual OPM cumulative volume differences; predicted oil/liquid/pressure alone cannot certify these limits."}},
-            "claim_limits": "Forecasts use observed pre-origin history and planned controls. When forecast_reference is present, its prior simulated future is also used; candidate future observations are excluded. Screening margin is a full-period undiscounted rate-integration estimate excluding pump CAPEX, state events and tax. It is NOT CHDD and cannot select a winning control policy. Every retained hypothesis must undergo full OPM plus official CHDD before selection. Candidate requires full-period OPM plus the official calculator. Request dates describe this experiment, not a confirmed competition horizon. No independently calibrated TimesFM uncertainty or improvement claim."}
-        if args.economic_selection:
-            context_value['objective'] = f"Improve forecast CHDD over all {horizon} months using permitted rates, BHP, statuses and producer-to-injector conversions. Call propose_policy exactly once with an unexplored policy. The official calculator scores forecasts, including pumps, conversions, water costs, taxes and discounting. All search evaluations use TimesFM; only the graph with maximum eligible forecast CHDD is sealed for one final OPM check. Never ask for OPM to compare search alternatives."
-            context_value['claim_limits'] = 'Forecast CHDD uses nine predicted economic outputs and observed history only. It includes all official economic terms, but it is not physically verified CHDD. No independently certified uncertainty, deployment approval or guaranteed uplift. Supplied schedule restrictions remain mandatory; unsupported forecast operating limits stop this mode.'
+            "claim_limits": 'Forecast CHDD uses nine predicted economic outputs and observed history only. It includes all official economic terms, but it is not physically verified CHDD. No independently certified uncertainty, deployment approval or guaranteed uplift. Supplied schedule restrictions remain mandatory; unsupported forecast operating limits stop this mode.'}
         (args.output / f'planning-context-{index:02d}.json').write_text(json.dumps(context_value, ensure_ascii=False, indent=2))
         async with ExternalQwenClient(LLMConfig.from_env()) as client:
             workflow = AgentWorkflow(client, ToolRegistry((tool,)),
@@ -645,18 +538,17 @@ def main():
         "timesfm_revision": MODEL_REVISION, "agent_proposal_ids": proposed_ids,
         "attempted_agent_rounds": args.rounds, "skipped_invalid_rounds": skipped_rounds,
         "horizon_months": horizon, "head_sha256": args.head_sha256,
-        "reference_manifest_sha256": args.reference_sha256,
-        "reference_correction_sha256": args.reference_correction_sha256,
-        "connectivity_sha256": sha256(args.connectivity.read_bytes()).hexdigest() if args.connectivity else None,
+        "reference_manifest_sha256": None,
+        "reference_correction_sha256": None,
+        "connectivity_sha256": sha256(args.connectivity.read_bytes()).hexdigest(),
         "script_sha256": sha256(Path(__file__).read_bytes()).hexdigest(), "requires_full_period_opm": True,
-        "economic_selection": args.economic_selection,
-        "head_report_sha256": sha256(args.head_report.read_bytes()).hexdigest() if args.economic_selection else None,
+        "economic_selection": True,
+        "head_report_sha256": sha256(args.head_report.read_bytes()).hexdigest(),
         "normative_profile": normative_profile,
         "search_opm_calls": 0,
         "final_chdd_computed": False}, indent=2))
-    if args.economic_selection:
-        from track2_final_selection import seal_forecast_selection
-        print(json.dumps(seal_forecast_selection(args.output)), flush=True)
+    from track2_final_selection import seal_forecast_selection
+    print(json.dumps(seal_forecast_selection(args.output)), flush=True)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,9 @@
-"""Train a BHP-aware Model Z surrogate on whole held-out 224-month OPM scenarios."""
+"""Model Z scenario bank builder over the 224-month management period.
+
+Runs the baseline Model Z case in OPM, exports it canonically, generates the
+perturbed control scenarios and runs each of them through the authenticated OPM
+path. The resulting bank is what the TimesFM forecast chain consumes.
+"""
 from __future__ import annotations
 
 import argparse
@@ -12,14 +17,10 @@ import sys
 import numpy as np
 import pandas as pd
 
-from timesoil.aios.interwell import WellConnectivity
 from timesoil.aios.opm import OpmFlowRunner
 from timesoil.aios.opm_chdd import export_opm_chdd
 from timesoil.aios.surrogate import ScenarioTrajectory
-from timesoil.aios.track2 import (
-    MODEL_Z_SOURCE_SHA256, _VerifiedTrajectoryDataset, fit_track2_surrogate,
-    load_trajectory_dataset,
-)
+from timesoil.aios.track2 import MODEL_Z_SOURCE_SHA256, _VerifiedTrajectoryDataset
 
 START = pd.Timestamp('2007-01-01')
 END = pd.Timestamp('2025-09-01')
@@ -125,54 +126,12 @@ def prepare(args):
                     '--timeout-seconds', '7200', '--include-bhp', '--workers', str(args.workers)], check=True)
 
 
-def train(args):
-    if digest(args.source) != MODEL_Z_SOURCE_SHA256:
-        raise ValueError('training geometry must use official Model Z')
-    batch = args.output / 'scenario-runs'
-    plan = json.loads((args.output / 'plan.json').read_text())
-    manifest = json.loads((batch / 'manifest.json').read_text())
-    if (manifest['official_source_sha256'] != MODEL_Z_SOURCE_SHA256
-            or manifest['scenario_index_sha256'] != plan['scenario_index_sha256']
-            or digest(args.output / 'scenario-bundle/index.json') != plan['scenario_index_sha256']
-            or manifest['scenario_count'] != 10):
-        raise ValueError('scenario batch does not match the BHP experiment plan')
-    for record in manifest['scenarios']:
-        for name in ('dataset', 'export_manifest', 'run_manifest', 'canonical_chdd'):
-            path = (batch / record[name]).resolve()
-            if not path.is_relative_to(batch.resolve()) or digest(path) != record[name + '_sha256']:
-                raise ValueError(f'scenario artifact mismatch: {name}')
-    full = load_trajectory_dataset(batch / 'dataset', manifest=batch / 'manifests')
-    trajectories = management_window(full)
-    if not trajectories.model_z_identity or len(trajectories) != 10:
-        raise ValueError('ten verified official Model Z trajectories required')
-    initial = trajectories[0].states[0]
-    for item in trajectories[1:]:
-        np.testing.assert_allclose(item.states[0], initial, rtol=1e-6, atol=1e-6,
-                                   err_msg='scenarios changed physical history before January 2007')
-    connectivity = WellConnectivity.from_source(args.source, trajectories[0].well_ids)
-    result = fit_track2_surrogate(trajectories, test_fraction=0.3, ensemble_size=5,
-                                  n_estimators=160, horizon=MONTHS, seed=20260909,
-                                  conformal_level=None, connectivity=connectivity)
-    assert set(result.train_ids).isdisjoint(result.test_ids)
-    model_dir = args.output / 'surrogate'
-    model_manifest = result.model.save(model_dir)
-    report = {**result.report(), 'period': plan, 'artifact_hash': model_manifest['artifact_hash'],
-              'batch_manifest_sha256': digest(batch / 'manifest.json'),
-              'full_source_scenario_hashes': {t.scenario_id: t.content_hash for t in full},
-              'action_features': ['control_value', 'control_target_code', 'status', 'bhp_limit'],
-              'final_model_refit_on_test': False, 'future_observations_used_in_rollout': False,
-              'is_new_optimization_result': False}
-    write_json(args.output / 'report.json', report)
-    print(json.dumps(report, ensure_ascii=False, indent=2), flush=True)
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path)
     parser.add_argument('--output', type=Path)
     parser.add_argument('--reference-run', type=Path)
     parser.add_argument('--workers', type=int, choices=(1, 2), default=2)
-    parser.add_argument('--train-only', action='store_true')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -181,9 +140,7 @@ def main():
     if not args.source or not args.output:
         parser.error('source and output required')
     args.source, args.output = args.source.absolute(), args.output.absolute()
-    if not args.train_only:
-        prepare(args)
-    train(args)
+    prepare(args)
 
 
 if __name__ == '__main__':

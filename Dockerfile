@@ -11,9 +11,6 @@ ENV PATH="/app/.venv/bin:$PATH" \
     UV_NO_CACHE=1
 
 WORKDIR /app
-RUN apt-get update \
-    && apt-get install --yes --no-install-recommends libgomp1 libstdc++6 \
-    && rm -rf /var/lib/apt/lists/*
 RUN useradd --create-home --uid 10001 timesoil
 
 COPY pyproject.toml uv.lock ./
@@ -26,7 +23,6 @@ COPY docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py \
      ./docs/hackathon/chdd/CHDD_PYTHON/
 COPY docs/hackathon/chdd/CHDD_PYTHON/input/Нормативы_ЧДД.xlsx \
      ./docs/hackathon/chdd/CHDD_PYTHON/input/Нормативы_ЧДД.xlsx
-COPY deliverables/track2_model_z/surrogate_v5/model/ ./model-z-surrogate-v5/
 
 RUN uv sync --locked --no-dev --no-editable \
     && mkdir -p /app/runs \
