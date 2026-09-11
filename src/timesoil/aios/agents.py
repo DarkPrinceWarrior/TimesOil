@@ -374,7 +374,19 @@ class AgentWorkflow:
             schema=_decision_schema(role),
             schema_name=f"{role.value}_decision",
         )
-        return _parse_decision(payload, expected_role=role, tool_evidence=evidence)
+        try:
+            return _parse_decision(payload, expected_role=role, tool_evidence=evidence)
+        except WorkflowError as error:
+            # Nothing has executed since the tools ran; one bounded retry with the exact
+            # contract violation keeps a single over-long or malformed answer from ending the cycle.
+            payload, _ = await self._llm.structured(
+                final_messages + (ChatMessage("user", f"Предыдущий JSON отклонён: {error}. "
+                    "Верни JSON по схеме: summary и recommendation — непустые строки до 10000 символов, "
+                    "evidence — не более 32 строк до 512 символов каждая, approved — булево."),),
+                schema=_decision_schema(role),
+                schema_name=f"{role.value}_decision",
+            )
+            return _parse_decision(payload, expected_role=role, tool_evidence=evidence)
 
 
 def _decision_schema(role: AgentRole) -> dict[str, Any]:
