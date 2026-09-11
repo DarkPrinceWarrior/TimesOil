@@ -1148,8 +1148,11 @@ def export_opm_chdd(
             # Per-connection mass sums over several PVT regions carry rounding residue; a
             # cumulative that steps back by less than 1e-6 of itself (or 1e-3 t) is that
             # residue, not production, and is clamped to zero. Anything larger still refuses.
+            # A layer-completed well can also step back by a few tonnes when one connection
+            # takes fluid in (crossflow) while the well-level total never decreases; that month
+            # is reported as zero production of the mass in question, up to 100 t.
             for key, value in diffs.items():
-                if value < 0 and -value <= max(1e-3, 1e-6 * abs(previous[well][key])):
+                if value < 0 and -value <= max(100.0, 1e-6 * abs(previous[well][key])):
                     diffs[key] = 0.0
                     cumulative[key] = previous[well][key]
             negative = {key: value for key, value in diffs.items() if value < 0}
