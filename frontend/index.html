@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TimesOil — результаты трека Z</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">TimesOil<span class="brand-sub">Model Z</span></div>
+  <label class="runsel">
+    Расчёт
+    <select id="run-select"><option value="">загрузка…</option></select>
+  </label>
+  <span id="badge" class="badge badge-forecast">прогноз</span>
+  <span id="status" class="status"></span>
+</header>
+
+<main>
+  <section class="cards" id="cards">
+    <div class="card"><div class="card-label">Официальный ЧДД финала</div><div class="card-value" id="npv-final">—</div><div class="card-unit">млн ₽</div></div>
+    <div class="card"><div class="card-label">ЧДД инкамбента</div><div class="card-value" id="npv-inc">—</div><div class="card-unit">млн ₽</div></div>
+    <div class="card"><div class="card-label">Прирост</div><div class="card-value" id="npv-gain">—</div><div class="card-unit">%</div></div>
+    <div class="card"><div class="card-label">Накопленная нефть</div><div class="card-value" id="oil-total">—</div><div class="card-unit">т</div></div>
+  </section>
+
+  <section class="panel">
+    <h2>Карта промысла</h2>
+    <div class="legend">
+      <span><svg width="14" height="14"><circle cx="7" cy="7" r="5" class="lg"></circle></svg> добывающая</span>
+      <span><svg width="14" height="14"><polygon points="7,2 12,12 2,12" class="lg"></polygon></svg> нагнетательная</span>
+      <span class="muted">цвет — блок, размер — накопленная нефть / закачка</span>
+    </div>
+    <div id="map" class="map"></div>
+    <div id="map-tip" class="tip"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Динамика по объекту</h2>
+    <div id="field-charts" class="charts"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Выбранная скважина: <span id="well-name">не выбрана</span></h2>
+    <div id="well-charts" class="charts"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Ограничения</h2>
+    <div id="constraints"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Изменения управления <span id="diff-scope" class="muted"></span></h2>
+    <div id="diff"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Интерпретация</h2>
+    <div id="interp"></div>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

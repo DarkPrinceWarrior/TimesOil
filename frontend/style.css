@@ -1,0 +1,77 @@
+:root {
+  --bg: #f4f5f7;
+  --panel: #ffffff;
+  --ink: #1c1f24;
+  --muted: #6b7280;
+  --line: #d8dbe0;
+  --head: #16202c;
+  --accent: #0b6bcb;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+.topbar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  background: var(--head); color: #e8edf3; padding: 10px 18px;
+}
+.brand { font-weight: 700; letter-spacing: .5px; }
+.brand-sub { font-weight: 400; opacity: .65; margin-left: 8px; font-size: 12px; }
+.runsel { font-size: 12px; opacity: .85; display: flex; align-items: center; gap: 8px; }
+.runsel select {
+  background: #223040; color: #e8edf3; border: 1px solid #35485c;
+  padding: 4px 6px; font: inherit; min-width: 220px;
+}
+.badge { font-size: 12px; padding: 3px 10px; border-radius: 2px; text-transform: uppercase; letter-spacing: .5px; }
+.badge-official { background: #1f7a43; color: #fff; }
+.badge-forecast { background: #8a6d1f; color: #fff; }
+.status { font-size: 12px; opacity: .7; margin-left: auto; }
+
+main { padding: 16px; max-width: 1400px; margin: 0 auto; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; }
+.card-label { font-size: 12px; color: var(--muted); }
+.card-value { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.card-unit { font-size: 11px; color: var(--muted); }
+
+.panel { background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; margin-bottom: 16px; }
+.panel h2 { font-size: 14px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .6px; color: #33405060; color: #334050; }
+.muted { color: var(--muted); font-weight: 400; }
+.empty { color: var(--muted); padding: 8px 0; }
+
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); align-items: center; margin-bottom: 6px; }
+.legend .lg { fill: #8a96a3; }
+.map svg { width: 100%; height: auto; background: #fbfcfd; border: 1px solid var(--line); }
+.well { cursor: pointer; stroke: #22303f; stroke-width: .6; }
+.well.selected { stroke: #b3261e; stroke-width: 2; }
+.well-label { font-size: 7px; fill: #44505e; pointer-events: none; }
+.tip { font-size: 12px; color: var(--muted); min-height: 18px; margin-top: 6px; }
+
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 12px; }
+.chart { border: 1px solid var(--line); padding: 6px; }
+.chart h3 { font-size: 12px; margin: 2px 4px 4px; font-weight: 600; }
+.chart svg { width: 100%; height: auto; }
+.chart .axis { stroke: #b9bfc7; stroke-width: .8; }
+.chart .grid { stroke: #e8eaee; stroke-width: .8; }
+.chart .tick { font-size: 8px; fill: var(--muted); }
+.chart .cap { stroke-dasharray: 4 3; stroke-width: 1.2; fill: none; }
+.chart .ser { fill: none; stroke-width: 1.6; }
+.chart-legend { font-size: 11px; color: var(--muted); margin: 2px 4px; display: flex; gap: 12px; flex-wrap: wrap; }
+.chart-legend i { display: inline-block; width: 10px; height: 3px; vertical-align: middle; margin-right: 4px; }
+
+table { border-collapse: collapse; width: 100%; font-size: 12px; }
+th, td { border-bottom: 1px solid var(--line); padding: 4px 8px; text-align: left; }
+th { background: #eef1f4; font-weight: 600; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.scroll { max-height: 320px; overflow: auto; border: 1px solid var(--line); }
+
+.viol { border-left: 3px solid #b3261e; padding: 4px 8px; margin: 4px 0; background: #fdf3f2; font-size: 12px; }
+.ok { color: #1f7a43; }
+pre.md { white-space: pre-wrap; background: #f7f8fa; border: 1px solid var(--line); padding: 10px; font-size: 12px; max-height: 360px; overflow: auto; }
+details { border: 1px solid var(--line); margin: 4px 0; padding: 4px 8px; }
+details summary { cursor: pointer; font-size: 12px; font-weight: 600; }
+details pre { white-space: pre-wrap; font-size: 11px; max-height: 260px; overflow: auto; }
