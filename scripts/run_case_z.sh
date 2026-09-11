@@ -82,6 +82,9 @@ if [ -z "${LLM_BASE_URL:-}" ]; then
   if test -s "$TATNEFT_KEY"; then
     export LLM_BASE_URL=https://litellm.tatneft.guru/v1 LLM_MODEL=qwen3.8-27b
     export LLM_API_KEY="$(cat "$TATNEFT_KEY")"
+    # A proxy left over in the shell (this script's own Cerebras branch exports one) would
+    # route every Tatneft call through the Cerebras egress and fail it.
+    unset LLM_PROXY_URL
     if test -s "$CEREBRAS_KEY"; then
       export LLM_FALLBACK_BASE_URL=https://api.cerebras.ai/v1 LLM_FALLBACK_MODEL=qwen-3.8-27b
       export LLM_FALLBACK_API_KEY_FILE="$CEREBRAS_KEY"

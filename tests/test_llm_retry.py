@@ -257,10 +257,89 @@ def test_both_routes_failing_raises_after_each_route_ran_its_own_retries(tmp_pat
     assert [record["route"] for record in records] == ["primary", "fallback"]
 
 
+def test_chat_answered_by_the_fallback_is_named_in_the_receipt_evidence(tmp_path: Path) -> None:
+    config = LLMConfig.from_env(_route_env(tmp_path))
+
+    def primary(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(400, json={"error": "Failed to generate tool call"})
+
+    def fallback(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={
+            "model": CEREBRAS_MODEL,
+            "choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}],
+        })
+
+    async def run():
+        async with _two_route_client(config, primary, fallback) as client:
+            return await client.chat([ChatMessage("user", "decide")]), client.fallback_evidence()
+
+    response, evidence = asyncio.run(run())
+    assert response.content == "ok" and response.model == CEREBRAS_MODEL
+    # The sealed receipt must not claim the primary model when the fallback answered.
+    assert evidence == {"model": CEREBRAS_MODEL, "answered_calls": 1}
+
+
+def test_both_routes_failing_keeps_the_primary_error_text_for_the_agent_recovery(
+    tmp_path: Path,
+) -> None:
+    config = LLMConfig.from_env(_route_env(tmp_path))
+
+    def primary(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(400, json={
+            "error": "Failed to generate tool call but tool_choice = required"
+        })
+
+    def fallback(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("proxy is down", request=request)
+
+    async def run():
+        async with _two_route_client(config, primary, fallback) as client:
+            return await client.chat([ChatMessage("user", "decide")])
+
+    # agents.py keys its Cerebras tool_choice recovery on "HTTP 400" in str(error): the
+    # transport failure of the alternate route must not hide it.
+    with patch("timesoil.aios.llm.asyncio.sleep", new_callable=AsyncMock):
+        with pytest.raises(LLMError, match="HTTP 400") as raised:
+            asyncio.run(run())
+    assert "fallback route also failed" in str(raised.value)
+
+
+def test_a_broken_fallback_key_file_is_a_configuration_error(tmp_path: Path) -> None:
+    env = _route_env(tmp_path, LLM_FALLBACK_API_KEY_FILE=str(tmp_path / "absent-key"))
+    with pytest.raises(ValueError, match="LLM_FALLBACK_API_KEY_FILE"):
+        LLMConfig.from_env(env)
+    inline = dict(env)
+    del inline["LLM_FALLBACK_API_KEY_FILE"]
+    inline["LLM_FALLBACK_API_KEY"] = "inline-test-only-key"
+    config = LLMConfig.from_env(inline)
+    assert config.fallback is not None and config.fallback.api_key == "inline-test-only-key"
+
+
+def test_a_config_contract_error_is_not_replayed_on_the_fallback(tmp_path: Path) -> None:
+    config = LLMConfig.from_env(_route_env(tmp_path))
+
+    def unreachable(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("no route may be contacted for a rejected payload")
+
+    async def run():
+        async with _two_route_client(config, unreachable, unreachable) as client:
+            await client.chat([ChatMessage("user", "decide")], tool_choice="required")
+
+    # Replaying it costs nothing (no network on either route) but must still surface as LLMError.
+    with pytest.raises(LLMError, match="tool_choice requires tools"):
+        asyncio.run(run())
+
+
 def test_a_fallback_route_must_differ_from_the_primary_and_must_not_chain(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="LLM_FALLBACK_BASE_URL"):
         LLMConfig.from_env(
             _route_env(tmp_path, LLM_FALLBACK_BASE_URL=_BASE_URL, LLM_FALLBACK_MODEL=APPROVED_MODEL)
+        )
+    with pytest.raises(ValueError, match="LLM_FALLBACK_BASE_URL"):  # A trailing slash is the same route.
+        LLMConfig.from_env(
+            _route_env(
+                tmp_path, LLM_FALLBACK_BASE_URL=_BASE_URL + "/", LLM_FALLBACK_MODEL=APPROVED_MODEL
+            )
         )
     chained = LLMConfig.from_env(_route_env(tmp_path))
     with pytest.raises(ValueError, match="without its own fallback"):

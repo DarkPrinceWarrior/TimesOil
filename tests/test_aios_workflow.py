@@ -91,7 +91,8 @@ def _request(root: Path) -> dict[str, Any]:
 
 class _LLM(ExternalQwenClient):
     def __init__(self) -> None:
-        self.config = SimpleNamespace(model=APPROVED_MODEL)
+        self.config = SimpleNamespace(model=APPROVED_MODEL, fallback=None)
+        self.fallback_answers = 0
         self.forced_tools: list[str] = []
         self.states: list[str] = []
 
@@ -338,6 +339,7 @@ def test_full_cycle_keeps_full_digest_and_real_critic_decision(tmp_path: Path) -
     assert receipt["external_qwen_used"] is False
     assert receipt["agent"]["transport"] == "injected_test"
     assert receipt["agent"]["model"] is None
+    assert receipt["agent"]["fallback_route"] is None  # No alternate route configured here.
     assert "endpoint" not in receipt["agent"]
     assert receipt["terminal_evidence"]["available"] is False
     assert receipt["terminal_evidence"]["opm"] == {

@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 import re
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Any, Literal, Self
 from urllib.parse import urlsplit
@@ -144,7 +144,9 @@ class LLMConfig:
             # One alternate route only: a chain would make the number of remote calls unbounded.
             if not isinstance(self.fallback, LLMConfig) or self.fallback.fallback is not None:
                 raise ValueError("LLM fallback must be a single route without its own fallback")
-            if self.fallback.base_url == self.base_url:
+            # Normalise as the other endpoint checks do: a trailing slash or a different case
+            # must not disguise the primary endpoint as its own fallback.
+            if self.fallback.base_url.rstrip("/").lower() == self.base_url.rstrip("/").lower():
                 raise ValueError("LLM_FALLBACK_BASE_URL must differ from LLM_BASE_URL")
 
     @classmethod
@@ -167,15 +169,20 @@ class LLMConfig:
         if not fallback_url:
             return config
         key_file = (source.get("LLM_FALLBACK_API_KEY_FILE") or "").strip()
+        if key_file:
+            try:
+                # A misconfigured key path is a configuration error, not a crash: callers
+                # (api.get_agent_workflow, cli) map ValueError to "Qwen is not configured".
+                fallback_key = Path(key_file).read_text(encoding="utf-8").strip()
+            except OSError as exc:
+                raise ValueError("LLM_FALLBACK_API_KEY_FILE is not readable") from exc
+        else:
+            fallback_key = source.get("LLM_FALLBACK_API_KEY", "")
         # The alternate route inherits every determinism field (seed, temperature, reasoning
         # effort, token budget) and the same call log, so only the endpoint identity differs.
         fallback = replace(
             config,
-            api_key=(
-                Path(key_file).read_text(encoding="utf-8").strip()
-                if key_file
-                else source.get("LLM_FALLBACK_API_KEY", "")
-            ),
+            api_key=fallback_key,
             base_url=fallback_url,
             model=source.get("LLM_FALLBACK_MODEL") or APPROVED_MODEL,
             # Only the alternate endpoint may need an egress proxy (api.cerebras.ai is geo-blocked).
@@ -257,6 +264,7 @@ class ExternalQwenClient:
             raise ValueError("LLM route must be primary or fallback")
         self.config = config
         self.route = route
+        self.fallback_answers = 0  # How many calls the alternate route answered; receipt evidence.
         self._fallback = (
             None
             if config.fallback is None
@@ -284,6 +292,30 @@ class ExternalQwenClient:
         if self._owns_client:
             await self._client.aclose()
 
+    def fallback_evidence(self) -> dict[str, Any] | None:
+        """Receipt provenance: the alternate route's model and how many calls it answered."""
+        if self.config.fallback is None:
+            return None
+        return {"model": self.config.fallback.model, "answered_calls": self.fallback_answers}
+
+    async def _route[T](self, call: Callable[[ExternalQwenClient], Awaitable[T]]) -> T:
+        """Run one logical call on the primary and, only on its LLMError, once on the fallback."""
+        try:
+            return await call(self)
+        except LLMError as primary_error:
+            if self._fallback is None:
+                raise
+            try:
+                answer = await call(self._fallback)
+            except LLMError as fallback_error:
+                # Keep the primary's message first: agents.py recovers from its HTTP 400
+                # "tool_choice = required" refusal by matching that text.
+                raise LLMError(
+                    f"{primary_error}; fallback route also failed: {fallback_error}"
+                ) from primary_error
+            self.fallback_answers += 1
+            return answer
+
     async def chat(
         self,
         messages: Sequence[ChatMessage],
@@ -294,18 +326,12 @@ class ExternalQwenClient:
         max_tokens: int | None = None,
         timeout_seconds: float | None = None,
     ) -> LLMResponse:
-        try:
-            return await self._chat(
+        return await self._route(
+            lambda route: route._chat(
                 messages, reasoning=reasoning, tools=tools, tool_choice=tool_choice,
                 max_tokens=max_tokens, timeout_seconds=timeout_seconds,
             )
-        except LLMError:
-            if self._fallback is None:
-                raise
-            return await self._fallback._chat(
-                messages, reasoning=reasoning, tools=tools, tool_choice=tool_choice,
-                max_tokens=max_tokens, timeout_seconds=timeout_seconds,
-            )
+        )
 
     async def structured(
         self,
@@ -316,18 +342,12 @@ class ExternalQwenClient:
         max_tokens: int | None = None,
         timeout_seconds: float | None = None,
     ) -> tuple[dict[str, Any], LLMResponse]:
-        try:
-            return await self._structured(
+        return await self._route(
+            lambda route: route._structured(
                 messages, schema=schema, schema_name=schema_name,
                 max_tokens=max_tokens, timeout_seconds=timeout_seconds,
             )
-        except LLMError:
-            if self._fallback is None:
-                raise
-            return await self._fallback._structured(
-                messages, schema=schema, schema_name=schema_name,
-                max_tokens=max_tokens, timeout_seconds=timeout_seconds,
-            )
+        )
 
     async def _chat(
         self,

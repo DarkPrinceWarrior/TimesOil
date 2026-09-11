@@ -636,6 +636,7 @@ class FullCycleWorkflow:
             execution_binding,
             self._dependency_mode,
             self._llm.config.model,
+            self._llm.fallback_evidence(),
         )
         receipt_path = result.run_dir / "full-cycle-receipt.json"
         receipt_bytes = _json_bytes(receipt, indent=2)
@@ -1005,6 +1006,7 @@ def _receipt(
     execution_binding: Mapping[str, Any],
     dependency_mode: str,
     model_name: str,
+    fallback_route: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
     artifacts = {
         "exact_opm_input_schedule": _artifact(schedule, run_dir),
@@ -1059,6 +1061,11 @@ def _receipt(
                 "external_openai_compatible_api" if production else "injected_test"
             ),
             "model": model_name if production else None,
+            # The primary model above is not the whole provenance: a role's answer may have come
+            # from the alternate route (a different provider and model id).
+            "fallback_route": (
+                dict(fallback_route) if production and fallback_route is not None else None
+            ),
             "decisions": [_decision(decision) for decision in state.decisions],
         },
         "terminal_evidence": public_terminal_evidence,

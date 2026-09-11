@@ -262,6 +262,7 @@ export LLM_FALLBACK_BASE_URL=https://api.cerebras.ai/v1
 export LLM_FALLBACK_MODEL=qwen-3.8-27b
 export LLM_FALLBACK_API_KEY_FILE=/root/.config/timesoil/cerebras-key
 export LLM_FALLBACK_PROXY_URL=http://127.0.0.1:10809
+unset LLM_PROXY_URL   # прокси — только резервному маршруту, иначе Татнефть идёт через него
 export CUDA_VISIBLE_DEVICES=5 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 export OPM_MPI_PROCESSES=16 OPM_THREADS_PER_PROCESS=1 OPM_CPU_AFFINITY=30-45
 export TIMESOIL_CASE_SOURCE_SHA256=<sha256 архива кейса>
@@ -272,7 +273,16 @@ export TIMESOIL_CASE_SOURCE_SHA256=<sha256 архива кейса>
 (**после** его собственных ограниченных повторов) повторяет тот же самый запрос
 ровно один раз на резервном; цепочки резервов запрещены, совпадение адресов
 основного и резервного маршрутов отклоняется. Каждая строка `LLM_CALL_LOG`
-несёт поле `route` (`primary`/`fallback`) — по нему видно, кто ответил.
+несёт поле `route` (`primary`/`fallback`) — по нему видно, кто ответил; в
+`full-cycle-receipt.json` то же самое видно в `agent.fallback_route`
+(`model` резервного маршрута и `answered_calls` — сколько вызовов он ответил),
+поэтому расписка не выдаёт ответ резерва за ответ основной модели. Если файл
+ключа `LLM_FALLBACK_API_KEY_FILE` недоступен (ключи в `/dev/shm` не переживают
+перезагрузку), конфигурация отклоняется с `ValueError`, а веб-поверхность
+отвечает 503 «Qwen is not configured», а не 500. Бюджет времени на один
+логический вызов удваивается: каждый маршрут получает свой
+`LLM_TIMEOUT_SECONDS` (при 600 с — до 1200 с на вызов, плюс повтор agents.py
+при отсутствии обязательного вызова инструмента).
 `scripts/run_case_z.sh` выставляет эту пару сам: Татнефть, если её файл ключа
 непустой, Cerebras резервом; если ключа Татнефти нет, Cerebras становится
 основным маршрутом без резерва.
