@@ -17,6 +17,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-dev --no-install-project
 
 COPY src ./src
+COPY frontend ./frontend
 COPY docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py \
      docs/hackathon/chdd/CHDD_PYTHON/chdd_model.py \
      docs/hackathon/chdd/CHDD_PYTHON/excel_io.py \

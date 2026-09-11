@@ -10,10 +10,13 @@ services:
       - "127.0.0.1:${AIOS_PORT:-8000}:8000"
     env_file:
       - "${AIOS_ENV_FILE:-./config/aios.example.env}"
+    environment:
+      TIMESOIL_RESULTS_ROOT: /app/results
     secrets:
       - qwen_api_key
     volumes:
       - runs:/app/runs
+      - "${TIMESOIL_RESULTS_DIR:-./results}:/app/results:ro"
     read_only: true
     tmpfs:
       - /tmp:size=64m,mode=1777
