@@ -115,6 +115,8 @@ def main():
     split_group.add_argument('--test-only', action='store_true',
         help='Evaluate only held-out cases; do not reuse development cases for intervals')
     parser.add_argument('--fixed-origin-only', action='store_true')
+    parser.add_argument('--gpu-memory-fraction', type=float, default=.5,
+        help='Share of the GPU reserved for this process; the run refuses to start unless it is free')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     self_check()
@@ -125,7 +127,7 @@ def main():
     if not args.fixed_origin_only:
         parser.error('the nine-target economic evaluation never observes the candidate future; pass --fixed-origin-only')
     os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
-    from timesfm_geology import MODEL_REVISION, load_frozen_model
+    from timesfm_geology import MODEL_REVISION, load_frozen_model, reserve_gpu_memory
     if digest(args.batch / 'manifest.json') != args.batch_sha256:
         raise ValueError('evaluation batch hash mismatch')
     manifest = json.loads((args.batch / 'manifest.json').read_text())
@@ -156,7 +158,8 @@ def main():
         'reference_correction_sha256': None,
         'head_validation_loss': training['validation_loss_best'], 'metrics': [], 'source_scenarios': {},
         'economic_targets': list(ECONOMIC_TARGETS), 'target_units': list(ECONOMIC_UNITS),
-        'source_scenario_hash_semantics': 'canonical economic CSV SHA-256'}
+        'source_scenario_hash_semantics': 'canonical economic CSV SHA-256',
+        'gpu_memory_fraction': args.gpu_memory_fraction}
     (args.output / 'protocol.json').write_text(json.dumps(report, indent=2) + '\n')
     started = time.monotonic()
     import torch
@@ -164,7 +167,7 @@ def main():
     if not torch.cuda.is_available() or 'A100' not in torch.cuda.get_device_name(0):
         raise RuntimeError('requires allocated A100')
     torch.set_num_threads(4)
-    torch.cuda.set_per_process_memory_fraction(.35)
+    report.update(reserve_gpu_memory(args.gpu_memory_fraction))
     torch.use_deterministic_algorithms(True)
     torch.backends.cuda.enable_flash_sdp(False)
     torch.backends.cuda.enable_mem_efficient_sdp(False)

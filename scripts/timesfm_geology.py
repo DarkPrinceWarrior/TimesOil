@@ -60,6 +60,19 @@ def enable_precise_variate_softmax(model):
     model.precise_variate_softmax = True
 
 
+def reserve_gpu_memory(fraction):
+    """Fail closed unless the requested share of GPU memory is actually free; return what was reserved."""
+    import torch
+    if not 0 < fraction <= 1:
+        raise ValueError('gpu memory fraction must be in (0, 1]')
+    free, total = torch.cuda.mem_get_info()
+    if free < fraction * total:
+        raise RuntimeError(f'GPU has {free / 2**30:.2f} GiB free; {fraction * total / 2**30:.2f} GiB requested')
+    torch.cuda.set_per_process_memory_fraction(fraction)
+    return {'gpu_memory_fraction': fraction, 'gpu_free_gib': round(free / 2**30, 3),
+            'gpu_total_gib': round(total / 2**30, 3)}
+
+
 def geological_inputs(trajectory, origin, context, horizon, connectivity):
     if tuple(trajectory.well_ids) != tuple(connectivity.well_ids):
         raise ValueError('geological well order differs from trajectory')
