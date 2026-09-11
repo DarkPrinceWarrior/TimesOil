@@ -1151,8 +1151,9 @@ def export_opm_chdd(
             # A layer-completed well can also step back by a few tonnes when one connection
             # takes fluid in (crossflow) while the well-level total never decreases; that month
             # is reported as zero production of the mass in question, up to 100 t.
+            crossflow_allowance = 100.0 if well in connection_wells else 0.0
             for key, value in diffs.items():
-                if value < 0 and -value <= max(100.0, 1e-6 * abs(previous[well][key])):
+                if value < 0 and -value <= max(crossflow_allowance, 1e-3, 1e-6 * abs(previous[well][key])):
                     diffs[key] = 0.0
                     cumulative[key] = previous[well][key]
             negative = {key: value for key, value in diffs.items() if value < 0}
