@@ -546,6 +546,9 @@ class FullCycleWorkflow:
             deck_dir=result.deck_path.parent,
             density_map=request.density_map,
             unit_system=prepared.unit_system,
+            # The BHP action channel is exported whenever the request plans BHP bounds, so
+            # the incumbent can serve as the authenticated baseline of a BHP-screened search.
+            include_bhp=any(action.bhp_limit is not None for action in request.controls),
         )
         export_sha256 = _authenticate_export(
             exported,
