@@ -210,7 +210,7 @@ def test_derived_field_vectors_convert_mass_with_export_densities_only():
     np.testing.assert_allclose(unit['WVPT_DELTA'][:, 0], unit['WLPT_DELTA'][:, 0])
     manifest = {'conversion': {'density_by_well': {'P': {'oil_kg_m3': 800, 'water_kg_m3': 1000,
                                                          'provenance': 'deck'}}}}
-    assert economics.export_densities(manifest, ['P'])['P'] == {'oil_kg_m3': 800., 'water_kg_m3': 1000.}
+    assert economics.export_densities(manifest, ['P'])['P'] == {'oil_kg_m3': 800., 'water_kg_m3': 1000., 'method': 'well_surface_density'}
     with pytest.raises(ValueError, match='misses positive per-well densities'):
         economics.export_densities(manifest, wells)
     with pytest.raises(ValueError, match='misses positive per-well densities'):
