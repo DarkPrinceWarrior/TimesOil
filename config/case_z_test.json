@@ -1,0 +1,111 @@
+{
+  "liquid_cap_m3d": 600,
+  "injection_cap_m3d": 600,
+  "bhp_bounds": [
+    50.6625,
+    303.975
+  ],
+  "vrr": {
+    "min": 0.85,
+    "max": 1.15,
+    "window_months": 3,
+    "denominator": "liquid_reservoir",
+    "lower_bound_status": "hard"
+  },
+  "water_balance": {
+    "deficit_m3": null,
+    "carryover": false
+  },
+  "pressure": {
+    "field_min_bar": 109.431,
+    "block_min_bar": null,
+    "regions": "FIP_C1"
+  },
+  "repairs": [
+    {
+      "well": "90",
+      "start": "2007-04-01",
+      "end": "2007-06-01"
+    },
+    {
+      "well": "27",
+      "start": "2007-12-01",
+      "end": "2008-04-01"
+    },
+    {
+      "well": "54",
+      "start": "2008-03-01",
+      "end": "2008-08-01"
+    },
+    {
+      "well": "59",
+      "start": "2008-10-01",
+      "end": "2009-03-01"
+    },
+    {
+      "well": "75",
+      "start": "2009-05-01",
+      "end": "2009-08-01"
+    },
+    {
+      "well": "6",
+      "start": "2009-12-01",
+      "end": "2010-04-01"
+    },
+    {
+      "well": "3",
+      "start": "2020-04-01",
+      "end": "2020-08-01"
+    },
+    {
+      "well": "26",
+      "start": "2020-11-01",
+      "end": "2021-03-01"
+    },
+    {
+      "well": "30",
+      "start": "2021-05-01",
+      "end": "2021-09-01"
+    },
+    {
+      "well": "24",
+      "start": "2021-12-01",
+      "end": "2022-04-01"
+    },
+    {
+      "well": "47",
+      "start": "2022-06-01",
+      "end": "2022-10-01"
+    },
+    {
+      "well": "13",
+      "start": "2023-02-01",
+      "end": "2023-06-01"
+    },
+    {
+      "well": "54",
+      "start": "2023-09-01",
+      "end": "2024-01-01"
+    },
+    {
+      "well": "42",
+      "start": "2024-04-01",
+      "end": "2024-08-01"
+    },
+    {
+      "well": "55",
+      "start": "2024-11-01",
+      "end": "2025-03-01"
+    },
+    {
+      "well": "7",
+      "start": "2025-05-01",
+      "end": "2025-09-01"
+    }
+  ],
+  "selection_margins": {
+    "eps_liquid": 0.03,
+    "eps_injection": 0.03,
+    "phi": 1.0
+  }
+}
