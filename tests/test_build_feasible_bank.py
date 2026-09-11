@@ -94,6 +94,68 @@ class ProducedWaterArithmetic(unittest.TestCase):
             bank.canonical_volumes(rows, {"A": (800.0, 1000.0)})
 
 
+class ExportTolerances(unittest.TestCase):
+    """Every tolerance the bank applies: inside it is clamped and counted, outside refuses."""
+
+    def test_oil_above_liquid_within_tolerance_is_clamped_and_counted(self):
+        densities = {"A": (800.0, 1000.0)}
+        log = bank.ToleranceLog({"oil_above_liquid_rel_tol": bank.OIL_ABOVE_LIQUID_REL_TOL})
+        # 1e-4 * 100 t = 0.01 t of slack; the row is 0.005 t over.
+        rows = [{"DATA": "2007-01-01", "well": "A", "WLPT_Diff": "100.0",
+                 "WOMT_Diff": "100.005"}]
+
+        water, oil = bank.canonical_volumes(rows, densities, log)
+
+        self.assertEqual(water["A"]["2007-01-01"], 0.0)
+        self.assertAlmostEqual(oil["A"]["2007-01-01"], 100.005 * 1000.0 / 800.0)
+        rule = log.as_manifest()["rules"]["oil_above_liquid_t"]
+        self.assertEqual(rule["count"], 1)
+        self.assertAlmostEqual(rule["max_magnitude"], 0.005)
+        self.assertEqual((rule["first_well"], rule["first_date"]), ("A", "2007-01-01"))
+
+    def test_oil_above_liquid_just_outside_tolerance_is_refused(self):
+        rows = [{"DATA": "2007-01-01", "well": "A", "WLPT_Diff": "100.0",
+                 "WOMT_Diff": "100.02"}]
+        with self.assertRaisesRegex(bank.BankError, "oil mass exceeds liquid mass"):
+            bank.canonical_volumes(rows, {"A": (800.0, 1000.0)})
+
+    def test_connection_mean_density_is_used_and_counted(self):
+        manifest = {"conversion": {
+            "density_by_well": {"A": {"oil_kg_m3": 800.0, "water_kg_m3": 1000.0}},
+            "connection_density_by_well": {
+                "A": {"oil_kg_m3": [700.0], "water_kg_m3": [900.0]},
+                "B": {"oil_kg_m3": [800.0, 900.0], "water_kg_m3": [1000.0, 1100.0]},
+                "C": {"oil_kg_m3": [], "water_kg_m3": []}}}}
+        log = bank.ToleranceLog({})
+
+        densities = bank.surface_densities(manifest, log)
+
+        # An explicit well-level density always wins over the connection mean.
+        self.assertEqual(densities["A"], (800.0, 1000.0))
+        self.assertEqual(densities["B"], (850.0, 1050.0))
+        self.assertNotIn("C", densities)
+        rule = log.as_manifest()["rules"]["connection_mean_density_rel_spread"]
+        self.assertEqual((rule["count"], rule["first_well"]), (1, "B"))
+        self.assertAlmostEqual(rule["max_magnitude"], 100.0 / 850.0)
+
+    def test_producing_well_without_a_usable_density_is_refused(self):
+        densities = bank.surface_densities(
+            {"conversion": {"density_by_well": {"A": {"oil_kg_m3": 800.0, "water_kg_m3": 1000.0}},
+                            "connection_density_by_well": {"C": {"oil_kg_m3": [],
+                                                                 "water_kg_m3": []}}}})
+        rows = [{"DATA": "2007-01-01", "well": "C", "WLPT_Diff": "5", "WOMT_Diff": "1"}]
+        with self.assertRaisesRegex(bank.BankError, "no surface density"):
+            bank.canonical_volumes(rows, densities)
+
+    def test_bank_manifest_carries_the_tolerance_block(self):
+        _, _, manifest, _ = build()
+        applied = manifest["tolerances_applied"]
+        self.assertEqual(applied["thresholds"]["oil_above_liquid_rel_tol"],
+                         bank.OIL_ABOVE_LIQUID_REL_TOL)
+        # The synthetic baseline needs no tolerance at all.
+        self.assertEqual(applied["rules"], {})
+
+
 class Families(unittest.TestCase):
     def test_counts_and_identifiers(self):
         _, scenarios, manifest, _ = build()

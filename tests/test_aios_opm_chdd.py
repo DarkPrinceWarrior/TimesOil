@@ -12,6 +12,9 @@ from pathlib import Path
 
 from timesoil.aios.opm import OPM_EXPORT_VECTORS, OPM_IMAGE, OPM_IMAGE_DIGEST
 from timesoil.aios.opm_chdd import (
+    CONNECTION_CROSSFLOW_STEP_T,
+    CUMULATIVE_STEP_ABS_TOL_T,
+    PRODUCER_BACKFLOW_RATE_TPD,
     OpmChddError,
     _check_connection_total,
     _float32_identity_tolerance,
@@ -47,6 +50,37 @@ CONNECTION_VECTORS = (
     "CWIR",
     "CWIT",
 )
+COMPLETIONS = ("1,1,1", "1,1,2")
+# One well, two layers, two PVT regions: 800/1000 kg/m3 in layer 1, 900/1100 in layer 2.
+CONNECTION_DECK = """RUNSPEC
+START
+ 1 JAN 2025 /
+METRIC
+DIMENS
+ 1 1 2 /
+TABDIMS
+ 2 /
+PROPS
+DENSITY
+ 800 1000 1 /
+ 900 1100 1 /
+REGIONS
+PVTNUM
+ 1 2 /
+ACTNUM
+ 2*1 /
+SCHEDULE
+WELSPECS
+ 'P1' 'G' 1 1 /
+/
+COMPDAT
+ 'P1' 1* 1* 1 2 OPEN /
+/
+WCONPROD
+ 'P1' 'OPEN' 'LRAT' 1* 1* 1* 30 /
+/
+END
+"""
 
 
 class OpmChddTest(unittest.TestCase):
@@ -909,120 +943,232 @@ END
             self.assertEqual(changed[0], original_first)
             self.assertEqual(float(changed[1]["control_value"]), 900.0)
 
+    @staticmethod
+    def _connection_row(
+        month: str, completions: dict[str, dict[str, float]]
+    ) -> dict[str, float | str]:
+        """One report row of the CONNECTION_DECK well; COFR/CWFR follow COPR/CWPR."""
+        row: dict[str, float | str] = {
+            "DATE": month,
+            "TIME": 0,
+            "WLPR:P1": 30.0,
+            "WLPT:P1": 300.0,
+            "WOPR:P1": 9.0,
+            "WOPT:P1": 90.0,
+            "WOIR:P1": 0.0,
+            "WOIT:P1": 0.0,
+            "WWPR:P1": 21.0,
+            "WWPT:P1": 210.0,
+            "WWIR:P1": 0.0,
+            "WWIT:P1": 0.0,
+            "WBHP:P1": 120.0,
+            "WBP9:P1": 200.0,
+            "WEFF:P1": 1.0,
+        }
+        for completion in COMPLETIONS:
+            values = {vector: 0.0 for vector in CONNECTION_VECTORS}
+            values.update(completions.get(completion, {}))
+            values["COFR"], values["CWFR"] = values["COPR"], values["CWPR"]
+            for vector, value in values.items():
+                row[f"{vector}:P1:{completion}"] = value
+        return row
+
+    def _connection_export(
+        self, root: Path, rows: list[dict[str, float | str]]
+    ) -> tuple[list[dict[str, str]], dict]:
+        (root / "MODEL.DATA").write_text(CONNECTION_DECK, encoding="utf-8")
+        summary = self._summary(
+            root,
+            rows,
+            extra_fields=tuple(
+                f"{vector}:P1:{completion}"
+                for completion in COMPLETIONS
+                for vector in CONNECTION_VECTORS
+            ),
+        )
+        run_manifest, extraction = self._extraction_chain(root, summary)
+        chdd, track2, manifest = root / "chdd.csv", root / "track2.csv", root / "manifest.json"
+        export_opm_chdd(
+            summary,
+            chdd,
+            track2,
+            manifest,
+            scenario_id="connections",
+            source_model="synthetic_opm",
+            opm_run_manifest=run_manifest,
+            summary_extraction_manifest=extraction,
+            deck_dir=root,
+            _summary_run=self._summary_replay(summary),
+        )
+        with chdd.open(encoding="utf-8", newline="") as stream:
+            chdd_rows = list(csv.DictReader(stream))
+        return chdd_rows, json.loads(manifest.read_text(encoding="utf-8"))
+
     def test_connection_vectors_use_cell_density(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            (root / "MODEL.DATA").write_text(
-                """RUNSPEC
-START
- 1 JAN 2025 /
-METRIC
-DIMENS
- 1 1 2 /
-TABDIMS
- 2 /
-PROPS
-DENSITY
- 800 1000 1 /
- 900 1100 1 /
-REGIONS
-PVTNUM
- 1 2 /
-ACTNUM
- 2*1 /
-SCHEDULE
-WELSPECS
- 'P1' 'G' 1 1 /
-/
-COMPDAT
- 'P1' 1* 1* 1 2 OPEN /
-/
-WCONPROD
- 'P1' 'OPEN' 'LRAT' 1* 1* 1* 30 /
-/
-END
-""",
-                encoding="utf-8",
-            )
-            connection_fields = tuple(
-                f"{vector}:P1:{completion}"
-                for completion in ("1,1,1", "1,1,2")
-                for vector in CONNECTION_VECTORS
-            )
-            rows = []
-            for month, factor in (("2025-02-01", 1.0), ("2025-03-01", 1.5)):
-                row = {
-                    "DATE": month,
-                    "TIME": 0,
-                    "WLPR:P1": 30.0,
-                    "WLPT:P1": 300.0 * factor,
-                    "WOPR:P1": 9.0,
-                    "WOPT:P1": 90.0 * factor,
-                    "WOIR:P1": 0.0,
-                    "WOIT:P1": 0.0,
-                    "WWPR:P1": 21.0,
-                    "WWPT:P1": 210.0 * factor,
-                    "WWIR:P1": 0.0,
-                    "WWIT:P1": 0.0,
-                    "WBHP:P1": 120.0,
-                    "WBP9:P1": 200.0,
-                    "WEFF:P1": 1.0,
-                }
-                row.update(
+            rows = [
+                self._connection_row(
+                    month,
                     {
-                        "COFR:P1:1,1,1": -1.0,
-                        "CWFR:P1:1,1,1": -2.0,
-                        "COPR:P1:1,1,1": -1.0,
-                        "COPT:P1:1,1,1": -10.0 * factor,
-                        "CWPR:P1:1,1,1": -2.0,
-                        "CWPT:P1:1,1,1": -20.0 * factor,
-                        "COIT:P1:1,1,1": 0.0,
-                        "CWIR:P1:1,1,1": 0.0,
-                        "CWIT:P1:1,1,1": 0.0,
-                        "COFR:P1:1,1,2": 11.0,
-                        "CWFR:P1:1,1,2": 22.0,
-                        "COPR:P1:1,1,2": 11.0,
-                        "COPT:P1:1,1,2": 110.0 * factor,
-                        "CWPR:P1:1,1,2": 22.0,
-                        "CWPT:P1:1,1,2": 220.0 * factor,
-                        "COIT:P1:1,1,2": 0.0,
-                        "CWIR:P1:1,1,2": 0.0,
-                        "CWIT:P1:1,1,2": 0.0,
-                    }
+                        "1,1,1": {
+                            "COPR": -1.0,
+                            "COPT": -10.0 * factor,
+                            "CWPR": -2.0,
+                            "CWPT": -20.0 * factor,
+                        },
+                        "1,1,2": {
+                            "COPR": 11.0,
+                            "COPT": 110.0 * factor,
+                            "CWPR": 22.0,
+                            "CWPT": 220.0 * factor,
+                        },
+                    },
                 )
-                rows.append(row)
-            summary = self._summary(root, rows, extra_fields=connection_fields)
-            run_manifest, extraction = self._extraction_chain(root, summary)
-            chdd, track2, manifest = root / "chdd.csv", root / "track2.csv", root / "manifest.json"
-            export_opm_chdd(
-                summary,
-                chdd,
-                track2,
-                manifest,
-                scenario_id="connections",
-                source_model="synthetic_opm",
-                opm_run_manifest=run_manifest,
-                summary_extraction_manifest=extraction,
-                deck_dir=root,
-                _summary_run=self._summary_replay(summary),
-            )
-            with chdd.open(encoding="utf-8", newline="") as stream:
-                first = next(csv.DictReader(stream))
+                for month, factor in (("2025-02-01", 1.0), ("2025-03-01", 1.5))
+            ]
+            for row, factor in zip(rows, (1.0, 1.5), strict=True):
+                row["WLPT:P1"] = 300.0 * factor
+                row["WOPT:P1"] = 90.0 * factor
+
+            chdd, manifest = self._connection_export(root, rows)
+
+            first = chdd[0]
             self.assertAlmostEqual(float(first["WOMR"]), 9.1)
             self.assertAlmostEqual(float(first["WOMT"]), 91.0)
             self.assertAlmostEqual(float(first["WLPR"]), 30.0)
             self.assertAlmostEqual(float(first["WLPT"]), 313.0)
             self.assertEqual(
-                json.loads(manifest.read_text(encoding="utf-8"))["conversion"][
-                    "mass_method_by_well"
-                ]["P1"],
+                manifest["conversion"]["mass_method_by_well"]["P1"],
                 "connection_surface_vectors",
             )
             self.assertIn(
                 "COIR=COPR-COFR",
-                json.loads(manifest.read_text(encoding="utf-8"))["provenance"][
-                    "raw_opm_manifest_caveats"
-                ][0],
+                manifest["provenance"]["raw_opm_manifest_caveats"][0],
+            )
+
+    def test_producer_backflow_rate_inside_tolerance_is_zeroed_and_counted(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            # -0.1 m3/day of oil at 800 kg/m3 is -0.08 t/day, well inside the allowance.
+            rows = [
+                self._connection_row(
+                    month,
+                    {
+                        "1,1,1": {"COPR": -0.1, "CWPR": -0.2},
+                        "1,1,2": {"COPT": 50.0, "CWPT": 50.0},
+                    },
+                )
+                for month in ("2025-02-01", "2025-03-01")
+            ]
+
+            chdd, manifest = self._connection_export(root, rows)
+
+            self.assertEqual(float(chdd[0]["WOMR"]), 0.0)
+            rule = manifest["tolerances_applied"]["rules"]["producer_backflow_rate_tpd"]
+            # Both the oil rate (-0.08 t/day) and the liquid rate (-0.28 t/day), twice.
+            self.assertEqual(rule["count"], 4)
+            self.assertAlmostEqual(rule["max_magnitude"], 0.28)
+            self.assertEqual(rule["first_well"], "P1")
+            self.assertEqual(rule["first_date"], "2025-02-01")
+            self.assertEqual(
+                manifest["tolerances_applied"]["thresholds"][
+                    "producer_backflow_rate_tpd"
+                ],
+                PRODUCER_BACKFLOW_RATE_TPD,
+            )
+
+    def test_producer_backflow_rate_outside_tolerance_is_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            # -10 m3/day of oil at 800 kg/m3 is -8 t/day: beyond the 5 t/day allowance.
+            rows = [
+                self._connection_row(
+                    month,
+                    {
+                        "1,1,1": {"COPR": -10.0, "CWPR": -0.2},
+                        "1,1,2": {"COPT": 50.0, "CWPT": 50.0},
+                    },
+                )
+                for month in ("2025-02-01", "2025-03-01")
+            ]
+
+            with self.assertRaisesRegex(
+                OpmChddError, "negative density-weighted production mass"
+            ):
+                self._connection_export(root, rows)
+
+    def test_connection_crossflow_cumulative_step_is_clamped_and_counted(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            # Oil cumulative steps back by 9 t, liquid by the same 9 t: inside 100 t.
+            rows = [
+                self._connection_row(month, {"1,1,2": {"COPT": oil_m3, "CWPT": 100.0}})
+                for month, oil_m3 in (("2025-02-01", 100.0), ("2025-03-01", 90.0))
+            ]
+
+            chdd, manifest = self._connection_export(root, rows)
+
+            self.assertAlmostEqual(float(chdd[0]["WOMT"]), 90.0)
+            # The reported cumulative stays as OPM has it; the month is booked as zero
+            # production, which is what the calculator consumes.
+            self.assertAlmostEqual(float(chdd[1]["WOMT"]), 81.0)
+            self.assertEqual(float(chdd[1]["WOMT_Diff"]), 0.0)
+            rule = manifest["tolerances_applied"]["rules"]["connection_crossflow_step_t"]
+            self.assertEqual(rule["count"], 2)
+            self.assertAlmostEqual(rule["max_magnitude"], 9.0)
+            self.assertEqual(rule["first_date"], "2025-03-01")
+            self.assertEqual(
+                manifest["tolerances_applied"]["thresholds"][
+                    "connection_crossflow_step_t"
+                ],
+                CONNECTION_CROSSFLOW_STEP_T,
+            )
+
+    def test_connection_crossflow_step_outside_tolerance_is_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            # 135 t back on the oil cumulative: beyond the 100 t crossflow allowance.
+            rows = [
+                self._connection_row(month, {"1,1,2": {"COPT": oil_m3, "CWPT": 100.0}})
+                for month, oil_m3 in (("2025-02-01", 200.0), ("2025-03-01", 50.0))
+            ]
+
+            with self.assertRaisesRegex(
+                OpmChddError, "negative cumulative difference"
+            ):
+                self._connection_export(root, rows)
+
+    def test_cumulative_rounding_residue_is_clamped_and_counted(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            rows = []
+            # Water at 1000 kg/m3: the liquid mass in tonnes equals WLPT in m3, so the
+            # cumulative steps back by 5e-4 t, inside the 1e-3 t floor.
+            for month, total in (("2025-01-01", 1000.0), ("2025-02-01", 999.9995)):
+                row = {"DATE": month, "TIME": 0, **{f"{vector}:P1": 0 for vector in VECTORS}}
+                row.update({"WLPR:P1": 1, "WLPT:P1": total, "WEFF:P1": 1})
+                rows.append(row)
+            summary = self._summary(root, rows)
+            density = self._density(
+                root, {"P1": {"oil_kg_m3": 800.0, "water_kg_m3": 1000.0}}
+            )
+
+            chdd, _, manifest = self._export(root, summary, density)
+
+            self.assertAlmostEqual(float(chdd[1]["WLPT"]), 999.9995)
+            self.assertEqual(float(chdd[1]["WLPT_Diff"]), 0.0)
+            applied = manifest["tolerances_applied"]
+            rule = applied["rules"]["cumulative_step_residue_t"]
+            self.assertEqual(rule["count"], 1)
+            self.assertAlmostEqual(rule["max_magnitude"], 5e-4)
+            self.assertEqual(rule["first_well"], "P1")
+            self.assertEqual(rule["first_date"], "2025-02-01")
+            # A single-PVT well gets no crossflow allowance at all.
+            self.assertNotIn("connection_crossflow_step_t", applied["rules"])
+            self.assertIn(
+                str(CUMULATIVE_STEP_ABS_TOL_T),
+                applied["thresholds"]["cumulative_step_residue_t"],
             )
 
 
