@@ -242,18 +242,26 @@ printf '%s\n' "$?" >"$OUT/evaluation.exit"
 калькулятором по прогнозным экономическим рядам. Недопустимые по собственным
 заданиям скважин варианты отбрасываются **до** ранжирования.
 
-Окружение поиска:
+Окружение поиска (основной маршрут — Cerebras `qwen-3.8-27b` с высоким
+рассуждением, нулевой температурой и фиксированным seed; с A100 только через
+локальный прокси, прямой доступ к `api.cerebras.ai` закрыт гео-блоком):
 
 ```bash
-export LLM_BASE_URL=https://litellm.tatneft.guru/v1
-export LLM_MODEL=qwen3.8-27b
+export LLM_BASE_URL=https://api.cerebras.ai/v1
+export LLM_MODEL=qwen-3.8-27b
+export LLM_REASONING_EFFORT=high LLM_SEED=20260909
+export LLM_PROXY_URL=http://127.0.0.1:10809
 export LLM_TIMEOUT_SECONDS=600
 export LLM_MAX_OUTPUT_TOKENS=8192
-test -s /dev/shm/timesoil-tatneft-20260909-key
-export LLM_API_KEY="$(</dev/shm/timesoil-tatneft-20260909-key)"
+test -s /root/.config/timesoil/cerebras-key
+export LLM_API_KEY="$(</root/.config/timesoil/cerebras-key)"
 export CUDA_VISIBLE_DEVICES=5 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 export OPM_MPI_PROCESSES=16 OPM_THREADS_PER_PROCESS=1 OPM_CPU_AFFINITY=30-45
+export TIMESOIL_CASE_SOURCE_SHA256=<sha256 архива кейса>
 ```
+
+Резервный маршрут — Татнефть (`LLM_BASE_URL=https://litellm.tatneft.guru/v1`,
+`LLM_MODEL=qwen3.8-27b`, ключ в `/dev/shm/timesoil-tatneft-20260909-key`).
 
 Ключ читается из runtime-файла в переменную окружения процесса. Проверка
 наличия — `test -s`, не `cat`. Ключ не печатать, не коммитить, не включать в
@@ -264,10 +272,22 @@ PYTHONPATH=src:scripts \
   /tmp/timesoil-kt3-20260908/venv/bin/python scripts/propose_track2_policies.py \
   <baseline-view> <request.json> "$OUT/search" \
   --rounds 3 --economic-selection \
+  --case-profile config/case_z_test.json \
+  --search cma --search-seconds 900 --blocks "$OUT/blocks.json" \
   --head "$MODEL/full-model.pt" --head-sha256 <sha> \
   --head-report "$MODEL/report.json" \
-  --connectivity "$R/static-head-geology-20260909/model-z/connectivity.json"
+  --connectivity "$OUT/connectivity.json"
 ```
+
+`--case-profile` включает профиль кейса: ворота G1 (задания), G2 (прогноз и
+производные векторы), ремонт масштабированием вместо штрафов, 16 обязательных
+ремонтов. `--search cma` заменяет перебор сетки поиском CMA-ES по 18-мерному
+пространству политик (`policy_space.py`, `cma_search.py`) с затравками Sobol и
+предложениями агентов блоков (`--blocks`, `planning.py`); `--search grid`
+оставляет прежний перебор. Все ворота одинаково жёсткие: 600/600 в каждый
+момент, ВКЗ 0,85–1,15 по трёхмесячному окну с обеих сторон, забойные давления,
+ремонты. След поиска — `search/search_trace.json`, элита — `search/elite.json`;
+оба входят в печать выбора.
 
 `<request.json>` — полный запрос управления на 224 месяца (контракт — раздел 7),
 `<baseline-view>` — аутентифицированный канонический экспорт исходного графика.
@@ -411,6 +431,31 @@ OPM хранит конец отчётного интервала: продук�
 | Финальный full-cycle | 7 мин 36 с |
 | — OPM внутри него | 3 мин 37 с |
 | **Итого** | **26 мин 13 с** |
+
+## 7а. Прогон тестового кейса одной командой
+
+Разделы 2–7 описывают цепочку по шагам — так она собиралась и проверялась. В день
+кейса та же цепочка запускается одной командой: `scripts/run_case_z.sh ARCHIVE.zip`.
+Скрипт делает приём архива, базовый цикл инкумбента, связность и блоки **из этого же
+прогона**, банк и его прогоны OPM, сборку батча, дообучение с 60-эпохной головы, поиск,
+**единственную** финальную проверку и отчёт интерпретируемости. На каждый этап — свой
+каталог, `<этап>.log`, `<этап>.exit`, время и запись в `protocol.json` с хешами выходов;
+первый ненулевой `exit` останавливает цепочку.
+
+```bash
+scripts/run_case_z.sh /root/projects/case_z_20260911/case_z.zip --dry-run   # печать всех команд
+scripts/run_case_z.sh /root/projects/case_z_20260911/case_z.zip             # полный путь, ≈2,5–3 ч
+scripts/run_case_z.sh /root/projects/case_z_20260911/case_z.zip --plan-a    # быстрый путь, ≈50 мин
+```
+
+По умолчанию: банк включён (`--bank-runs 16`), дообучение включено (`--epochs 20`),
+оценка на закреплённом наборе выключена (`--evaluate` включает; драйверу нужен сплит 5/3,
+которого у банка кейса нет). Перед каждым необязательным этапом печатается остаток
+бюджета (`--budget-seconds`, по умолчанию 4 часа).
+
+Регламент дежурного на 17:00 — доставка архива и кода, сухой прогон, что смотреть в логе,
+тайминги по этапам и запасные пути (план A, маршрут LLM, отличия раскладки архива):
+[`docs/CASE_INTAKE_20260911.md`](CASE_INTAKE_20260911.md).
 
 ## 8. Веб-интерфейс и API
 
