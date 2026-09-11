@@ -9,6 +9,7 @@ import pytest
 
 from timesoil.aios.llm import (
     APPROVED_MODEL,
+    CEREBRAS_MODEL,
     ChatMessage,
     ExternalQwenClient,
     LLMConfig,
@@ -162,3 +163,105 @@ def test_replay_returns_the_recorded_answer_and_fails_on_a_miss(tmp_path: Path) 
     assert replayed.content_sha256 == original.content_sha256
     with pytest.raises(LLMError, match="replay entry missing"):
         asyncio.run(replay("never recorded"))
+
+
+_FALLBACK_URL = "https://api.cerebras.ai/v1"
+_SCHEMA = {"type": "object", "properties": {"ok": {"type": "boolean"}}, "required": ["ok"]}
+
+
+def _route_env(tmp_path: Path, **extra: str) -> dict[str, str]:
+    key_file = tmp_path / "fallback-key"
+    key_file.write_text("fallback-test-only-key\n", encoding="utf-8")
+    return {
+        "LLM_API_KEY": "primary-test-only-key",
+        "LLM_BASE_URL": _BASE_URL,
+        "LLM_TIMEOUT_SECONDS": "2",
+        "LLM_SEED": "20260909",
+        "LLM_CALL_LOG": str(tmp_path / "llm_calls.jsonl"),
+        "LLM_FALLBACK_BASE_URL": _FALLBACK_URL,
+        "LLM_FALLBACK_MODEL": CEREBRAS_MODEL,
+        "LLM_FALLBACK_API_KEY_FILE": str(key_file),
+        **extra,
+    }
+
+
+def _two_route_client(config: LLMConfig, primary, fallback) -> ExternalQwenClient:
+    assert config.fallback is not None
+    return ExternalQwenClient(
+        config,
+        http_client=httpx.AsyncClient(base_url=config.base_url + "/", transport=httpx.MockTransport(primary)),
+        fallback_http_client=httpx.AsyncClient(
+            base_url=config.fallback.base_url + "/", transport=httpx.MockTransport(fallback)
+        ),
+    )
+
+
+def test_fallback_route_answers_when_the_primary_structured_reply_is_incomplete(tmp_path: Path) -> None:
+    config = LLMConfig.from_env(_route_env(tmp_path))
+    assert config.fallback is not None and config.fallback.api_key == "fallback-test-only-key"
+    assert config.fallback.seed == config.seed == 20260909  # Determinism fields are inherited.
+    primary_bodies: list[bytes] = []
+    fallback_bodies: list[bytes] = []
+
+    def primary(request: httpx.Request) -> httpx.Response:
+        primary_bodies.append(request.content)
+        return httpx.Response(200, json={  # Truncated answer: the incomplete-structured guard fires.
+            "model": APPROVED_MODEL,
+            "choices": [{"message": {"content": '{"ok": tr'}, "finish_reason": "length"}],
+        })
+
+    def fallback(request: httpx.Request) -> httpx.Response:
+        fallback_bodies.append(request.content)
+        return httpx.Response(200, json={
+            "model": CEREBRAS_MODEL,
+            "choices": [{"message": {"content": '{"ok": true}'}, "finish_reason": "stop"}],
+        })
+
+    async def run():
+        async with _two_route_client(config, primary, fallback) as client:
+            return await client.structured(
+                [ChatMessage("user", "decide")], schema=_SCHEMA, schema_name="decision"
+            )
+
+    payload, response = asyncio.run(run())
+    assert payload == {"ok": True} and response.model == CEREBRAS_MODEL
+    assert len(primary_bodies) == 1 and len(fallback_bodies) == 1
+    assert config.call_log is not None
+    raw = config.call_log.read_text(encoding="utf-8")
+    records = [json.loads(line) for line in raw.splitlines()]
+    assert [record["route"] for record in records] == ["primary", "fallback"]
+    assert [record["base_url"] for record in records] == [_BASE_URL, _FALLBACK_URL]
+    assert "fallback-test-only-key" not in raw
+
+
+def test_both_routes_failing_raises_after_each_route_ran_its_own_retries(tmp_path: Path) -> None:
+    config = LLMConfig.from_env(_route_env(tmp_path))
+    seen: list[str] = []
+
+    def refuse(route: str):
+        def handler(_: httpx.Request) -> httpx.Response:
+            seen.append(route)
+            return httpx.Response(400, json={"error": "Failed to generate tool call"})
+
+        return handler
+
+    async def run():
+        async with _two_route_client(config, refuse("primary"), refuse("fallback")) as client:
+            return await client.chat([ChatMessage("user", "decide")])
+
+    with pytest.raises(LLMError, match="HTTP 400"):
+        asyncio.run(run())
+    assert seen == ["primary", "fallback"]  # HTTP 400 is fatal per route, so one attempt each.
+    assert config.call_log is not None
+    records = [json.loads(line) for line in config.call_log.read_text(encoding="utf-8").splitlines()]
+    assert [record["route"] for record in records] == ["primary", "fallback"]
+
+
+def test_a_fallback_route_must_differ_from_the_primary_and_must_not_chain(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="LLM_FALLBACK_BASE_URL"):
+        LLMConfig.from_env(
+            _route_env(tmp_path, LLM_FALLBACK_BASE_URL=_BASE_URL, LLM_FALLBACK_MODEL=APPROVED_MODEL)
+        )
+    chained = LLMConfig.from_env(_route_env(tmp_path))
+    with pytest.raises(ValueError, match="without its own fallback"):
+        LLMConfig(api_key="test-only-key", base_url=_BASE_URL, fallback=chained)
