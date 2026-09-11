@@ -12,7 +12,7 @@ from enum import StrEnum
 from itertools import pairwise
 from typing import Any, Protocol
 
-from .llm import ChatMessage, LLMResponse, ToolCall
+from .llm import LLMError, ChatMessage, LLMResponse, ToolCall
 
 _MAX_CONTEXT_CHARS = 128_000
 _MAX_TOOL_ARGUMENT_CHARS = 8_192
@@ -336,12 +336,20 @@ class AgentWorkflow:
             tool_choice = {"type": "function", "function": {"name": required[0]}}
         elif required:
             tool_choice = "required"
-        preliminary = await self._llm.chat(
-            messages,
-            reasoning=True,
-            tools=schemas or None,
-            tool_choice=tool_choice,
-        ) if schemas else LLMResponse("", None, "stop")
+        try:
+            preliminary = await self._llm.chat(
+                messages,
+                reasoning=True,
+                tools=schemas or None,
+                tool_choice=tool_choice,
+            ) if schemas else LLMResponse("", None, "stop")
+        except LLMError as error:
+            # Cerebras answers HTTP 400 ("Failed to generate tool call but tool_choice =
+            # 'required'") instead of returning a call-less message; treat it as the same
+            # missing-call outcome so the bounded retry below applies.
+            if "HTTP 400" not in str(error) or not required:
+                raise
+            preliminary = LLMResponse("", None, "stop")
         if required and not set(required) <= {call.name for call in preliminary.tool_calls}:
             # No tool has executed yet; one bounded retry handles a truncated thinking response.
             preliminary = await self._llm.chat(
