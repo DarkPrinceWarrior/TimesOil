@@ -213,6 +213,16 @@ def main():
     if args.bhp_calibration:
         train_ids += [f'bhp-only-{i:02d}' for i in (0, 1, 3, 6)]
         validation_ids += ['bhp-only-04']
+    if set(train_ids + validation_ids + test_ids) != set(by_id) and any(
+            name.startswith('feasible-') for name in by_id):
+        # A case bank (build_feasible_bank) carries its own scenario ids: the baseline and
+        # every feasible regime train, the last two in sorted order hold out validation and test.
+        feasible = sorted(name for name in by_id if name.startswith('feasible-'))
+        if 'baseline' not in by_id or len(feasible) < 3:
+            raise ValueError('a case bank batch needs the baseline and at least three feasible regimes')
+        train_ids = ['baseline', *feasible[:-2]]
+        validation_ids = [feasible[-2]]
+        test_ids = [feasible[-1]]
     assert set(train_ids + validation_ids + test_ids) == set(by_id)
     assert len(train_ids + validation_ids + test_ids) == len(by_id)
     import torch
