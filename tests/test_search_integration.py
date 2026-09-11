@@ -8,6 +8,7 @@ produces the artifact set ``track2_final_selection.seal_forecast_selection`` dem
 """
 
 import json
+import math
 from types import SimpleNamespace
 
 import pytest
@@ -228,3 +229,31 @@ def test_an_infeasible_candidate_always_outranks_nothing(tmp_path):
         {'rule': 'diagnostic-only', 'status': 'diagnostic', 'ok': False,
          'worst_value': 1.0, 'margin': -99.0}]}
     assert violation_score(over) == pytest.approx(.5)  # Diagnostic verdicts never count.
+
+
+def _vrr_candidate(ratio, months):
+    """One infeasible candidate whose window VRR sits at ``ratio`` for ``months`` months."""
+    return {'forecast_eligible': False, 'forecast_constraint_verdicts': [
+        {'rule': 'min_window_voidage_replacement', 'status': 'hard', 'ok': False,
+         'worst_value': ratio, 'margin': -1000.0, 'month': f'2031-{index % 12 + 1:02d}-01'}
+        for index in range(months)]}
+
+
+def test_a_shallow_short_vrr_breach_outranks_a_deep_long_one():
+    corridor = (.85, 1.15)
+    shallow = violation_score(_vrr_candidate(.85 * .98, 3), corridor)
+    deep = violation_score(_vrr_candidate(.85 * .8, 60), corridor)
+    assert shallow == pytest.approx(3 * .02)  # depth times the months spent outside
+    assert deep == pytest.approx(60 * .2)
+    assert 0 < shallow < deep  # feasible still scores 0, so the lexicographic rule holds
+    assert violation_score({'forecast_eligible': True}, corridor) == 0.0
+    inside = {'forecast_eligible': False, 'forecast_constraint_verdicts': [
+        {'rule': 'min_window_voidage_replacement', 'status': 'hard', 'ok': False,
+         'worst_value': 1.0, 'margin': -1000.0}]}
+    assert violation_score(inside, corridor) == pytest.approx(1000.0)  # inside: fall back to the margin
+    for worst in (float('inf'), float('nan'), 1e300):
+        idle = {'forecast_eligible': False, 'forecast_constraint_verdicts': [
+            {'rule': 'max_window_voidage_replacement', 'status': 'hard', 'ok': False,
+             'worst_value': worst, 'margin': -1000.0}]}
+        score = violation_score(idle, corridor)
+        assert math.isfinite(score) and 0 < score <= 1e6  # cma_search refuses a non-finite violation
