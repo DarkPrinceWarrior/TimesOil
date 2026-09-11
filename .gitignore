@@ -32,3 +32,6 @@ docs/hackathon/sources/
 
 # Machine-level agent wiring: kept out of this public repository
 CLAUDE.local.md
+
+# local assistant instructions, never committed
+CLAUDE.md
