@@ -803,6 +803,52 @@ def _install_summary_overlay(
     return overlay_path, connection_wells, _unit_system(deck)
 
 
+def _cpu_set(spec: str) -> set[int]:
+    """Expand a taskset/cpuset list such as ``14-29,32`` into the set of CPU ids."""
+    cpus: set[int] = set()
+    for part in spec.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        low, _, high = part.partition("-")
+        cpus.update(range(int(low), int(high or low) + 1))
+    return cpus
+
+
+def check_cpu_affinity(affinity: str, mpi_processes: int, threads_per_process: int,
+                       effective_cpuset: str | None) -> None:
+    """Refuse an OPM launch whose CPU pinning cannot deliver the requested parallelism.
+
+    A 16-rank MPI run pinned to cores the container does not own (or to fewer cores
+    than ranks × threads) oversubscribes the few cores it does own and slows the
+    simulator by an order of magnitude instead of failing; the Track 1 audit run of
+    10 September lost twelve times its normal duration this way. ``effective_cpuset``
+    is the content of ``cpuset.cpus.effective`` when known; ``None`` skips that part.
+    """
+    if not affinity:
+        return
+    wanted = _cpu_set(affinity)
+    if len(wanted) < mpi_processes * threads_per_process:
+        raise ValueError(
+            f"OPM cpu_affinity {affinity!r} has {len(wanted)} CPUs for "
+            f"{mpi_processes} MPI ranks × {threads_per_process} threads")
+    if effective_cpuset:
+        missing = sorted(wanted - _cpu_set(effective_cpuset))
+        if missing:
+            raise ValueError(
+                f"OPM cpu_affinity {affinity!r} names CPUs outside the container cpuset "
+                f"{effective_cpuset!r}: {missing}")
+
+
+def _effective_cpuset() -> str | None:
+    for path in ("/sys/fs/cgroup/cpuset.cpus.effective", "/sys/fs/cgroup/cpuset/cpuset.effective_cpus"):
+        try:
+            return Path(path).read_text().strip()
+        except OSError:
+            continue
+    return None
+
+
 class OpmFlowRunner:
     """Run an immutable case snapshot with digest-pinned OPM Flow."""
 
@@ -946,6 +992,8 @@ class OpmFlowRunner:
                 "-np", str(self.mpi_processes), "--bind-to", "none",
             ]
         if self.cpu_affinity:
+            check_cpu_affinity(self.cpu_affinity, self.mpi_processes, self.threads_per_process,
+                               _effective_cpuset())
             command[command.index(OPM_IMAGE) + 1:command.index(OPM_IMAGE) + 1] = [
                 "taskset", "-c", self.cpu_affinity,
             ]

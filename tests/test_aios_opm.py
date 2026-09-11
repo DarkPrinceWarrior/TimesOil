@@ -406,3 +406,15 @@ class OpmFlowRunnerTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CpuAffinityGuardTests(unittest.TestCase):
+    def test_affinity_must_cover_ranks_and_lie_inside_the_cpuset(self):
+        from timesoil.aios.opm import check_cpu_affinity
+        check_cpu_affinity("14-29", 16, 1, "14-54,56-61,83-99")
+        check_cpu_affinity("", 16, 1, "0-1")  # no pinning requested: nothing to check
+        with self.assertRaisesRegex(ValueError, "outside the container cpuset"):
+            check_cpu_affinity("48-63", 16, 1, "14-54,56-61,83-99")  # 55, 62, 63 are not ours
+        with self.assertRaisesRegex(ValueError, "16 MPI ranks"):
+            check_cpu_affinity("14-21", 16, 1, None)
+        check_cpu_affinity("14-45", 16, 2, None)
