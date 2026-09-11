@@ -692,6 +692,13 @@ def build_request(
     note("no_production_before_first_source_control",
          report["wells_shut_before_first_source_control"])
 
+    # The profile's rules travel inside the request so that every candidate inherits them
+    # and the final full-cycle checks the OPM SUMMARY against the same limits (gate G3).
+    well_ids = sorted({str(action["well"]) for action in controls}, key=lambda w: (len(w), w))
+    months_sorted = sorted({str(action["month"]) for action in controls})
+    operating_constraints = [rule.to_dict() for rule in profile.operating_rules(
+        wells=well_ids, start=date.fromisoformat(months_sorted[0]),
+        end=date.fromisoformat(months_sorted[-1]))]
     request = {
         "context": {
             "track": 2,
@@ -699,6 +706,7 @@ def build_request(
                           "the cut continued over the management period under the case caps. "
                           "Paired baseline for every candidate; no gain is claimed here."),
             "constraints": {"allow_conversion_to_injection": True},
+            "operating_constraints": operating_constraints,
             "facts": {
                 "is_baseline": True,
                 "schedule_kind": "case_incumbent_continuation",
