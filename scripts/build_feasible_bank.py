@@ -90,7 +90,7 @@ def days_in_month(month: str) -> int:
 
 
 def surface_densities(manifest: Mapping[str, Any]) -> dict[str, tuple[float, float]]:
-    """(oil, water) kg/m3 per well from the canonical export manifest, never averaged."""
+    """(oil, water) kg/m3 per well from the canonical export manifest; multi-PVT wells use the connection mean."""
     conversion = manifest.get("conversion")
     if not isinstance(conversion, Mapping):
         raise BankError("export manifest has no conversion block")
@@ -99,10 +99,12 @@ def surface_densities(manifest: Mapping[str, Any]) -> dict[str, tuple[float, flo
         result[str(well)] = (float(values["oil_kg_m3"]), float(values["water_kg_m3"]))
     for well, values in (conversion.get("connection_density_by_well") or {}).items():
         oil, water = values.get("oil_kg_m3"), values.get("water_kg_m3")
-        if not isinstance(oil, list) or not isinstance(water, list) or len(oil) != 1 or len(water) != 1:
-            # Multi-PVT wells with more than one surface density cannot be inverted here.
+        if not isinstance(oil, list) or not isinstance(water, list) or not oil or not water:
             continue
-        result.setdefault(str(well), (float(oil[0]), float(water[0])))
+        # Multi-PVT wells list their distinct connection densities; the mean is used, as in
+        # timesfm_economics.export_densities, because these volumes feed the bank's caps
+        # (3% margin), never the official calculator, which works in mass.
+        result.setdefault(str(well), (sum(map(float, oil)) / len(oil), sum(map(float, water)) / len(water)))
     if not result:
         raise BankError("export manifest carries no usable surface densities")
     if any(not math.isfinite(v) or v <= 0 for pair in result.values() for v in pair):
