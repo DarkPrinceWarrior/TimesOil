@@ -259,3 +259,17 @@ def test_forecast_gates_k1_k2_k4_k5_need_the_derived_volume_increments():
     with pytest.raises(ValueError, match='do not match the forecast'):
         economics.economic_constraint_verdicts(values, stamps, ['I', 'P'], rules(max_monthly_liquid_m3d=1),
                                                derived=derived)
+
+
+def test_export_densities_uses_connection_densities_for_multi_pvt_wells():
+    import pytest
+    from timesfm_economics import export_densities
+    manifest = {'conversion': {
+        'density_by_well': {'1': {'oil_kg_m3': 850.0, 'water_kg_m3': 1000.0}},
+        'connection_density_by_well': {'2': {'connection_count': 3, 'oil_kg_m3': [840.0, 860.0], 'water_kg_m3': [1000.0]},
+                                       '3': {'connection_count': 1, 'oil_kg_m3': [], 'water_kg_m3': []}}}}
+    got = export_densities(manifest, ['1', '2'])
+    assert got['1'] == {'oil_kg_m3': 850.0, 'water_kg_m3': 1000.0, 'method': 'well_surface_density'}
+    assert got['2']['method'] == 'connection_mean' and got['2']['oil_kg_m3'] == 850.0 and got['2']['water_kg_m3'] == 1000.0
+    with pytest.raises(ValueError, match="densities for: 3"):
+        export_densities(manifest, ['1', '2', '3'])

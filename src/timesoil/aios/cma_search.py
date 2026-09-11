@@ -108,6 +108,7 @@ def run_cma_search(evaluate: Callable[[list[np.ndarray]], list[Evaluation]], dim
                    sobol_seeds: int = 32,
                    inject: Callable[[Elite], list[np.ndarray]] | None = None,
                    inject_every: int = 8, max_injections: int = 3,
+                   max_generations: int | None = None,
                    clock: Callable[[], float] = time.monotonic) -> SearchResult:
     """Search the unit box under a wall clock, returning the elite and a per-generation trace."""
     if dim < 1 or popsize < 2 or sobol_seeds < 0 or inject_every < 1 or max_injections < 0:
@@ -147,6 +148,9 @@ def run_cma_search(evaluate: Callable[[list[np.ndarray]], list[Evaluation]], dim
     generation = 0
     stop_reason = 'wall_clock'
     while clock() - start < wall_clock_seconds:
+        if max_generations is not None and generation >= max_generations:
+            stop_reason = 'max_generations'
+            break
         if strategy.stop():
             stop_reason = 'cma_stop'
             break
