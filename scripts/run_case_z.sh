@@ -235,9 +235,29 @@ BATCH=
 if [ "$SKIP_BANK" -eq 0 ]; then
   budget "bank (~$(( BANK_RUNS * 4 / 2 + 8 )) min of OPM on two workers)"
   OUTPUTS=("$OUT/bank/manifest.json")
+  # The bank wants the calculator rows of the control months only: the canonical export is
+  # labelled by report date and spans the history, the calculator input is shifted back a
+  # month and spans the history too, so the management-period rows are cut out here.
+  OUTPUTS=("$OUT/bank-rows.csv")
+  stage bank-rows "$PY_PROJECT" - "$OUT/baseline/incumbent/economics-2007/input.csv" \
+      "$INCUMBENT_REQUEST" "$OUT/bank-rows.csv" <<'ROWS'
+import csv, json, sys
+source, request, target = sys.argv[1:]
+months = {action["month"][:10] for action in json.load(open(request))["controls"]}
+with open(source, newline="") as inp, open(target, "w", newline="") as out:
+    reader = csv.DictReader(inp)
+    writer = csv.DictWriter(out, fieldnames=reader.fieldnames, lineterminator="\n")
+    writer.writeheader()
+    kept = 0
+    for row in reader:
+        if row["DATA"][:10] in months:
+            writer.writerow(row); kept += 1
+print(f"bank rows: {kept} of the management period, {len(months)} months")
+ROWS
+  OUTPUTS=("$OUT/bank/manifest.json")
   stage bank "$PY_PROJECT" scripts/build_feasible_bank.py \
     --request "$INCUMBENT_REQUEST" \
-    --canonical "$OUT/baseline/incumbent/canonical/chdd.csv" \
+    --canonical "$OUT/bank-rows.csv" \
     --export-manifest "$OUT/baseline/incumbent/canonical/manifest.json" \
     --output "$OUT/bank" --blocks "$OUT/blocks.json" \
     --injection-cap-m3d 600 --liquid-cap-m3d 600 --injection-basis cap
