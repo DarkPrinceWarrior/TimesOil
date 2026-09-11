@@ -9,11 +9,13 @@ from uuid import uuid4
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt
 
 from .agents import AgentState, AgentWorkflow, WorkflowError
 from .economics import CHDDEconomicsAdapter, EconomicResult
 from .llm import APPROVED_MODEL, ExternalQwenClient, LLMConfig
+from .results import router as results_router
 from .tools import GROUNDED_ROLE_TOOLS, build_grounded_tool_registry
 from .ui import OPERATOR_PAGE, UI_HEADERS
 
@@ -161,6 +163,14 @@ def _chdd_ready() -> bool:
 
 
 app = FastAPI(title="Track 2 AIOS", version="1")
+app.include_router(results_router)
+
+_FRONTEND_DIR = Path(
+    os.environ.get("TIMESOIL_FRONTEND_DIR")
+    or Path(__file__).resolve().parents[3] / "frontend"
+)
+if _FRONTEND_DIR.is_dir():
+    app.mount("/app", StaticFiles(directory=_FRONTEND_DIR, html=True), name="frontend")
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
