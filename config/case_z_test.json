@@ -17,7 +17,7 @@
     "carryover": false
   },
   "pressure": {
-    "field_min_bar": 109.431,
+    "field_min_bar": null,
     "block_min_bar": null,
     "regions": "FIP_C1"
   },
