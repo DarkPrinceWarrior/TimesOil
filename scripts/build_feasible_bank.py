@@ -124,7 +124,9 @@ def canonical_volumes(
         if not math.isfinite(liquid_t) or not math.isfinite(oil_t) or liquid_t < 0 or oil_t < 0:
             raise BankError(f"canonical cumulative delta is negative or non-finite: {well} {month}")
         water_t = liquid_t - oil_t
-        if water_t < -1e-9 * max(1.0, liquid_t):
+        # Multi-PVT exports derive oil and liquid mass through different density paths; a
+        # 100%-oil well can therefore show oil above liquid by rounding (observed 3e-5).
+        if water_t < -1e-4 * max(1.0, liquid_t):
             raise BankError(f"oil mass exceeds liquid mass in the baseline export: {well} {month}")
         if well in water and month in water[well]:
             raise BankError(f"duplicate canonical row: {well} {month}")
