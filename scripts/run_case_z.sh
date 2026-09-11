@@ -192,9 +192,15 @@ stage intake "$PY_PROJECT" scripts/intake_case_z.py build-request "$ARCHIVE" \
 # rules (a case's source schedule need not satisfy the case limits), while every candidate
 # and the final full-cycle keep the rules embedded in intake/request.json.
 OUTPUTS=("$OUT/intake-incumbent/request.json")
-stage intake-incumbent "$PY_PROJECT" scripts/intake_case_z.py build-request "$ARCHIVE" \
+# With --extend-schedule the first intake writes case-extended.zip; the second intake reads
+# that very archive so both requests pin the same source hash.
+INCUMBENT_ARCHIVE=$ARCHIVE; INCUMBENT_FLAGS=("${INTAKE_FLAGS[@]}")
+if [ "$EXTEND_SCHEDULE" -eq 1 ] && [ -f "$OUT/intake/case-extended.zip" ]; then
+  INCUMBENT_ARCHIVE=$OUT/intake/case-extended.zip; INCUMBENT_FLAGS=()
+fi
+stage intake-incumbent "$PY_PROJECT" scripts/intake_case_z.py build-request "$INCUMBENT_ARCHIVE" \
   --cut 2006-12-31 --start 2007-01-01 --end 2025-09-01 --profile "$PROFILE" --rules none \
-  --scenario-id baseline --output "$OUT/intake-incumbent" "${INTAKE_FLAGS[@]}"
+  --scenario-id baseline --output "$OUT/intake-incumbent" "${INCUMBENT_FLAGS[@]}"
 INCUMBENT_REQUEST=$OUT/intake-incumbent/request.json
 
 # The request is what every later gate is pinned to, so the hash comes from the request.
@@ -307,7 +313,10 @@ for key in ("well_ids", "static", "weights"):
 print("case geology matches the head's geology (well_ids, static, weights)")
 GEO
   SEARCH_CONNECTIVITY=$HEAD_CONNECTIVITY
-  log "search uses the head's geology file $HEAD_CONNECTIVITY"
+  # The voucher lets the search accept the head's file although its provenance names the
+  # training deck; the content equality above is what justifies it (recorded in the receipt).
+  export TIMESOIL_HEAD_GEOLOGY_VERIFIED_SHA256=$(sha_of "$HEAD_CONNECTIVITY")
+  log "search uses the head's geology file $HEAD_CONNECTIVITY (content verified against the case export)"
 fi
 if [ -n "$BATCH" ]; then
   budget "fine-tune ($EPOCHS epochs on GPU ${CUDA_VISIBLE_DEVICES})"
