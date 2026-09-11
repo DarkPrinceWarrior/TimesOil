@@ -1,7 +1,7 @@
-# Передача Claude Opus / Claude Code CLI
+# Передача команда / команда CLI
 
-Главный документ: [HANDOFF_CLAUDE_CODE_20260910.md](../../docs/HANDOFF_CLAUDE_CODE_20260910.md).
-Начальный запрос: [START_CLAUDE.txt](START_CLAUDE.txt).
+Главный документ: [HANDOFF_20260910.md](../../docs/HANDOFF_20260910.md).
+Начальный запрос передачи в бандл не включён.
 
 Срез A100: **2026-09-10 19:06:39 UTC / 22:06:39 Москва**. Новых OPM/обучений
 при подготовке передачи не запускали. Повторён только read-only аудит Y.
@@ -34,7 +34,7 @@
 python3 - <<'PY'
 import hashlib, json
 from pathlib import Path
-root = Path('deliverables/handoff_claude_20260910')
+root = Path('deliverables/handoff_20260910')
 for item in json.loads((root/'manifest.json').read_text())['files']:
     content = (root/item['path']).read_bytes()
     assert len(content) == item['bytes'], item['path']
