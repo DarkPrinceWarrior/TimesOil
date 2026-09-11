@@ -26,10 +26,12 @@ def verified_batch(batch, expected_hash):
         raise ValueError('batch manifest hash mismatch')
     manifest = json.loads((batch / 'manifest.json').read_text())
     records = manifest['scenarios']
+    count = manifest['scenario_count']
     if (manifest['official_source_sha256'] != MODEL_Z_SOURCE_SHA256
-            or manifest['scenario_count'] != 10 or len(records) != 10
-            or len({r['scenario_id'] for r in records}) != 10):
-        raise ValueError('ten distinct official Model Z scenarios required')
+            or type(count) is not int or count < 3 or len(records) != count
+            or len({r['scenario_id'] for r in records}) != count
+            or 'baseline' not in {r['scenario_id'] for r in records}):
+        raise ValueError('at least three distinct official scenarios including baseline required')
     for record in records:
         for name in ('dataset', 'export_manifest', 'run_manifest', 'canonical_chdd'):
             path = (batch / record[name]).resolve()

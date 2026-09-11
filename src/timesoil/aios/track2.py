@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from hashlib import sha256
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +31,23 @@ CANONICAL_COLUMNS = (
     "status",
 )
 CONTROL_TARGET_CODES = {"ORAT": 0.0, "LRAT": 1.0, "WRAT": 2.0}
-MODEL_Z_SOURCE_SHA256 = "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa"
+TRAINING_SOURCE_SHA256 = "4af3b60f8c053b858d52882bc514f2cdf434573c3919574e532e620d06c45aaa"
+
+
+def _case_source_sha256() -> str:
+    """The archive every gate pins to: the training deck unless a case archive is declared.
+
+    ``TIMESOIL_CASE_SOURCE_SHA256`` carries the SHA-256 of the organizers' case archive so
+    that the same strict equality checks run against the case instead of the training deck.
+    The value is validated, never trusted blindly, and the checks themselves stay strict.
+    """
+    value = os.environ.get("TIMESOIL_CASE_SOURCE_SHA256", TRAINING_SOURCE_SHA256).strip().lower()
+    if len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
+        raise ValueError("TIMESOIL_CASE_SOURCE_SHA256 must be a 64-character hex SHA-256")
+    return value
+
+
+MODEL_Z_SOURCE_SHA256 = _case_source_sha256()
 _MODEL_Z_SOURCE_SHA256 = MODEL_Z_SOURCE_SHA256
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 from datetime import date
+from hashlib import sha256
 from collections.abc import Mapping, Sequence
 from itertools import pairwise
 from pathlib import Path
@@ -27,6 +28,7 @@ from timesoil.aios.economics import (
 )
 from timesoil.aios.llm import (
     APPROVED_MODEL,
+    CEREBRAS_MODEL,
     ChatMessage,
     ExternalQwenClient,
     LLMConfig,
@@ -36,6 +38,7 @@ from timesoil.aios.llm import (
 )
 
 _TEST_BASE_URL = "https://litellm.tatneft.guru/v1"
+CEREBRAS_BASE_URL = "https://api.cerebras.ai/v1"
 
 
 def _http_client(handler: Any) -> httpx.AsyncClient:
@@ -151,7 +154,8 @@ def test_reasoning_content_and_tool_calls_are_normalized_with_mock_transport() -
     assert captured["payload"]["model"] == APPROVED_MODEL
     assert captured["payload"]["temperature"] == 0.0
     assert captured["payload"]["chat_template_kwargs"] == {"enable_thinking": True}
-    assert "reasoning_effort" not in captured["payload"]
+    assert captured["payload"]["max_tokens"] == 4096
+    assert not {"reasoning_effort", "seed", "presence_penalty", "max_completion_tokens"} & captured["payload"].keys()
     assert captured["authorization"] == "Bearer test-only-key"
 
 
@@ -231,6 +235,115 @@ def test_cerebras_schema_translation_preserves_names_and_legacy_wire() -> None:
     assert captured[1]["chat_template_kwargs"] == {"enable_thinking": False}
     assert captured[1]["response_format"]["json_schema"]["schema"] == original
     assert all("reasoning_effort" not in payload for payload in captured)
+
+
+def _cerebras_client(handler: Any, **overrides: Any) -> tuple[ExternalQwenClient, httpx.AsyncClient]:
+    config = LLMConfig(
+        api_key="test-only-key", base_url=CEREBRAS_BASE_URL, model=CEREBRAS_MODEL,
+        timeout_seconds=2, seed=20260909, **overrides,
+    )
+    transport = httpx.AsyncClient(
+        base_url=CEREBRAS_BASE_URL + "/", transport=httpx.MockTransport(handler), follow_redirects=False,
+    )
+    return ExternalQwenClient(config, http_client=transport), transport
+
+
+def test_cerebras_payload_uses_configured_reasoning_effort_seed_and_strict_schema() -> None:
+    captured: list[dict[str, Any]] = []
+    schema = {
+        "type": "object",
+        "properties": {"value": {"type": "string", "maxLength": 8, "pattern": "^a+$"}},
+        "required": ["value"],
+        "additionalProperties": False,
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append(json.loads(request.content))
+        return httpx.Response(200, json={
+            "model": CEREBRAS_MODEL,
+            "choices": [{"message": {"content": '{"value":"aa"}'}, "finish_reason": "stop"}],
+        })
+
+    async def scenario() -> None:
+        client, transport = _cerebras_client(handler)
+        async with transport:
+            await client.chat([ChatMessage("user", "plan")], tools=[{
+                "type": "function",
+                "function": {"name": "inspect_state", "description": "inspect", "parameters": {"type": "object"}},
+            }])
+            await client.chat([ChatMessage("user", "plan")], reasoning=False)
+            await client.structured([ChatMessage("user", "json")], schema=schema, schema_name="Output")
+            with pytest.raises(LLMError, match="must not be combined"):
+                await client._post(
+                    {"model": CEREBRAS_MODEL, "messages": [], "tools": [], "response_format": {}},
+                    timeout_seconds=None,
+                )
+
+    asyncio.run(scenario())
+    chat_payload, no_reasoning_payload, structured_payload = captured
+    for payload in captured:
+        assert payload["max_completion_tokens"] == 4096 and "max_tokens" not in payload
+        assert payload["temperature"] == 0.0 and payload["presence_penalty"] == 0.0
+        assert payload["seed"] == 20260909
+        assert "chat_template_kwargs" not in payload
+        assert not {"top_k", "min_p", "repetition_penalty"} & payload.keys()
+    assert chat_payload["reasoning_effort"] == "high"
+    assert "response_format" not in chat_payload and chat_payload["tools"]
+    assert no_reasoning_payload["reasoning_effort"] == "none"
+    assert structured_payload["reasoning_effort"] == "high"
+    assert "tools" not in structured_payload
+    assert structured_payload["response_format"]["json_schema"]["strict"] is True
+    assert structured_payload["response_format"]["json_schema"]["schema"]["properties"]["value"] == {"type": "string"}
+
+
+def test_cerebras_response_capture_hashes_full_reasoning_and_token_details() -> None:
+    reasoning = "d" * 40_000
+
+    def handler(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={
+            "model": CEREBRAS_MODEL,
+            "system_fingerprint": "fp_cerebras_1",
+            "time_info": {"queue_time": 0.01, "total_time": 0.42},
+            "choices": [{"message": {"content": "ok", "reasoning": reasoning}, "finish_reason": "stop"}],
+            "usage": {
+                "prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15,
+                "completion_tokens_details": {"reasoning_tokens": 3},
+                "prompt_tokens_details": {"cached_tokens": 7},
+            },
+        })
+
+    async def scenario() -> LLMResponse:
+        client, transport = _cerebras_client(handler)
+        async with transport:
+            return await client.chat([ChatMessage("user", "capture")])
+
+    response = asyncio.run(scenario())
+    assert response.system_fingerprint == "fp_cerebras_1"
+    assert response.finish_reason == "stop"
+    assert response.time_info == {"queue_time": 0.01, "total_time": 0.42}
+    assert response.usage.reasoning_tokens == 3 and response.usage.cached_tokens == 7
+    assert response.content_sha256 == sha256(b"ok").hexdigest()
+    assert len(response.reasoning or "") == 32_768
+    assert response.reasoning_sha256 == sha256(reasoning.encode()).hexdigest()
+
+
+def test_llm_config_validates_new_audit_fields(tmp_path: Path) -> None:
+    config = LLMConfig.from_env({
+        "LLM_API_KEY": "test-only-key", "LLM_BASE_URL": CEREBRAS_BASE_URL, "LLM_MODEL": CEREBRAS_MODEL,
+        "LLM_SEED": "20260909", "LLM_PRESENCE_PENALTY": "0.0",
+        "LLM_CALL_LOG": str(tmp_path / "llm_calls.jsonl"), "LLM_REPLAY_DIR": str(tmp_path),
+    })
+    assert config.reasoning_effort == "high" and config.seed == 20260909
+    assert config.call_log == tmp_path / "llm_calls.jsonl" and config.replay_dir == tmp_path
+    assert LLMConfig.from_env({"LLM_API_KEY": "k", "LLM_BASE_URL": _TEST_BASE_URL}).seed is None
+    for environ, message in (
+        ({"LLM_REASONING_EFFORT": "xhigh"}, "LLM_REASONING_EFFORT"),
+        ({"LLM_SEED": "-1"}, "LLM_SEED"),
+        ({"LLM_PRESENCE_PENALTY": "3"}, "LLM_PRESENCE_PENALTY"),
+        ({"LLM_REPLAY_DIR": str(tmp_path / "absent")}, "LLM_REPLAY_DIR"),
+    ):
+        with pytest.raises(ValueError, match=message):
+            LLMConfig.from_env({"LLM_API_KEY": "k", "LLM_BASE_URL": _TEST_BASE_URL} | environ)
 
 
 def test_provider_error_fails_closed() -> None:
