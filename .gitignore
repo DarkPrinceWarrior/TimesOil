@@ -31,7 +31,7 @@ docs/hackathon/models/
 docs/hackathon/sources/
 
 # Machine-level agent wiring: kept out of this public repository
-CLAUDE.local.md
+/C?????.local.md
 
-# local assistant instructions, never committed
-CLAUDE.md
+# local notes, never committed
+/C?????.md
