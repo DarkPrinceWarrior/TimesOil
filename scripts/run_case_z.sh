@@ -188,6 +188,14 @@ OUTPUTS=("$OUT/intake/request.json" "$OUT/intake/manifest.json")
 stage intake "$PY_PROJECT" scripts/intake_case_z.py build-request "$ARCHIVE" \
   --cut 2006-12-31 --start 2007-01-01 --end 2025-09-01 --profile "$PROFILE" \
   --scenario-id baseline --output "$OUT/intake" "${INTAKE_FLAGS[@]}"
+# The incumbent is a reference, not a submission: its physics is run without the profile
+# rules (a case's source schedule need not satisfy the case limits), while every candidate
+# and the final full-cycle keep the rules embedded in intake/request.json.
+OUTPUTS=("$OUT/intake-incumbent/request.json")
+stage intake-incumbent "$PY_PROJECT" scripts/intake_case_z.py build-request "$ARCHIVE" \
+  --cut 2006-12-31 --start 2007-01-01 --end 2025-09-01 --profile "$PROFILE" --rules none \
+  --scenario-id baseline --output "$OUT/intake-incumbent" "${INTAKE_FLAGS[@]}"
+INCUMBENT_REQUEST=$OUT/intake-incumbent/request.json
 
 # The request is what every later gate is pinned to, so the hash comes from the request.
 if [ "$DRY_RUN" -eq 0 ]; then
@@ -202,7 +210,7 @@ fi
 
 # 2. Baseline physics of the incumbent (one OPM run; this is the paired base for the audit).
 OUTPUTS=("$OUT/baseline/incumbent/manifest.json" "$OUT/baseline/incumbent/canonical/chdd.csv")
-stage baseline "$PY_PROJECT" -m timesoil.aios.cli full-cycle "$OUT/intake/request.json" \
+stage baseline "$PY_PROJECT" -m timesoil.aios.cli full-cycle "$INCUMBENT_REQUEST" \
   --runs-dir "$OUT/baseline" --run-id incumbent --timeout 7200
 
 # 3. Connectivity of the case grid, from the authenticated INIT/EGRID of that very run.
@@ -222,7 +230,7 @@ if [ "$SKIP_BANK" -eq 0 ]; then
   budget "bank (~$(( BANK_RUNS * 4 / 2 + 8 )) min of OPM on two workers)"
   OUTPUTS=("$OUT/bank/manifest.json")
   stage bank "$PY_PROJECT" scripts/build_feasible_bank.py \
-    --request "$OUT/intake/request.json" \
+    --request "$INCUMBENT_REQUEST" \
     --canonical "$OUT/baseline/incumbent/canonical/chdd.csv" \
     --export-manifest "$OUT/baseline/incumbent/canonical/manifest.json" \
     --output "$OUT/bank" --blocks "$OUT/blocks.json" \
@@ -270,7 +278,7 @@ PY
     BATCH=$OUT/bank-runs/cycles
     OUTPUTS=("$BATCH/baseline/full-cycle-receipt.json")
     stage batch-baseline "$PY_PROJECT" -m timesoil.aios.cli full-cycle \
-      "$OUT/intake/request.json" --runs-dir "$BATCH" --run-id baseline --timeout 7200
+      "$INCUMBENT_REQUEST" --runs-dir "$BATCH" --run-id baseline --timeout 7200
     OUTPUTS=("$BATCH/manifest.json")
     stage assemble "$PY_PROJECT" scripts/assemble_scenario_batch.py "$BATCH"
   fi

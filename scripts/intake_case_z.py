@@ -632,6 +632,7 @@ def build_request(
     parsing_strictness: str,
     output: Path,
     extend_schedule: bool,
+    embed_rules: bool = True,
 ) -> dict[str, Any]:
     """Emit the incumbent request; every assumption below is a recorded, failing check."""
     checks: list[dict[str, Any]] = []
@@ -696,9 +697,12 @@ def build_request(
     # and the final full-cycle checks the OPM SUMMARY against the same limits (gate G3).
     well_ids = sorted({str(action["well"]) for action in controls}, key=lambda w: (len(w), w))
     months_sorted = sorted({str(action["month"]) for action in controls})
+    # With embed_rules=False the incumbent is a reference run only: its physics is reported,
+    # not gated, because the source schedule of a case need not satisfy the case limits.
     operating_constraints = [rule.to_dict() for rule in profile.operating_rules(
         wells=well_ids, start=date.fromisoformat(months_sorted[0]),
-        end=date.fromisoformat(months_sorted[-1]))]
+        end=date.fromisoformat(months_sorted[-1]))] if embed_rules else []
+    note("profile_rules_embedded", {"embedded": embed_rules, "count": len(operating_constraints)})
     request = {
         "context": {
             "track": 2,
@@ -855,6 +859,9 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument("--output", type=Path, required=True, help="new directory; never overwritten")
     build.add_argument("--scenario-id", default="case-z-incumbent")
     build.add_argument("--parsing-strictness", default="low", choices=("strict", "low"))
+    build.add_argument("--rules", default="embed", choices=("embed", "none"),
+                       help="embed the profile rules into the request (gate G3 on its physics) "
+                            "or leave them out for a reference-only incumbent")
     build.add_argument("--extend-schedule", action="store_true",
                        help="append the missing monthly report dates to a copy of the archive")
 
@@ -884,7 +891,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 archive, load_case_profile(args.profile), cut=args.cut, start=args.start,
                 end=args.end, scenario_id=args.scenario_id,
                 parsing_strictness=args.parsing_strictness, output=args.output,
-                extend_schedule=args.extend_schedule)
+                extend_schedule=args.extend_schedule, embed_rules=args.rules == "embed")
     except (IntakeError, CycleError, ScheduleOverlayError) as error:
         print(f"case intake failed: {error}", file=sys.stderr)
         return 2
