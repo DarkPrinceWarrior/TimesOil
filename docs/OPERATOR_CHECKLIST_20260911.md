@@ -22,6 +22,38 @@ tmux new -s case-z-run-$(date +%H%M) \
 tail -f /root/projects/case_z_20260911/driver.log
 ```
 
+**Решение 17:10 по итогам репетиций:** план A под лимитами 600/600 не даёт ни
+одного допустимого кандидата (суррогат на старых весах прогнозирует жидкость
+740–1080 м³/сут при заданиях 600, ворота отбраковывают всё). Боевой прогон идёт
+**полным путём, без `--plan-a`**: intake → baseline → connectivity → blocks → bank
+(16 допустимых режимов) → bank-run (16 OPM, ≈40 мин) → assemble → finetune
+(20 эпох, ≈30 мин) → search → final → explain (≈2,5 ч). Сдаваемый результат на
+каждом рубеже:
+
+| Рубеж | Готово через | Что сдавать |
+|---|---|---|
+| `baseline` | ≈6 мин | инкамбент под лимитами + ремонты: `baseline/incumbent/` |
+| `bank-run` | ≈50 мин | лучший банковский прогон по официальному ЧДД (см. ниже) |
+| `final` | ≈2,5 ч | победитель поиска после единственного финального OPM: `final/<run>/` |
+
+Лучший банковский прогон:
+```bash
+for m in $OUT/bank-runs/cycles/*/economics-2007/manifest.json; do
+  printf '%s\t%s\n' "$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['management_period']['total_chdd_m'])" "$m")" "$m"
+done | sort -gr | head -3
+```
+
+Извлечение сдаваемых файлов из любого каталога полного цикла `<run>`
+(инкамбент, банковский прогон или финал):
+```bash
+f=<run>/input/Model_Z/Model_Z_sch.inc                      # имя деки — по архиву кейса
+n=$(grep -n -i 'JAN.*2007' "$f" | head -1 | cut -d: -f1)   # первый блок DATES периода управления
+sed -n "$((n-1)),\$p" "$f" > wells_schedule.inc               # 225 блоков DATES: 2007-01 … 2025-09
+python3 -c "import json;print(json.load(open('<run>/economics-2007/manifest.json'))['management_period']['total_chdd_m'])"   # ЧДД, млн руб., только период управления
+```
+Перед отправкой — пост-проверка лимитов по `canonical/chdd.csv` (жидкость и
+закачка ≤ 600 м³/сут в каждом месяце) и `FPR ≥ 109,431 бар` по summary.
+
 План A (`--plan-a`) — повторное использование 60-эпоховых весов: intake →
 baseline (OPM ≈4,5 мин) → connectivity → blocks → search (CMA-ES, 15 мин по
 умолчанию, `--search-seconds`) → один финальный OPM (≈5 мин) → explain.
