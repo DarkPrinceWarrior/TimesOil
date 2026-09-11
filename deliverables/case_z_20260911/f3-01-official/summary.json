@@ -1,0 +1,10 @@
+{
+  "run_dir": "/root/projects/case_z_20260911/official/rerun-bank-f3-01/cycle",
+  "npv_management_period_m_rub": 4287.946904642983,
+  "period": [
+    "2007-01-01",
+    "2025-09-01"
+  ],
+  "wells_schedule_sha256": "c8492e58c8f4f2ee73ba5bcda4fa6e85b74ec7c097c6bb4c233713232ba9f381",
+  "dates_blocks": 224
+}
