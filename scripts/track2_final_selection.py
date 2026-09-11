@@ -59,7 +59,8 @@ def seal_forecast_selection(root):
     files = {}
     for name in ('proposal-receipt.json', 'candidates.json'):
         files[name] = checked_file(root, name)[1]
-    for pattern in ('planning-context-*.json', 'policy-attempts-*.json', 'rejected-plan-*.json'):
+    for pattern in ('planning-context-*.json', 'policy-attempts-*.json', 'rejected-plan-*.json',
+                    'rejected-candidates.json', 'search_trace.json', 'elite.json'):
         for path in sorted(root.glob(pattern)):
             files[path.name] = checked_file(root, path.name)[1]
     profile = receipt['normative_profile']

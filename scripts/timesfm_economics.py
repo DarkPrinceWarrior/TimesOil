@@ -194,19 +194,42 @@ _FORECAST_DERIVED_LIMITS = {'max_monthly_liquid_m3d', 'max_monthly_injection_m3d
 _DERIVED_VECTORS = ('WLPT', 'WWPT', 'WWIT', 'WVPT', 'WVIT')
 
 
+def _positive_density(value):
+    return (not isinstance(value, bool) and isinstance(value, (int, float))
+            and np.isfinite(value) and value > 0)
+
+
 def export_densities(manifest, well_ids):
-    """Per-well surface densities from the canonical export manifest; never a field default."""
-    table = (manifest.get('conversion') or {}).get('density_by_well') or {}
+    """Per-well surface densities from the canonical export manifest; never a field default.
+
+    Single-PVT wells carry an unambiguous density in ``conversion.density_by_well``. Wells
+    completed in several PVT regions are exported by connection and only list the distinct
+    connection densities; for them the mean of those values is used and the method is
+    recorded, because the volumes derived here feed selection gates with a 3% margin, not
+    the official calculator (which works in mass and never needs this conversion).
+    """
+    conversion = manifest.get('conversion') or {}
+    table = conversion.get('density_by_well') or {}
+    by_connection = conversion.get('connection_density_by_well') or {}
     result, missing = {}, []
     for well in well_ids:
         row = table.get(well)
         oil = row.get('oil_kg_m3') if isinstance(row, dict) else None
         water = row.get('water_kg_m3') if isinstance(row, dict) else None
-        if any(isinstance(v, bool) or not isinstance(v, (int, float))
-               or not np.isfinite(v) or v <= 0 for v in (oil, water)):
-            missing.append(well)
+        if _positive_density(oil) and _positive_density(water):
+            result[well] = {'oil_kg_m3': float(oil), 'water_kg_m3': float(water),
+                            'method': 'well_surface_density'}
             continue
-        result[well] = {'oil_kg_m3': float(oil), 'water_kg_m3': float(water)}
+        links = by_connection.get(well)
+        oils = links.get('oil_kg_m3') if isinstance(links, dict) else None
+        waters = links.get('water_kg_m3') if isinstance(links, dict) else None
+        if (isinstance(oils, list) and isinstance(waters, list) and oils and waters
+                and all(_positive_density(v) for v in oils + waters)):
+            result[well] = {'oil_kg_m3': float(np.mean(oils)), 'water_kg_m3': float(np.mean(waters)),
+                            'method': 'connection_mean', 'oil_kg_m3_values': [float(v) for v in oils],
+                            'water_kg_m3_values': [float(v) for v in waters]}
+            continue
+        missing.append(well)
     if missing:
         raise ValueError('canonical export manifest misses positive per-well densities for: '
                          + ', '.join(sorted(missing)))

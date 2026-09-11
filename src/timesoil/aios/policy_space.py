@@ -26,6 +26,7 @@ import numpy as np
 
 _ROLES = ('producer', 'injector')
 _BOX_TOLERANCE = 1e-9
+_LRAT_CAP_M3D = 500.0
 _SCALE_TOLERANCE = 1e-12
 
 
@@ -269,8 +270,11 @@ class PolicySpace:
             base = self.baseline_rates.get(well)
             if base is None:
                 raise ValueError(f'second-half multiplier for {well} needs a baseline rate')
+            value = base * second
+            if self.well_roles.get(well) == 'producer':
+                value = min(value, _LRAT_CAP_M3D)  # the same clip policy_controls applies to first-half scales
             out.append({'well': well, 'start': start, 'end': end,
-                        'value': round(base * second, 12)})
+                        'value': round(value, 12)})
         return out
 
     # ----------------------------------------------------------- warm starts

@@ -12,7 +12,7 @@ a numeric reservoir-pressure threshold) fails closed instead of being ignored.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from hashlib import sha256
 import json
 import math
@@ -35,6 +35,10 @@ _REGIONS = ("FIP_C1", "FIP_ZONE", "ward6")
 
 class CaseProfileError(ValueError):
     """The profile is not a valid case description; no gate may run without one."""
+
+
+def _previous_month(value: date) -> date:
+    return (value.replace(day=1) - timedelta(days=1)).replace(day=1)
 
 
 def _object(value, name, keys):
@@ -126,9 +130,14 @@ class CaseProfile:
         for well, first, last in self.repairs:
             if well not in stock:
                 raise CaseProfileError(f"repair calendar names an unknown well: {well}")
-            if not start <= first <= last <= end:
+            # The calendar is half-open, [first, last): the well restarts in the month ``last``
+            # (same reading as intake_case_z.py). Only the overlap with the management period
+            # becomes a rule; a repair entirely outside it is not a rule of this period.
+            first_month = max(first, start)
+            last_month = min(_previous_month(last), end)
+            if first_month > last_month:
                 continue
-            rules.append(OperatingConstraint(first, last, (well,), (), True))
+            rules.append(OperatingConstraint(first_month, last_month, (well,), (), True))
         return tuple(rules)
 
 

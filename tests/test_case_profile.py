@@ -20,12 +20,14 @@ def profile_data(name='case_constraints.example.json'):
     return json.loads((CONFIG / name).read_text())
 
 
-def test_shipped_profiles_differ_only_in_the_vrr_lower_bound_status():
+def test_shipped_profiles_are_the_development_deck_and_the_official_case():
     development = load_case_profile(CONFIG / 'case_constraints.example.json')
     test_case = load_case_profile(CONFIG / 'case_constraints.test.example.json')
     assert development.vrr['lower_bound_status'] == 'diagnostic'
     assert test_case.vrr['lower_bound_status'] == 'hard'
-    assert development.liquid_cap_m3d == test_case.liquid_cap_m3d == 1500
+    assert development.liquid_cap_m3d == 1500 and test_case.liquid_cap_m3d == test_case.injection_cap_m3d == 600
+    assert test_case.bhp_bounds == (50.6625, 303.975) and len(test_case.repairs) == 16
+    assert test_case.water_balance['deficit_m3'] is None  # external supply: no produced-water rule
     assert development.bhp_bounds == (50., 300.) and development.vrr['window_months'] == 3
     assert development.water_balance == {'deficit_m3': 0., 'carryover': False}
     assert development.selection_margins == {'eps_liquid': .03, 'eps_injection': .03, 'phi': .95}
@@ -78,7 +80,8 @@ def test_profile_builds_the_three_gate_rules_and_refuses_what_it_cannot_check(tm
     assert limits['max_monthly_water_deficit_m3'] == (0., 'hard', 1)
     # Only the repair inside the management period becomes an unavailability rule.
     outages = [rule for rule in rules if rule.unavailable]
-    assert [(r.wells, r.start, r.end) for r in outages] == [(('P',), date(2007, 2, 1), date(2007, 3, 1))]
+    # Half-open calendar: down from February, restarting in March → one unavailable month.
+    assert [(r.wells, r.start, r.end) for r in outages] == [(('P',), date(2007, 2, 1), date(2007, 2, 1))]
     assert all(set(r.wells) == {'P', 'I'} for r in rules if not r.unavailable)
 
     surface = parse_case_profile({**data, 'vrr': {**data['vrr'], 'denominator': 'water_surface'}},
