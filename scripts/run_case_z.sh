@@ -25,8 +25,10 @@
 #   --dry-run             print every command, run nothing, create nothing
 #
 # Required environment (see docs/CASE_INTAKE_20260911.md):
-#   LLM route is picked up from the runtime key files (test -s, never cat).
+#   LLM route is picked up from the runtime key files (test -s, never cat): Tatneft is the
+#   primary route, Cerebras the fallback the client retries once on after a primary failure.
 #   Overridable: R, PY_PROJECT, PY_TORCH, PROFILE, WEIGHTS, CONNECTIVITY, CPUS,
+#   TATNEFT_KEY, CEREBRAS_KEY,
 #   OPM_MPI_PROCESSES, OPM_THREADS_PER_PROCESS, OPM_CPU_AFFINITY.
 set -euo pipefail
 
@@ -71,20 +73,31 @@ if [ "$DRY_RUN" -eq 0 ]; then
   test ! -e "$OUT"; mkdir "$OUT"
 fi
 
-# LLM route: Cerebras (main) unless LLM_BASE_URL is already set; the key never leaves the file.
+# LLM route, unless LLM_BASE_URL is already set: Tatneft first (zero failures on 11.09),
+# Cerebras as the fallback route the client retries once after a primary LLMError.
+# Keys stay in their files (test -s, never printed); the fallback key is passed by path.
+TATNEFT_KEY=${TATNEFT_KEY:-/dev/shm/timesoil-tatneft-20260909-key}
+CEREBRAS_KEY=${CEREBRAS_KEY:-/root/.config/timesoil/cerebras-key}
 if [ -z "${LLM_BASE_URL:-}" ]; then
-  if test -s /root/.config/timesoil/cerebras-key; then
-    export LLM_BASE_URL=https://api.cerebras.ai/v1 LLM_MODEL=qwen-3.8-27b
-    export LLM_REASONING_EFFORT=${LLM_REASONING_EFFORT:-high} LLM_SEED=${LLM_SEED:-20260909}
-    export LLM_API_KEY="$(cat /root/.config/timesoil/cerebras-key)"
-    export LLM_PROXY_URL="${LLM_PROXY_URL:-http://127.0.0.1:10809}"  # api.cerebras.ai is geo-blocked from A100
-  elif test -s /dev/shm/timesoil-tatneft-20260909-key; then
+  if test -s "$TATNEFT_KEY"; then
     export LLM_BASE_URL=https://litellm.tatneft.guru/v1 LLM_MODEL=qwen3.8-27b
-    export LLM_API_KEY="$(cat /dev/shm/timesoil-tatneft-20260909-key)"
+    export LLM_API_KEY="$(cat "$TATNEFT_KEY")"
+    if test -s "$CEREBRAS_KEY"; then
+      export LLM_FALLBACK_BASE_URL=https://api.cerebras.ai/v1 LLM_FALLBACK_MODEL=qwen-3.8-27b
+      export LLM_FALLBACK_API_KEY_FILE="$CEREBRAS_KEY"
+      # api.cerebras.ai is geo-blocked from A100; the primary route must not use the proxy.
+      export LLM_FALLBACK_PROXY_URL="${LLM_FALLBACK_PROXY_URL:-http://127.0.0.1:10809}"
+    fi
+  elif test -s "$CEREBRAS_KEY"; then
+    export LLM_BASE_URL=https://api.cerebras.ai/v1 LLM_MODEL=qwen-3.8-27b
+    export LLM_API_KEY="$(cat "$CEREBRAS_KEY")"
+    export LLM_PROXY_URL="${LLM_PROXY_URL:-http://127.0.0.1:10809}"
   else
-    echo "no LLM key file found (cerebras or tatneft)" >&2; exit 3
+    echo "no LLM key file found (tatneft or cerebras)" >&2; exit 3
   fi
 fi
+# Determinism fields apply to whichever route answers; Cerebras reads both, Tatneft ignores them.
+export LLM_REASONING_EFFORT=${LLM_REASONING_EFFORT:-high} LLM_SEED=${LLM_SEED:-20260909}
 export LLM_TIMEOUT_SECONDS=${LLM_TIMEOUT_SECONDS:-600} LLM_MAX_OUTPUT_TOKENS=${LLM_MAX_OUTPUT_TOKENS:-8192}
 export LLM_CALL_LOG=${LLM_CALL_LOG:-$OUT/llm_calls.jsonl}
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-5}

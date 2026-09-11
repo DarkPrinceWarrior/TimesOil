@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 import time
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Literal, Self
 from urllib.parse import urlsplit
 
@@ -72,6 +72,7 @@ class LLMConfig:
     presence_penalty: float = 0.0
     call_log: Path | None = None
     replay_dir: Path | None = None
+    fallback: LLMConfig | None = None
 
     def __post_init__(self) -> None:
         parsed = urlsplit(self.base_url)
@@ -139,11 +140,17 @@ class LLMConfig:
             raise TypeError("LLM_CALL_LOG must be a path")
         if self.replay_dir is not None and not self.replay_dir.is_dir():
             raise ValueError("LLM_REPLAY_DIR must be an existing directory")
+        if self.fallback is not None:
+            # One alternate route only: a chain would make the number of remote calls unbounded.
+            if not isinstance(self.fallback, LLMConfig) or self.fallback.fallback is not None:
+                raise ValueError("LLM fallback must be a single route without its own fallback")
+            if self.fallback.base_url == self.base_url:
+                raise ValueError("LLM_FALLBACK_BASE_URL must differ from LLM_BASE_URL")
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> LLMConfig:
         source = os.environ if environ is None else environ
-        return cls(
+        config = cls(
             api_key=source.get("LLM_API_KEY", ""),
             base_url=source.get("LLM_BASE_URL", ""),
             model=source.get("LLM_MODEL", APPROVED_MODEL),
@@ -156,6 +163,25 @@ class LLMConfig:
             call_log=Path(source["LLM_CALL_LOG"]) if source.get("LLM_CALL_LOG") else None,
             replay_dir=Path(source["LLM_REPLAY_DIR"]) if source.get("LLM_REPLAY_DIR") else None,
         )
+        fallback_url = (source.get("LLM_FALLBACK_BASE_URL") or "").strip()
+        if not fallback_url:
+            return config
+        key_file = (source.get("LLM_FALLBACK_API_KEY_FILE") or "").strip()
+        # The alternate route inherits every determinism field (seed, temperature, reasoning
+        # effort, token budget) and the same call log, so only the endpoint identity differs.
+        fallback = replace(
+            config,
+            api_key=(
+                Path(key_file).read_text(encoding="utf-8").strip()
+                if key_file
+                else source.get("LLM_FALLBACK_API_KEY", "")
+            ),
+            base_url=fallback_url,
+            model=source.get("LLM_FALLBACK_MODEL") or APPROVED_MODEL,
+            # Only the alternate endpoint may need an egress proxy (api.cerebras.ai is geo-blocked).
+            proxy_url=source.get("LLM_FALLBACK_PROXY_URL") or config.proxy_url,
+        )
+        return replace(config, fallback=fallback)
 
 
 @dataclass(frozen=True, slots=True)
@@ -213,19 +239,29 @@ class LLMResponse:
 
 
 class ExternalQwenClient:
-    """Small OpenAI-compatible client with no provider or local fallback."""
+    """Small OpenAI-compatible client: approved remote routes only, never a local model."""
 
     def __init__(
         self,
         config: LLMConfig,
         *,
         http_client: httpx.AsyncClient | None = None,
+        fallback_http_client: httpx.AsyncClient | None = None,
+        route: Literal["primary", "fallback"] = "primary",
     ) -> None:
         if http_client is not None and http_client.follow_redirects:
             raise ValueError("LLM transport must not follow redirects")
         if http_client is not None and str(http_client.base_url).rstrip("/") != config.base_url:
             raise ValueError("LLM transport base URL must match configured endpoint")
+        if route not in {"primary", "fallback"}:
+            raise ValueError("LLM route must be primary or fallback")
         self.config = config
+        self.route = route
+        self._fallback = (
+            None
+            if config.fallback is None
+            else ExternalQwenClient(config.fallback, http_client=fallback_http_client, route="fallback")
+        )
         self._owns_client = http_client is None
         self._client = http_client or httpx.AsyncClient(
             base_url=config.base_url.rstrip("/") + "/",
@@ -243,6 +279,8 @@ class ExternalQwenClient:
         await self.aclose()
 
     async def aclose(self) -> None:
+        if self._fallback is not None:
+            await self._fallback.aclose()
         if self._owns_client:
             await self._client.aclose()
 
@@ -256,6 +294,52 @@ class ExternalQwenClient:
         max_tokens: int | None = None,
         timeout_seconds: float | None = None,
     ) -> LLMResponse:
+        try:
+            return await self._chat(
+                messages, reasoning=reasoning, tools=tools, tool_choice=tool_choice,
+                max_tokens=max_tokens, timeout_seconds=timeout_seconds,
+            )
+        except LLMError:
+            if self._fallback is None:
+                raise
+            return await self._fallback._chat(
+                messages, reasoning=reasoning, tools=tools, tool_choice=tool_choice,
+                max_tokens=max_tokens, timeout_seconds=timeout_seconds,
+            )
+
+    async def structured(
+        self,
+        messages: Sequence[ChatMessage],
+        *,
+        schema: Mapping[str, Any],
+        schema_name: str,
+        max_tokens: int | None = None,
+        timeout_seconds: float | None = None,
+    ) -> tuple[dict[str, Any], LLMResponse]:
+        try:
+            return await self._structured(
+                messages, schema=schema, schema_name=schema_name,
+                max_tokens=max_tokens, timeout_seconds=timeout_seconds,
+            )
+        except LLMError:
+            if self._fallback is None:
+                raise
+            return await self._fallback._structured(
+                messages, schema=schema, schema_name=schema_name,
+                max_tokens=max_tokens, timeout_seconds=timeout_seconds,
+            )
+
+    async def _chat(
+        self,
+        messages: Sequence[ChatMessage],
+        *,
+        reasoning: bool = True,
+        tools: Sequence[Mapping[str, Any]] | None = None,
+        tool_choice: str | Mapping[str, Any] | None = None,
+        max_tokens: int | None = None,
+        timeout_seconds: float | None = None,
+    ) -> LLMResponse:
+        """One route, its own bounded retries; the caller adds the fallback route."""
         payload = self._base_payload(messages, max_tokens=max_tokens)
         if self.config.model == CEREBRAS_MODEL:
             payload["reasoning_effort"] = self.config.reasoning_effort if reasoning else "none"
@@ -269,7 +353,7 @@ class ExternalQwenClient:
             payload["tool_choice"] = tool_choice
         return await self._post(payload, timeout_seconds=timeout_seconds)
 
-    async def structured(
+    async def _structured(
         self,
         messages: Sequence[ChatMessage],
         *,
@@ -434,6 +518,7 @@ class ExternalQwenClient:
             "error": error,
             "model": self.config.model,
             "base_url": self.config.base_url,
+            "route": self.route,  # Which route answered: "primary" or "fallback".
             "latency_seconds": round(latency_seconds, 6),
             "response_sha256": None if response is None else sha256(response.content).hexdigest(),
             "content_sha256": None,

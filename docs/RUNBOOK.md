@@ -242,30 +242,44 @@ printf '%s\n' "$?" >"$OUT/evaluation.exit"
 калькулятором по прогнозным экономическим рядам. Недопустимые по собственным
 заданиям скважин варианты отбрасываются **до** ранжирования.
 
-Окружение поиска (основной маршрут — Cerebras `qwen-3.8-27b` с высоким
-рассуждением, нулевой температурой и фиксированным seed; с A100 только через
-локальный прокси, прямой доступ к `api.cerebras.ai` закрыт гео-блоком):
+Окружение поиска. Основной маршрут — Татнефть `qwen3.8-27b` (11.09 ноль отказов),
+резервный — Cerebras `qwen-3.8-27b` (в тот же день три отказа: обрезанный
+структурный ответ, HTTP 400 на `tool_choice=required`, недопустимые значения).
+Температура нулевая, seed и рассуждение фиксированы и наследуются обоими
+маршрутами. Прямой доступ к `api.cerebras.ai` с A100 закрыт гео-блоком, поэтому
+прокси задаётся **только** резервному маршруту:
 
 ```bash
-export LLM_BASE_URL=https://api.cerebras.ai/v1
-export LLM_MODEL=qwen-3.8-27b
+export LLM_BASE_URL=https://litellm.tatneft.guru/v1
+export LLM_MODEL=qwen3.8-27b
 export LLM_REASONING_EFFORT=high LLM_SEED=20260909
-export LLM_PROXY_URL=http://127.0.0.1:10809
 export LLM_TIMEOUT_SECONDS=600
 export LLM_MAX_OUTPUT_TOKENS=8192
+test -s /dev/shm/timesoil-tatneft-20260909-key
+export LLM_API_KEY="$(</dev/shm/timesoil-tatneft-20260909-key)"
 test -s /root/.config/timesoil/cerebras-key
-export LLM_API_KEY="$(</root/.config/timesoil/cerebras-key)"
+export LLM_FALLBACK_BASE_URL=https://api.cerebras.ai/v1
+export LLM_FALLBACK_MODEL=qwen-3.8-27b
+export LLM_FALLBACK_API_KEY_FILE=/root/.config/timesoil/cerebras-key
+export LLM_FALLBACK_PROXY_URL=http://127.0.0.1:10809
 export CUDA_VISIBLE_DEVICES=5 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 export OPM_MPI_PROCESSES=16 OPM_THREADS_PER_PROCESS=1 OPM_CPU_AFFINITY=30-45
 export TIMESOIL_CASE_SOURCE_SHA256=<sha256 архива кейса>
 ```
 
-Резервный маршрут — Татнефть (`LLM_BASE_URL=https://litellm.tatneft.guru/v1`,
-`LLM_MODEL=qwen3.8-27b`, ключ в `/dev/shm/timesoil-tatneft-20260909-key`).
+Резервный маршрут необязателен: без `LLM_FALLBACK_BASE_URL` клиент работает как
+раньше, на одном маршруте. Если он задан, любой отказ основного маршрута
+(**после** его собственных ограниченных повторов) повторяет тот же самый запрос
+ровно один раз на резервном; цепочки резервов запрещены, совпадение адресов
+основного и резервного маршрутов отклоняется. Каждая строка `LLM_CALL_LOG`
+несёт поле `route` (`primary`/`fallback`) — по нему видно, кто ответил.
+`scripts/run_case_z.sh` выставляет эту пару сам: Татнефть, если её файл ключа
+непустой, Cerebras резервом; если ключа Татнефти нет, Cerebras становится
+основным маршрутом без резерва.
 
-Ключ читается из runtime-файла в переменную окружения процесса. Проверка
-наличия — `test -s`, не `cat`. Ключ не печатать, не коммитить, не включать в
-логи и бандлы.
+Ключ читается из runtime-файла в переменную окружения процесса (резервный —
+по пути, `LLM_FALLBACK_API_KEY_FILE`). Проверка наличия — `test -s`, не `cat`.
+Ключ не печатать, не коммитить, не включать в логи и бандлы.
 
 ```bash
 PYTHONPATH=src:scripts \
@@ -510,7 +524,8 @@ curl --noproxy '*' --fail http://127.0.0.1:18082/v1/capabilities
 прямое соединение. Системные `HTTP_PROXY`/`HTTPS_PROXY` клиент не читает. TLS
 проверяется клиентом, ключ не передаётся прокси открытым текстом. Внутри
 API-контейнера без host network `127.0.0.1` обозначает сам контейнер и не
-ведёт к прокси хоста.
+ведёт к прокси хоста. Резервному маршруту прокси задаётся отдельно —
+`LLM_FALLBACK_PROXY_URL` (по умолчанию наследуется `LLM_PROXY_URL`), см. §6.
 
 ### Проверка четырёх ролей
 
