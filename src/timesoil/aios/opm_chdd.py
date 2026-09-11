@@ -1138,6 +1138,13 @@ def export_opm_chdd(
                 "WWIT": wwit,
             }
             diffs = {key: value - previous[well][key] for key, value in cumulative.items()}
+            # Per-connection mass sums over several PVT regions carry rounding residue; a
+            # cumulative that steps back by less than 1e-6 of itself (or 1e-3 t) is that
+            # residue, not production, and is clamped to zero. Anything larger still refuses.
+            for key, value in diffs.items():
+                if value < 0 and -value <= max(1e-3, 1e-6 * abs(previous[well][key])):
+                    diffs[key] = 0.0
+                    cumulative[key] = previous[well][key]
             negative = {key: value for key, value in diffs.items() if value < 0}
             if negative:
                 raise OpmChddError(
