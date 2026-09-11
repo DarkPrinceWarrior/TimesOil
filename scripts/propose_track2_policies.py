@@ -243,6 +243,8 @@ def main():
         help='Rank nine-target forecasts with official economics and seal one choice before OPM')
     parser.add_argument('--head-report', type=Path)
     parser.add_argument('--skip-grid', action='store_true')
+    parser.add_argument('--gpu-memory-fraction', type=float, default=.5,
+        help='Share of the GPU reserved for this process; the search refuses to start unless it is free')
     args = parser.parse_args()
     os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
     self_check()
@@ -252,7 +254,7 @@ def main():
         parser.error('only sealed nine-target economic selection is supported; pass --economic-selection')
     if not (args.head and args.head_sha256 and args.head_report and args.connectivity):
         parser.error('economic selection requires trained weights, their SHA-256, the training report and connectivity')
-    from timesfm_geology import MODEL_REVISION, load_frozen_model
+    from timesfm_geology import MODEL_REVISION, load_frozen_model, reserve_gpu_memory
     request = json.loads(args.request.read_text())
     checked_request = CycleRequest.from_mapping(request)
     with TemporaryDirectory(prefix='timesoil-policy-source-') as temporary:
@@ -314,7 +316,7 @@ def main():
     if not torch.cuda.is_available() or "A100" not in torch.cuda.get_device_name(0):
         raise RuntimeError("A100 required")
     torch.set_num_threads(4)
-    torch.cuda.set_per_process_memory_fraction(.35)
+    gpu_reservation = reserve_gpu_memory(args.gpu_memory_fraction)
     torch.use_deterministic_algorithms(True)
     torch.backends.cuda.enable_flash_sdp(False)
     torch.backends.cuda.enable_mem_efficient_sdp(False)
@@ -546,6 +548,7 @@ def main():
         "head_report_sha256": sha256(args.head_report.read_bytes()).hexdigest(),
         "normative_profile": normative_profile,
         "search_opm_calls": 0,
+        **gpu_reservation,
         "final_chdd_computed": False}, indent=2))
     from track2_final_selection import seal_forecast_selection
     print(json.dumps(seal_forecast_selection(args.output)), flush=True)
