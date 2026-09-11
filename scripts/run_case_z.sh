@@ -286,6 +286,29 @@ fi
 
 # 6. Short fine-tune from the frozen 60-epoch head on the case batch (optional).
 HEAD=$WEIGHTS; HEAD_REPORT=$WEIGHTS_REPORT
+# Reused weights are conditioned on the geology file they were trained with, and the search
+# pins the head report to that file by hash. The case export must carry the same static
+# features, weights and well ids (only provenance may differ); otherwise the head does not
+# know this case and Plan A is refused — fine-tune on the case bank instead.
+SEARCH_CONNECTIVITY=$CONNECTIVITY
+if [ -z "$BATCH" ] && [ "$DRY_RUN" -eq 0 ]; then
+  HEAD_CONNECTIVITY=${HEAD_CONNECTIVITY:-$R/static-head-geology-20260909/model-z/connectivity.json}
+  "$PY_PROJECT" - "$HEAD_REPORT" "$HEAD_CONNECTIVITY" "$CONNECTIVITY" <<'GEO'
+import hashlib, json, sys
+report, head_file, case_file = sys.argv[1:]
+expected = json.load(open(report))["connectivity_sha256"]
+actual = hashlib.sha256(open(head_file, "rb").read()).hexdigest()
+if actual != expected:
+    sys.exit(f"head connectivity {head_file} sha256 {actual} != report {expected}")
+head, case = json.load(open(head_file)), json.load(open(case_file))
+for key in ("well_ids", "static", "weights"):
+    if head.get(key) != case.get(key):
+        sys.exit(f"case geology differs from the head's geology in '{key}': reuse refused, fine-tune on the case bank")
+print("case geology matches the head's geology (well_ids, static, weights)")
+GEO
+  SEARCH_CONNECTIVITY=$HEAD_CONNECTIVITY
+  log "search uses the head's geology file $HEAD_CONNECTIVITY"
+fi
 if [ -n "$BATCH" ]; then
   budget "fine-tune ($EPOCHS epochs on GPU ${CUDA_VISIBLE_DEVICES})"
   OUTPUTS=("$OUT/training/full-model.pt" "$OUT/training/report.json")
@@ -318,7 +341,7 @@ stage search taskset -c "$CPUS" "$PY_TORCH" scripts/propose_track2_policies.py \
   "$OUT/baseline/incumbent" "$OUT/intake/request.json" "$OUT/search" \
   --rounds 3 --economic-selection --case-profile "$PROFILE" \
   --head "$HEAD" --head-sha256 "$(sha_of "$HEAD")" --head-report "$HEAD_REPORT" \
-  --connectivity "$CONNECTIVITY" --gpu-memory-fraction 0.5 "${SEARCH_EXTRA[@]}"
+  --connectivity "$SEARCH_CONNECTIVITY" --gpu-memory-fraction 0.5 "${SEARCH_EXTRA[@]}"
 
 # 8. Exactly one final OPM of the sealed graph, paired audit against the incumbent.
 SEAL=$(sha_of "$OUT/search/selection-before-opm.json")
