@@ -11,6 +11,9 @@ ssh a100-remote
 cp ~/case_z.zip /root/projects/case_z_20260911/case_z.zip          # архив от организаторов
 sha256sum /root/projects/case_z_20260911/case_z.zip                 # в журнал
 cd /root/projects/TimesOil-freeze-<sha>
+# Маршрут LLM — Татнефть (Cerebras через прокси в репетициях отвечал 400 на tool_choice=required)
+export LLM_BASE_URL=https://litellm.tatneft.guru/v1 LLM_MODEL=qwen3.8-27b
+export LLM_API_KEY="$(</dev/shm/timesoil-tatneft-20260909-key)"      # test -s, не cat
 PYTHONPATH=src:scripts /root/projects/TimesOil/.venv/bin/python scripts/intake_case_z.py \
   inspect /root/projects/case_z_20260911/case_z.zip                 # ~3 с: раскладка, скважины, отсечение
 tmux new -s case-z-run-$(date +%H%M) \
