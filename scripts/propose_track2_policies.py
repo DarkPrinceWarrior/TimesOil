@@ -598,9 +598,14 @@ def main():
     if not has_bhp and any(a.bhp_limit is not None for a in checked_request.controls):
         raise ValueError('BHP screening requires an authenticated baseline with the BHP action channel')
     from timesoil.aios.interwell import WellConnectivity
-    connectivity = WellConnectivity.from_dict(json.loads(args.connectivity.read_text()))
-    if (connectivity.well_ids != trajectory.well_ids or connectivity.provenance['source_sha256']
-            != manifest['provenance']['opm_source_sha256']):
+    connectivity_bytes = args.connectivity.read_bytes()
+    connectivity = WellConnectivity.from_dict(json.loads(connectivity_bytes))
+    same_source = connectivity.provenance['source_sha256'] == manifest['provenance']['opm_source_sha256']
+    # A reused head is pinned to the geology file it was trained with. The driver may vouch for
+    # that file after proving its well ids, static features and weights equal the case export;
+    # the voucher is the file's own hash, so a different file is still refused.
+    vouched = os.environ.get('TIMESOIL_HEAD_GEOLOGY_VERIFIED_SHA256', '') == sha256(connectivity_bytes).hexdigest()
+    if connectivity.well_ids != trajectory.well_ids or not (same_source or vouched):
         raise ValueError('geology does not match the verified reservoir and well order')
     well_index = {w: i for i, w in enumerate(trajectory.well_ids)}
     initial_controls = {a["well"]: a for a in request["controls"] if a["month"] == start.date().isoformat()}
@@ -887,7 +892,8 @@ def main():
                 "five_strongest_neighbors": [[well, [[connectivity.well_ids[j], float(connectivity.weights[i, j])]
                     for j in np.argsort(-connectivity.weights[i])[:5] if connectivity.weights[i, j] > 0]]
                     for i, well in enumerate(connectivity.well_ids)],
-                "all_links_used_in_forecast": True, "limitations": connectivity.provenance['limitations']},
+                "all_links_used_in_forecast": True, "limitations": connectivity.provenance['limitations'],
+                "source_matches_baseline": same_source, "vouched_by_driver": vouched and not same_source},
             "economics": normative_profile,
             "field_state": [{"well": w, "oil_tpd": float(trajectory.states[origin, i, 0]),
                 "liquid_tpd": float(trajectory.states[origin, i, 1]), "pressure_bar": float(trajectory.states[origin, i, 2]),
