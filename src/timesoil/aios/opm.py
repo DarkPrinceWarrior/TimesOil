@@ -1,4 +1,15 @@
-"""Fail-closed OPM Flow 2026.04 execution boundary."""
+"""Fail-closed OPM Flow 2026.04 execution boundary.
+
+WARNING -- the SUMMARY overlay is a physical input. ``build_summary_overlay``
+writes ``_TIMESOIL_SUMMARY.INC`` into the run snapshot, so every vector added or
+removed here changes that file's SHA-256 and therefore the physical-input hashes
+of all later OPM runs. A baseline and a candidate may only be compared when both
+were simulated with the *same* overlay: ``compare_track2_cycles`` allows exactly
+one historical difference (WVPT/WVIT) and rejects everything else. Adding the
+field and region vectors below invalidates every pre-existing baseline for
+pairing -- the paired baseline must be re-run with this overlay. Ignoring this is
+what broke the Track 1 audit.
+"""
 
 from __future__ import annotations
 
@@ -58,6 +69,11 @@ _SUMMARY_VECTORS = (
 )
 OPM_EXPORT_VECTORS = _SUMMARY_VECTORS[1:]
 OPM_OPTIONAL_WELL_VECTORS = ("WVPT", "WVIT")
+# Field and region vectors for gate G3 (DESIGN_TRACK2 §1.1, K4/K6). They are requested
+# in the overlay and stored in the raw SMSPEC; the canonical CSV extraction keeps its
+# well-vector selection unchanged, so these never enter chdd.csv or its hashes.
+OPM_FIELD_VECTORS = ("FPR", "FPRP", "FLPT", "FWPT", "FWIT", "FVPT", "FVIT")
+OPM_REGION_VECTORS = ("RPR",)
 _SUMMARY_ARTIFACT_SUFFIXES = {
     ".SMSPEC",
     ".FSMSPEC",
@@ -725,8 +741,15 @@ def _connection_wells(deck_path: Path, input_dir: Path) -> tuple[str, ...]:
     return tuple(sorted(names))
 
 
-def build_summary_overlay(connection_wells: Iterable[str] = ()) -> str:
-    """Return all-well and explicit per-well OPM SUMMARY requests."""
+def build_summary_overlay(
+    connection_wells: Iterable[str] = (), *, fipnum_regions: int | None = None
+) -> str:
+    """Return all-well, field, region and explicit per-well OPM SUMMARY requests.
+
+    Well vectors keep their existing order byte for byte. Field keywords take no
+    record; ``RPR`` needs an explicit region list, so it is only requested when the
+    deck's FIPNUM region count is known and the reason is recorded otherwise.
+    """
     wells = tuple(sorted(set(connection_wells)))
     if not wells:
         raise OpmError("connection_wells must contain at least one WELSPECS well")
@@ -737,6 +760,12 @@ def build_summary_overlay(connection_wells: Iterable[str] = ()) -> str:
         for well in wells
     ):
         raise OpmError("connection_wells contains an unsafe well name")
+    if fipnum_regions is not None and (
+        isinstance(fipnum_regions, bool)
+        or not isinstance(fipnum_regions, int)
+        or not 1 <= fipnum_regions <= 999
+    ):
+        raise OpmError("fipnum_regions must be a positive integer region count")
     lines = ["-- TIMESOIL AIOS SUMMARY OVERLAY; GENERATED IN RUN SNAPSHOT", "DATE"]
     for vector in (*_SUMMARY_VECTORS[1 : -len(_CONNECTION_VECTORS)], *OPM_OPTIONAL_WELL_VECTORS):
         lines.extend((vector, "/"))
@@ -744,6 +773,14 @@ def build_summary_overlay(connection_wells: Iterable[str] = ()) -> str:
         lines.append(vector)
         lines.extend(f" '{well}' /" for well in wells)
         lines.append("/")
+    lines.append("-- FIELD AND REGION VECTORS FOR THE VRR WINDOW AND RESERVOIR PRESSURE GATE")
+    lines.extend(OPM_FIELD_VECTORS)
+    for vector in OPM_REGION_VECTORS:
+        if fipnum_regions is None:
+            lines.append(f"-- {vector} OMITTED: DECK FIPNUM REGION COUNT UNKNOWN")
+            continue
+        lines.append(vector)
+        lines.append(" " + " ".join(str(region) for region in range(1, fipnum_regions + 1)) + " /")
     return "\n".join(lines) + "\n"
 
 

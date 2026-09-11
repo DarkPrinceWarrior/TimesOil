@@ -1,6 +1,7 @@
 """Economic target mapping must preserve volumes, pump rates and conversion history."""
 
 from copy import deepcopy
+from datetime import date
 import importlib.util
 from pathlib import Path
 
@@ -169,3 +170,92 @@ def test_economic_targets_roundtrip_and_reject_incomplete_forecasts(tmp_path):
     (exported / 'chdd.csv').write_bytes(path.read_bytes() + b'\n')
     with pytest.raises(ValueError, match='CSV hash'):
         economics.load_economic_trajectories(tmp_path, physical, 0, extra_batches=[extra])
+
+
+def _nine_target_forecast():
+    """Three months of one producer and one injector, in the nine economic targets."""
+    from timesoil.aios.operating_constraints import parse_constraints
+
+    wells = ['P', 'I']
+    stamps = ['2007-02-01', '2007-03-01', '2007-04-01']
+    values = np.zeros((3, 2, 9))
+    values[:, 0, [0, 1, 3, 4, 5]] = [8., 100., 120., 60., 1.]
+    values[:, 1, [2, 3, 4, 5]] = [50., 130., 280., 1.]
+    # 800 kg/m3 oil: 80 t of oil is 100 m3; 1000 kg/m3 water: 1 t of water is 1 m3.
+    values[:, 0, 6] = 80.
+    values[:, 0, 7] = [3080., 2780., 3080.]
+    values[:, 1, 8] = [3100., 2800., 6200.]
+    densities = {well: {'oil_kg_m3': 800., 'water_kg_m3': 1000.} for well in wells}
+    return values, stamps, wells, densities, parse_constraints
+
+
+def test_derived_field_vectors_convert_mass_with_export_densities_only():
+    values, stamps, wells, densities, _ = _nine_target_forecast()
+    derived = economics.derived_field_vectors(values, stamps, wells, densities,
+                                              oil_fvf=1.1, water_fvf=1.05, vrr_window=3)
+    np.testing.assert_allclose(derived['WOPT_DELTA'][:, 0], 100.)
+    np.testing.assert_allclose(derived['WWPT_DELTA'][:, 0], [3000., 2700., 3000.])
+    np.testing.assert_allclose(derived['WLPT_DELTA'][:, 0], [3100., 2800., 3100.])
+    np.testing.assert_allclose(derived['WVPT_DELTA'][:, 0], [3260., 2945., 3260.])
+    np.testing.assert_allclose(derived['WVIT_DELTA'][:, 1], [3255., 2940., 6510.])
+    assert not derived['WVPT_DELTA'][:, 1].any() and not derived['WVIT_DELTA'][:, 0].any()
+    field = derived['field']
+    assert field['months'] == ['2007-01-01', '2007-02-01', '2007-03-01']
+    np.testing.assert_allclose(field['liquid_m3d'], 100.)          # 3100/31, 2800/28, 3100/31
+    np.testing.assert_allclose(field['injection_m3d'], [100., 100., 200.])
+    np.testing.assert_allclose(field['water_m3d'], [3000 / 31, 2700 / 28, 3000 / 31])
+    np.testing.assert_allclose(field['vrr3'], [3255 / 3260, 6195 / 6205, 12705 / 9465])
+    assert derived['formation_volume_factors'] == {'oil': 1.1, 'water': 1.05}
+    unit = economics.derived_field_vectors(values, stamps, wells, densities)
+    np.testing.assert_allclose(unit['WVPT_DELTA'][:, 0], unit['WLPT_DELTA'][:, 0])
+    manifest = {'conversion': {'density_by_well': {'P': {'oil_kg_m3': 800, 'water_kg_m3': 1000,
+                                                         'provenance': 'deck'}}}}
+    assert economics.export_densities(manifest, ['P'])['P'] == {'oil_kg_m3': 800., 'water_kg_m3': 1000.}
+    with pytest.raises(ValueError, match='misses positive per-well densities'):
+        economics.export_densities(manifest, wells)
+    with pytest.raises(ValueError, match='misses positive per-well densities'):
+        economics.export_densities({'conversion': {'density_by_well': {'P': {'oil_kg_m3': 0,
+                                                                            'water_kg_m3': 1000}}}}, ['P'])
+    with pytest.raises(ValueError, match='explicit density'):
+        economics.derived_field_vectors(values, stamps, wells, {'P': densities['P']})
+    for bad in ({'oil_fvf': 0}, {'water_fvf': float('nan')}, {'vrr_window': 0}, {'vrr_window': 3.0}):
+        with pytest.raises(ValueError):
+            economics.derived_field_vectors(values, stamps, wells, densities, **bad)
+
+
+def test_forecast_gates_k1_k2_k4_k5_need_the_derived_volume_increments():
+    values, stamps, wells, densities, parse_constraints = _nine_target_forecast()
+    derived = economics.derived_field_vectors(values, stamps, wells, densities,
+                                              oil_fvf=1.1, water_fvf=1.05, vrr_window=3)
+
+    def rules(window=1, status='hard', **limits):
+        return parse_constraints([dict(start='2007-01-01', end='2007-03-01', wells=wells,
+                                       limits=limits, window_months=window, status=status)],
+                                 wells=wells, start=date(2007, 1, 1), end=date(2007, 3, 1))
+
+    def verdicts(**kwargs):
+        return economics.economic_constraint_verdicts(values, stamps, wells, rules(**kwargs), derived=derived)
+
+    def violations(**kwargs):
+        return economics.economic_constraint_violations(values, stamps, wells, rules(**kwargs), derived=derived)
+
+    # Water rules stay unsupported until the derived vectors are actually supplied.
+    for key in ('max_monthly_liquid_m3d', 'max_monthly_injection_m3d', 'max_monthly_water_deficit_m3',
+                'max_window_voidage_replacement'):
+        with pytest.raises(ValueError, match='lack required vectors'):
+            economics.economic_constraint_violations(values, stamps, wells, rules(**{key: 1}))
+    assert not violations(max_monthly_liquid_m3d=150)                       # K1: 100 m3/day every month
+    assert len(violations(max_monthly_liquid_m3d=90)) == 3
+    assert [v.month.isoformat() for v in verdicts(max_monthly_injection_m3d=150) if not v.ok] == ['2007-03-01']
+    k4 = [v for v in verdicts(max_window_voidage_replacement=1.15, window=3) if not v.ok]
+    assert [v.month.isoformat() for v in k4] == ['2007-03-01']
+    assert k4[0].worst_value == pytest.approx(12705 / 9465) and k4[0].margin < 0
+    assert len(violations(max_monthly_water_deficit_m3=0)) == 3             # K5: injection above produced water
+    assert [v.month.isoformat() for v in verdicts(max_monthly_water_deficit_m3=150) if not v.ok] == ['2007-03-01']
+    diagnostic = verdicts(max_monthly_water_deficit_m3=0, status='diagnostic')
+    assert sum(not v.ok for v in diagnostic) == 3
+    assert not economics.economic_constraint_violations(
+        values, stamps, wells, rules(max_monthly_water_deficit_m3=0, status='diagnostic'), derived=derived)
+    with pytest.raises(ValueError, match='do not match the forecast'):
+        economics.economic_constraint_verdicts(values, stamps, ['I', 'P'], rules(max_monthly_liquid_m3d=1),
+                                               derived=derived)

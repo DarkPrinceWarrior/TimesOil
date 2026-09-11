@@ -1,6 +1,9 @@
 """Lossless economic forecast targets; endpoint rates never stand in for monthly volumes."""
 
+from __future__ import annotations
+
 import argparse
+import calendar
 import csv
 from datetime import date, timedelta
 from hashlib import sha256
@@ -180,33 +183,139 @@ def economic_metrics(truth, prediction):
             for i, field in enumerate(ECONOMIC_TARGETS)}
 
 
-def validate_economic_constraints(rules):
-    supported = {'max_liquid_m3d', 'min_injection_m3d', 'max_injection_m3d',
-                 'min_bhp_bar', 'max_bhp_bar'}
+_FORECAST_ENDPOINT_LIMITS = {'max_liquid_m3d', 'min_injection_m3d', 'max_injection_m3d',
+                             'min_bhp_bar', 'max_bhp_bar'}
+# Reachable only once derived_field_vectors has supplied the monthly volume increments.
+_FORECAST_DERIVED_LIMITS = {'max_monthly_liquid_m3d', 'max_monthly_injection_m3d',
+                            'max_monthly_water_deficit_m3',
+                            'min_monthly_voidage_replacement', 'max_monthly_voidage_replacement',
+                            'min_window_voidage_replacement', 'max_window_voidage_replacement',
+                            'min_window_water_replacement', 'max_window_water_replacement'}
+_DERIVED_VECTORS = ('WLPT', 'WWPT', 'WWIT', 'WVPT', 'WVIT')
+
+
+def export_densities(manifest, well_ids):
+    """Per-well surface densities from the canonical export manifest; never a field default."""
+    table = (manifest.get('conversion') or {}).get('density_by_well') or {}
+    result, missing = {}, []
+    for well in well_ids:
+        row = table.get(well)
+        oil = row.get('oil_kg_m3') if isinstance(row, dict) else None
+        water = row.get('water_kg_m3') if isinstance(row, dict) else None
+        if any(isinstance(v, bool) or not isinstance(v, (int, float))
+               or not np.isfinite(v) or v <= 0 for v in (oil, water)):
+            missing.append(well)
+            continue
+        result[well] = {'oil_kg_m3': float(oil), 'water_kg_m3': float(water)}
+    if missing:
+        raise ValueError('canonical export manifest misses positive per-well densities for: '
+                         + ', '.join(sorted(missing)))
+    return result
+
+
+def _positive(value, name, *, high):
+    if (isinstance(value, bool) or not isinstance(value, (int, float))
+            or not np.isfinite(value) or not 0 < value < high):
+        raise ValueError(f'{name} must be a finite positive number below {high}')
+    return float(value)
+
+
+def derived_field_vectors(prediction, timestamps, well_ids, densities, *,
+                          oil_fvf=1.0, water_fvf=1.0, vrr_window=3):
+    """Monthly surface and reservoir volumes implied by the nine forecast targets.
+
+    WOMT_Diff and WLPT_Diff are masses; they become volumes only through the
+    canonical export's per-well density map. Bo and Bw are explicit arguments:
+    no formation volume factor is ever assumed silently in the field aggregates.
+    """
+    stamps, wells = _monthly_grid(timestamps, well_ids)
+    values = np.asarray(prediction, dtype=np.float64)
+    _validate_targets(values, len(stamps), len(wells))
+    oil_fvf = _positive(oil_fvf, 'oil_fvf', high=10)
+    water_fvf = _positive(water_fvf, 'water_fvf', high=10)
+    if isinstance(vrr_window, bool) or not isinstance(vrr_window, int) or not 1 <= vrr_window <= 12:
+        raise ValueError('vrr_window must be an integer number of months in [1, 12]')
+    missing = [well for well in wells if well not in densities]
+    if missing:
+        raise ValueError('derived field vectors require an explicit density for: ' + ', '.join(missing))
+    oil_density = np.array([_positive(densities[w]['oil_kg_m3'], f'density {w} oil', high=2000)
+                            for w in wells]) / 1000.0
+    water_density = np.array([_positive(densities[w]['water_kg_m3'], f'density {w} water', high=2000)
+                              for w in wells]) / 1000.0
+    months = [(stamp - timedelta(days=1)).replace(day=1) for stamp in stamps]
+    days = np.array([calendar.monthrange(m.year, m.month)[1] for m in months], dtype=np.float64)
+    oil_mass = values[..., ECONOMIC_TARGETS.index('WOMT_Diff')]
+    liquid_mass = values[..., ECONOMIC_TARGETS.index('WLPT_Diff')]
+    water_mass = np.maximum(liquid_mass - oil_mass, 0.0)
+    oil = oil_mass / oil_density
+    water = water_mass / water_density
+    injection = values[..., ECONOMIC_TARGETS.index('WWIT_Diff')]
+    derived = {'months': [month.isoformat() for month in months], 'well_ids': list(wells),
+               'WOPT_DELTA': oil, 'WWPT_DELTA': water, 'WLPT_DELTA': oil + water,
+               'WWIT_DELTA': injection,
+               'WVPT_DELTA': oil * oil_fvf + water * water_fvf, 'WVIT_DELTA': injection * water_fvf,
+               'formation_volume_factors': {'oil': oil_fvf, 'water': water_fvf},
+               'vrr_window_months': vrr_window,
+               'density_units': 'kg/m3 surface density from the canonical export manifest'}
+    produced = derived['WVPT_DELTA'].sum(axis=1)
+    injected = derived['WVIT_DELTA'].sum(axis=1)
+    window = [(max(0, index - vrr_window + 1), index + 1) for index in range(len(months))]
+    derived['field'] = {
+        'months': derived['months'],
+        'liquid_m3d': (derived['WLPT_DELTA'].sum(axis=1) / days).tolist(),
+        'injection_m3d': (injection.sum(axis=1) / days).tolist(),
+        'water_m3d': (water.sum(axis=1) / days).tolist(),
+        'reservoir_production_m3': produced.tolist(),
+        'reservoir_injection_m3': injected.tolist(),
+        'vrr3': [float(injected[lo:hi].sum() / produced[lo:hi].sum())
+                 if produced[lo:hi].sum() > 1e-12 else None for lo, hi in window],
+        'window_months': vrr_window}
+    return derived
+
+
+def validate_economic_constraints(rules, *, derived=False):
+    supported = _FORECAST_ENDPOINT_LIMITS | (_FORECAST_DERIVED_LIMITS if derived else set())
     unsupported = {key for rule in rules for key, _ in rule.limits} - supported
     if unsupported:
         raise ValueError('economic forecasts lack required vectors for: ' + ', '.join(sorted(unsupported)))
 
 
-def economic_constraint_violations(predictions, timestamps, well_ids, rules):
-    """Use the physical limit checker on predicted endpoints, aligned to control months."""
-    from timesoil.aios.operating_constraints import check_observed
+def economic_constraint_verdicts(predictions, timestamps, well_ids, rules, *, derived=None):
+    """Structured verdicts for K1, K2, K4 and K5 on the forecast, aligned to control months."""
+    from timesoil.aios.operating_constraints import evaluate_observed, window_months
 
-    validate_economic_constraints(rules)
+    validate_economic_constraints(rules, derived=derived is not None)
     stamps, wells = _monthly_grid(timestamps, well_ids)
     values = np.asarray(predictions, dtype=float)
     _validate_targets(values, len(stamps), len(wells))
-    violations = []
-    for stamp, forecast in zip(stamps, values, strict=True):
+    window = window_months(rules) or 1
+    if derived is not None:
+        months = [(stamp - timedelta(days=1)).replace(day=1).isoformat() for stamp in stamps]
+        if list(derived['months']) != months or list(derived['well_ids']) != list(wells):
+            raise ValueError('derived field vectors do not match the forecast well-month grid')
+    verdicts = []
+    for index, (stamp, forecast) in enumerate(zip(stamps, values, strict=True)):
         month = (stamp - timedelta(days=1)).replace(day=1)
         rows = {well: dict(WOMR=float(row[0]), WLPR=float(row[1]),
                           WWIR=float(row[2]), WBHP=float(row[4]))
                 for well, row in zip(wells, forecast, strict=True)}
-        try:
-            check_observed(rules, month, rows)
-        except ValueError as error:
-            violations.append(str(error))
-    return violations
+        if derived is not None:
+            low = max(0, index - window + 1)
+            for column, well in enumerate(wells):
+                for vector in _DERIVED_VECTORS:
+                    series = derived[f'{vector}_DELTA']
+                    rows[well][f'{vector}_DELTA'] = float(series[index, column])
+                    rows[well][f'{vector}_WINDOW'] = float(series[low:index + 1, column].sum())
+        verdicts.extend(evaluate_observed(rules, month, rows))
+    return tuple(verdicts)
+
+
+def economic_constraint_violations(predictions, timestamps, well_ids, rules, *, derived=None):
+    """Messages of the violated hard rules; diagnostic rules are reported, never fatal."""
+    from timesoil.aios.operating_constraints import failures
+
+    return [verdict.message for verdict in
+            failures(economic_constraint_verdicts(predictions, timestamps, well_ids, rules, derived=derived))]
 
 
 def verify_roundtrip(canonical, manifest_sha256, output, start, end):

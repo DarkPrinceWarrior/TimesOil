@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import asyncio
 from email.utils import parsedate_to_datetime
+from hashlib import sha256
 from ipaddress import ip_address
 import json
 from math import isfinite
 import os
+from pathlib import Path
 import re
 import time
 from collections.abc import Mapping, Sequence
@@ -20,9 +22,11 @@ import httpx
 APPROVED_MODEL = "qwen3.8-27b"
 CEREBRAS_MODEL = "qwen-3.8-27b"
 APPROVED_MODELS = frozenset({APPROVED_MODEL, CEREBRAS_MODEL, "qwen3.6-35b-a3b"})
+REASONING_EFFORTS = ("none", "low", "medium", "high")
 _MAX_REASONING_CHARS = 32_768
 _MAX_CONTENT_CHARS = 65_536
 _NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]{0,63}$")
+_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 class LLMError(RuntimeError):
@@ -63,6 +67,11 @@ class LLMConfig:
     timeout_seconds: float = 60.0
     max_output_tokens: int = 4096
     proxy_url: str | None = None
+    reasoning_effort: Literal["none", "low", "medium", "high"] = "high"
+    seed: int | None = None
+    presence_penalty: float = 0.0
+    call_log: Path | None = None
+    replay_dir: Path | None = None
 
     def __post_init__(self) -> None:
         parsed = urlsplit(self.base_url)
@@ -120,6 +129,16 @@ class LLMConfig:
             ):
                 raise ValueError("LLM_PROXY_URL must be an HTTP(S) proxy without credentials or path")
             proxy.port  # Validate the optional port before constructing the transport.
+        if self.reasoning_effort not in REASONING_EFFORTS:
+            raise ValueError("LLM_REASONING_EFFORT must be none, low, medium or high")
+        if self.seed is not None and not 0 <= self.seed < 2 ** 63:
+            raise ValueError("LLM_SEED must be in [0, 2**63)")
+        if not -2.0 <= self.presence_penalty <= 2.0:
+            raise ValueError("LLM_PRESENCE_PENALTY must be in [-2, 2]")
+        if self.call_log is not None and not isinstance(self.call_log, Path):
+            raise TypeError("LLM_CALL_LOG must be a path")
+        if self.replay_dir is not None and not self.replay_dir.is_dir():
+            raise ValueError("LLM_REPLAY_DIR must be an existing directory")
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> LLMConfig:
@@ -131,6 +150,11 @@ class LLMConfig:
             timeout_seconds=_env_float(source, "LLM_TIMEOUT_SECONDS", 60.0),
             max_output_tokens=_env_int(source, "LLM_MAX_OUTPUT_TOKENS", 4096),
             proxy_url=source.get("LLM_PROXY_URL") or None,
+            reasoning_effort=source.get("LLM_REASONING_EFFORT") or "high",  # type: ignore[arg-type]
+            seed=_env_int(source, "LLM_SEED", 0) if source.get("LLM_SEED", "").strip() else None,
+            presence_penalty=_env_float(source, "LLM_PRESENCE_PENALTY", 0.0),
+            call_log=Path(source["LLM_CALL_LOG"]) if source.get("LLM_CALL_LOG") else None,
+            replay_dir=Path(source["LLM_REPLAY_DIR"]) if source.get("LLM_REPLAY_DIR") else None,
         )
 
 
@@ -170,6 +194,8 @@ class LLMUsage:
     prompt_tokens: int = 0
     completion_tokens: int = 0
     total_tokens: int = 0
+    reasoning_tokens: int = 0
+    cached_tokens: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -180,6 +206,10 @@ class LLMResponse:
     tool_calls: tuple[ToolCall, ...] = ()
     usage: LLMUsage = LLMUsage()
     model: str | None = None
+    system_fingerprint: str | None = None
+    time_info: dict[str, Any] | None = None
+    content_sha256: str = ""
+    reasoning_sha256: str | None = None
 
 
 class ExternalQwenClient:
@@ -228,7 +258,7 @@ class ExternalQwenClient:
     ) -> LLMResponse:
         payload = self._base_payload(messages, max_tokens=max_tokens)
         if self.config.model == CEREBRAS_MODEL:
-            payload["reasoning_effort"] = "medium" if reasoning else "none"
+            payload["reasoning_effort"] = self.config.reasoning_effort if reasoning else "none"
         else:
             payload["chat_template_kwargs"] = {"enable_thinking": reasoning}
         if tools is not None:
@@ -252,7 +282,7 @@ class ExternalQwenClient:
             raise ValueError("invalid JSON schema name")
         payload = self._base_payload(messages, max_tokens=max_tokens)
         if self.config.model == CEREBRAS_MODEL:
-            payload["reasoning_effort"] = "none"
+            payload["reasoning_effort"] = self.config.reasoning_effort
             schema = _cerebras_json_schema(schema)
         else:
             payload["chat_template_kwargs"] = {"enable_thinking": False}
@@ -282,12 +312,19 @@ class ExternalQwenClient:
         limit = self.config.max_output_tokens if max_tokens is None else max_tokens
         if not 1 <= limit <= self.config.max_output_tokens:
             raise ValueError("max_tokens exceeds configured output limit")
-        return {
+        payload: dict[str, Any] = {
             "model": self.config.model,
             "messages": [message.wire() for message in messages],
             "temperature": 0.0,
-            "max_tokens": limit,
         }
+        if self.config.model != CEREBRAS_MODEL:
+            payload["max_tokens"] = limit
+            return payload
+        payload["max_completion_tokens"] = limit  # Cerebras rejects max_tokens.
+        payload["presence_penalty"] = self.config.presence_penalty
+        if self.config.seed is not None:
+            payload["seed"] = self.config.seed
+        return payload
 
     async def _post(
         self,
@@ -298,20 +335,35 @@ class ExternalQwenClient:
         timeout = self.config.timeout_seconds if timeout_seconds is None else timeout_seconds
         if not 0 < timeout <= self.config.timeout_seconds:
             raise ValueError("request timeout must fit configured timeout")
+        if "tools" in payload and "response_format" in payload:
+            raise LLMError("tools and response_format must not be combined")
+        request_sha256 = _sha256_json(payload)  # The payload never carries the API key.
+        messages_sha256 = _sha256_json(payload["messages"])
+        if self.config.replay_dir is not None:
+            return self._replay(request_sha256)
         try:
             async with asyncio.timeout(timeout):
                 for attempt in range(5):
                     delay = float(2 ** attempt)
+                    started = time.monotonic()
                     try:
                         response = await self._client.post(
                             "chat/completions", json=payload,
                             headers={"Accept-Encoding": "identity",
                                      "Authorization": f"Bearer {self.config.api_key}"},
                         )
-                    except httpx.TransportError:
+                    except httpx.TransportError as exc:
+                        self._log_attempt(
+                            request_sha256, messages_sha256, attempt,
+                            time.monotonic() - started, None, type(exc).__name__,
+                        )
                         if attempt == 4:
                             raise
                     else:
+                        self._log_attempt(
+                            request_sha256, messages_sha256, attempt,
+                            time.monotonic() - started, response, None,
+                        )
                         if response.status_code not in (408, 429, 500, 502, 503, 504) or attempt == 4:
                             break
                         if response.status_code == 429:
@@ -338,6 +390,67 @@ class ExternalQwenClient:
             reason = f"HTTP {exc.response.status_code}" if isinstance(exc, httpx.HTTPStatusError) else type(exc).__name__
             raise LLMError(f"external Qwen request failed: {reason}") from exc
 
+    def _replay(self, request_sha256: str) -> LLMResponse:
+        """Return the recorded answer for this exact payload; never touch the network."""
+        assert self.config.replay_dir is not None
+        path = self.config.replay_dir / f"{request_sha256}.json"
+        try:
+            body = json.loads(path.read_text(encoding="utf-8"))
+        except OSError as exc:
+            raise LLMError(f"replay entry missing for request {request_sha256}") from exc
+        except json.JSONDecodeError as exc:
+            raise LLMError(f"replay entry is not valid JSON: {path.name}") from exc
+        try:
+            result = _parse_response(body)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise LLMError(f"replay entry is not a usable response: {path.name}") from exc
+        if result.model != self.config.model:
+            raise LLMError("replayed Qwen response model mismatch")
+        return result
+
+    def _log_attempt(
+        self,
+        request_sha256: str,
+        messages_sha256: str,
+        attempt: int,
+        latency_seconds: float,
+        response: httpx.Response | None,
+        error: str | None,
+    ) -> None:
+        """Append one audit line per attempt; the key and headers are never written."""
+        if self.config.call_log is None:
+            return
+        body: Any = None
+        if response is not None:
+            try:
+                body = response.json()
+            except ValueError:
+                body = None
+        record: dict[str, Any] = {
+            "request_sha256": request_sha256,
+            "messages_sha256": messages_sha256,
+            "attempt": attempt,
+            "http_status": None if response is None else response.status_code,
+            "error": error,
+            "model": self.config.model,
+            "base_url": self.config.base_url,
+            "latency_seconds": round(latency_seconds, 6),
+            "response_sha256": None if response is None else sha256(response.content).hexdigest(),
+            "content_sha256": None,
+            "reasoning_sha256": None,
+            "tool_calls_sha256": None,
+            "system_fingerprint": None,
+            "finish_reason": None,
+            "usage": None,
+            "time_info": None,
+        }
+        if isinstance(body, Mapping):
+            record.update(_audit_fields(body))
+            record["response"] = body  # Source for export_replay_dir.
+        self.config.call_log.parent.mkdir(parents=True, exist_ok=True)
+        with self.config.call_log.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+
 
 def _parse_response(body: Any) -> LLMResponse:
     if not isinstance(body, Mapping):
@@ -357,14 +470,58 @@ def _parse_response(body: Any) -> LLMResponse:
     tool_calls = _parse_tool_calls(message.get("tool_calls"))
     if not content and reasoning is None and not tool_calls:
         raise TypeError("response contains no usable output")
+    time_info = body.get("time_info")
     return LLMResponse(
         content=content,
-        reasoning=reasoning,
+        reasoning=None if reasoning is None else reasoning[:_MAX_REASONING_CHARS],
         finish_reason=choice.get("finish_reason") if isinstance(choice, Mapping) else None,
         tool_calls=tool_calls,
         usage=_parse_usage(body.get("usage")),
         model=body.get("model") if isinstance(body.get("model"), str) else None,
+        system_fingerprint=body.get("system_fingerprint") if isinstance(body.get("system_fingerprint"), str) else None,
+        time_info=dict(time_info) if isinstance(time_info, Mapping) else None,
+        content_sha256=_sha256_text(content),
+        reasoning_sha256=None if reasoning is None else _sha256_text(reasoning),
     )
+
+
+def _audit_fields(body: Mapping[str, Any]) -> dict[str, Any]:
+    """Best-effort hashes of any response body, including error bodies."""
+    choices = body.get("choices")
+    choice = choices[0] if isinstance(choices, list) and choices and isinstance(choices[0], Mapping) else {}
+    message = choice.get("message")
+    message = message if isinstance(message, Mapping) else {}
+    raw_content = message.get("content")
+    reasoning = _reasoning_text(message)
+    tool_calls = message.get("tool_calls")
+    return {
+        "content_sha256": _sha256_text(raw_content.strip() if isinstance(raw_content, str) else ""),
+        "reasoning_sha256": None if reasoning is None else _sha256_text(reasoning),
+        "tool_calls_sha256": None if tool_calls is None else _sha256_json(tool_calls),
+        "system_fingerprint": body.get("system_fingerprint"),
+        "finish_reason": choice.get("finish_reason"),
+        "usage": body.get("usage"),
+        "time_info": body.get("time_info"),
+    }
+
+
+def export_replay_dir(call_log: Path, replay_dir: Path) -> int:
+    """Write <request_sha256>.json per logged body so a rerun can use LLM_REPLAY_DIR."""
+    replay_dir.mkdir(parents=True, exist_ok=True)
+    written = 0
+    for line in call_log.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        record = json.loads(line)
+        body = record.get("response")
+        request_sha256 = record.get("request_sha256")
+        if body is None or not isinstance(request_sha256, str) or not _SHA256_RE.fullmatch(request_sha256):
+            continue
+        (replay_dir / f"{request_sha256}.json").write_text(
+            json.dumps(body, ensure_ascii=False, sort_keys=True), encoding="utf-8"
+        )
+        written += 1
+    return written
 
 
 def _parse_tool_calls(raw_calls: Any) -> tuple[ToolCall, ...]:
@@ -397,21 +554,41 @@ def _parse_tool_calls(raw_calls: Any) -> tuple[ToolCall, ...]:
 
 
 def _reasoning_text(message: Mapping[str, Any]) -> str | None:
+    """Full reasoning; callers truncate for display, hashes cover the whole text."""
     for key in ("reasoning_content", "reasoning"):
         value = message.get(key)
         if isinstance(value, str) and value.strip():
-            return value.strip()[:_MAX_REASONING_CHARS]
+            return value.strip()
     return None
 
 
 def _parse_usage(raw: Any) -> LLMUsage:
     if not isinstance(raw, Mapping):
         return LLMUsage()
-    values = []
-    for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
-        value = raw.get(key, 0)
-        values.append(value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else 0)
-    return LLMUsage(*values)
+
+    def count(source: Any, key: str) -> int:
+        value = source.get(key, 0) if isinstance(source, Mapping) else 0
+        return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else 0
+
+    completion_details = raw.get("completion_tokens_details")
+    prompt_details = raw.get("prompt_tokens_details")
+    return LLMUsage(
+        count(raw, "prompt_tokens"),
+        count(raw, "completion_tokens"),
+        count(raw, "total_tokens"),
+        count(completion_details, "reasoning_tokens") or count(raw, "reasoning_tokens"),
+        count(prompt_details, "cached_tokens") or count(raw, "cached_tokens"),
+    )
+
+
+def _sha256_text(value: str) -> str:
+    return sha256(value.encode("utf-8")).hexdigest()
+
+
+def _sha256_json(value: Any) -> str:
+    return sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
 
 
 def _strip_json_fence(value: str) -> str:

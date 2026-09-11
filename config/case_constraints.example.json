@@ -1,0 +1,27 @@
+{
+  "liquid_cap_m3d": 1500,
+  "injection_cap_m3d": 1500,
+  "bhp_bounds": [50, 300],
+  "vrr": {
+    "min": 0.85,
+    "max": 1.15,
+    "window_months": 3,
+    "denominator": "liquid_reservoir",
+    "lower_bound_status": "diagnostic"
+  },
+  "water_balance": {
+    "deficit_m3": 0,
+    "carryover": false
+  },
+  "pressure": {
+    "field_min_bar": null,
+    "block_min_bar": null,
+    "regions": "FIP_C1"
+  },
+  "repairs": [],
+  "selection_margins": {
+    "eps_liquid": 0.03,
+    "eps_injection": 0.03,
+    "phi": 0.95
+  }
+}
