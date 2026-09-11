@@ -47,6 +47,34 @@ CONNECTION_VECTORS = (
     "CWIR",
     "CWIT",
 )
+
+# --- Export tolerances ------------------------------------------------------
+# Every clamp the export may apply is named here, counted while it runs and
+# reported in the manifest "tolerances_applied" block. The cited magnitudes are
+# the worst cases observed on the organizers' Model Z deck on 2026-09-11
+# (docs/CASE_Z_RESULT_20260911.md); a step beyond a threshold still refuses.
+
+PRODUCER_BACKFLOW_RATE_TPD = 5.0
+"""Producer-mode connection rate sum of a layer-completed well may be negative down
+to -5 t/day and is then reported as zero production: at a report date one connection
+can take fluid in (crossflow) while the well produces. Observed worst case -0.36 t/day.
+A rate below -5 t/day is a physics or export error and refuses."""
+
+CUMULATIVE_STEP_REL_TOL = 1e-6
+"""Relative part of the backward-step allowance on a cumulative mass: per-connection
+sums over several PVT regions carry float rounding residue. Observed worst case
+1.19e-5 t on a cumulative of order 1e4 t."""
+
+CUMULATIVE_STEP_ABS_TOL_T = 1e-3
+"""Absolute floor of the same allowance, for cumulatives small enough that the
+relative bound would be tighter than the printed SUMMARY resolution."""
+
+CONNECTION_CROSSFLOW_STEP_T = 100.0
+"""A connection-summed cumulative may additionally step back by up to 100 t when one
+connection takes fluid in while the well-level total never decreases; that month is
+reported as zero production of the mass in question. Observed worst case -10.84 t.
+Wells whose mass comes from a single well-level density get no such allowance."""
+
 _STB_TO_M3 = 0.158987294928
 _PSI_TO_BAR = 0.0689475729318
 _LB_FT3_TO_KG_M3 = 16.01846337396
@@ -65,6 +93,41 @@ _MONTHS = {
 
 class OpmChddError(ValueError):
     """SUMMARY or deck cannot be converted without an unsupported assumption."""
+
+
+class ToleranceLog:
+    """Per-rule tally of the tolerances an export or a bank actually applied.
+
+    Bounded by construction: a rule may only clamp inside its declared threshold,
+    everything outside refuses, and the manifest block shows how often each rule
+    fired, its worst magnitude and where it fired first.
+    """
+
+    def __init__(self, thresholds: Mapping[str, Any]) -> None:
+        self._thresholds = dict(thresholds)
+        self._rules: dict[str, dict[str, Any]] = {}
+
+    def record(
+        self, rule: str, magnitude: float, well: str, when: str | None = None
+    ) -> None:
+        entry = self._rules.get(rule)
+        if entry is None:
+            entry = self._rules[rule] = {
+                "count": 0,
+                "max_magnitude": 0.0,
+                "first_well": well,
+                "first_date": when,
+            }
+        entry["count"] += 1
+        entry["max_magnitude"] = max(entry["max_magnitude"], abs(magnitude))
+
+    def as_manifest(self) -> dict[str, Any]:
+        return {
+            "policy": "a value inside its threshold is clamped and counted here; "
+            "anything outside refuses the export",
+            "thresholds": dict(sorted(self._thresholds.items())),
+            "rules": dict(sorted(self._rules.items())),
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -1054,6 +1117,16 @@ def export_opm_chdd(
     chdd_rows: list[dict[str, str | float]] = []
     trajectory_rows: list[dict[str, str | float | int]] = []
     previous = {well: {"WLPT": 0.0, "WOMT": 0.0, "WWIT": 0.0} for well in wells}
+    tolerances = ToleranceLog(
+        {
+            "producer_backflow_rate_tpd": PRODUCER_BACKFLOW_RATE_TPD,
+            "cumulative_step_residue_t": (
+                f"max({CUMULATIVE_STEP_ABS_TOL_T}, "
+                f"{CUMULATIVE_STEP_REL_TOL} * previous cumulative)"
+            ),
+            "connection_crossflow_step_t": CONNECTION_CROSSFLOW_STEP_T,
+        }
+    )
 
     for date_index, (month, by_well, by_connection) in enumerate(summary):
         iso_date = month.replace(day=1).isoformat()
@@ -1116,11 +1189,18 @@ def export_opm_chdd(
                     for number, density in connection_density.items()
                 )
                 # Layer-completed wells can show a small reversed connection flow at a
-                # report date (crossflow); a producer-mode rate down to -5 t/d is that
-                # backflow, reported as zero production. Cumulative totals stay guarded.
-                if -5.0 <= womr < 0:
+                # report date (crossflow); a producer-mode rate inside
+                # PRODUCER_BACKFLOW_RATE_TPD is that backflow, reported as zero
+                # production. Cumulative totals stay guarded.
+                if -PRODUCER_BACKFLOW_RATE_TPD <= womr < 0:
+                    tolerances.record(
+                        "producer_backflow_rate_tpd", womr, well, iso_date
+                    )
                     womr = 0.0
-                if -5.0 <= liquid_tpd < 0:
+                if -PRODUCER_BACKFLOW_RATE_TPD <= liquid_tpd < 0:
+                    tolerances.record(
+                        "producer_backflow_rate_tpd", liquid_tpd, well, iso_date
+                    )
                     liquid_tpd = 0.0
                 negative_mass = {
                     name: value
@@ -1146,16 +1226,31 @@ def export_opm_chdd(
             }
             diffs = {key: value - previous[well][key] for key, value in cumulative.items()}
             # Per-connection mass sums over several PVT regions carry rounding residue; a
-            # cumulative that steps back by less than 1e-6 of itself (or 1e-3 t) is that
-            # residue, not production, and is clamped to zero. Anything larger still refuses.
-            # A layer-completed well can also step back by a few tonnes when one connection
-            # takes fluid in (crossflow) while the well-level total never decreases; that month
-            # is reported as zero production of the mass in question, up to 100 t.
-            crossflow_allowance = 100.0 if well in connection_wells else 0.0
+            # cumulative that steps back inside CUMULATIVE_STEP_REL_TOL of itself (or
+            # CUMULATIVE_STEP_ABS_TOL_T) is that residue, not production, and is clamped
+            # to zero. A layer-completed well can also step back when one connection takes
+            # fluid in (crossflow) while the well-level total never decreases; that month is
+            # reported as zero production of the mass in question, up to
+            # CONNECTION_CROSSFLOW_STEP_T. Anything larger still refuses.
+            crossflow_allowance = (
+                CONNECTION_CROSSFLOW_STEP_T if well in connection_wells else 0.0
+            )
             for key, value in diffs.items():
-                if value < 0 and -value <= max(crossflow_allowance, 1e-3, 1e-6 * abs(previous[well][key])):
-                    diffs[key] = 0.0
-                    cumulative[key] = previous[well][key]
+                if value >= 0:
+                    continue
+                residue = max(
+                    CUMULATIVE_STEP_ABS_TOL_T,
+                    CUMULATIVE_STEP_REL_TOL * abs(previous[well][key]),
+                )
+                if -value <= residue:
+                    rule = "cumulative_step_residue_t"
+                elif -value <= crossflow_allowance:
+                    rule = "connection_crossflow_step_t"
+                else:
+                    continue
+                tolerances.record(rule, value, well, iso_date)
+                diffs[key] = 0.0
+                cumulative[key] = previous[well][key]
             negative = {key: value for key, value in diffs.items() if value < 0}
             if negative:
                 raise OpmChddError(
@@ -1235,6 +1330,7 @@ def export_opm_chdd(
             "connection_vectors": list(CONNECTION_VECTORS) if connection_wells else [],
         },
         "scenario": {"scenario_id": scenario_id, "source_model": source_model},
+        "tolerances_applied": tolerances.as_manifest(),
         "conversion": {
             "dates": "OPM report date normalized to YYYY-MM-01",
             "volume": f"{requested_unit} surface volume converted to m3",

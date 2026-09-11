@@ -23,9 +23,17 @@ from typing import Any
 
 from scipy.stats import qmc
 
+from timesoil.aios.opm_chdd import ToleranceLog
 from timesoil.aios.workflow import CycleRequest
 
 SCHEMA = "timesoil.feasible-bank/v1"
+
+OIL_ABOVE_LIQUID_REL_TOL = 1e-4
+"""A canonical row may report oil mass above liquid mass by this fraction of the liquid
+mass: multi-PVT exports derive the two through different density paths, so a 100%-oil
+well rounds apart. Observed worst case 3.4e-5 relative on the organizers' Model Z deck
+(2026-09-11). The produced water is then taken as zero; a larger excess refuses."""
+
 # Mirrors workflow._ID: the scenario_id accepted by CycleRequest.
 _IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 LRAT_CAP_M3D = 500.0
@@ -89,7 +97,9 @@ def days_in_month(month: str) -> int:
     return calendar.monthrange(parsed.year, parsed.month)[1]
 
 
-def surface_densities(manifest: Mapping[str, Any]) -> dict[str, tuple[float, float]]:
+def surface_densities(
+    manifest: Mapping[str, Any], tolerances: ToleranceLog | None = None
+) -> dict[str, tuple[float, float]]:
     """(oil, water) kg/m3 per well from the canonical export manifest; multi-PVT wells use the connection mean."""
     conversion = manifest.get("conversion")
     if not isinstance(conversion, Mapping):
@@ -101,10 +111,31 @@ def surface_densities(manifest: Mapping[str, Any]) -> dict[str, tuple[float, flo
         oil, water = values.get("oil_kg_m3"), values.get("water_kg_m3")
         if not isinstance(oil, list) or not isinstance(water, list) or not oil or not water:
             continue
+        name = str(well)
+        if name in result:
+            continue
         # Multi-PVT wells list their distinct connection densities; the mean is used, as in
         # timesfm_economics.export_densities, because these volumes feed the bank's caps
         # (3% margin), never the official calculator, which works in mass.
-        result.setdefault(str(well), (sum(map(float, oil)) / len(oil), sum(map(float, water)) / len(water)))
+        oil_values = [float(value) for value in oil]
+        water_values = [float(value) for value in water]
+        result[name] = (
+            math.fsum(oil_values) / len(oil_values),
+            math.fsum(water_values) / len(water_values),
+        )
+        if tolerances is not None and all(mean > 0 for mean in result[name]):
+            # The magnitude of the assumption is how far the PVT regions of that well
+            # disagree, relative to the mean actually used.
+            tolerances.record(
+                "connection_mean_density_rel_spread",
+                max(
+                    (max(sample) - min(sample)) / mean
+                    for sample, mean in zip(
+                        (oil_values, water_values), result[name], strict=True
+                    )
+                ),
+                name,
+            )
     if not result:
         raise BankError("export manifest carries no usable surface densities")
     if any(not math.isfinite(v) or v <= 0 for pair in result.values() for v in pair):
@@ -113,7 +144,9 @@ def surface_densities(manifest: Mapping[str, Any]) -> dict[str, tuple[float, flo
 
 
 def canonical_volumes(
-    rows: Iterable[Mapping[str, str]], densities: Mapping[str, tuple[float, float]]
+    rows: Iterable[Mapping[str, str]],
+    densities: Mapping[str, tuple[float, float]],
+    tolerances: ToleranceLog | None = None,
 ) -> tuple[dict[str, dict[str, float]], dict[str, dict[str, float]]]:
     """Per (month, well) produced water and oil in m3 from tonne cumulative deltas."""
     water: dict[str, dict[str, float]] = defaultdict(dict)
@@ -124,10 +157,13 @@ def canonical_volumes(
         if not math.isfinite(liquid_t) or not math.isfinite(oil_t) or liquid_t < 0 or oil_t < 0:
             raise BankError(f"canonical cumulative delta is negative or non-finite: {well} {month}")
         water_t = liquid_t - oil_t
-        # Multi-PVT exports derive oil and liquid mass through different density paths; a
-        # 100%-oil well can therefore show oil above liquid by rounding (observed 3e-5).
-        if water_t < -1e-4 * max(1.0, liquid_t):
-            raise BankError(f"oil mass exceeds liquid mass in the baseline export: {well} {month}")
+        if water_t < 0:
+            # Rounding between the two density paths, inside OIL_ABOVE_LIQUID_REL_TOL.
+            if water_t < -OIL_ABOVE_LIQUID_REL_TOL * max(1.0, liquid_t):
+                raise BankError(
+                    f"oil mass exceeds liquid mass in the baseline export: {well} {month}")
+            if tolerances is not None:
+                tolerances.record("oil_above_liquid_t", water_t, well, month)
         if well in water and month in water[well]:
             raise BankError(f"duplicate canonical row: {well} {month}")
         if (liquid_t or oil_t) and well not in densities:
@@ -555,8 +591,17 @@ def build_bank(
     """Return the scenarios, the manifest head and the derived baseline vectors."""
     baseline = baseline_controls(request)
     months = months_of(baseline)
-    densities = surface_densities(export_manifest)
-    water, oil = canonical_volumes(canonical_rows, densities)
+    tolerances = ToleranceLog(
+        {
+            "oil_above_liquid_rel_tol": OIL_ABOVE_LIQUID_REL_TOL,
+            "connection_mean_density_rel_spread": (
+                "no bound: multi-PVT wells use the connection mean of the export "
+                "manifest for the bank's volume caps only, never for the calculator"
+            ),
+        }
+    )
+    densities = surface_densities(export_manifest, tolerances)
+    water, oil = canonical_volumes(canonical_rows, densities, tolerances)
     wells = {str(action["well"]) for action in baseline}
     if set(water) - wells:
         raise BankError("canonical export carries wells absent from the baseline request")
@@ -609,6 +654,7 @@ def build_bank(
                   "frozen_test_ids": sorted(HELD_OUT_TEST_IDS),
                   "frozen_test_prefixes": list(HELD_OUT_TEST_PREFIXES)},
         "blocks": blocks_source,
+        "tolerances_applied": tolerances.as_manifest(),
         "scenarios": [],
     }
     return scenarios, manifest, {"months": months, "water_m3d": water_m3d}
