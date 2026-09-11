@@ -1115,6 +1115,13 @@ def export_opm_chdd(
                     / 1000
                     for number, density in connection_density.items()
                 )
+                # Layer-completed wells can show a small reversed connection flow at a
+                # report date (crossflow); a producer-mode rate down to -5 t/d is that
+                # backflow, reported as zero production. Cumulative totals stay guarded.
+                if -5.0 <= womr < 0:
+                    womr = 0.0
+                if -5.0 <= liquid_tpd < 0:
+                    liquid_tpd = 0.0
                 negative_mass = {
                     name: value
                     for name, value in {
