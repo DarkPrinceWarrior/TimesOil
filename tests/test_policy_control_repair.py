@@ -83,3 +83,104 @@ def test_duplicate_policy_is_returned_to_agent_for_one_correction(tmp_path):
     assert asyncio.run(plan_with_control_repair(workflow, {}, candidates,
         [{'producer_scale':1.5}], tmp_path, 0)) == 'corrected'
     assert workflow.calls == 2 and len(candidates) == 1
+
+
+from pathlib import Path
+
+from propose_track2_policies import policy_controls, rejected_candidate, repair_policy
+from timesoil.aios.case_profile import load_case_profile
+
+PROFILE = load_case_profile(Path(__file__).resolve().parents[1] / 'config/case_constraints.example.json')
+MONTHS = ['2007-01-01', '2007-02-01', '2007-03-01']
+AGGREGATES = {'months': MONTHS,
+              'liquid_m3d': [2000., 1000., 1000.],
+              'injection_m3d': [2000., 1000., 1000.],
+              'water_m3d': [5000., 500., 5000.],
+              'reservoir_production_m3': [1000., 1000., 1000.],
+              'reservoir_injection_m3': [1000., 1000., 3000.]}
+
+
+def test_repair_scales_each_month_to_the_binding_cap_water_or_vrr_bound():
+    policy = {'producer_scale': 1.0}
+    repaired, factors = repair_policy(policy, AGGREGATES, PROFILE)
+    assert factors['applied'] and repaired['producer_scale'] == 1.0
+    assert repaired['monthly_repair'] == {'liquid': factors['liquid'], 'injection': factors['injection']}
+    # Liquid hits exactly (1 - eps_liquid) * 1500 in the only month that exceeds it.
+    assert list(factors['liquid']) == [MONTHS[0]]
+    assert AGGREGATES['liquid_m3d'][0] * factors['liquid'][MONTHS[0]] == pytest.approx(.97 * 1500)
+    assert factors['binding'] == {MONTHS[0]: 'injection_cap', MONTHS[1]: 'produced_water',
+                                  MONTHS[2]: 'vrr_upper'}
+    assert AGGREGATES['injection_m3d'][0] * factors['injection'][MONTHS[0]] == pytest.approx(.97 * 1500)
+    assert AGGREGATES['injection_m3d'][1] * factors['injection'][MONTHS[1]] == pytest.approx(.95 * 500)
+    # Three-month window solved for March: the January/February volumes are already repaired.
+    earlier = 1000 * factors['injection'][MONTHS[0]] + 1000 * factors['injection'][MONTHS[1]]
+    assert factors['injection'][MONTHS[2]] == pytest.approx((1.15 * 3000 - earlier) / 3000)
+    assert factors['window_months'] == 3 and factors['case_profile_sha256'] == PROFILE.sha256
+    assert all(0 < value <= 1 for table in ('liquid', 'injection') for value in factors[table].values())
+
+    relaxed = {**AGGREGATES, 'liquid_m3d': [10.] * 3, 'injection_m3d': [10.] * 3,
+               'water_m3d': [1000.] * 3, 'reservoir_injection_m3': [100.] * 3,
+               'reservoir_production_m3': [1000.] * 3}
+    untouched, idle = repair_policy(policy, relaxed, PROFILE)
+    assert idle['applied'] is False and untouched['monthly_repair'] == {'liquid': {}, 'injection': {}}
+    stopped, stopped_factors = repair_policy(policy, {**relaxed, 'injection_m3d': [0.] * 3}, PROFILE)
+    assert stopped_factors['injection'] == {} and stopped['monthly_repair']['injection'] == {}
+    with pytest.raises(ValueError, match='exactly the forecast months'):
+        repair_policy(policy, {**AGGREGATES, 'water_m3d': [1.]}, PROFILE)
+
+
+def test_repaired_policy_scales_only_the_month_it_names():
+    controls = [dict(month=month, well=well, role=role, status='OPEN', target=target, value=100.)
+                for month in MONTHS
+                for well, role, target in (('P', 'producer', 'LRAT'), ('I', 'injector', 'WRAT'))]
+    repaired, factors = repair_policy({}, AGGREGATES, PROFILE)
+    scaled = policy_controls(controls, {'producer_scale': 1.0, 'injector_scale': 1.0,
+                                        'shut_wells': [], 'well_scales': [], **repaired})
+    values = {(a['month'], a['well']): a['value'] for a in scaled}
+    assert values[MONTHS[0], 'P'] == pytest.approx(100 * factors['liquid'][MONTHS[0]])
+    assert values[MONTHS[0], 'I'] == pytest.approx(100 * factors['injection'][MONTHS[0]])
+    assert values[MONTHS[1], 'P'] == 100.               # no liquid factor for February
+    assert values[MONTHS[1], 'I'] == pytest.approx(100 * factors['injection'][MONTHS[1]])
+    assert values[MONTHS[2], 'P'] == 100.
+    assert values[MONTHS[2], 'I'] == pytest.approx(100 * factors['injection'][MONTHS[2]])
+    assert all(action['value'] == 100. for action in controls)
+
+
+def test_a_refusing_guard_is_recorded_and_never_reaches_the_sealed_ledger():
+    record = rejected_candidate({'producer_scale': 3.0}, 7, ValueError('planned max_liquid_m3d exceeds'),
+                                case_profile_sha256='a' * 64)
+    assert record['forecast_eligible'] is False and record['id'] is None and record['attempt'] == 7
+    assert 'max_liquid_m3d' in record['rejection'] and record['case_profile_sha256'] == 'a' * 64
+    assert 'forecast_chdd_m' not in record
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        'track2_final_selection', Path(__file__).resolve().parents[1] / 'scripts/track2_final_selection.py')
+    seal = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(seal)
+    with pytest.raises(ValueError):
+        seal.best_forecast([{**record, 'id': 0}])
+
+
+def test_repair_respects_the_case_water_semantics_and_solves_vrr_per_month():
+    """No produced-water term without a deficit rule; the VRR window is solved month by month."""
+    import json, tempfile, pathlib
+    from timesoil.aios.case_profile import load_case_profile
+    from propose_track2_policies import repair_policy
+    base = json.loads(pathlib.Path('config/case_z_test.json').read_text())
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    (tmp / 'case.json').write_text(json.dumps(base))
+    profile = load_case_profile(tmp / 'case.json')
+    agg = {'months': ['2007-01-01', '2007-02-01', '2007-03-01'],
+           'liquid_m3d': [500.0, 500.0, 500.0], 'injection_m3d': [500.0, 500.0, 500.0],
+           'water_m3d': [40.0, 40.0, 40.0],  # tiny produced water must NOT throttle injection
+           'reservoir_production_m3': [1000.0, 1000.0, 1000.0],
+           'reservoir_injection_m3': [1000.0, 1000.0, 3000.0]}
+    _, factors = repair_policy({}, agg, profile)
+    assert 'produced_water' not in set(factors['binding'].values())
+    # window over 2007-01..03: allowed = 1.15 * 3000 - (1000 + 1000) = 1450 -> factor 1450/3000
+    assert factors['binding']['2007-03-01'] == 'vrr_upper'
+    assert abs(factors['injection']['2007-03-01'] - 1450.0 / 3000.0) < 1e-9
+    strict = dict(base); strict['water_balance'] = {'deficit_m3': 0, 'carryover': False}
+    (tmp / 'strict.json').write_text(json.dumps(strict))
+    _, strict_factors = repair_policy({}, agg, load_case_profile(tmp / 'strict.json'))
+    assert set(strict_factors['binding'].values()) == {'produced_water'}

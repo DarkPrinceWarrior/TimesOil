@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from hashlib import sha256
 import json
+from math import log
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -20,15 +22,22 @@ import time
 import numpy as np
 import pandas as pd
 
+from timesoil.aios import cma_search, planning
 from timesoil.aios.agents import AgentRole, AgentWorkflow, ToolDefinition, ToolRegistry
 from timesoil.aios.llm import ExternalQwenClient, LLMConfig
+from timesoil.aios.policy_space import PolicySpace, block_map
 from timesoil.aios.track2 import load_trajectory_dataset
 from timesoil.aios.workflow import (CycleError, CycleRequest, _controls,
     _source_control_inventory, _validate_source_well_scope)
 from timesoil.aios.opm import OpmFlowRunner
 from timesoil.aios.schedule_overlay import apply_schedule_overlay
-from timesoil.aios.operating_constraints import check_controls, parse_constraints, own_control_constraints
+from timesoil.aios.operating_constraints import check_controls, failures, own_control_constraints, parse_constraints
+from timesoil.aios.case_profile import load_case_profile
 from timesoil.aios.economics import CHDDEconomicsAdapter, opm_management_rows
+
+SEARCH_SEED = 20260909
+GRID = ((1, 1), (1.25, 1), (1, .8), (1, 1.2), (.8, 1), (1.5, 1), (2, 1), (3, 1))
+BASE_POLICY = {'producer_scale': 1.0, 'injector_scale': 1.0, 'shut_wells': [], 'well_scales': []}
 
 
 def agent_candidate_context(candidates):
@@ -128,6 +137,30 @@ def policy_controls(controls, policy):
             action.update(changes)
             if action['status'] == 'SHUT':
                 action['value'] = 0.0
+    repair = policy.get('monthly_repair') or {}
+    if repair:
+        if not isinstance(repair, dict) or repair.keys() - {'liquid', 'injection'}:
+            raise ValueError('monthly repair accepts only liquid and injection factors')
+        factors = {}
+        for kind in ('liquid', 'injection'):
+            table = repair.get(kind, {})
+            if not isinstance(table, dict):
+                raise ValueError('monthly repair factors must map a control month to a factor')
+            for month, factor in table.items():
+                if month not in months:
+                    raise ValueError('monthly repair factor is outside the control grid')
+                if (isinstance(factor, bool) or not isinstance(factor, (int, float))
+                        or not np.isfinite(factor) or not 0 < factor <= 1):
+                    raise ValueError('monthly repair may only scale a rate down, by a factor in (0, 1]')
+            factors[kind] = table
+        for action in output:
+            if action['status'] != 'OPEN':
+                continue
+            if action['target'] == 'ORAT' and factors['liquid'].get(action['month'], 1) < 1:
+                raise ValueError('liquid repair cannot scale an ORAT-controlled producer')
+            kind = {'LRAT': 'liquid', 'WRAT': 'injection'}.get(action['target'])
+            if kind:
+                action['value'] *= factors[kind].get(action['month'], 1)
     _controls(output)
     roles = {}
     for action in sorted(output, key=lambda a: (a['month'], a['well'])):
@@ -137,6 +170,75 @@ def policy_controls(controls, policy):
             raise ValueError('reverse conversion is not permitted')
         roles[action['well']] = action['role']
     return output
+
+
+def repair_policy(policy, forecast_aggregates, profile):
+    """Scale each month's LRAT/WRAT down until the pass-1 forecast respects K1, K2, K4, K5.
+
+    ``forecast_aggregates`` is ``derived_field_vectors(...)['field']`` of the first
+    forecast pass; ``profile`` is a validated ``CaseProfile``. Design §1.3:
+
+        s_L(m) = min{1, (1-eps_L) * liquid_cap / L(m)}
+        s_I(m) = min{1, (1-eps_I) * injection_cap / I(m), phi * W(m) / I(m),
+                     vrr_max * Vp3(m) / Vi3(m)}
+
+    Returns ``(policy with monthly_repair, factors)``; both factors are <= 1, so a
+    repaired schedule can only withdraw or inject less than the proposed one.
+    """
+    margins = profile.selection_margins
+    months = list(forecast_aggregates['months'])
+    series = [list(forecast_aggregates[key]) for key in
+              ('liquid_m3d', 'injection_m3d', 'water_m3d', 'reservoir_production_m3', 'reservoir_injection_m3')]
+    if any(len(values) != len(months) for values in series):
+        raise ValueError('forecast aggregates must cover exactly the forecast months')
+    liquid, injection, water, produced, injected = series
+    window = int(profile.vrr['window_months'])
+    liquid_cap = (1 - margins['eps_liquid']) * profile.liquid_cap_m3d
+    injection_cap = (1 - margins['eps_injection']) * profile.injection_cap_m3d
+    # The produced-water term exists only when the case restricts injection to produced
+    # water (a finite deficit rule); an external supply is bounded by the injection cap alone.
+    produced_water_rule = profile.water_balance.get('deficit_m3') is not None
+    scales = {'liquid': {}, 'injection': {}}
+    binding = {}
+    injected_repaired = list(injected)  # earlier months carry the factors already decided
+    for index, month in enumerate(months):
+        if liquid[index] > 0 and liquid_cap < liquid[index]:
+            scales['liquid'][month] = liquid_cap / liquid[index]
+        rate = injection[index]
+        if rate <= 0:
+            continue
+        terms = {'injection_cap': injection_cap / rate}
+        if produced_water_rule:
+            terms['produced_water'] = margins['phi'] * water[index] / rate
+        # VRR upper bound solved for the current month: the earlier months of the window are
+        # already repaired, so only this month's injection is the unknown.
+        low = max(0, index - window + 1)
+        earlier = sum(injected_repaired[low:index])
+        if injected[index] > 0:
+            allowed = profile.vrr['max'] * sum(produced[low:index + 1]) - earlier
+            terms['vrr_upper'] = max(0.0, allowed / injected[index])
+        limiting = min(terms, key=lambda key: terms[key])
+        if terms[limiting] < 1:
+            scales['injection'][month] = terms[limiting]
+            binding[month] = limiting
+            injected_repaired[index] = injected[index] * terms[limiting]
+    factors = {'liquid': scales['liquid'], 'injection': scales['injection'], 'binding': binding,
+               'applied': bool(scales['liquid'] or scales['injection']),
+               'eps_liquid': margins['eps_liquid'], 'eps_injection': margins['eps_injection'],
+               'phi': margins['phi'], 'vrr_max': profile.vrr['max'], 'window_months': window,
+               'case_profile_sha256': profile.sha256}
+    return {**policy, 'monthly_repair': {'liquid': scales['liquid'], 'injection': scales['injection']}}, factors
+
+
+def rejected_candidate(policy, attempt, error, *, case_profile_sha256):
+    """A refusing guard is a result: recorded with its reason, never joining the sealed ledger.
+
+    The record deliberately has no forecast, no CHDD and no id, so
+    ``track2_final_selection.best_forecast`` rejects it if it ever reaches
+    ``candidates.json``; rejections live in ``rejected-candidates.json`` instead.
+    """
+    return {'id': None, 'attempt': attempt, 'policy': policy, 'forecast_eligible': False,
+            'rejection': str(error), 'case_profile_sha256': case_profile_sha256}
 
 
 def baseline_bhp_controls(controls, trajectory):
@@ -161,6 +263,168 @@ def baseline_bhp_controls(controls, trajectory):
 def reject_duplicate_controls(controls_sha256, candidates):
     if any(row['controls_sha256'] == controls_sha256 for row in candidates):
         raise CycleError('policy repeats an already evaluated control schedule; propose different controls')
+
+
+def violation_score(record):
+    """Sum of normalised hard-limit deficits behind one candidate; 0 only when it is eligible.
+
+    ``cma_search`` ranks every infeasible point by this scalar, so a rejected
+    candidate that never reached the gates still has to score strictly above zero.
+    """
+    if record.get('forecast_eligible') is True:
+        return 0.0
+    total = 0.0
+    for verdict in record.get('forecast_constraint_verdicts', ()):
+        if verdict.get('ok') is not False or verdict.get('status') != 'hard':
+            continue
+        margin, worst = verdict.get('margin'), verdict.get('worst_value')
+        if not isinstance(margin, (int, float)) or isinstance(margin, bool) or not np.isfinite(margin) or margin >= 0:
+            total += 1.0
+            continue
+        scale = abs(float(worst)) if isinstance(worst, (int, float)) and not isinstance(worst, bool) \
+            and np.isfinite(worst) and worst else 1.0
+        total += -float(margin) / max(scale, 1e-9)
+    return total or 1.0
+
+
+def representative_rates(controls):
+    """First OPEN LRAT/WRAT value per well: the absolute-rate reference ``PolicySpace`` needs."""
+    rates = {}
+    for action in sorted(controls, key=lambda item: (item['well'], item['month'])):
+        if (action['well'] not in rates and action['status'] == 'OPEN'
+                and action['target'] in ('LRAT', 'WRAT')):
+            rates[action['well']] = float(action['value'])
+    return rates
+
+
+def origin_well_state(history, month, densities, pressures):
+    """Per-well surface rates and water cut of the last observed month, tonnes converted with the export densities.
+
+    Only the ``month`` row of the observed CHDD history is read, so no post-origin
+    observation can reach the search.
+    """
+    days = pd.Timestamp(month).days_in_month
+    state = {}
+    for row in history:
+        well = str(row['well'])
+        if str(row['DATA']) != month or well not in densities:
+            continue
+        oil_tonnes, liquid_tonnes = float(row['WOMT_Diff']), float(row['WLPT_Diff'])
+        oil = oil_tonnes / (densities[well]['oil_kg_m3'] / 1000.0)
+        water = max(liquid_tonnes - oil_tonnes, 0.0) / (densities[well]['water_kg_m3'] / 1000.0)
+        liquid = oil + water
+        state[well] = {'oil_tpd': oil_tonnes / days, 'liquid_m3d': liquid / days,
+                       'water_m3d': water / days, 'injection_m3d': float(row['WWIT_Diff']) / days,
+                       'water_cut': water / liquid if liquid > 0 else 0.0,
+                       'wbp9': float(pressures.get(well, 0.0))}
+    return state
+
+
+def run_search(args, context):
+    """Run the configured search and return the ``proposal-receipt.json`` fragment it produced.
+
+    Everything physical is injected through ``context``: ``evaluate(policy)`` for one
+    candidate, ``evaluate_generation(policies)`` for a whole generation,
+    ``reject(policy, error)``, the two ledgers, the ``PolicySpace`` and the two LLM
+    hooks. Nothing here calls OPM, TimesFM or the GPU, so the loop is testable on its own.
+    """
+    evaluate, candidates, rejections = context['evaluate'], context['candidates'], context['rejections']
+    blocks_sha256 = context.get('blocks_sha256')
+    if args.search == 'grid':
+        for production, injection in ([(1, 1)] if args.skip_grid else GRID):
+            print(json.dumps(evaluate({**BASE_POLICY, 'producer_scale': production,
+                                       'injector_scale': injection})), flush=True)
+        proposed_ids, skipped = context['agent_rounds']()
+        return {'agent_proposal_ids': proposed_ids, 'skipped_invalid_rounds': skipped,
+                'search': {'mode': 'grid', 'seconds': None, 'blocks_sha256': blocks_sha256,
+                           'evaluations': len(candidates) + len(rejections),
+                           'generations': 0, 'injections': 0, 'llm_candidate_ids': []}}
+    space, output = context['space'], context['output']
+    # The unchanged incumbent is candidate 0 in both modes: the seal reads it as the baseline.
+    print(json.dumps(evaluate(dict(BASE_POLICY))), flush=True)
+    neutral = space.encode_seed({'field_producer': 1.0, 'block_producer': 1.0,
+                                 'watercut_shut': 0.995, 'producer_bhp_add': 0.0})
+    genes_by_point, llm_ids = {}, []
+
+    def register(genes, hint, fallback):
+        """Keep the genes that belong to a point; the searcher only carries the vector."""
+        values = [float(value) for value in hint]
+        point = np.clip(np.asarray(values if len(values) == space.dim else fallback, dtype=float), 0.0, 1.0)
+        genes_by_point[point.tobytes()] = genes
+        return point
+
+    def score(points):
+        policies, refused = [], {}
+        for index, point in enumerate(points):
+            genes = genes_by_point.get(np.asarray(point, dtype=float).tobytes())
+            try:
+                policies.append(space.decode(point, genes))
+            except (ValueError, CycleError) as error:
+                refused[index] = context['reject'](
+                    {'x': [float(value) for value in np.asarray(point, dtype=float).reshape(-1)],
+                     'genes': genes}, error)
+                policies.append(None)
+        scored = iter(context['evaluate_generation']([item for item in policies if item is not None]))
+        records = [refused[index] if policy is None else next(scored)
+                   for index, policy in enumerate(policies)]
+        evaluations = []
+        for point, record in zip(points, records, strict=True):
+            if record.get('id') is not None and np.asarray(point, dtype=float).tobytes() in genes_by_point:
+                llm_ids.append(record['id'])
+            evaluations.append(cma_search.Evaluation(
+                x=np.asarray(point, dtype=float), feasible=record.get('forecast_eligible') is True,
+                npv=record.get('forecast_chdd_m'), violation=violation_score(record),
+                candidate_id=record.get('id')))
+        return evaluations
+
+    if args.llm_round0:
+        seeds = []
+        try:
+            seeds = context['llm_round0']()
+        except Exception as error:  # The LLM may propose, never stop, the numeric search.
+            context['reject']({'llm_round': 'round0'}, error)
+        points = []
+        for genes, hint in seeds:
+            if len(hint) != space.dim and not any(genes.values()):
+                continue  # No usable box hint and no genes: nothing to seed.
+            point = register(genes, hint, neutral)
+            if not any(np.array_equal(point, other) for other in points):
+                points.append(point)
+        if points:
+            score(points)
+    seeded = len(candidates) + len(rejections)
+
+    def inject(elite):
+        digest = [{'id': elite.candidate_id, 'npv_m': elite.npv,
+                   'x': [round(float(value), 6) for value in elite.x]}]
+        try:
+            proposals = context['llm_injection'](digest)
+        except Exception as error:  # As in round 0: a rejection entry, never a dead search.
+            context['reject']({'llm_round': 'injection'}, error)
+            return []
+        return [register(genes, hint, elite.x) for genes, hint in proposals]
+
+    result = cma_search.run_cma_search(
+        score, dim=space.dim, x0=neutral, seed=SEARCH_SEED,
+        popsize=context.get('popsize', 4 + int(3 * log(space.dim))),
+        wall_clock_seconds=args.search_seconds, sobol_seeds=context.get('sobol_seeds', 32),
+        inject=inject if args.llm_round0 else None, inject_every=context.get('inject_every', 8),
+        max_injections=args.injections, clock=context.get('clock', time.monotonic))
+    (output / 'search_trace.json').write_text(json.dumps(
+        {'seed': SEARCH_SEED, 'dim': space.dim, 'popsize': context.get('popsize'),
+         'stop_reason': result.stop_reason, 'seed_evaluations': seeded, 'generations': result.trace},
+        ensure_ascii=False, indent=2, sort_keys=True))
+    (output / 'elite.json').write_text(json.dumps(
+        [{'candidate_id': item.candidate_id, 'forecast_chdd_m': item.npv, 'generation': item.generation,
+          'x': [round(float(value), 12) for value in item.x], 'parameters': space.describe(item.x)}
+         for item in result.elite], ensure_ascii=False, indent=2, sort_keys=True))
+    return {'agent_proposal_ids': [], 'skipped_invalid_rounds': [],
+            'search': {'mode': 'cma', 'seconds': args.search_seconds, 'blocks_sha256': blocks_sha256,
+                       'evaluations': seeded + result.evaluations,
+                       'generations': max((row['generation'] for row in result.trace), default=0),
+                       'injections': sum(1 for row in result.trace if row.get('injected')),
+                       'stop_reason': result.stop_reason,
+                       'llm_candidate_ids': sorted(set(llm_ids))}}
 
 
 def self_check():
@@ -227,6 +491,24 @@ def self_check():
             pass
         else:
             raise AssertionError('invalid timed control update accepted')
+    repaired = policy_controls(controls, {**policy, 'monthly_repair': {
+        'liquid': {'2007-01-01': .5}, 'injection': {'2007-01-01': .25}}})
+    assert [r['value'] for r in repaired] == [250, 20, 0]
+    for bad in ({'liquid': {'2007-02-01': .5}}, {'liquid': {'2007-01-01': 0}},
+                {'liquid': {'2007-01-01': 1.5}}, {'injection': {'2007-01-01': True}}, {'unknown': {}}):
+        try:
+            policy_controls(controls, {**policy, 'monthly_repair': bad})
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('invalid monthly repair factor accepted')
+    oil_rate = [dict(controls[0], target='ORAT', value=10)]
+    try:
+        policy_controls(oil_rate, {**policy, 'monthly_repair': {'liquid': {'2007-01-01': .5}}})
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('liquid repair silently ignored an ORAT producer')
     print('policy rates, dated status/BHP, conversion persistence and rejection checks passed', flush=True)
 
 
@@ -243,13 +525,32 @@ def main():
         help='Rank nine-target forecasts with official economics and seal one choice before OPM')
     parser.add_argument('--head-report', type=Path)
     parser.add_argument('--skip-grid', action='store_true')
+    parser.add_argument('--case-profile', type=Path, required=True,
+        help='Validated case_constraints.json; its SHA-256 is sealed with the proposal')
+    parser.add_argument('--oil-fvf', type=float, default=1.0,
+        help='Bo used to convert forecast surface volumes to reservoir volumes for the VRR gate')
+    parser.add_argument('--water-fvf', type=float, default=1.0, help='Bw, as for --oil-fvf')
     parser.add_argument('--gpu-memory-fraction', type=float, default=.5,
         help='Share of the GPU reserved for this process; the search refuses to start unless it is free')
+    parser.add_argument('--search', choices=('cma', 'grid'), default='cma',
+        help='cma: CMA-ES over the block policy space; grid: the 8-point grid plus Qwen tool rounds')
+    parser.add_argument('--search-seconds', type=float, default=600.0,
+        help='Wall clock budget of the CMA-ES loop, excluding the seed batch')
+    parser.add_argument('--blocks', type=Path,
+        help='blocks.json from scripts/export_blocks.py; without it the field is one block')
+    parser.add_argument('--llm-round0', action=argparse.BooleanOptionalAction, default=True,
+        help='Run the block-agent round 0 and the periodic injections (default on)')
+    parser.add_argument('--injections', type=int, default=3,
+        help='Maximum LLM injections, one every eight generations')
     args = parser.parse_args()
     os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
     self_check()
+    case_profile = load_case_profile(args.case_profile)
+    case_profile_sha256 = case_profile.sha256
     if not 1 <= args.rounds <= 12:
         parser.error("rounds must be in [1, 12]")
+    if args.search_seconds <= 0 or not 0 <= args.injections <= 16:
+        parser.error('search budget must be positive and injections must be in [0, 16]')
     if not args.economic_selection:
         parser.error('only sealed nine-target economic selection is supported; pass --economic-selection')
     if not (args.head and args.head_sha256 and args.head_report and args.connectivity):
@@ -304,12 +605,16 @@ def main():
     well_index = {w: i for i, w in enumerate(trajectory.well_ids)}
     initial_controls = {a["well"]: a for a in request["controls"] if a["month"] == start.date().isoformat()}
     date_index = {d.date().isoformat(): i for i, d in enumerate(trajectory.dates)}
-    operating_rules = parse_constraints(
-        checked_request.context.get('operating_constraints', []), wells=trajectory.well_ids,
-        start=min(a.month for a in checked_request.controls),
-        end=max(a.month for a in checked_request.controls))
-    from timesfm_economics import validate_economic_constraints, economic_constraint_violations
-    validate_economic_constraints(operating_rules)
+    first_month = min(a.month for a in checked_request.controls)
+    last_month = max(a.month for a in checked_request.controls)
+    operating_rules = (
+        *parse_constraints(checked_request.context.get('operating_constraints', []),
+                           wells=trajectory.well_ids, start=first_month, end=last_month),
+        *case_profile.operating_rules(wells=trajectory.well_ids, start=first_month, end=last_month))
+    from timesfm_economics import (derived_field_vectors, economic_constraint_verdicts,
+        export_densities, validate_economic_constraints)
+    validate_economic_constraints(operating_rules, derived=True)
+    densities = export_densities(manifest, trajectory.well_ids)
     args.output.mkdir(parents=True, exist_ok=False)
     import torch
     from timesfm3 import ModelConfig, TimesFM3Forecaster
@@ -341,13 +646,16 @@ def main():
     economic_history, economic_trajectory = observed_economic_history(
         args.baseline_run / 'canonical', manifest, trajectory, origin)
     candidates = []
+    rejections = []
     days = np.array([d.days_in_month for d in trajectory.dates[origin:origin + horizon]])[:, None]
+    timestamps = trajectory.dates[origin + 1:origin + horizon + 1].strftime('%Y-%m-%d')
 
-    def evaluate(policy):
+    def decode(policy, attempt):
+        """Decode a policy into a validated request; gate G1 runs here, before any forecast."""
         policy = {"producer_scale": 1.0, "injector_scale": 1.0,
                   "shut_wells": [], "well_scales": [], **policy}
         controls = policy_controls(request["controls"], policy)
-        proposed = {**request, "scenario_id": f"timesfm-policy-{len(candidates):02d}", "controls": controls, "context": {
+        proposed = {**request, "scenario_id": f"timesfm-policy-{attempt:02d}", "controls": controls, "context": {
             **request.get("context", {}),
             "objective": "Verify the graph selected and sealed by TimesFM forecast CHDD. Run OPM once; report physical CHDD even if it is worse than predicted. Do not select another graph using the result.",
             "facts": {"schedule_kind": "timesfm_policy_candidate", "is_baseline": False,
@@ -362,19 +670,14 @@ def main():
         checked = CycleRequest.from_mapping(proposed)
         _validate_source_well_scope(checked.controls, source_inventory,
                                    allow_conversion_to_injection=allow_conversion)
-        reject_duplicate_controls(checked.controls_sha256, candidates)
         original_roles = {(a['month'], a['well']): a['role'] for a in request['controls']}
         if (not checked.context.get('constraints', {}).get('allow_conversion_to_injection', False)
                 and any(a['role'] != original_roles[a['month'], a['well']] for a in controls)):
             raise ValueError('new role changes are not permitted by this case')
         check_controls(operating_rules, checked.controls)
-        candidate_rules = (*operating_rules, *own_control_constraints(checked.controls))
-        try:
-            validate_economic_constraints(candidate_rules)
-        except ValueError as error:
-            raise CycleError(str(error)) from error
-        overlay = apply_schedule_overlay(source_schedule, checked.controls,
-            known_wells=trajectory.well_ids, end_exclusive=trajectory.dates[origin + horizon].date())
+        return policy, controls, proposed, checked
+
+    def plan_actions(controls):
         actions = trajectory.actions.copy()
         for a in controls:
             position = date_index[a['month']], well_index[a['well']]
@@ -384,32 +687,116 @@ def main():
             elif 'bhp_limit' in a:
                 raise ValueError('BHP policy requires the BHP action channel')
             actions[position] = value
-        future = actions[origin:origin + horizon]
+        return actions
+
+    def forecast_pass(controls):
+        """One TimesFM pass for already validated controls; no OPM, no selection."""
+        actions = plan_actions(controls)
         begin = time.monotonic()
         economic_trajectory.actions = actions
         prediction = forecast_economic(forecaster, economic_trajectory, origin, horizon, context, connectivity)
         if not np.isfinite(prediction).all():
             raise ValueError("non-finite TimesFM forecast")
-        inference_seconds = time.monotonic() - begin
-        timestamps = trajectory.dates[origin + 1:origin + horizon + 1].strftime('%Y-%m-%d')
-        violations = economic_constraint_violations(prediction, timestamps, trajectory.well_ids, candidate_rules)
+        derived = derived_field_vectors(prediction, timestamps, trajectory.well_ids, densities,
+            oil_fvf=args.oil_fvf, water_fvf=args.water_fvf,
+            vrr_window=int(case_profile.vrr['window_months']))
+        return actions, prediction, derived, time.monotonic() - begin
+
+    def reject(policy, attempt, error):
+        """A refusing guard is a result: recorded with its reason, never fatal to the search."""
+        record = rejected_candidate(policy, attempt, error, case_profile_sha256=case_profile_sha256)
+        rejections.append(record)
+        (args.output / 'rejected-candidates.json').write_text(
+            json.dumps(rejections, ensure_ascii=False, indent=2))
+        return record
+
+    def evaluate(policy):
+        """Two passes: forecast, repair the monthly rates, forecast again, then gate G2."""
+        attempt = len(candidates) + len(rejections)
+        try:
+            item = screen_forecast(policy, attempt)
+            return screen_finish(item, screen_score(item), len(candidates))
+        except (ValueError, CycleError) as error:
+            return reject(policy, attempt, error)
+
+    def evaluate_generation(policies):
+        """Forecasts stay sequential on the GPU; the official calculator scores the batch in threads.
+
+        Candidate ids are assigned before submission and records are appended in id
+        order, so ``candidates.json`` stays the ordered ledger the seal requires.
+        """
+        slots, pending, reserved = [], [], []
+        for policy in policies:
+            attempt = len(candidates) + len(rejections) + len(pending)
+            try:
+                item = screen_forecast(policy, attempt, reserved)
+            except (ValueError, CycleError) as error:
+                slots.append(reject(policy, attempt, error))
+                continue
+            reserved.append(item['controls_sha256'])
+            item['candidate_id'] = len(candidates) + len(pending)
+            slots.append(item)
+            pending.append(item)
+        if pending:
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                results = list(pool.map(screen_score, pending))
+            for item, result in zip(pending, results, strict=True):
+                item['record'] = screen_finish(item, result, item['candidate_id'])
+        return [item['record'] if 'record' in item else item for item in slots]
+
+    def screen_forecast(policy, attempt, reserved=()):
+        """Everything before the official calculator: gate G1, two forecast passes, gate G2."""
+        policy, controls, proposed, checked = decode(policy, attempt)
+        first = forecast_pass(controls)
+        repaired, repair_factors = repair_policy(policy, first[2]['field'], case_profile)  # first[2] is derived
+        if repair_factors['applied']:
+            policy, controls, proposed, checked = decode(repaired, attempt)
+        reject_duplicate_controls(checked.controls_sha256, candidates)
+        if checked.controls_sha256 in reserved:
+            raise CycleError('policy repeats an already evaluated control schedule; propose different controls')
+        candidate_rules = (*operating_rules, *own_control_constraints(checked.controls))
+        try:
+            validate_economic_constraints(candidate_rules, derived=True)
+        except ValueError as error:
+            raise CycleError(str(error)) from error
+        overlay = apply_schedule_overlay(source_schedule, checked.controls,
+            known_wells=trajectory.well_ids, end_exclusive=trajectory.dates[origin + horizon].date())
+        actions, prediction, derived, inference_seconds = (
+            forecast_pass(controls) if repair_factors['applied'] else first)
+        verdicts = economic_constraint_verdicts(prediction, timestamps, trajectory.well_ids,
+                                                candidate_rules, derived=derived)
+        violations = [verdict.message for verdict in failures(verdicts)]
         if not (prediction[..., 1] <= 500 + 1e-6).all():
             violations.append('forecast well liquid rate exceeds 500 m3/day')
-        predicted_rows = forecast_chdd_rows(economic_history, timestamps, trajectory.well_ids, prediction)
-        result = calculator.calculate(opm_management_rows(predicted_rows,
-            (start.date(), trajectory.dates[origin + horizon].date())),
-            start_year=checked.start_year, output_dir=args.output / f'economics-{len(candidates):02d}',
-            charge_initial_pump=checked.charge_initial_pump,
-            management_period=(start.date(), trajectory.dates[origin + horizon].date()))
-        forecast_path = args.output / f'forecast-{len(candidates):02d}.npz'
+        return {'attempt': attempt, 'policy': policy, 'controls': controls, 'proposed': proposed,
+                'checked': checked, 'overlay': overlay, 'prediction': prediction, 'derived': derived,
+                'future': actions[origin:origin + horizon], 'verdicts': verdicts,
+                'violations': violations, 'repair_factors': repair_factors,
+                'controls_sha256': checked.controls_sha256, 'inference_seconds': inference_seconds,
+                'rows': forecast_chdd_rows(economic_history, timestamps, trajectory.well_ids, prediction)}
+
+    def screen_score(item):
+        """The official calculator on one forecast; a separate subprocess, safe to run in a thread."""
+        period = (start.date(), trajectory.dates[origin + horizon].date())
+        return calculator.calculate(opm_management_rows(item['rows'], period),
+            start_year=item['checked'].start_year,
+            output_dir=args.output / f"economics-{item['attempt']:02d}",
+            charge_initial_pump=item['checked'].charge_initial_pump, management_period=period)
+
+    def screen_finish(item, result, candidate_id):
+        """Persist one scored candidate under its pre-assigned id."""
+        policy, checked, prediction = item['policy'], item['checked'], item['prediction']
+        derived, verdicts, violations = item['derived'], item['verdicts'], item['violations']
+        repair_factors, future = item['repair_factors'], item['future']
+        forecast_path = args.output / f'forecast-{candidate_id:02d}.npz'
         np.savez_compressed(forecast_path, prediction=prediction, timestamps=np.asarray(timestamps, dtype=str),
                             well_ids=np.asarray(trajectory.well_ids), targets=np.asarray(ECONOMIC_TARGETS))
         injection = float((np.where(future[..., 1] == 2, future[..., 0] * future[..., 2], 0) * days).sum())
-        record = {"id": len(candidates), "policy": policy, "lookahead_months": horizon,
+        record = {"id": candidate_id, "policy": policy, "lookahead_months": horizon,
             "estimated_oil_t": float(prediction[..., 6].sum()),
             "estimated_liquid_t": float(prediction[..., 7].sum()),
             "planned_injection_m3": injection,
-            "full_period_months": checked.horizon_months, "full_period_actions": len(controls),
+            "full_period_months": checked.horizon_months, "full_period_actions": len(item['controls']),
             "bhp_channel": has_bhp,
             "pressure_semantics": pressure_semantics,
             "trained_head_sha256": args.head_sha256,
@@ -418,9 +805,9 @@ def main():
                 'liquid_tonnes': float(prediction[:, i, 7].sum()),
                 'terminal_reservoir_pressure_bar': float(prediction[-1, i, 3])}
                 for i, well in enumerate(trajectory.well_ids)],
-            "controls_sha256": checked.controls_sha256, "schedule_overlay_sha256": overlay.sha256,
+            "controls_sha256": checked.controls_sha256, "schedule_overlay_sha256": item['overlay'].sha256,
             "source_schedule_constraints_checked_before_forecast": True,
-            "inference_seconds": inference_seconds,
+            "inference_seconds": item['inference_seconds'],
             "is_official_chdd": False,
             'forecast_chdd_m': result.total_chdd_m,
             'predicted_injection_m3': float(prediction[..., 8].sum()),
@@ -429,19 +816,22 @@ def main():
             'forecast_economics_directory': str(result.output_dir.relative_to(args.output.resolve())),
             'forecast_eligible': not violations,
             'forecast_constraint_violations': violations,
-            'eligibility_scope': 'Forecast well liquid limit 500 m3/day, own LRAT/WRAT/BHP/role/status bounds, supplied operating limits and exact schedule constraints; physical feasibility and uncertainty require final verification.',
+            'forecast_constraint_verdicts': [verdict.to_dict() for verdict in verdicts],
+            'case_profile_sha256': case_profile_sha256,
+            'repair_factors': repair_factors,
+            'repair_passes': 2 if repair_factors['applied'] else 1,
+            'formation_volume_factors': derived['formation_volume_factors'],
+            'forecast_field_aggregates': derived['field'],
+            'eligibility_scope': 'Forecast well liquid limit 500 m3/day, own LRAT/WRAT/BHP/role/status bounds, the case profile field caps, VRR window, water balance and repair calendar, and exact schedule constraints; diagnostic rules are reported but never fatal; physical feasibility and uncertainty require final verification.',
             'training_report_sha256': sha256(args.head_report.read_bytes()).hexdigest(),
             'forecast_sha256': sha256(forecast_path.read_bytes()).hexdigest()}
         candidates.append(record)
-        proposed["context"]["screening"] = record
-        (args.output / f"request-{record['id']:02d}.json").write_text(json.dumps(proposed, ensure_ascii=False, indent=2))
+        item['proposed']["context"]["screening"] = record
+        (args.output / f"request-{candidate_id:02d}.json").write_text(
+            json.dumps(item['proposed'], ensure_ascii=False, indent=2))
         (args.output / "candidates.json").write_text(json.dumps(candidates, ensure_ascii=False, indent=2))
         return record
 
-    base_policy = dict(producer_scale=1.0, injector_scale=1.0, shut_wells=[], well_scales=[])
-    grid = [(1, 1)] if args.skip_grid else [(1, 1), (1.25, 1), (1, .8), (1, 1.2), (.8, 1), (1.5, 1), (2, 1), (3, 1)]
-    for production, injection in grid:
-        print(json.dumps(evaluate({**base_policy, "producer_scale": production, "injector_scale": injection})), flush=True)
     schema = {"type": "object", "properties": {
         "producer_scale": {"type": "number"}, "injector_scale": {"type": "number"},
         "shut_wells": {"type": "array", "items": {"type": "string"}},
@@ -461,7 +851,7 @@ def main():
     if has_bhp:
         schema['properties'].update(producer_bhp_add={'type': 'number', 'minimum': 0},
                                     injector_bhp_factor={'type': 'number', 'exclusiveMinimum': 0, 'maximum': 1})
-    proposed_ids = []
+    proposed_ids, skipped_rounds = [], []
 
     async def propose_round(index):
         before = len(candidates)
@@ -469,7 +859,11 @@ def main():
         def propose(policy, _context):
             attempted.append(policy)
             (args.output / f"policy-attempts-{index:02d}.json").write_text(json.dumps(attempted, indent=2))
-            return evaluate(policy)
+            record = evaluate(policy)
+            if 'rejection' in record:
+                # A refusing guard is a result: recorded, returned to the agent, never fatal.
+                raise CycleError(record['rejection'])
+            return record
         tool = ToolDefinition("propose_policy", "Propose a full-field policy. Optional producer_bhp_add (bar) and injector_bhp_factor tighten open-well BHP limits uniformly before individual updates. well_updates changes a well over inclusive monthly start/end dates after rate scaling: rate, status, target, role, BHP limit. Conversion requires explicit WRAT, value and BHP, must be permitted by the case, and cannot be reversed; extend its role to the end. Omitted scales default to 1, arrays to empty. Official calculator ranks nine-target forecasts; only the sealed winning graph gets final OPM verification.", schema,
             propose)
         context_value = {"track": 2, "round": index,
@@ -530,15 +924,96 @@ def main():
         proposed_ids.append(candidates[-1]["id"])
         print(json.dumps(candidates[-1]), flush=True)
 
-    skipped_rounds = []
-    for index in range(args.rounds):
-        asyncio.run(propose_round(index))
-    if not proposed_ids:
-        raise RuntimeError('search requires at least one approved agent proposal')
+    def agent_rounds():
+        """The grid fallback keeps the Qwen tool-calling rounds exactly as before."""
+        for index in range(args.rounds):
+            asyncio.run(propose_round(index))
+        if not proposed_ids:
+            raise RuntimeError('search requires at least one approved agent proposal')
+        return proposed_ids, skipped_rounds
+
+    well_roles = {}
+    for action in sorted(request['controls'], key=lambda item: item['month']):
+        well_roles.setdefault(action['well'], action['role'])
+    origin_month = trajectory.dates[origin].date().isoformat()
+    well_state = origin_well_state(economic_history, origin_month, densities,
+        {well: float(trajectory.states[origin, i, 2]) for i, well in enumerate(trajectory.well_ids)})
+    blocks_payload = json.loads(args.blocks.read_text()) if args.blocks else {
+        'blocks': [{'id': 'field', 'wells': sorted(well_roles)}],
+        'well_to_block': {well: 'field' for well in sorted(well_roles)}}
+    blocks_sha256 = sha256(args.blocks.read_bytes()).hexdigest() if args.blocks else None
+    space = PolicySpace(sorted({a['month'] for a in request['controls']}), well_roles,
+        blocks=block_map(well_roles, blocks_payload.get('well_to_block')),
+        caps=case_profile.to_dict(), baseline_rates=representative_rates(request['controls']),
+        water_cut={well: row['water_cut'] for well, row in well_state.items() if well in well_roles} or None)
+
+    def planning_briefs():
+        """Briefs describe the field at the origin; nothing after the origin is read."""
+        state = {'month': origin_month,
+            'wells': [{'well': well, 'role': action['role'], 'status': action['status'],
+                       'target': action['target'], 'value': action['value'],
+                       'bhp_limit': action.get('bhp_limit')}
+                      for well, action in sorted(initial_controls.items())],
+            'totals': {key: sum(row[key] for row in well_state.values())
+                       for key in ('liquid_m3d', 'oil_tpd', 'injection_m3d')},
+            'neighbours': {well: [[connectivity.well_ids[j], float(connectivity.weights[i, j])]
+                                  for j in np.argsort(-connectivity.weights[i])[:5]
+                                  if connectivity.weights[i, j] > 0]
+                           for i, well in enumerate(connectivity.well_ids)}}
+        return (planning.build_block_briefs(state, well_state, blocks_payload, case_profile,
+                                            normative_profile, candidates, {}),
+                planning.build_field_brief(state, well_state, blocks_payload, case_profile,
+                                           normative_profile, candidates, {}))
+
+    def llm_round0():
+        block_briefs, field_brief = planning_briefs()
+        (args.output / 'planning-context-00.json').write_text(json.dumps(
+            {'blocks': [brief.to_dict() for brief in block_briefs], 'field': field_brief.to_dict()},
+            ensure_ascii=False, indent=2, sort_keys=True))
+
+        async def call():
+            async with ExternalQwenClient(LLMConfig.from_env()) as client:
+                return await planning.run_round0(client, block_briefs, field_brief, SEARCH_SEED)
+
+        intents, plan, journal = asyncio.run(call())
+        (args.output / 'planning-round0.json').write_text(json.dumps(
+            {'intents': [intent.to_dict() for intent in intents], 'next_focus': list(plan.next_focus),
+             'journal': [entry.to_dict() for entry in journal]}, ensure_ascii=False, indent=2))
+        return planning.merge_intents(intents, plan, well_roles)
+
+    injections_done = []
+
+    def llm_injection(digest):
+        _, field_brief = planning_briefs()
+        injections_done.append(len(injections_done) + 1)
+        index = injections_done[-1]
+        (args.output / f'planning-context-{index:02d}.json').write_text(json.dumps(
+            {'field': field_brief.to_dict(), 'elite': list(digest)},
+            ensure_ascii=False, indent=2, sort_keys=True))
+
+        async def call():
+            async with ExternalQwenClient(LLMConfig.from_env()) as client:
+                return await planning.run_injection(client, digest, field_brief, SEARCH_SEED + index)
+
+        proposals, journal = asyncio.run(call())
+        (args.output / f'planning-injection-{index:02d}.json').write_text(json.dumps(
+            {'journal': [entry.to_dict() for entry in journal],
+             'proposals': [[genes, list(hint)] for genes, hint in proposals]},
+            ensure_ascii=False, indent=2))
+        return list(proposals)
+
+    fragment = run_search(args, {
+        'evaluate': evaluate, 'evaluate_generation': evaluate_generation,
+        'reject': lambda policy, error: reject(policy, len(candidates) + len(rejections), error),
+        'candidates': candidates, 'rejections': rejections, 'space': space,
+        'output': args.output, 'blocks_sha256': blocks_sha256, 'agent_rounds': agent_rounds,
+        'llm_round0': llm_round0, 'llm_injection': llm_injection})
     (args.output / "proposal-receipt.json").write_text(json.dumps({
         "source_trajectory_sha256": sha256(raw).hexdigest(), "request_sha256": sha256(args.request.read_bytes()).hexdigest(),
-        "timesfm_revision": MODEL_REVISION, "agent_proposal_ids": proposed_ids,
-        "attempted_agent_rounds": args.rounds, "skipped_invalid_rounds": skipped_rounds,
+        "timesfm_revision": MODEL_REVISION, "agent_proposal_ids": fragment['agent_proposal_ids'],
+        "attempted_agent_rounds": args.rounds if args.search == 'grid' else 0,
+        "skipped_invalid_rounds": fragment['skipped_invalid_rounds'],
+        "search": fragment['search'],
         "horizon_months": horizon, "head_sha256": args.head_sha256,
         "reference_manifest_sha256": None,
         "reference_correction_sha256": None,
@@ -547,6 +1022,11 @@ def main():
         "economic_selection": True,
         "head_report_sha256": sha256(args.head_report.read_bytes()).hexdigest(),
         "normative_profile": normative_profile,
+        "case_profile_sha256": case_profile_sha256,
+        "case_profile": case_profile.to_dict(),
+        "formation_volume_factors": {"oil": args.oil_fvf, "water": args.water_fvf},
+        "operating_rules": [rule.to_dict() for rule in operating_rules],
+        "rejected_candidates": len(rejections),
         "search_opm_calls": 0,
         **gpu_reservation,
         "final_chdd_computed": False}, indent=2))
