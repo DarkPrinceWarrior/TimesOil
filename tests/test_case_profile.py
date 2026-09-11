@@ -103,3 +103,17 @@ def test_profile_builds_the_three_gate_rules_and_refuses_what_it_cannot_check(tm
         load_case_profile(path)
     with pytest.raises(CaseProfileError, match='cannot read'):
         load_case_profile(tmp_path / 'absent.json')
+
+
+def test_null_water_deficit_disables_the_water_gate(tmp_path):
+    """The official case has an external water supply: no produced-water rule at all."""
+    from timesoil.aios.case_profile import load_case_profile
+    import json, datetime
+    data = profile_data()
+    data['water_balance'] = {'deficit_m3': None, 'carryover': False}
+    path = tmp_path / 'p.json'; path.write_text(json.dumps(data))
+    profile = load_case_profile(path)
+    rules = profile.operating_rules(wells=('1', '2'), start=datetime.date(2007, 1, 1), end=datetime.date(2007, 3, 1))
+    kinds = {key for rule in rules for key, _ in rule.limits}
+    assert 'max_monthly_water_deficit_m3' not in kinds
+    assert 'max_monthly_liquid_m3d' in kinds and 'min_bhp_bar' in kinds

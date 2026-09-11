@@ -119,9 +119,10 @@ class CaseProfile:
                                 window_months=window),
             OperatingConstraint(start, end, stock, ((f"min_window_{ratio}_replacement", self.vrr["min"]),),
                                 window_months=window, status=self.vrr["lower_bound_status"]),
-            OperatingConstraint(start, end, stock,
-                                (("max_monthly_water_deficit_m3", self.water_balance["deficit_m3"]),)),
         ]
+        if self.water_balance["deficit_m3"] is not None:
+            rules.append(OperatingConstraint(
+                start, end, stock, (("max_monthly_water_deficit_m3", self.water_balance["deficit_m3"]),)))
         for well, first, last in self.repairs:
             if well not in stock:
                 raise CaseProfileError(f"repair calendar names an unknown well: {well}")
@@ -159,7 +160,10 @@ def parse_case_profile(data: Mapping[str, Any], *, sha256_hex: str) -> CaseProfi
     raw_water = _object(data["water_balance"], "water_balance", _WATER_KEYS)
     if type(raw_water["carryover"]) is not bool:
         raise CaseProfileError("water_balance.carryover must be a boolean")
-    water = {"deficit_m3": _number(raw_water["deficit_m3"], "water_balance.deficit_m3", low=0),
+    # ``null`` means the case has no produced-water rule (an external supply is capped by
+    # ``injection_cap_m3d`` instead); the deficit gate is then not created at all.
+    water = {"deficit_m3": _number(raw_water["deficit_m3"], "water_balance.deficit_m3", low=0,
+                                   allow_none=True),
              "carryover": raw_water["carryover"]}
 
     raw_pressure = _object(data["pressure"], "pressure", _PRESSURE_KEYS)
