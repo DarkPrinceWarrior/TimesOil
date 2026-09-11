@@ -265,11 +265,42 @@ def reject_duplicate_controls(controls_sha256, candidates):
         raise CycleError('policy repeats an already evaluated control schedule; propose different controls')
 
 
-def violation_score(record):
-    """Sum of normalised hard-limit deficits behind one candidate; 0 only when it is eligible.
+def _finite(value):
+    """The float behind a verdict field, or None when it is absent, boolean or non-finite."""
+    if not isinstance(value, (int, float)) or isinstance(value, bool) or not np.isfinite(value):
+        return None
+    return float(value)
+
+
+def _breach_weight(verdict, corridor):
+    """Normalised depth of one violated hard verdict: the deeper the breach, the larger."""
+    worst = _finite(verdict.get('worst_value'))
+    if corridor is not None and str(verdict.get('rule', '')).endswith('_replacement') and worst is not None:
+        low, high = float(corridor[0]), float(corridor[1])
+        # Relative distance outside [min, max]: the verdicts are one per month, so
+        # summing them charges depth times the number of months spent outside.
+        if worst < low:
+            return (low - worst) / max(abs(low), 1e-9)
+        if worst > high:
+            return (worst - high) / max(abs(high), 1e-9)
+    margin = _finite(verdict.get('margin'))
+    if margin is None or margin >= 0:
+        return 1.0
+    # Relative excess over the bound: |margin| against the observed value it breached.
+    return -margin / max(abs(worst) if worst else 1.0, 1e-9)
+
+
+def violation_score(record, corridor=None):
+    """Depth-weighted sum of the hard-limit breaches behind one candidate; 0 only when eligible.
 
     ``cma_search`` ranks every infeasible point by this scalar, so a rejected
     candidate that never reached the gates still has to score strictly above zero.
+    With the VRR ``corridor`` known, a replacement-ratio breach costs its relative
+    distance outside ``[min, max]`` once per breached month instead of one flat unit,
+    so a candidate that is barely outside for a few months pulls CMA-ES ahead of one
+    that is far outside for the whole period; caps keep their relative excess. The
+    lexicographic rule is untouched: ``cma_search`` still sorts every feasible point
+    below every infeasible one whatever this returns.
     """
     if record.get('forecast_eligible') is True:
         return 0.0
@@ -277,13 +308,7 @@ def violation_score(record):
     for verdict in record.get('forecast_constraint_verdicts', ()):
         if verdict.get('ok') is not False or verdict.get('status') != 'hard':
             continue
-        margin, worst = verdict.get('margin'), verdict.get('worst_value')
-        if not isinstance(margin, (int, float)) or isinstance(margin, bool) or not np.isfinite(margin) or margin >= 0:
-            total += 1.0
-            continue
-        scale = abs(float(worst)) if isinstance(worst, (int, float)) and not isinstance(worst, bool) \
-            and np.isfinite(worst) and worst else 1.0
-        total += -float(margin) / max(scale, 1e-9)
+        total += min(_breach_weight(verdict, corridor), 1e6)  # cma_search refuses a non-finite violation
     return total or 1.0
 
 
@@ -373,7 +398,8 @@ def run_search(args, context):
                 llm_ids.append(record['id'])
             evaluations.append(cma_search.Evaluation(
                 x=np.asarray(point, dtype=float), feasible=record.get('forecast_eligible') is True,
-                npv=record.get('forecast_chdd_m'), violation=violation_score(record),
+                npv=record.get('forecast_chdd_m'),
+                violation=violation_score(record, context.get('vrr_corridor')),
                 candidate_id=record.get('id')))
         return evaluations
 
@@ -1013,6 +1039,7 @@ def main():
         'reject': lambda policy, error: reject(policy, len(candidates) + len(rejections), error),
         'candidates': candidates, 'rejections': rejections, 'space': space,
         'output': args.output, 'blocks_sha256': blocks_sha256, 'agent_rounds': agent_rounds,
+        'vrr_corridor': (case_profile.vrr['min'], case_profile.vrr['max']),
         'llm_round0': llm_round0, 'llm_injection': llm_injection})
     (args.output / "proposal-receipt.json").write_text(json.dumps({
         "source_trajectory_sha256": sha256(raw).hexdigest(), "request_sha256": sha256(args.request.read_bytes()).hexdigest(),
