@@ -198,7 +198,7 @@ def test_manifest_records_every_check(training_intake):
         "single_data_deck_and_schedule_include", "unit_system_is_metric", "management_period",
         "cut_month_present", "schedule_covers_management_period", "repair_calendar_applied",
         "field_targets_within_case_caps", "no_production_before_first_source_control",
-        "request_validates"]
+        "profile_rules_embedded", "request_validates"]
     assert len(training_intake["archive"]["sha256"]) == 64
     assert len(training_intake["case_profile"]["sha256"]) == 64
     assert training_intake["case_profile"]["repairs"] == 16
@@ -324,3 +324,13 @@ def test_month_range_is_half_open():
         month_range(date(2007, 1, 1), date(2007, 1, 1))
     with pytest.raises(IntakeError):
         month_range(date(2007, 1, 15), date(2008, 1, 1))
+
+
+def test_build_request_rules_switch_is_exposed_on_the_cli():
+    """--rules none leaves the profile rules out; the default embeds them."""
+    import inspect as _inspect
+    import intake_case_z
+    assert _inspect.signature(intake_case_z.build_request).parameters['embed_rules'].default is True
+    parser_args = intake_case_z.build_parser().parse_args(
+        ['build-request', 'x.zip', '--profile', 'p.json', '--output', 'o', '--rules', 'none'])
+    assert parser_args.rules == 'none'

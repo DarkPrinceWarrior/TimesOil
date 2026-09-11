@@ -210,10 +210,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         return int(args.handler(args))
     except CLIError as exc:
-        _json({"ok": False, "error": str(exc)}, stream=sys.stderr)
+        cause = exc.__cause__
+        _json({"ok": False, "error": str(exc),
+               "cause": f"{type(cause).__name__}: {cause}" if cause is not None else None},
+              stream=sys.stderr)
         return 1
     except Exception as exc:
-        _json({"ok": False, "error": type(exc).__name__}, stream=sys.stderr)
+        _json({"ok": False, "error": type(exc).__name__, "cause": str(exc)}, stream=sys.stderr)
         return 1
 
 
