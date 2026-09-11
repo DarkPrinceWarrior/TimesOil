@@ -1,17 +1,16 @@
 [project]
 name = "scorp-timesoil-track2"
 version = "0.2.0"
-description = "TimesOil Track 2: Model Z surrogate, AIOS, OPM replay and CHDD"
+description = "TimesOil Track 2: TimesFM forecast, AIOS agents, OPM verification and official NPV"
 requires-python = ">=3.13,<3.14"
 dependencies = [
     "fastapi>=0.116",
     "httpx>=0.28",
-    "lightgbm>=4.6.0",
     "numpy>=2.1",
     "openpyxl>=3.1",
     "pandas>=2.2",
-    "pyarrow>=17",
     "pydantic>=2.11",
+    "scipy>=1.18.1",
     "uvicorn>=0.35",
 ]
 
@@ -24,6 +23,10 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/timesoil"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "scripts"]
+testpaths = ["tests"]
 
 [dependency-groups]
 dev = [

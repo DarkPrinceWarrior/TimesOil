@@ -368,7 +368,7 @@ def test_four_role_workflow_is_fixed_and_tools_are_allow_listed() -> None:
         asyncio.run(workflow.run({"track": 2, "access_token": "test-only"}))
 
 
-def test_completed_audit_uses_numerical_approval_scope_for_planning_roles() -> None:
+def test_planning_scope_is_stated_to_every_non_critic_role() -> None:
     class ScopeLLM(_WorkflowLLM):
         prompts: list[str]
         def __init__(self):
@@ -380,12 +380,9 @@ def test_completed_audit_uses_numerical_approval_scope_for_planning_roles() -> N
 
     llm = ScopeLLM()
     workflow = AgentWorkflow(llm, ToolRegistry(()))
-    asyncio.run(workflow.run({'track': 2, 'phase': 'completed_paired_numerical_audit'}))
-    assert all('численная проверка уже завершённой пары' in p for p in llm.prompts[:3])
-    assert all('Сейчас фаза планирования до запуска' not in p for p in llm.prompts)
-    llm.prompts.clear()
     asyncio.run(workflow.run({'track': 2, 'phase': 'planning'}))
     assert all('Сейчас фаза планирования до запуска' in p for p in llm.prompts[:3])
+    assert 'Сейчас фаза планирования до запуска' not in llm.prompts[3]
 
 
 def _chdd_row(date_value: str, well: str, *, producer: bool) -> dict[str, Any]:

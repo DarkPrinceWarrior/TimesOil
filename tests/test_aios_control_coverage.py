@@ -5,7 +5,6 @@ import pytest
 
 from timesoil.aios.contracts import ControlAction, ControlTarget, WellRole, WellStatus
 from timesoil.aios.scenario_generation import _actions_sha256, load_control_records
-from timesoil.aios.track2 import _action_cube
 from timesoil.aios.workflow import CycleError, _SourceControl, _action, _controls, _validate_source_well_scope
 
 
@@ -18,8 +17,6 @@ def test_optional_pressure_roundtrip_and_one_way_conversion():
     assert _actions_sha256((old,)) != _actions_sha256((bounded,))
     assert load_control_records([{"date": month.isoformat(), "well": "P1", "control_value": 100,
                                   "control_target": "LRAT", "status": "OPEN", "bhp_limit": 70}]) == (bounded,)
-    with pytest.raises(ValueError, match="BHP action feature"):
-        _action_cube((bounded,), (month,), ("P1",))
     converted = replace(old, role=WellRole.INJECTOR, target=ControlTarget.WATER_INJECTION_RATE, bhp_limit=280)
     inventory = {m: {"P1": _SourceControl(WellRole.PRODUCER, False, month)} for m in (month, next_month)}
     controls = (converted, replace(converted, month=next_month))

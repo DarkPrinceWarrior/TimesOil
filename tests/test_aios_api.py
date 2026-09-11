@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-import json
-from hashlib import sha256
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 
 from fastapi.testclient import TestClient
 
 from timesoil.aios.agents import AgentRole, AgentState, RoleDecision, WorkflowError
-from timesoil.aios import api as api_module
 from timesoil.aios.api import app, get_agent_workflow, get_chdd_adapter, get_runs_dir
 from timesoil.aios.economics import CHDD_FIELDS, EconomicResult
 
@@ -42,70 +38,9 @@ def test_health_and_capabilities_do_not_expose_secret(monkeypatch) -> None:
         "connectivity_verified": False,
     }
     assert set(payload) == {"qwen", "track2", "chdd"}
-    assert payload["track2"] == {
-        "component_available": True,
-        "certified": False,
-        "model_z_trained": False,
-    }
+    assert payload["track2"] == {"component_available": True, "certified": False}
     assert payload["chdd"]["component_available"] is True
     assert secret not in health.text + capabilities.text
-
-
-def test_model_z_capability_requires_pinned_verified_artifact(
-    monkeypatch, tmp_path: Path
-) -> None:
-    expected_hash = "a" * 64
-    calls: list[tuple[Path, str | None]] = []
-
-    def load(directory: Path, *, expected_manifest_sha256: str | None = None):
-        calls.append((directory, expected_manifest_sha256))
-        return SimpleNamespace(
-            training_metadata={
-                "model_z_ready": True,
-                "pipeline_proof_only": False,
-                "source_models": ["model_z_opm"],
-                "dataset_hash": "verified-extra-evidence",
-            }
-        )
-
-    monkeypatch.setenv("MODEL_Z_SURROGATE_DIR", str(tmp_path))
-    monkeypatch.setattr(api_module, "MODEL_Z_SURROGATE_MANIFEST_SHA256", expected_hash)
-    monkeypatch.setattr(api_module.Track2Surrogate, "load", load)
-    assert api_module._model_z_trained() is True
-    assert calls == [(tmp_path, expected_hash)]
-
-
-def test_bundled_model_z_artifact_matches_pin(monkeypatch) -> None:
-    artifact = ROOT / "deliverables/track2_model_z/surrogate_v5/model"
-    manifest = artifact / "manifest.json"
-    assert sha256(manifest.read_bytes()).hexdigest() == (
-        api_module.MODEL_Z_SURROGATE_MANIFEST_SHA256
-    )
-
-    model = api_module.Track2Surrogate.load(
-        artifact,
-        expected_manifest_sha256=api_module.MODEL_Z_SURROGATE_MANIFEST_SHA256,
-    )
-    assert model.training_metadata["model_z_ready"] is True
-    assert model.training_metadata["pipeline_proof_only"] is False
-    assert model.training_metadata["source_models"] == ["model_z_opm"]
-    assert model.baseline.connectivity is not None
-    assert len(model.baseline.connectivity.well_ids) == 103
-
-    monkeypatch.setenv("MODEL_Z_SURROGATE_DIR", str(artifact))
-    assert api_module._model_z_trained() is True
-
-    summary = json.loads(
-        (ROOT / "deliverables/track2_model_z/model_z_v4_summary.json").read_text()
-    )
-    assert summary["surrogate"]["model_manifest_sha256"] == (
-        "de825094812f4f3faf83b8c5e2e3338a519bc866a2ac728322080bbd0a17ec8a"
-    )
-    assert summary["final_replay"]["complete"] is True
-    assert summary["final_replay"]["improvement_over_operational_baseline"] is False
-    assert summary["final_replay"]["candidate_accepted"] is False
-    assert summary["search"]["operational_decision"] == "retain_authenticated_baseline"
-    assert summary["organizer_certified"] is False
 
 
 def test_compose_secret_bootstrap_drops_privileges() -> None:
@@ -119,59 +54,6 @@ def test_compose_secret_bootstrap_drops_privileges() -> None:
         "--bounding-set=-all --inh-caps=-all --ambient-caps=-all",
     ):
         assert expected in compose
-
-
-def test_model_z_capability_fails_closed(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("MODEL_Z_SURROGATE_DIR", str(tmp_path))
-    monkeypatch.setattr(
-        api_module, "MODEL_Z_SURROGATE_MANIFEST_SHA256", "a" * 64
-    )
-
-    for value in (
-        SimpleNamespace(
-            training_metadata={
-                "model_z_ready": True,
-                "pipeline_proof_only": True,
-                "source_models": ["model_z_opm"],
-            }
-        ),
-        ValueError("corrupt artifact"),
-    ):
-        def load(*_args, **_kwargs):
-            if isinstance(value, Exception):
-                raise value
-            return value
-
-        monkeypatch.setattr(api_module.Track2Surrogate, "load", load)
-        assert api_module._model_z_trained() is False
-
-
-def test_model_z_capability_revalidates_after_artifact_failure(
-    monkeypatch, tmp_path: Path
-) -> None:
-    ready = SimpleNamespace(
-        training_metadata={
-            "model_z_ready": True,
-            "pipeline_proof_only": False,
-            "source_models": ["model_z_opm"],
-        }
-    )
-    results = iter((ready, ValueError("artifact disappeared")))
-
-    def load(*_args, **_kwargs):
-        result = next(results)
-        if isinstance(result, Exception):
-            raise result
-        return result
-
-    monkeypatch.setenv("MODEL_Z_SURROGATE_DIR", str(tmp_path))
-    monkeypatch.setattr(
-        api_module, "MODEL_Z_SURROGATE_MANIFEST_SHA256", "a" * 64
-    )
-    monkeypatch.setattr(api_module.Track2Surrogate, "load", load)
-
-    assert api_module._model_z_trained() is True
-    assert api_module._model_z_trained() is False
 
 
 def test_agent_experiment_uses_dependency_and_filters_internal_data() -> None:

@@ -5,6 +5,38 @@ import torch
 from torch import nn
 
 
+MODEL_REVISION = "43046b85ec22d584a13f8098c2ed39c889e129c2"
+TARGET_COUNT = 9  # The nine canonical economic outputs are the only trained shape.
+
+
+def forecast_inputs(states, actions, origin, context_length, horizon):
+    """Align action[t] with state[t+1]; retain BHP when present and exclude future targets."""
+    states, actions = np.asarray(states), np.asarray(actions)
+    if (states.ndim != 3 or states.shape[-1] != TARGET_COUNT or actions.ndim != 3
+            or actions.shape[:2] != states.shape[:2] or actions.shape[-1] not in (3, 4)):
+        raise ValueError("forecast requires aligned nine-target states and three/four-feature actions")
+    if context_length < 1 or horizon < 1 or origin < 1 or origin + horizon >= len(states):
+        raise ValueError("invalid forecast window")
+    start = max(1, origin + 1 - context_length)
+    targets = states[start : origin + 1].transpose(1, 2, 0).astype(np.float32)
+    controls = actions[start - 1 : origin + horizon]
+    if (not np.isfinite(targets).all() or not np.isfinite(controls).all()
+            or (controls[..., 0] < 0).any()
+            or not np.isin(controls[..., 1], (0, 1, 2)).all()
+            or not np.isin(controls[..., 2], (0, 1)).all()
+            or (controls[..., 3:] < 0).any()):
+        raise ValueError("invalid observed states or planned forecast controls")
+    rates = np.stack(
+        [np.where(controls[..., 1] == code, controls[..., 0], 0.0)
+         * controls[..., 2] for code in range(3)], axis=-1
+    )
+    field_injection = np.broadcast_to(rates[..., 2].sum(axis=1)[:, None], rates.shape[:2])
+    covariates = np.concatenate(
+        [rates, controls[..., 2:], field_injection[..., None]], axis=-1
+    ).transpose(1, 2, 0).astype(np.float32)
+    return targets, covariates
+
+
 def enable_precise_variate_softmax(model):
     """Avoid observed CUDA FP32 softmax repeatability drift on full-field variates."""
     from unittest.mock import patch
@@ -29,11 +61,9 @@ def enable_precise_variate_softmax(model):
 
 
 def geological_inputs(trajectory, origin, context, horizon, connectivity):
-    from benchmark_timesfm3 import forecast_inputs
     if tuple(trajectory.well_ids) != tuple(connectivity.well_ids):
         raise ValueError('geological well order differs from trajectory')
-    target, cov = forecast_inputs(trajectory.states, trajectory.actions, origin, context, horizon,
-                                 target_count=trajectory.states.shape[-1])
+    target, cov = forecast_inputs(trajectory.states, trajectory.actions, origin, context, horizon)
     count, target_count, length = target.shape
     controls = trajectory.actions[origin - length:origin + horizon]
     allocated = connectivity.features(np.zeros((len(controls) * count, 3)),
@@ -43,11 +73,9 @@ def geological_inputs(trajectory, origin, context, horizon, connectivity):
 
 
 class StaticConditionedHead(nn.Module):
-    def __init__(self, head, connectivity, *, target_count=3):
+    def __init__(self, head, connectivity):
         super().__init__()
-        if target_count not in (3, 9):
-            raise ValueError('three physical or nine economic targets required')
-        self.target_count = target_count
+        target_count = self.target_count = TARGET_COUNT
         self.head = head
         raw = np.asarray(connectivity.provenance.get('static_features', connectivity.static), dtype=float)
         if raw.ndim != 2 or len(raw) != len(connectivity.well_ids) or not np.isfinite(raw).all():
@@ -113,8 +141,8 @@ def enable_cold_start_normalization(model, scales):
     """Give constant target histories a train-only scale for native output RevIN."""
     scales = np.asarray(scales, dtype=float)
     target_count = getattr(model.output_head, 'target_count', None)
-    if target_count not in (3, 9):
-        raise ValueError('cold-start normalization requires a conditioned target head')
+    if target_count != TARGET_COUNT:
+        raise ValueError('cold-start normalization requires a conditioned nine-target head')
     if scales.shape != (target_count,) or not np.isfinite(scales).all() or np.any(scales <= 0):
         raise ValueError('cold-start scales must match finite positive target training statistics')
     if hasattr(model, 'cold_start_scale'):
@@ -140,13 +168,10 @@ def enable_cold_start_normalization(model, scales):
 def load_frozen_model(model, connectivity, selected, *, reference_sha256=None):
     if selected.get('reference_manifest_sha256') not in (None, reference_sha256):
         raise ValueError('trained response weights require the matching physical reference')
-    economic = selected.get('economic_targets')
-    if economic is not None:
-        from timesfm_economics import ECONOMIC_TARGETS
-        if tuple(economic) != ECONOMIC_TARGETS:
-            raise ValueError('checkpoint economic target order differs')
-    model.output_head = StaticConditionedHead(model.output_head, connectivity,
-                                              target_count=9 if economic is not None else 3)
+    from timesfm_economics import ECONOMIC_TARGETS
+    if tuple(selected.get('economic_targets') or ()) != ECONOMIC_TARGETS:
+        raise ValueError('checkpoint economic target order differs')
+    model.output_head = StaticConditionedHead(model.output_head, connectivity)
     full = selected.get('full_model')
     head_weights = ({k.removeprefix('output_head.'): v for k, v in full.items() if k.startswith('output_head.')}
                     if full is not None else selected.get('output_head', selected))
@@ -177,6 +202,7 @@ def load_frozen_model(model, connectivity, selected, *, reference_sha256=None):
 
 
 def self_check():
+    from copy import deepcopy
     from types import SimpleNamespace
     class Attention(nn.Module):
         use_sdpa = True
@@ -193,28 +219,72 @@ def self_check():
     torch.testing.assert_close(torch.autograd.grad(actual[..., 0].sum(), values)[0],
                                torch.autograd.grad(expected[..., 0].sum(), values)[0], rtol=0, atol=0)
     assert not probe.var_attn.use_sdpa and torch.nn.functional.softmax is original_softmax
+    # Control lag, future-target leakage and the planned-control cube guard.
+    states = np.arange(40 * 2 * 9, dtype=float).reshape(40, 2, 9)
+    actions = np.zeros((40, 2, 3))
+    actions[..., 0] = np.arange(40)[:, None] + 1
+    actions[:, 0, 1], actions[:, 1, 1] = 1, 2
+    actions[..., 2] = 1
+    target, cov = forecast_inputs(states, actions, 20, 12, 6)
+    assert target.shape == (2, 9, 12) and cov.shape == (2, 5, 18)
+    np.testing.assert_array_equal(target[0], states[9:21, 0].T)
+    np.testing.assert_array_equal(cov[0, 1, :12], actions[8:20, 0, 0])
+    np.testing.assert_array_equal(cov[0, 1, 12:], actions[20:26, 0, 0])
+    changed = states.copy()
+    changed[21:] = -12345
+    np.testing.assert_array_equal(forecast_inputs(changed, actions, 20, 12, 6)[0], target)
+    other = actions.copy()
+    other[20:26, 1, 0] *= 2
+    _, other_cov = forecast_inputs(states, other, 20, 12, 6)
+    np.testing.assert_array_equal(other_cov[0, :4], cov[0, :4])
+    np.testing.assert_array_equal(other_cov[0, 4, 12:], 2 * cov[0, 4, 12:])
+    bhp_actions = np.concatenate([actions, np.full((*actions.shape[:2], 1), 70.0)], axis=-1)
+    bhp_actions[20:26, 0, 3] = 90.0
+    bhp_target, bhp_cov = forecast_inputs(states, bhp_actions, 20, 12, 6)
+    assert bhp_cov.shape == (2, 6, 18)
+    np.testing.assert_array_equal(bhp_target, target)
+    np.testing.assert_array_equal(bhp_cov[:, :4], cov[:, :-1])
+    np.testing.assert_array_equal(bhp_cov[:, -1], cov[:, -1])
+    np.testing.assert_array_equal(bhp_cov[0, 4, :12], 70.0)
+    np.testing.assert_array_equal(bhp_cov[0, 4, 12:], 90.0)
+    for channel, invalid in ((3, np.nan), (0, -1.), (1, 3.), (2, 2.), (3, -1.)):
+        rejected = bhp_actions.copy()
+        rejected[20, 0, channel] = invalid
+        try:
+            forecast_inputs(states, rejected, 20, 12, 6)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('invalid planned control accepted')
+    try:
+        forecast_inputs(states[..., :3], actions, 20, 12, 6)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('three-target states accepted')
     connection = SimpleNamespace(well_ids=('a', 'b'), static=[[10, .1, 1], [20, .2, 3]], provenance={})
     base = nn.Linear(4, 9)
     head = StaticConditionedHead(base, connection)
-    values = torch.ones((1, 8, 2, 4))
+    values = torch.ones((1, 20, 2, 4))
     torch.testing.assert_close(head(values), base(values), rtol=0, atol=0)
     with torch.no_grad():
         head.conditioner.weight[:, 0] = 1
     changed = head(values)
-    assert not torch.equal(changed[:, 0], changed[:, 3])
-    torch.testing.assert_close(changed[:, 6:], base(values)[:, 6:], rtol=0, atol=0)
+    assert not torch.equal(changed[:, 0], changed[:, 9])
+    torch.testing.assert_close(changed[:, 18:], base(values)[:, 18:], rtol=0, atol=0)
     head.disabled = True
     torch.testing.assert_close(head(values), base(values), rtol=0, atol=0)
+    head.disabled = False
     layer = StaticConditionedLayer(nn.Identity(), head)
-    embeddings = torch.ones((1, 18, 2, 4))
+    embeddings = torch.ones((1, 30, 2, 4))
     torch.testing.assert_close(layer(embeddings), embeddings, rtol=0, atol=0)
-    # Targets: 3 rows/well; own controls: 5 rows/well; then one allocated-injection row/well.
-    torch.testing.assert_close(layer.features[[0, 6, 16], :-9], head.features[[0, 0, 0], :-3])
-    torch.testing.assert_close(layer.features[[3, 11, 17], :-9], head.features[[3, 3, 3], :-3])
-    assert layer.features[:, -9:].argmax(dim=1).tolist() == [0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 7, 3, 4, 5, 6, 7, 8, 8]
+    # Targets: 9 rows/well; own controls: 5 rows/well; then one allocated-injection row/well.
+    torch.testing.assert_close(layer.features[[0, 18, 28], :-15], head.features[[0, 0, 0], :-9])
+    torch.testing.assert_close(layer.features[[9, 23, 29], :-15], head.features[[9, 9, 9], :-9])
+    assert (layer.features[:, -15:].argmax(dim=1).tolist()
+            == list(range(9)) * 2 + list(range(9, 14)) * 2 + [14, 14])
     layer(embeddings).square().sum().backward()
     assert torch.count_nonzero(layer.conditioner.weight.grad)
-    from copy import deepcopy
     with torch.no_grad():
         layer.conditioner.weight.fill_(.01)
     bundle = {'static_last_layer': True, 'last_layer': deepcopy(layer.state_dict())}
@@ -230,15 +300,19 @@ def self_check():
         pass
     else:
         raise AssertionError('mismatched checkpoint geology accepted')
+    from timesfm_economics import ECONOMIC_TARGETS
     native = nn.Module()
-    native.output_head = nn.Linear(4, 9)
+    native.output_head = nn.Linear(4, 6)
     native.transformer_stack = nn.Module()
     native.transformer_stack.layers = nn.ModuleList([nn.Linear(4, 4), nn.Identity()])
-    adapted = load_frozen_model(deepcopy(native), connection, head.state_dict())
-    adapted.transformer_stack.layers[-1] = StaticConditionedLayer(adapted.transformer_stack.layers[-1], adapted.output_head)
+    adapted = deepcopy(native)
+    adapted.output_head = StaticConditionedHead(adapted.output_head, connection)
+    adapted.transformer_stack.layers[-1] = StaticConditionedLayer(
+        adapted.transformer_stack.layers[-1], adapted.output_head)
     with torch.no_grad():
         adapted.transformer_stack.layers[0].weight.fill_(.125)
-    full = {'full_model': adapted.state_dict(), 'static_last_layer': True}
+    full = {'full_model': adapted.state_dict(), 'static_last_layer': True,
+            'economic_targets': list(ECONOMIC_TARGETS)}
     sealed = {**full, 'reference_manifest_sha256': 'a' * 64}
     try:
         load_frozen_model(deepcopy(native), connection, sealed)
@@ -251,6 +325,14 @@ def self_check():
     for key, value in adapted.state_dict().items():
         torch.testing.assert_close(restored.state_dict()[key], value, rtol=0, atol=0)
     assert not torch.equal(native.transformer_stack.layers[0].weight, restored.transformer_stack.layers[0].weight)
+    for invalid in ({'economic_targets': list(reversed(ECONOMIC_TARGETS))},
+                    {'economic_targets': None}):
+        try:
+            load_frozen_model(deepcopy(native), connection, {**full, **invalid})
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('checkpoint without the canonical nine targets accepted')
     early = load_frozen_model(deepcopy(native), connection, full)
     first = early.transformer_stack.layers[0]
     early.transformer_stack.layers[0] = StaticConditionedLayer(first, early.output_head)
@@ -258,8 +340,8 @@ def self_check():
     with torch.no_grad():
         early.transformer_stack.layers[0].conditioner.weight[:, 0] = .1
     early_output = early.transformer_stack.layers[0](embeddings)
-    assert not torch.equal(early_output[:, 0], early_output[:, 3])
-    early_bundle = {'full_model': deepcopy(early.state_dict()), 'static_first_layer': True, 'static_last_layer': True}
+    assert not torch.equal(early_output[:, 0], early_output[:, 9])
+    early_bundle = {**full, 'full_model': deepcopy(early.state_dict()), 'static_first_layer': True}
     restored_early = load_frozen_model(deepcopy(native), connection, early_bundle)
     torch.testing.assert_close(restored_early.transformer_stack.layers[0](embeddings), early_output, rtol=0, atol=0)
     early_bundle['full_model']['transformer_stack.layers.0.features'][0, 0] += 1
@@ -270,80 +352,45 @@ def self_check():
     else:
         raise AssertionError('mismatched first-layer geological identity accepted')
     from timesfm3.torch import util
-    sigma = torch.tensor([[[0.], [2.], [0.], [0.], [3.], [0.], [0.], [2.]]])
+    sigma = torch.zeros(1, 20, 1)
+    sigma[0, 1], sigma[0, 4], sigma[0, 18] = 2., 3., 5.
     mean = torch.zeros_like(sigma)
     original_stats = (None, None, None, (mean, sigma), torch.ones_like(sigma))
     native._preprocess = lambda *args, **kwargs: original_stats
-    adapted = load_frozen_model(deepcopy(native), connection,
-        {**full, 'cold_start_scale': [10., 20., 250.]})
+    scales = [10., 20., 250., 30., 40., 50., 60., 70., 80.]
+    adapted = load_frozen_model(deepcopy(native), connection, {**full, 'cold_start_scale': scales})
     adjusted = adapted._preprocess()[3][1]
-    torch.testing.assert_close(adjusted.flatten(), torch.tensor([10., 2., 250., 10., 3., 250., 0., 2.]))
-    logits = torch.ones((1, 8, 1, 2), requires_grad=True)
+    expected = torch.tensor(scales * 2 + [5., 0.]).reshape(1, 20, 1)
+    expected[0, 1], expected[0, 4] = 2., 3.
+    torch.testing.assert_close(adjusted, expected)
+    logits = torch.ones((1, 20, 1, 2), requires_grad=True)
     fixed = util.revin(logits, mean, adjusted, reverse=True)
     fixed.sum().backward()
     assert logits.grad[0, 2, 0, 0] == 250
     unchanged = util.revin(logits, mean, sigma, reverse=True)
-    torch.testing.assert_close(fixed[:, [1, 4, 6, 7]], unchanged[:, [1, 4, 6, 7]])
+    torch.testing.assert_close(fixed[:, [1, 4, 18, 19]], unchanged[:, [1, 4, 18, 19]])
     assert not torch.count_nonzero(unchanged[:, 2])
     torch.testing.assert_close(native._preprocess()[3][1], sigma, rtol=0, atol=0)
-    enable_cold_start_normalization(adapted, [10., 20., 250.])
-    for invalid in ([0., 20., 250.], [10., float('nan'), 250.], [10., 20.]):
+    enable_cold_start_normalization(adapted, scales)
+    for invalid in ([0.] + scales[1:], [10., float('nan')] + scales[2:], scales[:8]):
         try:
-            enable_cold_start_normalization(deepcopy(native), invalid)
+            enable_cold_start_normalization(
+                load_frozen_model(deepcopy(native), connection, full), invalid)
         except ValueError:
             pass
         else:
             raise AssertionError('invalid cold-start normalization accepted')
     from timesoil.aios.interwell import WellConnectivity
     connection = WellConnectivity(('a', 'b'), [[0, 1], [1, 0]], [[10, .1, 1], [20, .2, 3]], {})
-    states = np.ones((12, 2, 3))
+    economic_states = np.ones((12, 2, 9))
     actions = np.ones((12, 2, 4)); actions[:, 1, 1] = 2
-    trajectory = SimpleNamespace(well_ids=('a', 'b'), states=states, actions=actions)
+    trajectory = SimpleNamespace(well_ids=('a', 'b'), states=economic_states, actions=actions)
     target, cov = geological_inputs(trajectory, 5, 4, 3, connection)
-    states[6:] = 1e9
+    economic_states[6:] = np.nan
     other_target, other_cov = geological_inputs(trajectory, 5, 4, 3, connection)
     np.testing.assert_array_equal(target, other_target)
     np.testing.assert_array_equal(cov, other_cov)
-    assert cov.shape == (12, 7)
-    economic_states = np.ones((12, 2, 9))
-    economic_trajectory = SimpleNamespace(well_ids=('a', 'b'), states=economic_states, actions=actions)
-    target, cov = geological_inputs(economic_trajectory, 5, 4, 3, connection)
-    economic_states[6:] = np.nan
-    other_target, other_cov = geological_inputs(economic_trajectory, 5, 4, 3, connection)
-    np.testing.assert_array_equal(target, other_target)
-    np.testing.assert_array_equal(cov, other_cov)
     assert target.shape == (18, 4) and cov.shape == (12, 7)
-    economic_native = nn.Module()
-    economic_native.output_head = nn.Linear(4, 6)
-    economic_native.transformer_stack = nn.Module()
-    economic_native.transformer_stack.layers = nn.ModuleList([nn.Linear(4, 4)])
-    economic_model = deepcopy(economic_native)
-    economic_model.output_head = StaticConditionedHead(economic_model.output_head, connection, target_count=9)
-    economic_model.transformer_stack.layers[0] = StaticConditionedLayer(
-        economic_model.transformer_stack.layers[0], economic_model.output_head)
-    economic_layer = economic_model.transformer_stack.layers[0]
-    assert economic_layer.features.shape[0] == 30
-    assert economic_layer.features[:, -15:].argmax(dim=1).tolist() == list(range(9)) * 2 + list(range(9, 14)) * 2 + [14, 14]
-    economic_layer(torch.ones(1, 30, 2, 4)).sum().backward()
-    assert torch.count_nonzero(economic_layer.conditioner.weight.grad)
-    from timesfm_economics import ECONOMIC_TARGETS
-    bundle = {'full_model': economic_model.state_dict(), 'static_last_layer': True,
-              'economic_targets': list(ECONOMIC_TARGETS)}
-    restored = load_frozen_model(deepcopy(economic_native), connection, bundle)
-    for key, value in economic_model.state_dict().items():
-        torch.testing.assert_close(value, restored.state_dict()[key], rtol=0, atol=0)
-    bundle['economic_targets'] = list(reversed(ECONOMIC_TARGETS))
-    try:
-        load_frozen_model(deepcopy(economic_native), connection, bundle)
-    except ValueError:
-        pass
-    else:
-        raise AssertionError('reordered economic checkpoint targets accepted')
-    mean = torch.zeros(1, 30, 1)
-    restored._preprocess = lambda: (None, None, None, (mean, mean.clone()), torch.ones_like(mean))
-    enable_cold_start_normalization(restored, np.arange(1, 10))
-    torch.testing.assert_close(restored._preprocess()[3][1].flatten(),
-                               torch.tensor(list(range(1, 10)) * 2 + [0.] * 12))
     print('Static conditioning parity, well identity, ablation and covariate isolation passed', flush=True)
 
 

@@ -37,7 +37,7 @@ def _json(value: object) -> bytes:
 
 
 def _fixture(
-    root: Path, scenario_ids: tuple[str, ...] = MODULE._EXPECTED_SCENARIO_IDS
+    root: Path, scenario_ids: tuple[str, ...] = MODULE._EXPECTED_SCENARIO_SETS[4]
 ) -> tuple[Path, Path, dict[str, bytes]]:
     root.mkdir(parents=True, exist_ok=True)
     source = root / "source"
@@ -294,7 +294,7 @@ class Track2ScenarioRunnerTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "per worker"):
                     MODULE._run_batch(args)
 
-    def test_ten_scenario_batch_emits_versioned_conformal_training_receipt(self) -> None:
+    def test_ten_scenario_batch_emits_versioned_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             scenario_ids = MODULE._EXPECTED_SCENARIO_SETS[10]
@@ -311,17 +311,7 @@ class Track2ScenarioRunnerTest(unittest.TestCase):
             receipt = json.loads(batch_manifest.read_text(encoding="utf-8"))
             self.assertEqual(receipt["schema"], "timesoil.aios.track2-scenario-run/v2")
             self.assertEqual(receipt["scenario_count"], 10)
-            argv = receipt["training"]["argv"]
-            self.assertEqual(
-                argv[argv.index("--batch-manifest") + 1], str(batch_manifest)
-            )
-            self.assertEqual(
-                argv[argv.index("--scenario-index-sha256") + 1],
-                receipt["scenario_index_sha256"],
-            )
-            self.assertEqual(
-                argv[-2:], ["--conformal-level", "0.9"]
-            )
+            self.assertNotIn("training", receipt)
 
     def test_read_regular_rejects_component_swap_to_symlink(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -403,7 +393,7 @@ class Track2ScenarioRunnerTest(unittest.TestCase):
     def test_verified_bundle_runs_existing_pipeline_and_writes_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            scenario_ids = MODULE._EXPECTED_SCENARIO_IDS
+            scenario_ids = MODULE._EXPECTED_SCENARIO_SETS[4]
             source, bundle, modified = _fixture(root, scenario_ids)
             output = root / "runs"
             _FakeRunner.events = []
@@ -466,23 +456,7 @@ class Track2ScenarioRunnerTest(unittest.TestCase):
                     ],
                     f"{scenario_id}.csv",
                 )
-            self.assertEqual(receipt["training"]["dataset"], "dataset")
-            self.assertEqual(receipt["training"]["manifests"], "manifests")
-            self.assertEqual(
-                receipt["training"]["argv"][-10:],
-                [
-                    "--test-fraction",
-                    "0.25",
-                    "--ensemble-size",
-                    "5",
-                    "--n-estimators",
-                    "160",
-                    "--horizon",
-                    "6",
-                    "--seed",
-                    "20260831",
-                ],
-            )
+            self.assertNotIn("training", receipt)
 
     def test_incomplete_v2_scenario_set_fails_before_output(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

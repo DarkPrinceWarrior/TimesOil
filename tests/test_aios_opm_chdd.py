@@ -15,9 +15,9 @@ from timesoil.aios.opm_chdd import (
     OpmChddError,
     _check_connection_total,
     _float32_identity_tolerance,
+    _read_deck_densities_and_start,
     _read_summary,
     export_opm_chdd,
-    read_deck_densities,
 )
 
 
@@ -752,8 +752,11 @@ END
 """,
                 encoding="utf-8",
             )
-            unit, resolved, ambiguous, digest, connections = read_deck_densities(root)
+            unit, resolved, ambiguous, digest, connections, start, _ = (
+                _read_deck_densities_and_start(root)
+            )
             self.assertEqual(unit, "METRIC")
+            self.assertEqual(start, date(2025, 1, 1))
             self.assertEqual(resolved["P1"].oil_kg_m3, 800)
             self.assertEqual(ambiguous["P2"], (1, 2))
             self.assertEqual(set(connections["P2"]), {"1,1,1", "2,1,1"})

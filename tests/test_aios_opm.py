@@ -280,34 +280,35 @@ class OpmFlowRunnerTest(unittest.TestCase):
             self.assertEqual(mocked_run.call_args_list[1].kwargs["timeout"], 30.0)
 
     @patch("timesoil.aios.opm.subprocess.run")
-    def test_summary_uses_list_and_report_options_and_checks_errors(self, mocked_run) -> None:
-        mocked_run.side_effect = [
-            subprocess.CompletedProcess([], 0, "ok", ""),
-            subprocess.CompletedProcess([], 0, "TIME FOPR\n", ""),
-            subprocess.CompletedProcess([], 0, "TIME FOPR\n0 1\n", ""),
-            subprocess.CompletedProcess([], 2, "", "missing vector"),
-        ]
+    def test_summary_extraction_fails_closed_on_a_nonzero_summary_exit(
+        self, mocked_run
+    ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             source = root / "MODEL.DATA"
             source.write_text(_MINIMAL_DECK)
+
+            def execute(command, **_kwargs):
+                if "flow" in command:
+                    output = root / "run" / "output"
+                    (output / "MODEL.SMSPEC").write_bytes(b"smspec")
+                    (output / "MODEL.UNSMRY").write_bytes(b"unsmry")
+                    return subprocess.CompletedProcess(command, 0, "ok", "")
+                return subprocess.CompletedProcess(command, 2, "", "missing vector")
+
+            mocked_run.side_effect = execute
             runner = OpmFlowRunner()
             result = runner.run(source, root / "run")
-            (result.output_dir / "MODEL.SMSPEC").write_bytes(b"smspec")
 
-            self.assertEqual(runner.list_summary_vectors(result), ("TIME", "FOPR"))
-            self.assertIn("0 1", runner.extract_summary(result, ("FOPR",)))
             with self.assertRaisesRegex(OpmSummaryError, "exit code 2"):
-                runner.extract_summary(result, ("BAD",))
+                runner.extract_summary_report(
+                    result, result.run_dir / "summary-report.txt"
+                )
 
             list_command = mocked_run.call_args_list[1].args[0]
-            extract_command = mocked_run.call_args_list[2].args[0]
             self.assertLess(list_command.index("-l"), list_command.index("/output/MODEL.SMSPEC"))
-            self.assertLess(
-                extract_command.index("-r"),
-                extract_command.index("/output/MODEL.SMSPEC"),
-            )
-            self.assertFalse(mocked_run.call_args_list[2].kwargs["shell"])
+            self.assertFalse(mocked_run.call_args_list[1].kwargs["shell"])
+            self.assertFalse((result.run_dir / "summary-report.txt").exists())
 
     @patch("timesoil.aios.opm.subprocess.run")
     def test_summary_report_records_raw_artifact_derivation(self, mocked_run) -> None:

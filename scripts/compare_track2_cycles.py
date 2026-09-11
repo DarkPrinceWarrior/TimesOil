@@ -62,17 +62,6 @@ def compare_physical_inputs(roots, inputs, wells):
                  allowed_difference='Canonical all-well WVPT/WVIT SUMMARY requests only; no physics/control input change')]
 
 
-def agent_review_result(state):
-    """Keep unanimous numerical review distinct from the final critic decision."""
-    from dataclasses import asdict
-    return {
-        "agent_review": asdict(state),
-        "agent_review_scope": "completed_paired_numerical_audit",
-        "agent_review_critic_approved": state.critic_approved,
-        "agent_review_approved": state.complete and all(d.approved for d in state.decisions),
-    }
-
-
 def compare(baseline, candidate, expected_months=None):
     left, right = load(baseline), load(candidate)
     a, b = left[0], right[0]
@@ -136,45 +125,8 @@ if __name__ == "__main__":
     parser.add_argument("candidate", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument("--expected-months", type=int, help="Reject a shorter experimental window, e.g. require all 224 months")
-    parser.add_argument("--select-from", type=Path, nargs="*", help="Additional completed candidates; select by full-period CHDD including the baseline")
-    parser.add_argument("--agent-review", action="store_true", help="Ask the external agent workflow to audit the verified completed comparison")
     args = parser.parse_args()
-    if args.select_from is not None and args.expected_months is None:
-        parser.error("--select-from requires an explicit --expected-months economic horizon")
     result = compare(args.baseline, args.candidate, args.expected_months)
-    if args.select_from is not None:
-        comparisons = [result] + [compare(args.baseline, candidate, args.expected_months) for candidate in args.select_from]
-        choices = [result["baseline"]] + [item["candidate"] for item in comparisons]
-        selected = max(choices, key=lambda item: item["chdd_m"])
-        result = {"schema": "timesoil.full-horizon-selection/v1", "months": result["months"],
-                  "baseline": result["baseline"], "selected": selected,
-                  "selection_metric": "official_chdd_over_identical_complete_period",
-                  "comparisons": comparisons,
-                  "claim": "Model-based training experiment; selection runs are not an untouched test set."}
-    if args.agent_review:
-        import asyncio
-        from timesoil.aios.agents import AgentRole, AgentWorkflow, ToolDefinition, ToolRegistry
-        from timesoil.aios.llm import ExternalQwenClient, LLMConfig
-
-        tool = ToolDefinition("read_verified_comparison", "Read the completed paired artifact audit and full-period official CHDD.",
-            {"type": "object", "properties": {}, "required": [], "additionalProperties": False},
-            lambda _arguments, _context: result)
-
-        async def review():
-            async with ExternalQwenClient(LLMConfig.from_env()) as client:
-                return await AgentWorkflow(client, ToolRegistry((tool,)),
-                    role_tools={role: (tool.name,) for role in AgentRole},
-                    required_tools={role: (tool.name,) for role in AgentRole},
-                ).run({"track": 2, "phase": "completed_paired_numerical_audit",
-                    "approval_scope": "completed_paired_numerical_audit",
-                    "objective": "Audit the completed full-period OPM and official CHDD comparison. Read the tool. No new simulator run is requested. State actual delta and percentage; distinguish numeric validity from deployment readiness. Proposal provenance is outside this numerical audit: do not assert that a surrogate proposed or selected a candidate without explicit evidence.",
-                    "facts": {"paired_opm_and_economics_verified": True,
-                              "surrogate_uncertainty_independently_calibrated": False,
-                              "autonomous_surrogate_deployment_certified": False,
-                              "competition_result_claimed": False}})
-
-        reviewed = asyncio.run(review())
-        result = {**result, **agent_review_result(reviewed)}
     with args.output.open("x") as stream:
         json.dump(result, stream, indent=2)
     print(json.dumps(result))

@@ -36,23 +36,3 @@ def test_only_canonical_optional_summary_change_is_comparable(tmp_path):
         compare(current, grid="changed")
     with pytest.raises(AssertionError):
         compare(current, extra=True)
-
-
-def test_numerical_review_never_hides_a_role_rejection():
-    from timesoil.aios.agents import AgentState, ROLE_ORDER, RoleDecision
-
-    def review(approvals):
-        decisions = tuple(RoleDecision(role=role, summary="Numerical review", recommendation="no_action",
-                                       evidence=(), approved=approved, tool_evidence=())
-                          for role, approved in zip(ROLE_ORDER, approvals))
-        return module.agent_review_result(AgentState(run_id="test", context={}, decisions=decisions))
-
-    mixed = review((False, False, False, True))
-    assert mixed["agent_review_critic_approved"] is True
-    assert mixed["agent_review_approved"] is False
-    assert mixed["agent_review_scope"] == "completed_paired_numerical_audit"
-    assert [d["approved"] for d in mixed["agent_review"]["decisions"]] == [False, False, False, True]
-    assert review((True, True, True, True))["agent_review_approved"] is True
-    assert review((True, True, True, False))["agent_review_approved"] is False
-    assert review((True, True, True))["agent_review_approved"] is False
-    assert review(())["agent_review_approved"] is False

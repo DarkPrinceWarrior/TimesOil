@@ -1,36 +1,31 @@
 from __future__ import annotations
 
+import argparse
 import asyncio
-import csv
 import io
 import json
 from pathlib import Path
 import subprocess
 from types import SimpleNamespace
-import tempfile
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
 from timesoil.aios import cli
-from timesoil.aios.economics import CHDD_FIELDS
 from timesoil.aios.opm import OPM_IMAGE
 from timesoil.aios.tools import GROUNDED_ROLE_TOOLS
 
 
-def _csv(path: Path) -> None:
-    with path.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(CHDD_FIELDS))
-        writer.writeheader()
-        writer.writerow(
-            {
-                "DATA": "2014-01-01",
-                "well": "P1",
-                **{field: "1" for field in CHDD_FIELDS[2:]},
-            }
+class CLITest(unittest.TestCase):
+    def test_cli_exposes_only_the_submission_subcommands(self) -> None:
+        commands = next(
+            action.choices
+            for action in cli.build_parser()._actions
+            if isinstance(action, argparse._SubParsersAction)
+        )
+        self.assertEqual(
+            set(commands), {"doctor", "agent-experiment", "full-cycle"}
         )
 
-
-class CLITest(unittest.TestCase):
     def test_doctor_is_json_and_never_prints_secrets(self) -> None:
         secret = "api-key-must-not-leak"
         output = io.StringIO()
@@ -54,7 +49,6 @@ class CLITest(unittest.TestCase):
             },
         )
         self.assertEqual(set(report), {"qwen", "track2", "chdd"})
-        self.assertIn("model_z_trained", report["track2"])
         self.assertFalse(report["track2"]["runtime_ready"])
 
     def test_doctor_inspects_exact_pinned_image_without_shell(self) -> None:
@@ -152,104 +146,6 @@ class CLITest(unittest.TestCase):
             request, destination, run_id="production-cycle"
         )
         self.assertIs(result, expected)
-
-    def test_chdd_requires_canonical_csv_and_writes_below_runs_root(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            source = root / "input.csv"
-            runs = root / "runs"
-            _csv(source)
-            adapter = Mock()
-            adapter.calculate.return_value = SimpleNamespace(
-                total_chdd_m=12.0,
-                profitability_index=1.2,
-                start_date="2014-01-01",
-                max_date="2015-01-01",
-                diagnostics={},
-                output_dir=runs / "safe-run",
-                manifest_path=runs / "safe-run" / "manifest.json",
-            )
-            output = io.StringIO()
-            with patch(
-                "timesoil.aios.cli.CHDDEconomicsAdapter.from_env", return_value=adapter
-            ), patch("sys.stdout", output):
-                code = cli.main(
-                    [
-                        "chdd",
-                        str(source),
-                        "--start-year",
-                        "2014",
-                        "--runs-dir",
-                        str(runs),
-                        "--run-id",
-                        "safe-run",
-                    ]
-                )
-
-            self.assertEqual(code, 0)
-            records = adapter.calculate.call_args.args[0]
-            self.assertEqual(tuple(records[0]), CHDD_FIELDS)
-            destination = adapter.calculate.call_args.kwargs["output_dir"]
-            self.assertEqual(destination, (runs / "safe-run").resolve())
-            self.assertEqual(json.loads(output.getvalue())["run_id"], "safe-run")
-
-    def test_chdd_rejects_noncanonical_header(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            source = Path(temporary) / "bad.csv"
-            source.write_text("DATA,well\n2014-01-01,P1\n")
-            error = io.StringIO()
-            with patch("sys.stderr", error):
-                code = cli.main(["chdd", str(source), "--start-year", "2014"])
-            self.assertEqual(code, 1)
-            self.assertIn("canonical 14 fields", error.getvalue())
-
-    def test_opm_baseline_uses_safe_destination_and_explicit_low(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            source = root / "case.zip"
-            source.write_bytes(b"zip")
-            runner = Mock()
-            runner.get_provenance.return_value = "OPM pinned"
-            runner.run.return_value = SimpleNamespace(
-                run_dir=root / "runs" / "baseline",
-                manifest_path=root / "runs" / "baseline" / "manifest.json",
-                manifest_sha256="a" * 64,
-                warnings=("PINCHREG",),
-            )
-            runner.extract_summary_report.return_value = (
-                root / "runs" / "baseline" / "summary-report.txt",
-                root / "runs" / "baseline" / "summary-extraction.json",
-            )
-            output = io.StringIO()
-            with patch("timesoil.aios.cli.OpmFlowRunner", return_value=runner), patch(
-                "sys.stdout", output
-            ):
-                code = cli.main(
-                    [
-                        "opm-baseline",
-                        str(source),
-                        "--runs-dir",
-                        str(root / "runs"),
-                        "--run-id",
-                        "baseline",
-                        "--low",
-                    ]
-                )
-
-            self.assertEqual(code, 0)
-            self.assertEqual(
-                runner.run.call_args.kwargs["parsing_strictness"], "low"
-            )
-            runner.extract_summary_report.assert_called_once()
-            self.assertEqual(json.loads(output.getvalue())["warnings"], ["PINCHREG"])
-
-    def test_serve_invokes_fixed_app_without_subprocess(self) -> None:
-        with patch("uvicorn.run") as run:
-            self.assertEqual(
-                cli.main(["serve", "--host", "api.example", "--port", "9000"]), 0
-            )
-        self.assertEqual(run.call_args.kwargs["port"], 9000)
-        self.assertEqual(run.call_args.kwargs["host"], "api.example")
 
 
 if __name__ == "__main__":

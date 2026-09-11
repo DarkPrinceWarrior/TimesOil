@@ -16,9 +16,9 @@ from timesoil.aios.api import app, get_agent_workflow
 from timesoil.aios.llm import ChatMessage, LLMResponse, ToolCall
 from timesoil.aios.tools import (
     GROUNDED_ROLE_TOOLS,
+    READ_CONSTRAINTS,
     READ_CONTEXT_STATE,
     READ_EVIDENCE_READINESS,
-    VALIDATE_CANDIDATE_CONTROLS,
     build_grounded_tool_registry,
 )
 
@@ -34,33 +34,6 @@ def _context() -> dict[str, Any]:
             "model_z_trained": True,
         },
         "evidence": ["request assertion only"],
-        "case": {
-            "case_id": "model-z",
-            "start": "2014-01-01",
-            "end": "2014-02-01",
-            "economics_start": "2014-01-01",
-            "producers": ["P-1"],
-            "injectors": ["I-1"],
-            "max_liquid_rate": 500.0,
-        },
-        "candidate_controls": [
-            {
-                "month": "2014-01-01",
-                "well": "P-1",
-                "role": "producer",
-                "status": "OPEN",
-                "target": "LRAT",
-                "value": 120.0,
-            },
-            {
-                "month": "2014-01-01",
-                "well": "I-1",
-                "role": "injector",
-                "status": "OPEN",
-                "target": "WRAT",
-                "value": 80.0,
-            },
-        ],
     }
 
 
@@ -84,22 +57,19 @@ def test_grounded_tools_are_request_scoped_redacted_and_fail_closed() -> None:
             context=context,
         )
     ).output
-    validation = asyncio.run(
+    constraints = asyncio.run(
         registry.execute(
-            ToolCall("validate-1", VALIDATE_CANDIDATE_CONTROLS, {}),
+            ToolCall("constraints-1", READ_CONSTRAINTS, {}),
             allowed=allowed,
             context=context,
         )
     ).output
 
     assert state["state"]["facts"] == {"field_oil_rate": 100.0}
+    assert "api_key" not in state["state"]["facts"]
     assert readiness["reported"]["model_z_trained"] is True
-    assert readiness["verified"] == {"model_z_trained": False}
-    assert validation["valid"] is True
-    assert validation["certified"] is False
-    assert validation["simulator_executed"] is False
-    assert validation["chdd_complete"] is False
-    assert len(validation["schedule_sha256"]) == 64
+    assert readiness["verified"] == {}
+    assert constraints["constraints"] == {"fixed_total_injection": True}
 
 
 def test_tool_allowlist_schema_and_payload_limits_fail_closed() -> None:
@@ -153,7 +123,7 @@ class _ToolCallingLLM:
         assert tools
         available = {item["function"]["name"] for item in tools}
         name = (
-            VALIDATE_CANDIDATE_CONTROLS
+            READ_CONSTRAINTS
             if "планировщик" in messages[0].content
             else READ_CONTEXT_STATE
         )
@@ -199,7 +169,7 @@ def test_agent_api_executes_grounded_tool_and_returns_safe_trace() -> None:
     assert response.status_code == 200
     payload = response.json()
     planner = next(item for item in payload["decisions"] if item["role"] == "planner")
-    assert planner["tools"][0]["tool"] == VALIDATE_CANDIDATE_CONTROLS
-    assert planner["tools"][0]["output"]["valid"] is True
+    assert planner["tools"][0]["tool"] == READ_CONSTRAINTS
+    assert planner["tools"][0]["output"]["constraints"] == {"fixed_total_injection": True}
     assert "private reasoning" not in response.text
     assert "must-not-leak" not in response.text
