@@ -553,6 +553,18 @@ PYTHONPATH=src:scripts /root/projects/TimesOil/.venv/bin/python -m pytest -q \
 `deliverables/`. Локальная проверка не заменяет серверный прогон: если
 выполнена только она, так и указывать.
 
+## 8а. Операторский веб-интерфейс (`frontend/`)
+
+Интерфейс входит в тот же образ API и поднимается вместе с ним: после
+`docker compose --env-file .env.example up -d --build --wait` он открывается по
+адресу `http://127.0.0.1:8000/app/` (на A100-профиле — порт `AIOS_PORT`).
+Статика лежит в `frontend/` и копируется в образ строкой `COPY frontend
+./frontend`. Данные интерфейс получает через API `/v1/results`; каталог
+результатов хоста (`TIMESOIL_RESULTS_DIR`, по умолчанию `./results`)
+смонтирован только на чтение в `/app/results`, и на него указывает
+`TIMESOIL_RESULTS_ROOT`. Запись в этот каталог из контейнера невозможна —
+квитанции и sealed-прогоны остаются неизменными.
+
 **Связанные материалы:**
 [передача 10 сентября](HANDOFF_CLAUDE_CODE_20260910.md) ·
 [приёмочная матрица](BOTH_TRACKS_ACCEPTANCE_20260909.md) ·
