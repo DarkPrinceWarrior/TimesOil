@@ -1,36 +1,29 @@
-Scorp — Track 2 Model Z: проверка финального прогона
-Дата: 27.09.2026. Период управления: 01.01.2007–01.09.2025 (224 месяца).
-Исходный архив организаторов SHA-256: e64febb6d843feac06ed70835b09eae05c5cc99f4f5cef9225f1b36b0520653d
-Код полного цикла: GitLab final f0ff4bbd1ffb3f54b29d7f1d65e30929e4ebce10.
-Провайдер: Tatneft LiteLLM, qwen3.8-27b; 8 вызовов, ошибок 0.
-Полный цикл OPM → экспорт → официальный ЧДД → критик: завершён за 303 с.
-Квитанция: complete=true, critic_approved=true, experimental=true, organizer_certified=false.
+Scorp / Track 2 Model Z / submitted f3-01
+Source: case_z_official.zip SHA-256 e64febb6d843feac06ed70835b09eae05c5cc99f4f5cef9225f1b36b0520653d
+Schedule: TRACK2_FINAL_WELLS_SCHEDULE.inc SHA-256 c8492e58c8f4f2ee73ba5bcda4fa6e85b74ec7c097c6bb4c233713232ba9f381
+Management period: 2007-01-01 through 2025-08-31; final DATES block 2025-09-01
+Controls: 103 wells x 224 months = 23,072 actions; 16 required repair windows included
 
-Вход и встроенные ограничения
-- 103 скважины × 224 месяца = 23 072 действия; 21 правило operating_constraints.
-- Жёстких отказов валидатора: 0. Диагностических отклонений VRR: 14.
-- Сумма заданных LRAT: максимум 591,690 м³/сут при лимите 600.
-- Сумма заданных WRAT: максимум 510,000 м³/сут при лимите 600.
-- Пределы WCONPROD/WCONINJE действуют в симуляторе весь соответствующий месяц; физические значения ниже проверены на всех месячных шагах SUMMARY. Отдельного непрерывного ряда между шагами SUMMARY в пакете нет.
-- 16 обязательных окон ремонта: все SHUT в управлении; 63 из 63 соответствующих помесячных физических проверок дали нулевой поток.
-- Дополнительная разрешённая остановка скв. 94: сентябрь 2011 года. Перевод скв. 19 под закачку: с февраля 2013 года.
+Team calculator on full OPM output: 4,287.946904643 M RUB
+Comparable capped incumbent:       3,871.979374748 M RUB
+Difference:                         +415.967529895 M RUB = +10.743020291%
+This is a team comparison, not an organizer-issued score sheet.
 
-Физика OPM
-- Добыча жидкости: максимум 466,403 м³/сут из 600; месячный средний максимум 466,403 м³/сут.
-- Закачка воды: максимум 508,708 м³/сут из 600; месячный средний максимум 508,709 м³/сут.
-- Пластовое давление FPR: минимум 109,513977 бар на 01.01.2007 при пороге 108 атм = 109,431 бар; ниже порога 0 из 225 отчётных дат. FPR сопоставлен с TIME от START=01.06.1991; старый отчёт ошибочно сдвигал индекс на шесть месяцев.
-- Забойное давление при активной добыче: минимум 50,662498 бар. Задание OPM — 50 атм = 50,6625 бар; разница 0,000002 бар вызвана выводом float32 в SUMMARY. Жёсткое правило использует float32-представление 50,662498474 бар и допуск сравнения 0,000001 бар. Это численное округление, а не изменение физического предела.
-- Забойное давление при активной закачке: максимум 300,000 бар при пределе 300 атм = 303,975 бар.
-- VRR3 = сумма приростов WVIT / сумма приростов WVPT за скользящие три месяца по всем скважинам: минимум 0,959, максимум 1,739. В диапазоне 0,85–1,15 — 210 из 224 месяцев (93,75%); выше 1,15 — 14 месяцев (январь 2007 – февраль 2008), ниже 0,85 — 0. Текст кейса требует «преимущественно»; исключения показаны явно, а не объявлены отсутствующими.
+Liquid maximum at OPM reporting steps:   449.7 m3/day (case cap 600)
+Injection maximum at OPM reporting steps: 510.0 m3/day (case cap 600)
+Control BHP: producers >=50 atm = 50.6625 bar; injectors <=300 bar (<300 atm)
+Required repairs: all 16 windows represented by SHUT controls
+Raw OPM SMSPEC/TIME field pressure: 0 reporting steps below 108 atm = 109.431 bar
+Earlier claim of 6 low-pressure months came from shifting the time series.
+These observations do not prove the limits at every instant between reporting steps.
 
-Экономика
-- Официальный ЧДД итогового режима за 01.01.2007–01.09.2025: 4 030,275663 млн ₽.
-- ЧДД ранее рассчитанного режима при том же архиве, горизонте и нормах: 3 871,979375 млн ₽.
-- Арифметическая разница: +158,296288 млн ₽ (+4,088%). Ранее рассчитанный режим нарушает VRR и давление; эта разница не является сертифицированным приростом к допустимому baseline.
+VRR3, reservoir-volume definition: rolling three-month delta WVIT / delta WVPT.
+Within 0.85–1.15: 66/224 months (29.46%); above 1.15: 158/224; below 0.85: 0.
+Observed range: 1.109643–1.739175. The case uses the word "predominantly" but
+does not provide a numerical share or an authoritative VRR calculation method.
+This audit therefore cannot mark the VRR condition as passed. Earlier report's
+130 months used surface-volume series and a different window/date alignment.
 
-Контрольные суммы финального расчёта
-request_sha256: 6a129beb38ca2577da10e8a4482ec60f1389c41e24b8598ab47e3281c344ab3f
-opm_input_schedule_sha256: 0e683b07d130ee28d51bbaa5de49c09a57b720e99a8fb9e745e89ec489d8cfbc
-summary_report_sha256: 048337d37065fdf53ef9c1b383d2434afb8cab5e3fd356390f9ec338a13c3c2b
-canonical_chdd_csv_sha256: 8734823794920cfd3414cc2c7497b3fceb08a7d0addbc52bacb9af976e9c1a36
-full_cycle_receipt_sha256: 3bd4280a367ac0b47f41783b685435a2fb59164f2564e42cc6dcf96c72bbfa6c
+Original f3-01 request embeds zero operating_constraints. Receipt status is
+complete=true, critic_approved=true, experimental=true, organizer_certified=false.
+Admission of Scorp to the final does not reveal the organizers' per-rule verdict.
