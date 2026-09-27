@@ -1,10 +1,43 @@
 {
-  "run_dir": "/root/projects/case_z_20260911/official/rerun-bank-f3-01/cycle",
-  "npv_management_period_m_rub": 4287.946904642983,
-  "period": [
-    "2007-01-01",
-    "2025-09-01"
-  ],
-  "wells_schedule_sha256": "c8492e58c8f4f2ee73ba5bcda4fa6e85b74ec7c097c6bb4c233713232ba9f381",
-  "dates_blocks": 224
+  "scenario_id": "track2-model-z-compliance-final",
+  "management_period": {
+    "start_inclusive": "2007-01-01",
+    "end_exclusive": "2025-09-01",
+    "months": 224
+  },
+  "wells": 103,
+  "monthly_actions": 23072,
+  "mandatory_repairs": 16,
+  "chdd_m_rub": 4030.275662823322,
+  "previous_regime_chdd_m_rub": 3871.9793747475464,
+  "arithmetic_difference_m_rub": 158.29628807577546,
+  "arithmetic_difference_percent": 4.088252357648381,
+  "operating_constraints": {
+    "rule_count": 21,
+    "hard_failures": 0,
+    "vrr_diagnostic_months_above_1_15": 14,
+    "vrr_months_in_0_85_to_1_15": 210,
+    "fpr_months_below_108_atm": 0
+  },
+  "full_cycle": {
+    "code_commit": "f0ff4bbd1ffb3f54b29d7f1d65e30929e4ebce10",
+    "complete": true,
+    "critic_approved": true,
+    "organizer_certified": false,
+    "experimental": true,
+    "elapsed_seconds": 303,
+    "llm_provider": "Tatneft LiteLLM",
+    "llm_model": "qwen3.8-27b",
+    "llm_calls": 8
+  },
+  "sha256": {
+    "source_archive": "e64febb6d843feac06ed70835b09eae05c5cc99f4f5cef9225f1b36b0520653d",
+    "request_file": "f63bb44c82d8ffc826af2c8f238d9fe9843a6702b6f7f722f0a46b1053c4dd6b",
+    "request_receipt": "6a129beb38ca2577da10e8a4482ec60f1389c41e24b8598ab47e3281c344ab3f",
+    "management_schedule_file": "c499fcf86792ef3dfea7a631286233d88f7cf4071789547e06e5f3db3946d62e",
+    "opm_input_schedule": "0e683b07d130ee28d51bbaa5de49c09a57b720e99a8fb9e745e89ec489d8cfbc",
+    "summary_report": "048337d37065fdf53ef9c1b383d2434afb8cab5e3fd356390f9ec338a13c3c2b",
+    "canonical_chdd_csv": "8734823794920cfd3414cc2c7497b3fceb08a7d0addbc52bacb9af976e9c1a36",
+    "full_cycle_receipt_file": "3bd4280a367ac0b47f41783b685435a2fb59164f2564e42cc6dcf96c72bbfa6c"
+  }
 }
