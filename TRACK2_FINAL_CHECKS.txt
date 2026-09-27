@@ -1,0 +1,9 @@
+report dates 2007-02-01..2025-09-01 (224)
+liquid  max    449.7 m3/d at 2020-09-01  cap 600.0  -> OK
+inject  max    510.0 m3/d at 2008-11-01  cap 600.0  -> OK
+oil total 1,638,163 t; liquid total 2,692,967 t (mass)
+WWIR/WLPR ratio (surface, instantaneous) min 1.109 max 1.751
+VRR3 window (surface volumes) min 1.092 max 1.821; months <0.85: 0 []; >1.15: 130 ['2007-02-01', '2007-03-01', '2007-04-01', '2007-05-01']
+NPV management period 2007-01-01..2025-09-01: 4287.947 M RUB
+FPR: vector not found in summary-report.txt
+FPR management min 108.90 bar at 2007-02 (floor 109.431: LOW); months below: 6
