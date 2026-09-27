@@ -27,7 +27,7 @@ from intake_case_z import (
 )
 
 TRAINING_ARCHIVE = (Path(__file__).resolve().parents[1]
-                    / "docs/hackathon/models/model_z_final_opm/Model_Z_final_OPM.zip")
+                    / "Model_Z_final_OPM.zip")
 CUT = date(2006, 12, 31)
 START = date(2007, 1, 1)
 END = date(2025, 9, 1)

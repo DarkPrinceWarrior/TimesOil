@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 _REPO = Path(__file__).resolve().parents[3]
-_CHDD_DIR = _REPO / "docs" / "hackathon" / "chdd" / "CHDD_PYTHON"
+_CHDD_DIR = _REPO / "CHDD_PYTHON"
 
 # Terms below are exact per well-month sums; `discount` closes FCF -> CHDD.
 NPV_TERMS = ("revenue", "deductions", "oil_opex", "liquid_opex", "injection_opex",

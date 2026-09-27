@@ -4,6 +4,10 @@
 .uv-cache
 .pytest_cache
 .serena
+.claude
+docs
+deliverables
+examples
 dist
 build
 __pycache__

@@ -52,7 +52,7 @@ CONNECTION_VECTORS = (
 # Every clamp the export may apply is named here, counted while it runs and
 # reported in the manifest "tolerances_applied" block. The cited magnitudes are
 # the worst cases observed on the organizers' Model Z deck on 2026-09-11
-# (docs/CASE_Z_RESULT_20260911.md); a step beyond a threshold still refuses.
+# a step beyond a threshold still refuses.
 
 PRODUCER_BACKFLOW_RATE_TPD = 5.0
 """Producer-mode connection rate sum of a layer-completed well may be negative down

@@ -71,7 +71,7 @@ class CHDDEconomicsAdapter:
         repository = Path(__file__).resolve().parents[3]
         self.chdd_dir = Path(
             chdd_python_dir
-            or repository / "docs" / "hackathon" / "chdd" / "CHDD_PYTHON"
+            or repository / "CHDD_PYTHON"
         ).resolve()
         self.timeout_seconds = timeout_seconds
         self.python_executable = Path(python_executable).resolve()

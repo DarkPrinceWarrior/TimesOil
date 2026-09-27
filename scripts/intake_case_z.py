@@ -802,7 +802,7 @@ sha256sum $R/case-z/cycles/baseline/canonical/manifest.json | tee {intake}/basel
     --blocks $R/case-z/blocks.json --output $R/case-z/bank
 
 # 6. TimesFM head fine-tune on the case history (45-90 min, GPU {gpu}) and evaluation (5 min).
-CUDA_VISIBLE_DEVICES={gpu} {gpu_venv} scripts/finetune_timesfm_head.py ...  # see docs/RUNBOOK.md
+CUDA_VISIBLE_DEVICES={gpu} {gpu_venv} scripts/finetune_timesfm_head.py ...
 CUDA_VISIBLE_DEVICES={gpu} {gpu_venv} scripts/evaluate_timesfm_scenarios.py ...
 
 # 7. Search: zero OPM calls, sealed before the final run (~15-30 min).

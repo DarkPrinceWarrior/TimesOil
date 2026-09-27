@@ -24,7 +24,7 @@
 #   --budget-seconds N    wall-clock budget used for the remaining-time print (default 14400)
 #   --dry-run             print every command, run nothing, create nothing
 #
-# Required environment (see docs/CASE_INTAKE_20260911.md):
+# Required environment:
 #   LLM route is picked up from the runtime key files (test -s, never cat): Tatneft is the
 #   primary route, Cerebras the fallback the client retries once on after a primary failure.
 #   Overridable: R, PY_PROJECT, PY_TORCH, PROFILE, WEIGHTS, CONNECTIVITY, CPUS,

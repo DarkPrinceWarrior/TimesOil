@@ -67,7 +67,6 @@ def _records() -> list[dict[str, object]]:
 def test_bundled_model_z_baseline_controls_are_exact() -> None:
     source = (
         Path(__file__).resolve().parents[1]
-        / "examples"
         / "model_z_baseline_controls_v4.csv"
     )
     assert sha256(source.read_bytes()).hexdigest() == (

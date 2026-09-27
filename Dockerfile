@@ -18,12 +18,12 @@ RUN uv sync --locked --no-dev --no-install-project
 
 COPY src ./src
 COPY frontend ./frontend
-COPY docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py \
-     docs/hackathon/chdd/CHDD_PYTHON/chdd_model.py \
-     docs/hackathon/chdd/CHDD_PYTHON/excel_io.py \
-     ./docs/hackathon/chdd/CHDD_PYTHON/
-COPY docs/hackathon/chdd/CHDD_PYTHON/input/Нормативы_ЧДД.xlsx \
-     ./docs/hackathon/chdd/CHDD_PYTHON/input/Нормативы_ЧДД.xlsx
+COPY CHDD_PYTHON/РАСЧЕТ_ЧДД.py \
+     CHDD_PYTHON/chdd_model.py \
+     CHDD_PYTHON/excel_io.py \
+     ./CHDD_PYTHON/
+COPY CHDD_PYTHON/input/Нормативы_ЧДД.xlsx \
+     ./CHDD_PYTHON/input/Нормативы_ЧДД.xlsx
 
 RUN uv sync --locked --no-dev --no-editable \
     && mkdir -p /app/runs \

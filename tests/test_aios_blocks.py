@@ -29,7 +29,7 @@ WELL_CELLS: dict[str, tuple[tuple[int, int], ...]] = {
     "w7": ((9, 1),),
     "w8": ((9, 2),),
 }
-REAL_DECK = Path("docs/hackathon/models/model_z_final_opm/Model_Z_final_OPM.zip")
+REAL_DECK = Path("Model_Z_final_OPM.zip")
 
 
 def _zcorn(offset_from_i: int | None) -> list[float]:
@@ -178,7 +178,7 @@ def test_model_z_blocks(tmp_path: Path) -> None:
     bodies = sorted(geometry.component_sizes.values(), reverse=True)[:3]
     assert bodies == [143621, 52953, 41369]
     connectivity = json.loads(
-        Path("deliverables/control_coverage_20260909/geology-extended-model-z.json").read_text()
+        Path("geology-extended-model-z.json").read_text()
     )
     payload = build_blocks(geometry, connectivity, blocks=6)
     assert len(payload["well_to_block"]) == 103

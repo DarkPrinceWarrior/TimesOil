@@ -18,17 +18,21 @@ inputs/
 results/
 work/
 artifacts/
+docs/
+deliverables/
+examples/
 *.zip
 *.log
+*.docx
+Model_Z_sch_*.inc
 
 # Local tool state
 .codegraph/
 .ruff_cache/
+.claude/
 
 # Organizer inputs and source data: kept locally, never committed
 raw_data/
-docs/hackathon/models/
-docs/hackathon/sources/
 
 # Machine-level agent wiring: kept out of this public repository
 /C?????.local.md

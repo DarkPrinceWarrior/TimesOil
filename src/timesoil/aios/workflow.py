@@ -98,10 +98,10 @@ _EXECUTION_SOURCE_PATHS = (
     "scripts/timesfm_economics.py",
     "scripts/timesfm_geology.py",
     "scripts/track2_final_selection.py",
-    "docs/hackathon/chdd/CHDD_PYTHON/chdd_model.py",
-    "docs/hackathon/chdd/CHDD_PYTHON/excel_io.py",
-    "docs/hackathon/chdd/CHDD_PYTHON/input/Нормативы_ЧДД.xlsx",
-    "docs/hackathon/chdd/CHDD_PYTHON/РАСЧЕТ_ЧДД.py",
+    "CHDD_PYTHON/chdd_model.py",
+    "CHDD_PYTHON/excel_io.py",
+    "CHDD_PYTHON/input/Нормативы_ЧДД.xlsx",
+    "CHDD_PYTHON/РАСЧЕТ_ЧДД.py",
 )
 
 
